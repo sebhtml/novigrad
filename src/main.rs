@@ -4,12 +4,19 @@ use network::*;
 use neuron::*;
 
 fn main() {
-    let inputs = vec![vec![1.0, 2.0], vec![1.0, 3.0], vec![11.0, 222.0]];
+    let inputs = vec![vec![42.0], vec![41.0]];
+    let outputs = vec![vec![1.0], vec![0.0]];
 
     let network = Network::default();
-    let predictions = network.predict_many(&inputs);
+    let predicted_outputs = network.predict_many(&inputs);
 
-    for (index, prediction) in predictions.iter().enumerate() {
-        println!("Input: {:#?}  prediction: {:#?}", inputs[index], prediction);
+    for (index, _) in predicted_outputs.iter().enumerate() {
+        let input = &inputs[index];
+        let output = &outputs[index];
+        let predicted_output = &predicted_outputs[index];
+        println!(
+            "Input: {:?}  Output: {:?}  PredictedOutput: {:?}",
+            input, output, predicted_output
+        );
     }
 }

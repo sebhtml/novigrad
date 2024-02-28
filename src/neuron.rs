@@ -20,16 +20,16 @@ impl Default for Neuron {
 }
 
 impl Neuron {
-    pub fn predict(&self, inputs: &Vec<f32>) -> Option<f32> {
+    pub fn predict(&self, inputs: &Vec<f32>) -> f32 {
         let weights = self.weights.borrow();
         if weights.len() == inputs.len() {
             let mut output = 0.0;
             for (index, weight) in weights.iter().enumerate() {
                 output += weight * inputs[index];
             }
-            Some(output + self.bias)
+            output - self.bias
         } else {
-            None
+            Default::default()
         }
     }
 }

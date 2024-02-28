@@ -2,8 +2,8 @@ use std::{cell::RefCell, f32::consts::E};
 
 pub struct Neuron {
     // TODO store neuron parameter as a Mx1 matrix
-    weights: RefCell<Vec<f32>>,
-    bias: f32,
+    pub weights: RefCell<Vec<f32>>,
+    pub bias: RefCell<f32>,
 }
 
 fn sigmoid(x: f32) -> f32 {
@@ -13,8 +13,8 @@ fn sigmoid(x: f32) -> f32 {
 impl Default for Neuron {
     fn default() -> Self {
         Self {
-            weights: Default::default(),
-            bias: Default::default(),
+            weights: RefCell::new(vec![0.5]),
+            bias: RefCell::new(0.0),
         }
     }
 }
@@ -22,12 +22,13 @@ impl Default for Neuron {
 impl Neuron {
     pub fn predict(&self, inputs: &Vec<f32>) -> f32 {
         let weights = self.weights.borrow();
+        let bias: f32 = *self.bias.borrow();
         if weights.len() == inputs.len() {
             let mut output = 0.0;
             for (index, weight) in weights.iter().enumerate() {
                 output += weight * inputs[index];
             }
-            output - self.bias
+            sigmoid(output - bias)
         } else {
             Default::default()
         }

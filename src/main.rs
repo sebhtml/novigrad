@@ -1,8 +1,5 @@
 mod network;
-mod neuron;
-
 use network::*;
-use neuron::*;
 
 fn main() {
     let inputs = vec![vec![42.0], vec![20.0]];
@@ -22,7 +19,7 @@ fn main() {
     }
 
     println!("Some training !");
-    for _ in vec![1, 2, 3, 4, 5, 6 ,7,  8, 9, 10].iter() {
+    for _ in vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10].iter() {
         network.train(&inputs, &outputs);
     }
 

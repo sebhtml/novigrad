@@ -1,3 +1,5 @@
+use crate::Matrix;
+
 pub struct Network {}
 
 impl Default for Network {

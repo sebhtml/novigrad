@@ -1,5 +1,7 @@
 mod network;
 use network::*;
+mod matrix;
+use matrix::Matrix;
 
 fn main() {
     let inputs = vec![vec![42.0], vec![20.0]];

@@ -1,6 +1,6 @@
-use std::ops::Mul;
+use std::{fmt::Display, ops::Mul};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Matrix {
     rows: usize,
     cols: usize,
@@ -27,27 +27,46 @@ impl Mul for &Matrix {
 
     fn mul(self, rhs: &Matrix) -> Self::Output {
         let lhs: &Matrix = self;
+        println!("lhs {}", lhs);
+        println!("rhs {}", rhs);
         let (lhs_rows, lhs_cols) = lhs.shape();
         let (rhs_rows, rhs_cols) = rhs.shape();
-        if rhs_rows != lhs_cols {
+        if lhs_cols != rhs_rows {
             return Err(Error::IncompatibleMatrixShapes);
         }
-        let (output_rows, output_cols) = (rhs_rows, lhs_cols);
+        let (output_rows, output_cols) = (lhs_rows, rhs_cols);
         let mut values = Vec::new();
-        values.resize(rhs_rows * lhs_cols, 0.0);
+        values.resize(output_rows * output_cols, 0.0);
 
-        for (output_index, output_value) in values.iter_mut().enumerate() {
-            let output_row = output_index / output_cols;
-            let output_col = output_index % output_cols;
-            let mut lhs_index = output_col;
-            let mut rhs_index = output_row * rhs_cols;
-            for _ in 0..lhs_rows {
-                *output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
-                lhs_index += lhs_cols;
-                rhs_index += 1;
+        for output_row in 0..output_rows {
+            for output_col in 0..output_cols {
+                let mut lhs_index = output_row * lhs_cols;
+                let mut rhs_index = output_col;
+                println!(
+                    "output_row {}, output_col {}, lhs_index {}, rhs_index {}",
+                    output_row, output_col, lhs_index, rhs_index
+                );
+                let output_value: &mut f32 = &mut values[output_row * output_cols + output_col];
+                for _ in 0..lhs_cols {
+                    *output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
+                    lhs_index += 1;
+                    rhs_index += rhs_cols;
+                }
             }
         }
         Ok(Matrix::new(output_rows, output_cols, values))
+    }
+}
+
+impl Into<Vec<f32>> for Matrix {
+    fn into(self) -> Vec<f32> {
+        self.values
+    }
+}
+
+impl Display for Matrix {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Shape: {}x{}", self.rows, self.cols)
     }
 }
 
@@ -125,13 +144,18 @@ mod tests {
         );
         let actual_product = &lhs * &rhs;
         let expected_product = Matrix::new(
-            2,
-            2,
+            3,
+            3,
             vec![
-                1.0 * 11.0 + 3.0 * 12.0 + 5.0 * 13.0,
-                2.0 * 11.0 + 4.0 * 12.0 + 6.0 * 13.0, //
-                1.0 * 14.0 + 3.0 * 15.0 + 5.0 * 16.0,
-                2.0 * 14.0 + 4.0 * 15.0 + 6.0 * 16.0, //
+                1.0 * 11.0 + 2.0 * 14.0,
+                1.0 * 12.0 + 2.0 * 15.0,
+                1.0 * 13.0 + 2.0 * 16.0, //
+                3.0 * 11.0 + 4.0 * 14.0,
+                3.0 * 12.0 + 4.0 * 15.0,
+                3.0 * 13.0 + 4.0 * 16.0, //
+                5.0 * 11.0 + 6.0 * 14.0,
+                5.0 * 12.0 + 6.0 * 15.0,
+                5.0 * 13.0 + 6.0 * 16.0, //
             ],
         );
 

@@ -28,19 +28,16 @@ impl Mul for &Matrix {
         let mut values = Vec::new();
         values.resize(rhs_rows * lhs_cols, 0.0);
 
-        let mut output_index: usize = 0;
-
-        for row in 0..output_rows {
-            for col in 0..output_cols {
-                let mut lhs_index = col;
-                let mut rhs_index = row * rhs_cols;
-                let output_value: &mut f32 = &mut values[output_index];
-                for _ in 0..lhs_rows {
-                    *output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
-                    lhs_index += lhs_cols;
-                    rhs_index += 1;
-                }
-                output_index += 1;
+        for output_index in 0..values.len() {
+            let row = output_index / output_cols;
+            let col = output_index % output_cols;
+            let mut lhs_index = col;
+            let mut rhs_index = row * rhs_cols;
+            let output_value: &mut f32 = &mut values[output_index];
+            for _ in 0..lhs_rows {
+                *output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
+                lhs_index += lhs_cols;
+                rhs_index += 1;
             }
         }
         Matrix::new(output_rows, output_cols, values)

@@ -28,36 +28,9 @@ impl Mul for &Matrix {
         let mut values = Vec::new();
         values.resize(output_rows * output_cols, 0.0);
 
-        /*
-        Example:
-
-                  0 1
-              0 | a b |
-        lhs = 1 | c d |
-              2 | e f |
-
-                  0 1 2
-              0 | g h i |
-        rhs = 1 | k l m |
-
-                         0                    1              <- column in lhs
-        output = 0 | a*g + c*h + e*i     b*g + d*h + f*i |
-                 1 | a*k + c*l + e*m     b*k + d*l + f*m |
-
-                 ^
-                 |
-                 row in rhs
-
-        For cell (row, col) in output, we need:
-            - the row "row" in rhs
-            - the column "col" in lhs.
-         */
-
         let mut output = Matrix::new(output_rows, output_cols, values);
         let mut output_index: usize = 0;
-        let output_stride = 1;
         let lhs_stride = lhs_cols;
-        let rhs_stride = 1;
 
         for row in 0..output_rows {
             for col in 0..output_cols {
@@ -67,10 +40,10 @@ impl Mul for &Matrix {
                 for _ in 0..lhs_rows {
                     output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
                     lhs_index += lhs_stride;
-                    rhs_index += rhs_stride;
+                    rhs_index += 1;
                 }
                 output.values[output_index] = output_value;
-                output_index += output_stride;
+                output_index += 1;
             }
         }
         output

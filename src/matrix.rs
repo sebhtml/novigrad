@@ -17,13 +17,21 @@ impl Matrix {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Error {
+    IncompatibleMatrixShapes,
+}
+
 impl Mul for &Matrix {
-    type Output = Matrix;
+    type Output = Result<Matrix, Error>;
 
     fn mul(self, rhs: &Matrix) -> Self::Output {
         let lhs: &Matrix = self;
         let (lhs_rows, lhs_cols) = lhs.shape();
         let (rhs_rows, rhs_cols) = rhs.shape();
+        if rhs_rows != lhs_cols {
+            return Err(Error::IncompatibleMatrixShapes);
+        }
         let (output_rows, output_cols) = (rhs_rows, lhs_cols);
         let mut values = Vec::new();
         values.resize(rhs_rows * lhs_cols, 0.0);
@@ -39,13 +47,13 @@ impl Mul for &Matrix {
                 rhs_index += 1;
             }
         }
-        Matrix::new(output_rows, output_cols, values)
+        Ok(Matrix::new(output_rows, output_cols, values))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::matrix::Matrix;
+    use crate::matrix::{Error, Matrix};
 
     #[test]
     fn new() {
@@ -57,7 +65,6 @@ mod tests {
             4,
             3,
             vec![
-                //
                 0.0, 0.0, 0.0, //
                 0.0, 0.0, 0.0, //
                 0.0, 0.0, 0.0, //
@@ -67,7 +74,31 @@ mod tests {
         assert_eq!(matrix.shape(), (4, 3));
     }
 
-    // TODO add a test for incorrect shapes in multiplication
+    #[test]
+    fn multiplication_shape_compatibility() {
+        // Given two matrices with incompatible shapes
+        // When a matrix multiplication is done
+        // Then there is an error
+
+        let lhs = Matrix::new(
+            1,
+            1,
+            vec![
+                0.0, //
+            ],
+        );
+
+        let rhs = Matrix::new(
+            2,
+            1,
+            vec![
+                0.0, //
+                0.0, //
+            ],
+        );
+        let actual_product = &lhs * &rhs;
+        assert_eq!(actual_product, Err(Error::IncompatibleMatrixShapes))
+    }
 
     #[test]
     fn multiplication() {
@@ -79,7 +110,6 @@ mod tests {
             3,
             2,
             vec![
-                //
                 1.0, 2.0, //
                 3.0, 4.0, //
                 5.0, 6.0, //
@@ -89,7 +119,6 @@ mod tests {
             2,
             3,
             vec![
-                //
                 11.0, 12.0, 13.0, //
                 14.0, 15.0, 16.0, //
             ],
@@ -99,7 +128,6 @@ mod tests {
             2,
             2,
             vec![
-                //
                 1.0 * 11.0 + 3.0 * 12.0 + 5.0 * 13.0,
                 2.0 * 11.0 + 4.0 * 12.0 + 6.0 * 13.0, //
                 1.0 * 14.0 + 3.0 * 15.0 + 5.0 * 16.0,
@@ -107,6 +135,6 @@ mod tests {
             ],
         );
 
-        assert_eq!(actual_product, expected_product);
+        assert_eq!(actual_product, Ok(expected_product));
     }
 }

@@ -29,10 +29,10 @@ impl Mul for &Matrix {
         values.resize(rhs_rows * lhs_cols, 0.0);
 
         for output_index in 0..values.len() {
-            let row = output_index / output_cols;
-            let col = output_index % output_cols;
-            let mut lhs_index = col;
-            let mut rhs_index = row * rhs_cols;
+            let output_row = output_index / output_cols;
+            let output_col = output_index % output_cols;
+            let mut lhs_index = output_col;
+            let mut rhs_index = output_row * rhs_cols;
             let output_value: &mut f32 = &mut values[output_index];
             for _ in 0..lhs_rows {
                 *output_value += lhs.values[lhs_index] * rhs.values[rhs_index];

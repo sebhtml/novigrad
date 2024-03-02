@@ -27,8 +27,6 @@ impl Mul for &Matrix {
 
     fn mul(self, rhs: &Matrix) -> Self::Output {
         let lhs: &Matrix = self;
-        println!("lhs {}", lhs);
-        println!("rhs {}", rhs);
         let (lhs_rows, lhs_cols) = lhs.shape();
         let (rhs_rows, rhs_cols) = rhs.shape();
         if lhs_cols != rhs_rows {
@@ -42,10 +40,6 @@ impl Mul for &Matrix {
             for output_col in 0..output_cols {
                 let mut lhs_index = output_row * lhs_cols;
                 let mut rhs_index = output_col;
-                println!(
-                    "output_row {}, output_col {}, lhs_index {}, rhs_index {}",
-                    output_row, output_col, lhs_index, rhs_index
-                );
                 let output_value: &mut f32 = &mut values[output_row * output_cols + output_col];
                 for _ in 0..lhs_cols {
                     *output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
@@ -66,7 +60,15 @@ impl Into<Vec<f32>> for Matrix {
 
 impl Display for Matrix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Shape: {}x{}", self.rows, self.cols)
+        write!(f, "Shape: {}x{}", self.rows, self.cols);
+        write!(f, "\n");
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                write!(f, " {:2.2}", self.values[row * self.cols + col]);
+            }
+            write!(f, "\n");
+        }
+        Ok(())
     }
 }
 

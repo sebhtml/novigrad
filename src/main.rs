@@ -2,6 +2,8 @@ mod network;
 use network::*;
 mod matrix;
 use matrix::Matrix;
+mod activation;
+use activation::sigmoid;
 
 fn main() {
     let inputs = vec![vec![42.0], vec![20.0]];

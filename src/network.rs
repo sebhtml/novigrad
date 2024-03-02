@@ -1,5 +1,5 @@
+use crate::sigmoid;
 use crate::Matrix;
-
 pub struct Network {}
 
 impl Default for Network {

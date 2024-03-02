@@ -26,11 +26,10 @@ impl Mul for &Matrix {
         let (rhs_rows, rhs_cols) = rhs.shape();
         let (output_rows, output_cols) = (rhs_rows, lhs_cols);
         let mut values = Vec::new();
-        values.resize(output_rows * output_cols, 0.0);
+        values.resize(rhs_rows * lhs_cols, 0.0);
 
         let mut output = Matrix::new(output_rows, output_cols, values);
         let mut output_index: usize = 0;
-        let lhs_stride = lhs_cols;
 
         for row in 0..output_rows {
             for col in 0..output_cols {
@@ -39,7 +38,7 @@ impl Mul for &Matrix {
                 let mut output_value = 0.0;
                 for _ in 0..lhs_rows {
                     output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
-                    lhs_index += lhs_stride;
+                    lhs_index += lhs_cols;
                     rhs_index += 1;
                 }
                 output.values[output_index] = output_value;

@@ -35,13 +35,12 @@ impl Mul for &Matrix {
             for col in 0..output_cols {
                 let mut lhs_index = col;
                 let mut rhs_index = row * rhs_cols;
-                let mut output_value = 0.0;
+                let output_value: &mut f32 = &mut output.values[output_index];
                 for _ in 0..lhs_rows {
-                    output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
+                    *output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
                     lhs_index += lhs_cols;
                     rhs_index += 1;
                 }
-                output.values[output_index] = output_value;
                 output_index += 1;
             }
         }

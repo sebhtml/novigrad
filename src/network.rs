@@ -1,4 +1,6 @@
 use crate::activation;
+use crate::matrix::ElementWiseProduct;
+use crate::matrix::Error;
 use crate::sigmoid;
 use crate::Matrix;
 pub struct Network {
@@ -21,17 +23,17 @@ impl Network {
     }
     pub fn train(&self, inputs: &Vec<Vec<f32>>, outputs: &Vec<Vec<f32>>) {
         for i in 0..inputs.len() {
-            self.train_with_one_example(&inputs[i], &outputs[i]);
+            _ = self.train_with_one_example(&inputs[i], &outputs[i]);
         }
     }
 
-    fn train_with_one_example(&self, x: &Vec<f32>, y: &Vec<f32>) {
+    fn train_with_one_example(&self, x: &Vec<f32>, y: &Vec<f32>) -> Result<Matrix, Error> {
         println!("[train_with_one_example]");
         let mut activations: Vec<Matrix> = Vec::new();
         let mut x = x.clone();
         // Add a constant for bias
         x.push(1.0);
-        let x = Matrix::new(2, 1, x);
+        let x = Matrix::new(x.len(), 1, x);
 
         for (i, layer_weights) in self.layers.iter().enumerate() {
             let previous_activation = {
@@ -57,6 +59,30 @@ impl Network {
                 }
             }
         }
+
+        let output = &activations[activations.len() - 1];
+        let previous_output = &activations[activations.len() - 2];
+        let target = Matrix::new(y.len(), 1, y.clone());
+
+        let output_vec: Vec<f32> = output.clone().into();
+        let error = self.compute_error(y, &output_vec);
+        println!("Error: {}", error);
+
+        // delta rule
+        // TODO fix this equation of the delta rule
+        let d_error_d_weights = &(&(&-(&target - output)? * output)? * (/*1.0 -*/output))?
+            .element_wise_product(previous_output)?;
+        println!("d_error_d_weights for last layer: {}", d_error_d_weights);
+        Ok(d_error_d_weights.to_owned())
+    }
+
+    fn compute_error(&self, y: &Vec<f32>, output: &Vec<f32>) -> f32 {
+        let mut error = 0.0;
+        for i in 0..y.len() {
+            let diff = y[i] - output[i];
+            error += diff.powf(2.0);
+        }
+        error * 0.5
     }
 
     pub fn predict_many(&self, inputs: &Vec<Vec<f32>>) -> Vec<Vec<f32>> {
@@ -68,7 +94,7 @@ impl Network {
         let mut x = x.clone();
         // Add a constant for bias
         x.push(1.0);
-        let x = Matrix::new(2, 1, x);
+        let x = Matrix::new(x.len(), 1, x);
         let mut previous_activation = x;
 
         for layer_weights in self.layers.iter() {
@@ -89,6 +115,7 @@ impl Network {
             }
         }
 
-        previous_activation.into()
+        let output: Vec<f32> = previous_activation.into();
+        output
     }
 }

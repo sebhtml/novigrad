@@ -1,4 +1,7 @@
-use std::{fmt::Display, ops::Mul};
+use std::{
+    fmt::Display,
+    ops::{Mul, Neg, Sub},
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix {
@@ -14,6 +17,27 @@ impl Matrix {
 
     pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
+    }
+}
+
+pub trait ElementWiseProduct {
+    fn element_wise_product(&self, rhs: &Matrix) -> Result<Matrix, Error>;
+}
+
+impl ElementWiseProduct for Matrix {
+    fn element_wise_product(&self, rhs: &Matrix) -> Result<Matrix, Error> {
+        let lhs: &Matrix = self;
+        let (lhs_rows, lhs_cols) = lhs.shape();
+        let (rhs_rows, rhs_cols) = rhs.shape();
+        if lhs_rows != rhs_rows || lhs_cols != rhs_cols {
+            return Err(Error::IncompatibleMatrixShapes);
+        }
+        let mut values = Vec::new();
+        values.resize(lhs.values.len(), 0.0);
+        for i in 0..lhs.values.len() {
+            values[i] = lhs.values[i] * rhs.values[i];
+        }
+        Ok(Matrix::new(lhs_rows, lhs_cols, values))
     }
 }
 
@@ -52,6 +76,39 @@ impl Mul for &Matrix {
     }
 }
 
+// TODO add Sub test
+impl Sub for &Matrix {
+    type Output = Result<Matrix, Error>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        let lhs: &Matrix = self;
+        let (lhs_rows, lhs_cols) = lhs.shape();
+        let (rhs_rows, rhs_cols) = rhs.shape();
+        if lhs_rows != rhs_rows || lhs_cols != rhs_cols {
+            return Err(Error::IncompatibleMatrixShapes);
+        }
+        let mut values = Vec::new();
+        values.resize(lhs.values.len(), 0.0);
+        for i in 0..lhs.values.len() {
+            values[i] = lhs.values[i] - rhs.values[i];
+        }
+        Ok(Matrix::new(lhs_rows, lhs_cols, values))
+    }
+}
+
+impl Neg for Matrix {
+    type Output = Matrix;
+
+    fn neg(self) -> Self::Output {
+        let mut values = Vec::new();
+        values.resize(self.values.len(), 0.0);
+        for i in 0..self.values.len() {
+            values[i] = -self.values[i];
+        }
+        Matrix::new(self.rows, self.cols, values)
+    }
+}
+
 impl Into<Vec<f32>> for Matrix {
     fn into(self) -> Vec<f32> {
         self.values
@@ -60,13 +117,13 @@ impl Into<Vec<f32>> for Matrix {
 
 impl Display for Matrix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Shape: {}x{}", self.rows, self.cols);
-        write!(f, "\n");
+        _ = write!(f, "Shape: {}x{}", self.rows, self.cols);
+        _ = write!(f, "\n");
         for row in 0..self.rows {
             for col in 0..self.cols {
-                write!(f, " {:2.2}", self.values[row * self.cols + col]);
+                _ = write!(f, " {:2.2}", self.values[row * self.cols + col]);
             }
-            write!(f, "\n");
+            _ = write!(f, "\n");
         }
         Ok(())
     }

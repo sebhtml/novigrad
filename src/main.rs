@@ -10,12 +10,11 @@ fn main() {
     let outputs = vec![vec![1.0], vec![0.0]];
 
     let network = Network::new();
-    let _ = network.predict_many(&inputs);
 
-    println!("Some training !");
-    for _ in vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10].iter() {
+    for i in 0..100 {
+        println!("Training iteration {}", i);
         network.train(&inputs, &outputs);
     }
 
-    let _ = network.predict_many(&inputs);
+    _ = network.predict_many(&inputs);
 }

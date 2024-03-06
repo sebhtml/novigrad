@@ -130,7 +130,7 @@ impl Network {
 
                 for col in 0..layer_weights.cols() {
                     let activation_derivative = if layer == 0 {
-                        0.0 // TODO
+                        1.0 // TODO is this the correct thing ?
                     } else {
                         sigmoid_derivative(matrix_products[layer - 1].get(col, 0))
                     };

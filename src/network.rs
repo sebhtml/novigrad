@@ -11,7 +11,7 @@ impl Network {
                 .iter()
                 .map(|(rows, cols)| -> Matrix {
                     let mut weights = Vec::new();
-                    weights.resize(rows * cols, 0.0);
+                    weights.resize(rows * cols, 0.5);
                     Matrix::new(*rows, *cols, weights)
                 })
                 .collect(),
@@ -19,11 +19,28 @@ impl Network {
     }
     pub fn train(&mut self, inputs: &Vec<Vec<f32>>, outputs: &Vec<Vec<f32>>) {
         for i in 0..inputs.len() {
-            _ = self.train_with_one_example(&inputs[i], &outputs[i]);
+            self.train_with_one_example(i, &inputs[i], &outputs[i]);
         }
     }
 
-    fn train_with_one_example(&mut self, x: &Vec<f32>, y: &Vec<f32>) {
+    pub fn total_error(&self, inputs: &Vec<Vec<f32>>, outputs: &Vec<Vec<f32>>) -> f32 {
+        let mut total_error = 0.0;
+        for i in 0..inputs.len() {
+            let predicted = self.predict(&inputs[i]);
+            let target = &outputs[i];
+            let example_error = self.compute_error(target, &predicted);
+            println!(
+                "Example Error example {} target {:?} predicted {:?} error {}",
+                i, target, predicted, example_error
+            );
+            total_error += example_error;
+        }
+
+        total_error
+    }
+
+    fn train_with_one_example(&mut self, _example: usize, x: &Vec<f32>, y: &Vec<f32>) {
+        let learning_rate = 0.5;
         println!("[train_with_one_example]");
         let mut matrix_products: Vec<Matrix> = Vec::new();
         let mut activations: Vec<Matrix> = Vec::new();
@@ -66,50 +83,89 @@ impl Network {
             }
         }
 
-        let output = &activations[activations.len() - 1];
-        let target = Matrix::new(y.len(), 1, y.clone());
-
-        let output_vec: Vec<f32> = output.clone().into();
-        let error = self.compute_error(y, &output_vec);
-        println!("Error: {}", error);
-
         // delta rule
+        let mut deltas = self.layers.clone();
+        let mut layer_diffs = Vec::new();
+        layer_diffs.resize(self.layers.len(), Vec::<f32>::new());
         println!("Applying delta rule");
-        for layer in vec![self.layers.len() - 1].iter() {
+        for (layer, _) in self.layers.iter().enumerate().rev() {
             let layer = layer.to_owned();
             let layer_weights = self.layers[layer].clone();
             //self.layers.iter().enumerate().rev() {
             println!("Layer {}", layer);
             let layer_activation = &activations[layer];
             println!("Layer activation {}", layer_activation);
+            println!("layer weights {}", layer_weights);
             for row in 0..layer_weights.rows() {
                 println!("For row {}", row);
-                let diff = target.get(row, 0) - layer_activation.get(row, 0);
-                let activation_derivative =
-                    sigmoid_derivative(matrix_products[layer - 1].get(row, 0));
-                let diff_times_derivative = diff * activation_derivative;
-                println!(
-                    "diff {} activation_derivative {}",
-                    diff, activation_derivative
-                );
+                let diff = if layer == self.layers.len() - 1 {
+                    y[row] - layer_activation.get(row, 0)
+                } else {
+                    let mut diff = 0.0;
+                    let next_weights = &self.layers[layer + 1];
+                    let next_diffs = &layer_diffs[layer + 1];
+                    println!("next weights {}, next diffs {:?}", next_weights, next_diffs);
+                    for index in 0..next_diffs.len() {
+                        // For that diff in the next layer neuron,
+                        // take the contribution of the current neuron.
+                        let mut total_weight = 0.0;
+
+                        for next_col in 0..next_weights.cols() {
+                            total_weight += next_weights.get(index, next_col);
+                        }
+                        println!("Current layer: {}", layer);
+                        println!("next_diffs len {}", next_diffs.len());
+                        println!("layer weight shape {:?}", layer_weights.shape());
+                        println!("next_weights shape {:?}", next_weights.shape());
+                        let my_weight = next_weights.get(index, row);
+                        let contribution = my_weight / total_weight * layer_diffs[layer + 1][index];
+                        if contribution.is_finite() {
+                            diff += contribution;
+                        }
+                    }
+                    diff
+                };
+                layer_diffs[layer].push(diff);
+                println!("Pushed diff {} for layer {}", diff, layer);
+
                 for col in 0..layer_weights.cols() {
-                    let delta = diff_times_derivative
-                        * diff_times_derivative
-                        * activations[layer - 1].get(row, col);
+                    let activation_derivative = if layer == 0 {
+                        0.0 // TODO
+                    } else {
+                        sigmoid_derivative(matrix_products[layer - 1].get(col, 0))
+                    };
+
+                    let input_i = if layer != 0 {
+                        let previous_activation = activations[layer - 1].clone();
+                        println!("Previous activation {}", previous_activation);
+                        previous_activation.get(col, 0)
+                    } else {
+                        x.get(col, 0)
+                    };
+                    let delta = learning_rate * diff * activation_derivative * input_i;
                     println!(
-                        "Delta for layer {}, row {}, col {}, delta {}",
-                        layer, row, col, delta
+                        "Delta for layer {}, row {}, col {}, diff {}, activation_derivative {}, input_i {}, delta {}",
+                        layer, row, col, diff, activation_derivative, input_i, delta,
                     );
 
-                    let new_weight = self.layers[layer].get(row, col) + delta;
-                    self.layers[layer].set(row, col, new_weight);
+                    deltas[layer].set(row, col, delta);
                 }
+            }
+        }
+
+        for layer in 0..self.layers.len() {
+            match &self.layers[layer] + &deltas[layer] {
+                Ok(matrix) => {
+                    self.layers[layer] = matrix;
+                    println!("Updated matrix at layer {} with deltas", layer);
+                    println!("{}", deltas[layer]);
+                }
+                _ => (),
             }
         }
     }
 
     fn compute_error(&self, y: &Vec<f32>, output: &Vec<f32>) -> f32 {
-        println!("compute error {} {}", y.len(), output.len());
         let mut error = 0.0;
         for i in 0..y.len() {
             let diff = y[i] - output[i];

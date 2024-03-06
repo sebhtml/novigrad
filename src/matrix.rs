@@ -1,4 +1,7 @@
-use std::{fmt::Display, ops::Mul};
+use std::{
+    fmt::Display,
+    ops::{Add, Mul},
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix {
@@ -36,6 +39,24 @@ impl Matrix {
 #[derive(Debug, PartialEq)]
 pub enum Error {
     IncompatibleMatrixShapes,
+}
+
+impl Add for &Matrix {
+    type Output = Result<Matrix, Error>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let lhs = self;
+        if lhs.rows != rhs.rows || lhs.cols != rhs.cols {
+            return Err(Error::IncompatibleMatrixShapes);
+        }
+
+        let mut values = Vec::new();
+        values.resize(lhs.values.len(), 0.0);
+        for index in 0..lhs.values.len() {
+            values[index] = lhs.values[index] + rhs.values[index];
+        }
+        Ok(Matrix::new(lhs.rows, lhs.cols, values))
+    }
 }
 
 impl Mul for &Matrix {
@@ -78,7 +99,7 @@ impl Display for Matrix {
         _ = write!(f, "\n");
         for row in 0..self.rows {
             for col in 0..self.cols {
-                _ = write!(f, " {:2.2}", self.values[row * self.cols + col]);
+                _ = write!(f, " {:2.8}", self.values[row * self.cols + col]);
             }
             _ = write!(f, "\n");
         }

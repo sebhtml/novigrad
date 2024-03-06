@@ -69,7 +69,7 @@ impl Network {
                     let mut activation = matrix_product.clone();
                     for row in 0..activation.rows() {
                         for col in 0..activation.cols() {
-                            activation.set(row, col, sigmoid(activation.get(row, col)));
+                            activation.set(row, col, sigmoid(matrix_product.get(row, col)));
                         }
                     }
                     println!("matrix_product: {}", matrix_product);
@@ -179,7 +179,6 @@ impl Network {
     }
 
     pub fn predict(&self, x: &Vec<f32>) -> Vec<f32> {
-        println!("predict");
         let x = x.clone();
         // TODO add constant bias
         // Add a constant for bias
@@ -188,14 +187,16 @@ impl Network {
         let mut previous_activation = x;
 
         for layer_weights in self.layers.iter() {
-            println!("Layer weights: {}", layer_weights);
-            println!("Inputs: {}", previous_activation);
+            let matrix_product = layer_weights * &previous_activation;
 
-            let activation = layer_weights * &previous_activation;
-
-            match activation {
-                Ok(activation) => {
-                    println!("Activation: {}", activation);
+            match matrix_product {
+                Ok(matrix_product) => {
+                    let mut activation = matrix_product.clone();
+                    for row in 0..activation.rows() {
+                        for col in 0..activation.cols() {
+                            activation.set(row, col, sigmoid(matrix_product.get(row, col)));
+                        }
+                    }
                     previous_activation = activation;
                 }
                 _ => {

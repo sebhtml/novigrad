@@ -26,12 +26,14 @@ fn main() {
 
     let mut last_total_error = f32::NAN;
     for i in 0..10000 {
+        if i % 100 == 0 {
+            let total_error = network.total_error(&inputs, &outputs);
+            let change = (total_error - last_total_error) / last_total_error;
+            println!("Total_error {}, change: {}", total_error, change);
+            last_total_error = total_error;
+        }
         println!("Training iteration {}", i);
         network.train(&inputs, &outputs);
-        let total_error = network.total_error(&inputs, &outputs);
-        let change = (total_error - last_total_error) / last_total_error;
-        println!("Total_error {}, change: {}", total_error, change);
-        last_total_error = total_error;
     }
 
     _ = network.predict_many(&inputs);

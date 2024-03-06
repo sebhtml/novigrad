@@ -1,7 +1,4 @@
-use std::{
-    fmt::Display,
-    ops::{Mul, Neg, Sub},
-};
+use std::{fmt::Display, ops::Mul};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix {
@@ -18,26 +15,21 @@ impl Matrix {
     pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
-}
 
-pub trait ElementWiseProduct {
-    fn element_wise_product(&self, rhs: &Matrix) -> Result<Matrix, Error>;
-}
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
 
-impl ElementWiseProduct for Matrix {
-    fn element_wise_product(&self, rhs: &Matrix) -> Result<Matrix, Error> {
-        let lhs: &Matrix = self;
-        let (lhs_rows, lhs_cols) = lhs.shape();
-        let (rhs_rows, rhs_cols) = rhs.shape();
-        if lhs_rows != rhs_rows || lhs_cols != rhs_cols {
-            return Err(Error::IncompatibleMatrixShapes);
-        }
-        let mut values = Vec::new();
-        values.resize(lhs.values.len(), 0.0);
-        for i in 0..lhs.values.len() {
-            values[i] = lhs.values[i] * rhs.values[i];
-        }
-        Ok(Matrix::new(lhs_rows, lhs_cols, values))
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
+
+    pub fn get(&self, row: usize, col: usize) -> f32 {
+        self.values[row * self.cols + col]
+    }
+
+    pub fn set(&mut self, row: usize, col: usize, value: f32) {
+        self.values[row * self.cols + col] = value;
     }
 }
 
@@ -51,61 +43,26 @@ impl Mul for &Matrix {
 
     fn mul(self, rhs: &Matrix) -> Self::Output {
         let lhs: &Matrix = self;
-        let (lhs_rows, lhs_cols) = lhs.shape();
-        let (rhs_rows, rhs_cols) = rhs.shape();
-        if lhs_cols != rhs_rows {
+        if lhs.cols != rhs.rows {
             return Err(Error::IncompatibleMatrixShapes);
         }
-        let (output_rows, output_cols) = (lhs_rows, rhs_cols);
+        let (output_rows, output_cols) = (lhs.rows, rhs.cols);
         let mut values = Vec::new();
         values.resize(output_rows * output_cols, 0.0);
 
         for output_row in 0..output_rows {
             for output_col in 0..output_cols {
-                let mut lhs_index = output_row * lhs_cols;
+                let mut lhs_index = output_row * lhs.cols;
                 let mut rhs_index = output_col;
                 let output_value: &mut f32 = &mut values[output_row * output_cols + output_col];
-                for _ in 0..lhs_cols {
+                for _ in 0..lhs.cols {
                     *output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
                     lhs_index += 1;
-                    rhs_index += rhs_cols;
+                    rhs_index += rhs.cols;
                 }
             }
         }
         Ok(Matrix::new(output_rows, output_cols, values))
-    }
-}
-
-// TODO add Sub test
-impl Sub for &Matrix {
-    type Output = Result<Matrix, Error>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        let lhs: &Matrix = self;
-        let (lhs_rows, lhs_cols) = lhs.shape();
-        let (rhs_rows, rhs_cols) = rhs.shape();
-        if lhs_rows != rhs_rows || lhs_cols != rhs_cols {
-            return Err(Error::IncompatibleMatrixShapes);
-        }
-        let mut values = Vec::new();
-        values.resize(lhs.values.len(), 0.0);
-        for i in 0..lhs.values.len() {
-            values[i] = lhs.values[i] - rhs.values[i];
-        }
-        Ok(Matrix::new(lhs_rows, lhs_cols, values))
-    }
-}
-
-impl Neg for Matrix {
-    type Output = Matrix;
-
-    fn neg(self) -> Self::Output {
-        let mut values = Vec::new();
-        values.resize(self.values.len(), 0.0);
-        for i in 0..self.values.len() {
-            values[i] = -self.values[i];
-        }
-        Matrix::new(self.rows, self.cols, values)
     }
 }
 

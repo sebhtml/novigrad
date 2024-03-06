@@ -17,6 +17,7 @@ impl Network {
                 .collect(),
         }
     }
+
     pub fn train(&mut self, inputs: &Vec<Vec<f32>>, outputs: &Vec<Vec<f32>>) {
         for i in 0..inputs.len() {
             self.train_with_one_example(i, &inputs[i], &outputs[i]);
@@ -83,15 +84,26 @@ impl Network {
             }
         }
 
+        // Back-propagation
         // delta rule
         let mut deltas = self.layers.clone();
         let mut layer_diffs = Vec::new();
         layer_diffs.resize(self.layers.len(), Vec::<f32>::new());
         println!("Applying delta rule");
         for (layer, _) in self.layers.iter().enumerate().rev() {
+            /*
+             product =  | a b c d | * | i |  = | n |
+                        | e f g h |   | k |    | o |
+                                      | l |
+                                      | m |
+
+            activation = | sigmoid(n) |
+                         | sigmoid(o) |
+
+                       */
             let layer = layer.to_owned();
-            let layer_weights = self.layers[layer].clone();
-            //self.layers.iter().enumerate().rev() {
+            let layer_weights = &self.layers[layer];
+
             println!("Layer {}", layer);
             let layer_activation = &activations[layer];
             println!("Layer activation {}", layer_activation);
@@ -132,6 +144,8 @@ impl Network {
                     let activation_derivative = if layer == 0 {
                         1.0 // TODO is this the correct thing ?
                     } else {
+                        println!("previous matrix product {}", matrix_products[layer - 1]);
+
                         sigmoid_derivative(matrix_products[layer - 1].get(col, 0))
                     };
 
@@ -156,9 +170,10 @@ impl Network {
         for layer in 0..self.layers.len() {
             match &self.layers[layer] + &deltas[layer] {
                 Ok(matrix) => {
-                    self.layers[layer] = matrix;
-                    println!("Updated matrix at layer {} with deltas", layer);
-                    println!("{}", deltas[layer]);
+                    // TODO update all layers
+                    if layer == self.layers.len() - 1 {
+                        self.layers[layer] = matrix;
+                    }
                 }
                 _ => (),
             }

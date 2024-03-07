@@ -8,7 +8,7 @@ pub struct Network {
 impl Network {
     pub fn new() -> Self {
         let layer_sizes = vec![(16, 4), (1, 16)];
-        //  let layer_sizes = vec![(16, 4), (32, 16), (16, 32), (1, 16)];
+        //let layer_sizes = vec![(16, 4), (32, 16), (16, 32), (1, 16)];
         //let layer_sizes = vec![(1, 4)];
         Self {
             layers: layer_sizes

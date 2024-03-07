@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use crate::{activation::sigmoid, sigmoid_derivative, Matrix};
 pub struct Network {
     layers: Vec<Matrix>,
@@ -5,13 +7,18 @@ pub struct Network {
 
 impl Network {
     pub fn new() -> Self {
-        let layer_sizes = vec![(16, 4), (32, 16), (16, 32), (1, 16)];
+        let layer_sizes = vec![(16, 4), (1, 16)];
+        //  let layer_sizes = vec![(16, 4), (32, 16), (16, 32), (1, 16)];
+        //let layer_sizes = vec![(1, 4)];
         Self {
             layers: layer_sizes
                 .iter()
                 .map(|(rows, cols)| -> Matrix {
                     let mut weights = Vec::new();
-                    weights.resize(rows * cols, 0.5);
+                    weights.resize(rows * cols, 0.0);
+                    for index in 0..weights.len() {
+                        weights[index] = rand::thread_rng().gen_range(0.0..1.0);
+                    }
                     Matrix::new(*rows, *cols, weights)
                 })
                 .collect(),
@@ -20,7 +27,7 @@ impl Network {
 
     pub fn train(&mut self, inputs: &Vec<Vec<f32>>, outputs: &Vec<Vec<f32>>) {
         for i in 0..inputs.len() {
-            self.train_with_one_example(i, &inputs[i], &outputs[i]);
+            self.train_back_propagation(i, &inputs[i], &outputs[i]);
         }
     }
 
@@ -40,7 +47,7 @@ impl Network {
         total_error
     }
 
-    fn train_with_one_example(&mut self, _example: usize, x: &Vec<f32>, y: &Vec<f32>) {
+    fn train_back_propagation(&mut self, _example: usize, x: &Vec<f32>, y: &Vec<f32>) {
         let learning_rate = 0.5;
         println!("[train_with_one_example]");
         let mut matrix_products: Vec<Matrix> = Vec::new();
@@ -86,7 +93,7 @@ impl Network {
 
         // Back-propagation
         // delta rule
-        let mut deltas = self.layers.clone();
+        let mut weight_deltas = self.layers.clone();
         let mut layer_diffs = Vec::new();
         layer_diffs.resize(self.layers.len(), Vec::<f32>::new());
         println!("Applying delta rule");
@@ -106,41 +113,53 @@ impl Network {
 
             println!("Layer {}", layer);
             let layer_activation = &activations[layer];
+            let matrix_product = &matrix_products[layer];
             println!("Layer activation {}", layer_activation);
             println!("layer weights {}", layer_weights);
             for row in 0..layer_weights.rows() {
                 println!("For row {}", row);
+
                 let diff = if layer == self.layers.len() - 1 {
-                    y[row] - layer_activation.get(row, 0)
+                    let diff = y[row] - layer_activation.get(row, 0);
+                    diff
                 } else {
-                    let mut diff = 0.0;
+                    // The next layer has N neurons, each with a back-propagated error.
+                    // Each neuron in the current layer contributes to the error of
+                    // each neuron in the next layer.
+                    // In the current layer weights, if we change W_ij, how much does it affect
+                    // the errors of the next layer ?
+                    let mut sum_of_diffs = 0.0;
                     let next_weights = &self.layers[layer + 1];
                     let next_diffs = &layer_diffs[layer + 1];
-                    println!("next weights {}, next diffs {:?}", next_weights, next_diffs);
-                    for index in 0..next_diffs.len() {
-                        // For that diff in the next layer neuron,
-                        // take the contribution of the current neuron.
-                        let mut total_weight = 0.0;
+                    println!("next_weights {}", next_weights);
+                    println!("next_diffs {:?}", next_diffs);
+                    for (diff_index, diff) in next_diffs.iter().enumerate() {
+                        let mut sum_of_weights = 0.0;
 
-                        for next_col in 0..next_weights.cols() {
-                            total_weight += next_weights.get(index, next_col);
+                        for weight_index in 0..next_weights.cols() {
+                            sum_of_weights += layer_activation.get(diff_index, 0)
+                                * next_weights.get(diff_index, weight_index);
                         }
-                        println!("Current layer: {}", layer);
-                        println!("next_diffs len {}", next_diffs.len());
-                        println!("layer weight shape {:?}", layer_weights.shape());
-                        println!("next_weights shape {:?}", next_weights.shape());
-                        let my_weight = next_weights.get(index, row);
-                        let contribution = my_weight / total_weight * layer_diffs[layer + 1][index];
+
+                        println!(
+                            "layer {} row {} sum_of_weights {}",
+                            layer, row, sum_of_weights
+                        );
+                        let my_weight =
+                            layer_activation.get(diff_index, 0) * next_weights.get(diff_index, row);
+                        println!("my_weight {}", my_weight);
+                        let contribution = my_weight / sum_of_weights * diff;
                         if contribution.is_finite() {
-                            diff += contribution;
+                            sum_of_diffs += contribution;
                         }
                     }
-                    diff
+                    sum_of_diffs
                 };
                 layer_diffs[layer].push(diff);
-                println!("Pushed diff {} for layer {}", diff, layer);
 
                 for col in 0..layer_weights.cols() {
+                    println!("Pushed diff {} for layer {}", diff, layer);
+
                     let activation_derivative = if layer == 0 {
                         1.0 // TODO is this the correct thing ?
                     } else {
@@ -150,7 +169,7 @@ impl Network {
                     };
 
                     let input_i = if layer != 0 {
-                        let previous_activation = activations[layer - 1].clone();
+                        let previous_activation = &activations[layer - 1];
                         println!("Previous activation {}", previous_activation);
                         previous_activation.get(col, 0)
                     } else {
@@ -162,18 +181,21 @@ impl Network {
                         layer, row, col, diff, activation_derivative, input_i, delta,
                     );
 
-                    deltas[layer].set(row, col, delta);
+                    weight_deltas[layer].set(row, col, delta);
                 }
             }
         }
 
+        for (layer, diffs) in layer_diffs.iter().enumerate() {
+            println!("DEBUG Layer {} diffs {:?}", layer, diffs);
+        }
         for layer in 0..self.layers.len() {
-            match &self.layers[layer] + &deltas[layer] {
+            match &self.layers[layer] + &weight_deltas[layer] {
                 Ok(matrix) => {
                     // TODO update all layers
-                    if layer == self.layers.len() - 1 {
-                        self.layers[layer] = matrix;
-                    }
+                    //if layer == self.layers.len() - 1 {
+                    self.layers[layer] = matrix;
+                    //}
                 }
                 _ => (),
             }

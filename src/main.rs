@@ -1,5 +1,4 @@
 mod network;
-use std::os::linux::net;
 
 use network::*;
 mod matrix;
@@ -16,7 +15,17 @@ fn main() {
         ),
         (
             //
+            vec![1.0, 0.0, 0.0, 1.0], //
+            vec![0.0],
+        ),
+        (
+            //
             vec![0.0, 0.0, 1.0, 0.0], //
+            vec![1.0],
+        ),
+        (
+            //
+            vec![0.0, 1.0, 1.0, 0.0], //
             vec![1.0],
         ),
     ];
@@ -31,7 +40,10 @@ fn main() {
         if i % 100 == 0 {
             let total_error = network.total_error(&inputs, &outputs);
             let change = (total_error - last_total_error) / last_total_error;
-            println!("Total_error {}, change: {}", total_error, change);
+            println!(
+                "Iteration {} Total_error {}, change: {}",
+                i, total_error, change
+            );
             last_total_error = total_error;
         }
         println!("Training iteration {}", i);

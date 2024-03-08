@@ -7,9 +7,9 @@ pub struct Network {
 
 impl Network {
     pub fn new() -> Self {
-        let layer_sizes = vec![(16, 4), (1, 16)];
+        //let layer_sizes = vec![(16, 4), (1, 16)];
         //let layer_sizes = vec![(16, 4), (32, 16), (16, 32), (1, 16)];
-        //let layer_sizes = vec![(1, 4)];
+        let layer_sizes = vec![(1, 4)];
         Self {
             layers: layer_sizes
                 .iter()
@@ -50,7 +50,7 @@ impl Network {
     // https://web.stanford.edu/group/pdplab/originalpdphandbook/Chapter%205.pdf
     fn train_back_propagation(&mut self, _example: usize, x: &Vec<f32>, y: &Vec<f32>) {
         let learning_rate = 0.5;
-        println!("[train_with_one_example]");
+        println!("[train_with_one_example] x {:?} y {:?}", x, y);
         let mut matrix_products: Vec<Matrix> = Vec::new();
         let mut activations: Vec<Matrix> = Vec::new();
         let x = x.clone();
@@ -109,6 +109,7 @@ impl Network {
 
             for row in 0..layer_weights.rows() {
                 let f_derivative = sigmoid_derivative(layer_matrix_product.get(row, 0));
+                println!("f_derivative {}", f_derivative);
                 let target_diff = if layer == self.layers.len() - 1 {
                     y[row] - layer_activation.get(row, 0)
                 } else {
@@ -117,10 +118,9 @@ impl Network {
                     println!("MU");
                     println!("next errors {:?}", layer_diffs[layer + 1]);
                     println!("next_weights {}", next_weights);
-                    for next_col in 0..next_weights.cols() {
-                        let next_mystery = 0; // TODO solve mystery
-                        let next_weight = next_weights.get(next_mystery, next_col);
-                        let next_diff: f32 = layer_diffs[layer + 1][next_mystery];
+                    for k in 0..next_weights.rows() {
+                        let next_weight = next_weights.get(k, row);
+                        let next_diff: f32 = layer_diffs[layer + 1][k];
                         println!("next_weight {} next_diff {}", next_weight, next_diff);
                         sum += next_weight * next_diff;
                     }
@@ -133,8 +133,20 @@ impl Network {
                 layer_diffs[layer].push(delta_pi);
 
                 for col in 0..layer_weights.cols() {
+                    println!("row {} col {}", row, col);
                     println!("layer act {}", layer_activation);
-                    let delta_w_ij = learning_rate * delta_pi * layer_activation.get(row, 0);
+                    let a_pj = {
+                        if layer == 0 {
+                            x.get(col, 0)
+                        } else {
+                            activations[layer - 1].get(col, 0)
+                        }
+                    };
+                    let delta_w_ij = learning_rate * delta_pi * a_pj;
+                    println!(
+                        "layer {} row {} col {} delta_w_ij {}",
+                        layer, row, col, delta_w_ij
+                    );
                     weight_deltas[layer].set(row, col, delta_w_ij);
                 }
             }

@@ -62,28 +62,28 @@ impl Add for &Matrix {
 impl Mul for &Matrix {
     type Output = Result<Matrix, Error>;
 
-    fn mul(self, rhs: &Matrix) -> Self::Output {
-        let lhs: &Matrix = self;
-        if lhs.cols != rhs.rows {
+    fn mul(self, right: &Matrix) -> Self::Output {
+        let left: &Matrix = self;
+        if left.cols != right.rows {
             return Err(Error::IncompatibleMatrixShapes);
         }
-        let (output_rows, output_cols) = (lhs.rows, rhs.cols);
-        let mut values = Vec::new();
-        values.resize(output_rows * output_cols, 0.0);
+        let mut result = Vec::new();
+        result.resize(left.rows * right.cols, 0.0);
+        let mut result = Matrix::new(left.rows, right.cols, result);
 
-        for output_row in 0..output_rows {
-            for output_col in 0..output_cols {
-                let mut lhs_index = output_row * lhs.cols;
-                let mut rhs_index = output_col;
-                let output_value: &mut f32 = &mut values[output_row * output_cols + output_col];
-                for _ in 0..lhs.cols {
-                    *output_value += lhs.values[lhs_index] * rhs.values[rhs_index];
-                    lhs_index += 1;
-                    rhs_index += rhs.cols;
+        // matmulImplLoopOrder algorithm
+        // from https://siboehm.com/articles/22/Fast-MMM-on-CPU
+        // from Simon Boehm who works at Anthropic
+        for row in 0..left.rows {
+            for inner in 0..left.cols {
+                for col in 0..right.cols {
+                    result.values[row * right.cols + col] += left.values[row * left.cols + inner]
+                        * right.values[inner * right.cols + col];
                 }
             }
         }
-        Ok(Matrix::new(output_rows, output_cols, values))
+
+        Ok(result)
     }
 }
 

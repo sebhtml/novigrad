@@ -8,11 +8,17 @@ pub struct Network {
 
 impl Network {
     pub fn new() -> Self {
-        let layer_sizes = vec![(16, 4), (1, 16)];
-        //let layer_sizes = vec![(16, 4), (32, 16), (16, 32), (1, 16)];
-        //let layer_sizes = vec![(1, 4)];
+        //let layer_sizes = vec![4, 1];
+        //let layer_sizes = vec![4, 16, 1];
+        //let layer_sizes = vec![4, 8, 8, 1];
+        let layer_sizes = vec![4, 16, 16, 1];
+
+        let mut layer_size_pairs = Vec::new();
+        for index in 1..layer_sizes.len() {
+            layer_size_pairs.push((layer_sizes[index], layer_sizes[index - 1]));
+        }
         Self {
-            layers: layer_sizes
+            layers: layer_size_pairs
                 .iter()
                 .map(|(rows, cols)| -> Matrix {
                     let mut weights = Vec::new();

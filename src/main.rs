@@ -9,25 +9,24 @@ use activation::*;
 fn main() {
     let examples = vec![
         (
-            // TODO test with 2 outputs instead of 1.
             //
             vec![1.0, 0.0, 0.0, 0.0], //
-            vec![0.0],
+            vec![0.0, 0.5],
         ),
         (
             //
             vec![1.0, 0.0, 0.0, 1.0], //
-            vec![0.0],
+            vec![0.0, 0.5],
         ),
         (
             //
             vec![0.0, 0.0, 1.0, 0.0], //
-            vec![1.0],
+            vec![1.0, 0.9],
         ),
         (
             //
             vec![0.0, 1.0, 1.0, 0.0], //
-            vec![1.0],
+            vec![1.0, 0.9],
         ),
     ];
 

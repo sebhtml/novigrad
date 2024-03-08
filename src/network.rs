@@ -11,7 +11,7 @@ impl Network {
         //let layer_sizes = vec![4, 1];
         //let layer_sizes = vec![4, 16, 1];
         //let layer_sizes = vec![4, 8, 8, 1];
-        let layer_sizes = vec![4, 16, 16, 1];
+        let layer_sizes = vec![4, 16, 16, 2];
 
         let mut layer_size_pairs = Vec::new();
         for index in 1..layer_sizes.len() {

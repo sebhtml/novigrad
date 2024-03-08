@@ -1,15 +1,16 @@
 use rand::Rng;
 
-use crate::{activation::sigmoid, sigmoid_derivative, Matrix};
+use crate::{ActivationFunction, Matrix, Sigmoid};
 pub struct Network {
     layers: Vec<Matrix>,
+    activation: Box<dyn ActivationFunction>,
 }
 
 impl Network {
     pub fn new() -> Self {
-        //let layer_sizes = vec![(16, 4), (1, 16)];
+        let layer_sizes = vec![(16, 4), (1, 16)];
         //let layer_sizes = vec![(16, 4), (32, 16), (16, 32), (1, 16)];
-        let layer_sizes = vec![(1, 4)];
+        //let layer_sizes = vec![(1, 4)];
         Self {
             layers: layer_sizes
                 .iter()
@@ -22,6 +23,7 @@ impl Network {
                     Matrix::new(*rows, *cols, weights)
                 })
                 .collect(),
+            activation: Box::new(Sigmoid::default()),
         }
     }
 
@@ -75,14 +77,7 @@ impl Network {
             match matrix_product {
                 Ok(matrix_product) => {
                     matrix_products.push(matrix_product.clone());
-                    let mut activation = matrix_product.clone();
-                    for row in 0..activation.rows() {
-                        for col in 0..activation.cols() {
-                            activation.set(row, col, sigmoid(matrix_product.get(row, col)));
-                        }
-                    }
-                    println!("matrix_product: {}", matrix_product);
-                    println!("Activation: {}", activation);
+                    let activation = self.activation.activate_matrix(matrix_product);
                     activations.push(activation);
                 }
                 _ => {
@@ -107,8 +102,9 @@ impl Network {
             println!("Layer activation {}", layer_activation);
             println!("layer weights {}", layer_weights);
 
+            let derived_matrix = self.activation.derive_matrix(layer_matrix_product.clone());
             for row in 0..layer_weights.rows() {
-                let f_derivative = sigmoid_derivative(layer_matrix_product.get(row, 0));
+                let f_derivative = derived_matrix.get(row, 0);
                 println!("f_derivative {}", f_derivative);
                 let target_diff = if layer == self.layers.len() - 1 {
                     y[row] - layer_activation.get(row, 0)
@@ -191,12 +187,7 @@ impl Network {
 
             match matrix_product {
                 Ok(matrix_product) => {
-                    let mut activation = matrix_product.clone();
-                    for row in 0..activation.rows() {
-                        for col in 0..activation.cols() {
-                            activation.set(row, col, sigmoid(matrix_product.get(row, col)));
-                        }
-                    }
+                    let activation = self.activation.activate_matrix(matrix_product);
                     previous_activation = activation;
                 }
                 _ => {

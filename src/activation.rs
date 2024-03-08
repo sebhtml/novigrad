@@ -1,10 +1,48 @@
 use std::f32::consts::E;
 
-pub fn sigmoid(x: f32) -> f32 {
-    1.0 / (1.0 + E.powf(-x))
+use crate::Matrix;
+
+pub trait ActivationFunction {
+    fn activate(&self, x: f32) -> f32;
+
+    fn derive(&self, x: f32) -> f32;
+
+    fn activate_matrix(&self, mut matrix: Matrix) -> Matrix {
+        for row in 0..matrix.rows() {
+            for col in 0..matrix.cols() {
+                let y = self.activate(matrix.get(row, col));
+                matrix.set(row, col, y);
+            }
+        }
+        matrix
+    }
+
+    fn derive_matrix(&self, mut matrix: Matrix) -> Matrix {
+        for row in 0..matrix.rows() {
+            for col in 0..matrix.cols() {
+                let y = self.derive(matrix.get(row, col));
+                matrix.set(row, col, y);
+            }
+        }
+        matrix
+    }
 }
 
-pub fn sigmoid_derivative(x: f32) -> f32 {
-    let sigmoid_x = sigmoid(x);
-    sigmoid_x * (1.0 - sigmoid_x)
+pub struct Sigmoid {}
+
+impl Default for Sigmoid {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl ActivationFunction for Sigmoid {
+    fn activate(&self, x: f32) -> f32 {
+        1.0 / (1.0 + E.powf(-x))
+    }
+
+    fn derive(&self, x: f32) -> f32 {
+        let sigmoid_x = self.activate(x);
+        sigmoid_x * (1.0 - sigmoid_x)
+    }
 }

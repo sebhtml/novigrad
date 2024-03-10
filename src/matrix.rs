@@ -73,17 +73,21 @@ impl Mul for &Matrix {
         }
         let mut result_values = Vec::new();
         result_values.resize(left.rows * right.cols, 0.0);
-        let left_values = &left.values;
-        let right_values = &right.values;
+        let result_ptr = result_values.as_mut_ptr();
+        let left_ptr = left.values.as_ptr();
+        let right_ptr = right.values.as_ptr();
 
-        for row in 0..left.rows {
-            for col in 0..right.cols {
-                let mut acc = 0.0;
-                for inner in 0..left.cols {
-                    acc += left_values[row * left.cols + inner]
-                        * right_values[inner * right.cols + col];
+        let mut acc = result_ptr;
+
+        unsafe {
+            for row in 0..left.rows {
+                for col in 0..right.cols {
+                    for inner in 0..left.cols {
+                        *acc += *(left_ptr.add(row * left.cols + inner))
+                            * *(right_ptr.add(inner * right.cols + col));
+                    }
+                    acc = acc.add(1);
                 }
-                result_values[row * right.cols + col] = acc;
             }
         }
 

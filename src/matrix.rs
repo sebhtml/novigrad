@@ -59,6 +59,10 @@ impl Add for &Matrix {
     }
 }
 
+// TODO for large matrices, this could be used:
+// matmulImplLoopOrder algorithm
+// from https://siboehm.com/articles/22/Fast-MMM-on-CPU
+// from Simon Boehm who works at Anthropic
 impl Mul for &Matrix {
     type Output = Result<Matrix, Error>;
 
@@ -67,22 +71,23 @@ impl Mul for &Matrix {
         if left.cols != right.rows {
             return Err(Error::IncompatibleMatrixShapes);
         }
-        let mut result = Vec::new();
-        result.resize(left.rows * right.cols, 0.0);
-        let mut result = Matrix::new(left.rows, right.cols, result);
+        let mut result_values = Vec::new();
+        result_values.resize(left.rows * right.cols, 0.0);
+        let left_values = &left.values;
+        let right_values = &right.values;
 
-        // matmulImplLoopOrder algorithm
-        // from https://siboehm.com/articles/22/Fast-MMM-on-CPU
-        // from Simon Boehm who works at Anthropic
         for row in 0..left.rows {
-            for inner in 0..left.cols {
-                for col in 0..right.cols {
-                    result.values[row * right.cols + col] += left.values[row * left.cols + inner]
-                        * right.values[inner * right.cols + col];
+            for col in 0..right.cols {
+                let mut acc = 0.0;
+                for inner in 0..left.cols {
+                    acc += left_values[row * left.cols + inner]
+                        * right_values[inner * right.cols + col];
                 }
+                result_values[row * right.cols + col] = acc;
             }
         }
 
+        let result = Matrix::new(left.rows, right.cols, result_values);
         Ok(result)
     }
 }

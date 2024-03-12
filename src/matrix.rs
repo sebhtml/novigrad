@@ -90,15 +90,24 @@ impl Mul for &Matrix {
         let right_ptr = right.values.as_ptr();
 
         unsafe {
-            for row in 0..left.rows {
-                for inner in 0..left.cols {
-                    for col in 0..right.cols {
+            let mut row = 0;
+            let left_rows = left.rows;
+            let left_cols = left.cols;
+            let right_cols = right.cols;
+            while row != left_rows {
+                let mut inner = 0;
+                while inner != left_cols {
+                    let mut col = 0;
+                    while col != right_cols {
                         let left_cell = left_ptr.add(row * left.cols + inner);
                         let right_cell = right_ptr.add(inner * right.cols + col);
                         let result_cell = result_ptr.add(row * right.cols + col);
                         *result_cell += *left_cell * *right_cell;
+                        col += 1;
                     }
+                    inner += 1;
                 }
+                row += 1;
             }
         }
 
@@ -272,7 +281,7 @@ mod tests {
             values[index] = rand::thread_rng().gen_range(0.0..1.0)
         }
         let m = Matrix::new(rows, cols, values);
-        let product = &m * &m;
+        let _result = &m * &m;
     }
 
     #[test]
@@ -285,6 +294,6 @@ mod tests {
             values[index] = rand::thread_rng().gen_range(0.0..1.0)
         }
         let m = Matrix::new(rows, cols, values);
-        let sum = &m + &m;
+        let _result = &m + &m;
     }
 }

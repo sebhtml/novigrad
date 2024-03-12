@@ -44,18 +44,30 @@ pub enum Error {
 impl Add for &Matrix {
     type Output = Result<Matrix, Error>;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        let lhs = self;
-        if lhs.rows != rhs.rows || lhs.cols != rhs.cols {
+    fn add(self, right: Self) -> Self::Output {
+        let left = self;
+        if left.rows != right.rows || left.cols != right.cols {
             return Err(Error::IncompatibleMatrixShapes);
         }
 
         let mut values = Vec::new();
-        values.resize(lhs.values.len(), 0.0);
-        for index in 0..lhs.values.len() {
-            values[index] = lhs.values[index] + rhs.values[index];
+        values.resize(left.values.len(), 0.0);
+
+        let mut result = Matrix::new(left.rows, left.cols, values);
+        let result_ptr = result.values.as_mut_ptr();
+        let left_ptr = left.values.as_ptr();
+        let right_ptr = right.values.as_ptr();
+
+        unsafe {
+            for index in 0..left.values.len() {
+                let left_cell = left_ptr.add(index);
+                let right_cell = right_ptr.add(index);
+                let result_cell = result_ptr.add(index);
+                *result_cell = *left_cell + *right_cell;
+            }
         }
-        Ok(Matrix::new(lhs.rows, lhs.cols, values))
+
+        Ok(result)
     }
 }
 
@@ -167,7 +179,7 @@ mod tests {
     }
 
     #[test]
-    fn multiplication_result() {
+    fn matrix_multiplication_result() {
         // Given a left-hand side matrix and and a right-hand side matrix
         // When the multiplication lhs * rhs is done
         // Then the resulting matrix has the correct values
@@ -189,8 +201,8 @@ mod tests {
                 14.0, 15.0, 16.0, //
             ],
         );
-        let actual_product = &lhs * &rhs;
-        let expected_product = Matrix::new(
+        let actual_result = &lhs * &rhs;
+        let expected_result = Matrix::new(
             3,
             3,
             vec![
@@ -206,7 +218,48 @@ mod tests {
             ],
         );
 
-        assert_eq!(actual_product, Ok(expected_product));
+        assert_eq!(actual_result, Ok(expected_result));
+    }
+
+    #[test]
+    fn matrix_addition_result() {
+        // Given a left-hand side matrix and and a right-hand side matrix
+        // When the addition lhs + rhs is done
+        // Then the resulting matrix has the correct values
+
+        let lhs = Matrix::new(
+            3,
+            2,
+            vec![
+                1.0, 2.0, //
+                3.0, 4.0, //
+                5.0, 6.0, //
+            ],
+        );
+        let rhs = Matrix::new(
+            3,
+            2,
+            vec![
+                11.0, 12.0, //
+                14.0, 15.0, //
+                13.0, 16.0, //
+            ],
+        );
+        let actual_result = &lhs + &rhs;
+        let expected_result = Matrix::new(
+            3,
+            2,
+            vec![
+                1.0 + 11.0,
+                2.0 + 12.0, //
+                3.0 + 14.0,
+                4.0 + 15.0, //
+                5.0 + 13.0,
+                6.0 + 16.0, //
+            ],
+        );
+
+        assert_eq!(actual_result, Ok(expected_result));
     }
 
     #[test]
@@ -220,5 +273,18 @@ mod tests {
         }
         let m = Matrix::new(rows, cols, values);
         let product = &m * &m;
+    }
+
+    #[test]
+    fn big_matrix_addition() {
+        let rows = 1024;
+        let cols = 1024;
+        let mut values = Vec::new();
+        values.resize(rows * cols, 0.0);
+        for index in 0..values.len() {
+            values[index] = rand::thread_rng().gen_range(0.0..1.0)
+        }
+        let m = Matrix::new(rows, cols, values);
+        let sum = &m + &m;
     }
 }

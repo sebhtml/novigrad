@@ -58,7 +58,6 @@ impl Network {
     // https://web.stanford.edu/group/pdplab/originalpdphandbook/Chapter%205.pdf
     fn train_back_propagation(&mut self, _example: usize, x: &Vec<f32>, y: &Vec<f32>) {
         let learning_rate = 0.5;
-        println!("[train_with_one_example] x {:?} y {:?}", x, y);
         let mut matrix_products: Vec<Matrix> = Vec::new();
         let mut activations: Vec<Matrix> = Vec::new();
         let x = x.clone();
@@ -75,8 +74,6 @@ impl Network {
                     &activations[activations.len() - 1]
                 }
             };
-            println!("Layer {} weights: {}", layer, layer_weights);
-            println!("Inputs: {}", previous_activation);
 
             let matrix_product = layer_weights * previous_activation;
 
@@ -102,41 +99,29 @@ impl Network {
             let layer = layer.to_owned();
             let layer_weights = &self.layers[layer];
 
-            println!("Layer {}", layer);
             let layer_matrix_product = &matrix_products[layer];
             let layer_activation = &activations[layer];
-            println!("Layer activation {}", layer_activation);
-            println!("layer weights {}", layer_weights);
 
             let derived_matrix = self.activation.derive_matrix(layer_matrix_product.clone());
             for row in 0..layer_weights.rows() {
                 let f_derivative = derived_matrix.get(row, 0);
-                println!("f_derivative {}", f_derivative);
                 let target_diff = if layer == self.layers.len() - 1 {
                     y[row] - layer_activation.get(row, 0)
                 } else {
                     let next_weights = &self.layers[layer + 1];
                     let mut sum = 0.0;
-                    println!("MU");
-                    println!("next errors {:?}", layer_diffs[layer + 1]);
-                    println!("next_weights {}", next_weights);
                     for k in 0..next_weights.rows() {
                         let next_weight = next_weights.get(k, row);
                         let next_diff: f32 = layer_diffs[layer + 1][k];
-                        println!("next_weight {} next_diff {}", next_weight, next_diff);
                         sum += next_weight * next_diff;
                     }
-                    println!("END-MU");
                     sum
                 };
 
-                println!("layer {} row {} target_diff {}", layer, row, target_diff);
                 let delta_pi = f_derivative * target_diff;
                 layer_diffs[layer].push(delta_pi);
 
                 for col in 0..layer_weights.cols() {
-                    println!("row {} col {}", row, col);
-                    println!("layer act {}", layer_activation);
                     let a_pj = {
                         if layer == 0 {
                             x.get(col, 0)
@@ -145,18 +130,11 @@ impl Network {
                         }
                     };
                     let delta_w_ij = learning_rate * delta_pi * a_pj;
-                    println!(
-                        "layer {} row {} col {} delta_w_ij {}",
-                        layer, row, col, delta_w_ij
-                    );
                     weight_deltas[layer].set(row, col, delta_w_ij);
                 }
             }
         }
 
-        for (layer, diffs) in layer_diffs.iter().enumerate() {
-            println!("DEBUG Layer {} diffs {:?}", layer, diffs);
-        }
         for layer in 0..self.layers.len() {
             match &self.layers[layer] + &weight_deltas[layer] {
                 Ok(matrix) => {

@@ -46,7 +46,6 @@ fn main() {
             );
             last_total_error = total_error;
         }
-        println!("Training iteration {}", i);
         network.train(&inputs, &outputs);
     }
 

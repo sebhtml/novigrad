@@ -77,16 +77,15 @@ impl Mul for &Matrix {
         let left_ptr = left.values.as_ptr();
         let right_ptr = right.values.as_ptr();
 
-        let mut acc = result_ptr;
-
         unsafe {
             for row in 0..left.rows {
-                for col in 0..right.cols {
-                    for inner in 0..left.cols {
-                        *acc += *(left_ptr.add(row * left.cols + inner))
-                            * *(right_ptr.add(inner * right.cols + col));
+                for inner in 0..left.cols {
+                    for col in 0..right.cols {
+                        let left_cell = left_ptr.add(row * left.cols + inner);
+                        let right_cell = right_ptr.add(inner * right.cols + col);
+                        let result_cell = result_ptr.add(row * right.cols + col);
+                        *result_cell += *left_cell * *right_cell;
                     }
-                    acc = acc.add(1);
                 }
             }
         }
@@ -118,6 +117,8 @@ impl Display for Matrix {
 
 #[cfg(test)]
 mod tests {
+    use rand::Rng;
+
     use crate::matrix::{Error, Matrix};
 
     #[test]
@@ -166,7 +167,7 @@ mod tests {
     }
 
     #[test]
-    fn multiplication() {
+    fn multiplication_result() {
         // Given a left-hand side matrix and and a right-hand side matrix
         // When the multiplication lhs * rhs is done
         // Then the resulting matrix has the correct values
@@ -206,5 +207,18 @@ mod tests {
         );
 
         assert_eq!(actual_product, Ok(expected_product));
+    }
+
+    #[test]
+    fn big_matrix_multiplication() {
+        let rows = 1024;
+        let cols = 1024;
+        let mut values = Vec::new();
+        values.resize(rows * cols, 0.0);
+        for index in 0..values.len() {
+            values[index] = rand::thread_rng().gen_range(0.0..1.0)
+        }
+        let m = Matrix::new(rows, cols, values);
+        let product = &m * &m;
     }
 }

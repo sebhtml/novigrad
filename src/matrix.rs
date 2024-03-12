@@ -75,6 +75,7 @@ impl Add for &Matrix {
 // matmulImplLoopOrder algorithm
 // from https://siboehm.com/articles/22/Fast-MMM-on-CPU
 // from Simon Boehm who works at Anthropic
+// Also see "matmulImplTiling" from this link.
 impl Mul for &Matrix {
     type Output = Result<Matrix, Error>;
 

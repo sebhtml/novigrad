@@ -5,6 +5,8 @@ mod matrix;
 use matrix::*;
 mod activation;
 use activation::*;
+mod sigmoid;
+use sigmoid::*;
 
 fn main() {
     let examples = vec![

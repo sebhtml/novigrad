@@ -37,7 +37,12 @@ fn main() {
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
 
-    let mut network = Network::new();
+    //let layer_sizes = vec![4, 1];
+    //let layer_sizes = vec![4, 16, 1];
+    //let layer_sizes = vec![4, 8, 8, 1];
+    let layer_sizes = vec![4, 16, 16, 2];
+
+    let mut network = Network::new(layer_sizes);
 
     let mut last_total_error = f32::NAN;
     for i in 0..10000 {

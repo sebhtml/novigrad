@@ -3,10 +3,31 @@ use std::f32::consts::E;
 use crate::Matrix;
 
 pub trait ActivationFunction {
-    fn activate(&self, x: f32) -> f32;
+    fn activate_matrix(&self, matrix: Matrix) -> Matrix;
 
-    fn derive(&self, x: f32) -> f32;
+    fn derive_matrix(&self, matrix: Matrix) -> Matrix;
+}
 
+pub struct Sigmoid {}
+
+impl Default for Sigmoid {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl Sigmoid {
+    fn activate(&self, x: f32) -> f32 {
+        1.0 / (1.0 + E.powf(-x))
+    }
+
+    fn derive(&self, x: f32) -> f32 {
+        let sigmoid_x = self.activate(x);
+        sigmoid_x * (1.0 - sigmoid_x)
+    }
+}
+
+impl ActivationFunction for Sigmoid {
     fn activate_matrix(&self, mut matrix: Matrix) -> Matrix {
         for row in 0..matrix.rows() {
             for col in 0..matrix.cols() {
@@ -25,24 +46,5 @@ pub trait ActivationFunction {
             }
         }
         matrix
-    }
-}
-
-pub struct Sigmoid {}
-
-impl Default for Sigmoid {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl ActivationFunction for Sigmoid {
-    fn activate(&self, x: f32) -> f32 {
-        1.0 / (1.0 + E.powf(-x))
-    }
-
-    fn derive(&self, x: f32) -> f32 {
-        let sigmoid_x = self.activate(x);
-        sigmoid_x * (1.0 - sigmoid_x)
     }
 }

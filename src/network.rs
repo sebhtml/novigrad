@@ -29,7 +29,7 @@ impl Network {
                     Matrix::new(*rows, *cols, weights)
                 })
                 .collect(),
-            activation: Box::new(Softmax::default()),
+            activation: Box::new(Sigmoid::default()),
         }
     }
 
@@ -99,10 +99,9 @@ impl Network {
             let layer = layer.to_owned();
             let layer_weights = &self.layers[layer];
 
-            let layer_matrix_product = &matrix_products[layer];
             let layer_activation = &activations[layer];
 
-            let derived_matrix = self.activation.derive_matrix(layer_matrix_product.clone());
+            let derived_matrix = self.activation.derive_matrix(layer_activation.clone());
             for row in 0..layer_weights.rows() {
                 let f_derivative = derived_matrix.get(row, 0);
                 let target_diff = if layer == self.layers.len() - 1 {

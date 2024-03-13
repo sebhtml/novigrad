@@ -41,8 +41,9 @@ fn main() {
     //let layer_sizes = vec![4, 16, 1];
     //let layer_sizes = vec![4, 8, 8, 1];
     let layer_sizes = vec![4, 16, 16, 2];
+    let activation = Activation::Softmax;
 
-    let mut network = Network::new(layer_sizes);
+    let mut network = Network::new(layer_sizes, activation);
 
     let mut last_total_error = f32::NAN;
     for i in 0..10000 {

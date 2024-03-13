@@ -1,13 +1,13 @@
 use rand::Rng;
 
-use crate::{ActivationFunction, Matrix, Sigmoid, Softmax};
+use crate::{Activation, ActivationFunction, Matrix};
 pub struct Network {
     layers: Vec<Matrix>,
     activation: Box<dyn ActivationFunction>,
 }
 
 impl Network {
-    pub fn new(layer_sizes: Vec<usize>) -> Self {
+    pub fn new(layer_sizes: Vec<usize>, activation: Activation) -> Self {
         let mut layer_size_pairs = Vec::new();
         for index in 1..layer_sizes.len() {
             layer_size_pairs.push((layer_sizes[index], layer_sizes[index - 1]));
@@ -24,7 +24,7 @@ impl Network {
                     Matrix::new(*rows, *cols, weights)
                 })
                 .collect(),
-            activation: Box::new(Sigmoid::default()),
+            activation: activation.into(),
         }
     }
 

@@ -7,28 +7,30 @@ mod activation;
 use activation::*;
 mod sigmoid;
 use sigmoid::*;
+mod softmax;
+use softmax::*;
 
 fn main() {
     let examples = vec![
         (
             //
             vec![1.0, 0.0, 0.0, 0.0], //
-            vec![0.0, 0.5],
+            vec![0.1, 0.9],
         ),
         (
             //
             vec![1.0, 0.0, 0.0, 1.0], //
-            vec![0.0, 0.5],
+            vec![0.1, 0.9],
         ),
         (
             //
             vec![0.0, 0.0, 1.0, 0.0], //
-            vec![1.0, 0.9],
+            vec![0.9, 0.1],
         ),
         (
             //
             vec![0.0, 1.0, 1.0, 0.0], //
-            vec![1.0, 0.9],
+            vec![0.9, 0.1],
         ),
     ];
 

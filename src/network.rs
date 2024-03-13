@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{ActivationFunction, Matrix, Sigmoid};
+use crate::{ActivationFunction, Matrix, Sigmoid, Softmax};
 pub struct Network {
     layers: Vec<Matrix>,
     activation: Box<dyn ActivationFunction>,
@@ -29,7 +29,7 @@ impl Network {
                     Matrix::new(*rows, *cols, weights)
                 })
                 .collect(),
-            activation: Box::new(Sigmoid::default()),
+            activation: Box::new(Softmax::default()),
         }
     }
 

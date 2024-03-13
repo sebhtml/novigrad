@@ -23,21 +23,33 @@ impl Sigmoid {
 
 impl ActivationFunction for Sigmoid {
     fn activate_matrix(&self, mut matrix: Matrix) -> Matrix {
-        for row in 0..matrix.rows() {
-            for col in 0..matrix.cols() {
+        let rows = matrix.rows();
+        let cols = matrix.cols();
+        let mut row = 0;
+        while row < rows {
+            let mut col = 0;
+            while col < cols {
                 let y = self.activate(matrix.get(row, col));
                 matrix.set(row, col, y);
+                col += 1;
             }
+            row += 1;
         }
         matrix
     }
 
     fn derive_matrix(&self, mut matrix: Matrix) -> Matrix {
-        for row in 0..matrix.rows() {
-            for col in 0..matrix.cols() {
+        let rows = matrix.rows();
+        let cols = matrix.cols();
+        let mut row = 0;
+        while row < rows {
+            let mut col = 0;
+            while col < cols {
                 let y = self.derive(matrix.get(row, col));
                 matrix.set(row, col, y);
+                col += 1;
             }
+            row += 1;
         }
         matrix
     }

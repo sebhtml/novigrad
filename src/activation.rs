@@ -1,5 +1,3 @@
-use std::f32::consts::E;
-
 use crate::Matrix;
 
 pub trait ActivationFunction {

@@ -1,30 +1,47 @@
 use rand::Rng;
 
 use crate::{Activation, ActivationFunction, Matrix};
+
+pub struct LayerConfig {
+    pub size: usize, // neurons
+    pub activation: Activation,
+}
+
+pub struct Layer {
+    pub weights: Matrix,
+    pub activation: Box<dyn ActivationFunction>,
+}
+
 pub struct Network {
-    layers: Vec<Matrix>,
-    activation: Box<dyn ActivationFunction>,
+    layers: Vec<Layer>,
 }
 
 impl Network {
-    pub fn new(layer_sizes: Vec<usize>, activation: Activation) -> Self {
-        let mut layer_size_pairs = Vec::new();
-        for index in 1..layer_sizes.len() {
-            layer_size_pairs.push((layer_sizes[index], layer_sizes[index - 1]));
+    pub fn new(layers: Vec<LayerConfig>) -> Self {
+        let mut layer_configs = Vec::new();
+        for index in 1..layers.len() {
+            layer_configs.push((
+                layers[index].size,
+                layers[index - 1].size,
+                layers[index].activation.clone(),
+            ));
         }
         Self {
-            layers: layer_size_pairs
+            layers: layer_configs
                 .iter()
-                .map(|(rows, cols)| -> Matrix {
+                .map(|(rows, cols, activation)| {
                     let mut weights = Vec::new();
                     weights.resize(rows * cols, 0.0);
                     for index in 0..weights.len() {
                         weights[index] = rand::thread_rng().gen_range(0.0..1.0);
                     }
-                    Matrix::new(*rows, *cols, weights)
+                    let weights = Matrix::new(*rows, *cols, weights);
+                    Layer {
+                        weights,
+                        activation: activation.clone().into(),
+                    }
                 })
                 .collect(),
-            activation: activation.into(),
         }
     }
 
@@ -61,21 +78,23 @@ impl Network {
         //x.push(1.0);
         let x = Matrix::new(x.len(), 1, x);
 
-        for (layer, layer_weights) in self.layers.iter().enumerate() {
+        for (layer_index, layer) in self.layers.iter().enumerate() {
             let previous_activation = {
-                if layer == 0 {
+                if layer_index == 0 {
                     &x
                 } else {
                     &activations[activations.len() - 1]
                 }
             };
 
+            let layer_weights = &layer.weights;
+            let activation = &layer.activation;
             let matrix_product = layer_weights * previous_activation;
 
             match matrix_product {
                 Ok(matrix_product) => {
                     matrix_products.push(matrix_product.clone());
-                    let activation = self.activation.activate_matrix(matrix_product);
+                    let activation = activation.activate_matrix(matrix_product);
                     activations.push(activation);
                 }
                 _ => {
@@ -86,23 +105,23 @@ impl Network {
         }
 
         // Back-propagation
-        let mut weight_deltas = self.layers.clone();
+        let mut weight_deltas: Vec<Matrix> =
+            self.layers.iter().map(|x| x.weights.clone()).collect();
         let mut layer_diffs = Vec::new();
         layer_diffs.resize(self.layers.len(), Vec::<f32>::new());
 
         for (layer, _) in self.layers.iter().enumerate().rev() {
             let layer = layer.to_owned();
-            let layer_weights = &self.layers[layer];
-
+            let layer_weights = &self.layers[layer].weights;
+            let activation = &self.layers[layer].activation;
             let layer_activation = &activations[layer];
-
-            let derived_matrix = self.activation.derive_matrix(layer_activation.clone());
+            let derived_matrix = activation.derive_matrix(layer_activation.clone());
             for row in 0..layer_weights.rows() {
                 let f_derivative = derived_matrix.get(row, 0);
                 let target_diff = if layer == self.layers.len() - 1 {
                     y[row] - layer_activation.get(row, 0)
                 } else {
-                    let next_weights = &self.layers[layer + 1];
+                    let next_weights = &self.layers[layer + 1].weights;
                     let mut sum = 0.0;
                     for k in 0..next_weights.rows() {
                         let next_weight = next_weights.get(k, row);
@@ -130,9 +149,9 @@ impl Network {
         }
 
         for layer in 0..self.layers.len() {
-            match &self.layers[layer] + &weight_deltas[layer] {
+            match &self.layers[layer].weights + &weight_deltas[layer] {
                 Ok(matrix) => {
-                    self.layers[layer] = matrix;
+                    self.layers[layer].weights = matrix;
                 }
                 _ => (),
             }
@@ -160,12 +179,14 @@ impl Network {
         let x = Matrix::new(x.len(), 1, x);
         let mut previous_activation = x;
 
-        for layer_weights in self.layers.iter() {
+        for layer in self.layers.iter() {
+            let layer_weights = &layer.weights;
+            let activation = &layer.activation;
             let matrix_product = layer_weights * &previous_activation;
 
             match matrix_product {
                 Ok(matrix_product) => {
-                    let activation = self.activation.activate_matrix(matrix_product);
+                    let activation = activation.activate_matrix(matrix_product);
                     previous_activation = activation;
                 }
                 _ => {

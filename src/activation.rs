@@ -6,6 +6,7 @@ pub trait ActivationFunction {
     fn derive_matrix(&self, activation_matrix: Matrix) -> Matrix;
 }
 
+#[derive(Clone)]
 pub enum Activation {
     Sigmoid,
     Softmax,

@@ -1,5 +1,5 @@
+// TODO move those module declarations elsewhere, maybe in a module.
 mod network;
-
 use network::*;
 mod matrix;
 use matrix::*;
@@ -9,30 +9,11 @@ mod sigmoid;
 use sigmoid::*;
 mod softmax;
 use softmax::*;
+mod dataset;
+use dataset::*;
 
 fn main() {
-    let examples = vec![
-        (
-            //
-            vec![1.0, 0.0, 0.0, 0.0], //
-            vec![0.1, 0.9],
-        ),
-        (
-            //
-            vec![1.0, 0.0, 0.0, 1.0], //
-            vec![0.1, 0.9],
-        ),
-        (
-            //
-            vec![0.0, 0.0, 1.0, 0.0], //
-            vec![0.9, 0.1],
-        ),
-        (
-            //
-            vec![0.0, 1.0, 1.0, 0.0], //
-            vec![0.9, 0.1],
-        ),
-    ];
+    let examples = load_simple_examples();
 
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();

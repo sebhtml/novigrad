@@ -45,13 +45,13 @@ impl Network {
         }
     }
 
-    pub fn train(&mut self, inputs: &Vec<Vec<f32>>, outputs: &Vec<Vec<f32>>) {
+    pub fn train(&mut self, inputs: &Vec<Matrix>, outputs: &Vec<Matrix>) {
         for i in 0..inputs.len() {
             self.train_back_propagation(i, &inputs[i], &outputs[i]);
         }
     }
 
-    pub fn total_error(&self, inputs: &Vec<Vec<f32>>, outputs: &Vec<Vec<f32>>) -> f32 {
+    pub fn total_error(&self, inputs: &Vec<Matrix>, outputs: &Vec<Matrix>) -> f32 {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
             let predicted = self.predict(&inputs[i]);
@@ -68,15 +68,13 @@ impl Network {
     }
 
     // https://web.stanford.edu/group/pdplab/originalpdphandbook/Chapter%205.pdf
-    fn train_back_propagation(&mut self, _example: usize, x: &Vec<f32>, y: &Vec<f32>) {
+    fn train_back_propagation(&mut self, _example: usize, x: &Matrix, y: &Matrix) {
         let learning_rate = 0.5;
         let mut matrix_products: Vec<Matrix> = Vec::new();
         let mut activations: Vec<Matrix> = Vec::new();
-        let x = x.clone();
         // TODO add constant bias
         // Add a constant for bias
         //x.push(1.0);
-        let x = Matrix::new(x.len(), 1, x);
 
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let previous_activation = {
@@ -119,7 +117,7 @@ impl Network {
             for row in 0..layer_weights.rows() {
                 let f_derivative = derived_matrix.get(row, 0);
                 let target_diff = if layer == self.layers.len() - 1 {
-                    y[row] - layer_activation.get(row, 0)
+                    y.get(row, 0) - layer_activation.get(row, 0)
                 } else {
                     let next_weights = &self.layers[layer + 1].weights;
                     let mut sum = 0.0;
@@ -158,26 +156,24 @@ impl Network {
         }
     }
 
-    fn compute_error(&self, y: &Vec<f32>, output: &Vec<f32>) -> f32 {
+    fn compute_error(&self, y: &Matrix, output: &Matrix) -> f32 {
         let mut error = 0.0;
-        for i in 0..y.len() {
-            let diff = y[i] - output[i];
+        for i in 0..y.rows() {
+            let diff = y.get(i, 0) - output.get(i, 0);
             error += diff.powf(2.0);
         }
         error * 0.5
     }
 
-    pub fn predict_many(&self, inputs: &Vec<Vec<f32>>) -> Vec<Vec<f32>> {
+    pub fn predict_many(&self, inputs: &Vec<Matrix>) -> Vec<Matrix> {
         inputs.iter().map(|x| self.predict(x)).collect()
     }
 
-    pub fn predict(&self, x: &Vec<f32>) -> Vec<f32> {
-        let x = x.clone();
+    pub fn predict(&self, x: &Matrix) -> Matrix {
         // TODO add constant bias
         // Add a constant for bias
         //x.push(1.0);
-        let x = Matrix::new(x.len(), 1, x);
-        let mut previous_activation = x;
+        let mut previous_activation = x.clone();
 
         for layer in self.layers.iter() {
             let layer_weights = &layer.weights;
@@ -196,7 +192,6 @@ impl Network {
             }
         }
 
-        let output: Vec<f32> = previous_activation.into();
-        output
+        previous_activation
     }
 }

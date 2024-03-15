@@ -37,16 +37,9 @@ fn main() {
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
 
-    //let layer_sizes = vec![4, 1];
-    //let layer_sizes = vec![4, 16, 1];
-    //let layer_sizes = vec![4, 8, 8, 1];
     let layers = vec![
         LayerConfig {
             size: 4,
-            activation: Activation::Sigmoid,
-        },
-        LayerConfig {
-            size: 16,
             activation: Activation::Sigmoid,
         },
         LayerConfig {

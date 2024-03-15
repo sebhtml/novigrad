@@ -1,9 +1,10 @@
 use rand::Rng;
 
-use crate::{Activation, ActivationFunction, Matrix};
+use crate::{activation, Activation, ActivationFunction, Matrix};
 
 pub struct LayerConfig {
-    pub size: usize, // neurons
+    pub rows: usize,
+    pub cols: usize,
     pub activation: Activation,
 }
 
@@ -17,25 +18,20 @@ pub struct Network {
 }
 
 impl Network {
-    pub fn new(layers: Vec<LayerConfig>) -> Self {
-        let mut layer_configs = Vec::new();
-        for index in 1..layers.len() {
-            layer_configs.push((
-                layers[index].size,
-                layers[index - 1].size,
-                layers[index].activation.clone(),
-            ));
-        }
+    pub fn new(layer_configs: Vec<LayerConfig>) -> Self {
         Self {
             layers: layer_configs
-                .iter()
-                .map(|(rows, cols, activation)| {
+                .into_iter()
+                .map(|layer_config| {
                     let mut weights = Vec::new();
+                    let rows = layer_config.rows;
+                    let cols = layer_config.cols;
+                    let activation = layer_config.activation;
                     weights.resize(rows * cols, 0.0);
                     for index in 0..weights.len() {
                         weights[index] = rand::thread_rng().gen_range(0.0..1.0);
                     }
-                    let weights = Matrix::new(*rows, *cols, weights);
+                    let weights = Matrix::new(rows, cols, weights);
                     Layer {
                         weights,
                         activation: activation.clone().into(),

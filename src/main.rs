@@ -15,25 +15,23 @@ use dataset::*;
 fn main() {
     let examples = load_simple_examples();
 
-    let inputs = examples.iter().map(|x| x.clone().0).collect();
-    let outputs = examples.iter().map(|x| x.clone().1).collect();
-
     let layers = vec![
         LayerConfig {
-            size: 4,
+            rows: 16,
+            cols: 4,
             activation: Activation::Sigmoid,
         },
         LayerConfig {
-            size: 16,
+            rows: 2,
+            cols: 16,
             activation: Activation::Sigmoid,
-        },
-        LayerConfig {
-            size: 2,
-            activation: Activation::Softmax,
         },
     ];
 
     let mut network = Network::new(layers);
+
+    let inputs = examples.iter().map(|x| x.clone().0).collect();
+    let outputs = examples.iter().map(|x| x.clone().1).collect();
 
     let mut last_total_error = f32::NAN;
     for i in 0..10000 {

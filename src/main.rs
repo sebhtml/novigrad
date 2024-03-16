@@ -17,13 +17,18 @@ fn main() {
 
     let layers = vec![
         LayerConfig {
-            rows: 16,
-            cols: 4,
+            rows: 4,
+            cols: 16,
             activation: Activation::Sigmoid,
         },
         LayerConfig {
-            rows: 2,
+            rows: 16,
             cols: 16,
+            activation: Activation::Sigmoid,
+        },
+        LayerConfig {
+            rows: 16,
+            cols: 2,
             activation: Activation::Softmax,
         },
     ];
@@ -34,8 +39,8 @@ fn main() {
     let outputs = examples.iter().map(|x| x.clone().1).collect();
 
     let mut last_total_error = f32::NAN;
-    for i in 0..10000 {
-        if i % 100 == 0 {
+    for i in 0..100000 {
+        if i % 1000 == 0 {
             let total_error = network.total_error(&inputs, &outputs);
             let change = (total_error - last_total_error) / last_total_error;
             println!(

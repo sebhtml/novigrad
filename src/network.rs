@@ -66,6 +66,8 @@ impl Network {
     // https://web.stanford.edu/group/pdplab/originalpdphandbook/Chapter%205.pdf
     fn train_back_propagation(&mut self, _example: usize, x: &Matrix, y: &Matrix) {
         let learning_rate = 0.5;
+        let x = x.transpose();
+        let y = y.transpose();
         let mut matrix_products: Vec<Matrix> = Vec::new();
         let mut activations: Vec<Matrix> = Vec::new();
         // TODO add constant bias
@@ -83,7 +85,8 @@ impl Network {
 
             let layer_weights = &layer.weights;
             let activation = &layer.activation;
-            let matrix_product = layer_weights * previous_activation;
+            // C = X * W
+            let matrix_product = previous_activation * layer_weights;
 
             match matrix_product {
                 Ok(matrix_product) => {
@@ -93,7 +96,7 @@ impl Network {
                 }
                 _ => {
                     println!("Incompatible shapes in matrix multiplication");
-                    println!("Between  W {} and A {}", layer_weights, previous_activation,);
+                    println!("Between  X {} and W {}", previous_activation, layer_weights,);
                 }
             }
         }
@@ -110,15 +113,15 @@ impl Network {
             let activation = &self.layers[layer].activation;
             let layer_activation = &activations[layer];
             let derived_matrix = activation.derive_matrix(layer_activation.clone());
-            for row in 0..layer_weights.rows() {
-                let f_derivative = derived_matrix.get(row, 0);
+            for col in 0..layer_weights.cols() {
+                let f_derivative = derived_matrix.get(0, col);
                 let target_diff = if layer == self.layers.len() - 1 {
-                    y.get(row, 0) - layer_activation.get(row, 0)
+                    y.get(0, col) - layer_activation.get(0, col)
                 } else {
                     let next_weights = &self.layers[layer + 1].weights;
                     let mut sum = 0.0;
-                    for k in 0..next_weights.rows() {
-                        let next_weight = next_weights.get(k, row);
+                    for k in 0..next_weights.cols() {
+                        let next_weight = next_weights.get(k, col);
                         let next_diff: f32 = layer_diffs[layer + 1][k];
                         sum += next_weight * next_diff;
                     }
@@ -128,12 +131,12 @@ impl Network {
                 let delta_pi = f_derivative * target_diff;
                 layer_diffs[layer].push(delta_pi);
 
-                for col in 0..layer_weights.cols() {
+                for row in 0..layer_weights.rows() {
                     let a_pj = {
                         if layer == 0 {
-                            x.get(col, 0)
+                            x.get(0, row)
                         } else {
-                            activations[layer - 1].get(col, 0)
+                            activations[layer - 1].get(0, row)
                         }
                     };
                     let delta_w_ij = learning_rate * delta_pi * a_pj;
@@ -169,12 +172,12 @@ impl Network {
         // TODO add constant bias
         // Add a constant for bias
         //x.push(1.0);
-        let mut previous_activation = x.clone();
+        let mut previous_activation = x.transpose();
 
         for layer in self.layers.iter() {
             let layer_weights = &layer.weights;
             let activation = &layer.activation;
-            let matrix_product = layer_weights * &previous_activation;
+            let matrix_product = &previous_activation * layer_weights;
 
             match matrix_product {
                 Ok(matrix_product) => {
@@ -183,11 +186,11 @@ impl Network {
                 }
                 _ => {
                     println!("Incompatible shapes in matrix multiplication");
-                    println!("Between  W {} and A {}", layer_weights, previous_activation,);
+                    println!("Between  X {} and W {}", previous_activation, layer_weights,);
                 }
             }
         }
 
-        previous_activation
+        previous_activation.transpose()
     }
 }

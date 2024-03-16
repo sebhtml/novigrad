@@ -1,8 +1,8 @@
 // TODO move those module declarations elsewhere, maybe in a module.
 mod network;
 use network::*;
-mod matrix;
-use matrix::*;
+mod tensor;
+use tensor::*;
 mod activation;
 use activation::*;
 mod sigmoid;

@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{Activation, ActivationFunction, Matrix};
+use crate::{Activation, ActivationFunction, Tensor};
 
 pub struct LayerConfig {
     pub rows: usize,
@@ -9,7 +9,7 @@ pub struct LayerConfig {
 }
 
 pub struct Layer {
-    pub weights: Matrix,
+    pub weights: Tensor,
     pub activation: Box<dyn ActivationFunction>,
 }
 
@@ -31,7 +31,7 @@ impl Network {
                     for index in 0..weights.len() {
                         weights[index] = rand::thread_rng().gen_range(0.0..1.0);
                     }
-                    let weights = Matrix::new(rows, cols, weights);
+                    let weights = Tensor::new(rows, cols, weights);
                     Layer {
                         weights,
                         activation: activation.clone().into(),
@@ -41,13 +41,13 @@ impl Network {
         }
     }
 
-    pub fn train(&mut self, inputs: &Vec<Matrix>, outputs: &Vec<Matrix>) {
+    pub fn train(&mut self, inputs: &Vec<Tensor>, outputs: &Vec<Tensor>) {
         for i in 0..inputs.len() {
             self.train_back_propagation(i, &inputs[i], &outputs[i]);
         }
     }
 
-    pub fn total_error(&self, inputs: &Vec<Matrix>, outputs: &Vec<Matrix>) -> f32 {
+    pub fn total_error(&self, inputs: &Vec<Tensor>, outputs: &Vec<Tensor>) -> f32 {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
             let predicted = self.predict(&inputs[i]);
@@ -64,12 +64,12 @@ impl Network {
     }
 
     // https://web.stanford.edu/group/pdplab/originalpdphandbook/Chapter%205.pdf
-    fn train_back_propagation(&mut self, _example: usize, x: &Matrix, y: &Matrix) {
+    fn train_back_propagation(&mut self, _example: usize, x: &Tensor, y: &Tensor) {
         let learning_rate = 0.5;
         let x = x.transpose();
         let y = y.transpose();
-        let mut matrix_products: Vec<Matrix> = Vec::new();
-        let mut activations: Vec<Matrix> = Vec::new();
+        let mut matrix_products: Vec<Tensor> = Vec::new();
+        let mut activations: Vec<Tensor> = Vec::new();
         // TODO add constant bias
         // Add a constant for bias
         //x.push(1.0);
@@ -102,7 +102,7 @@ impl Network {
         }
 
         // Back-propagation
-        let mut weight_deltas: Vec<Matrix> =
+        let mut weight_deltas: Vec<Tensor> =
             self.layers.iter().map(|x| x.weights.clone()).collect();
         let mut layer_diffs = Vec::new();
         layer_diffs.resize(self.layers.len(), Vec::<f32>::new());
@@ -155,7 +155,7 @@ impl Network {
         }
     }
 
-    fn compute_error(&self, y: &Matrix, output: &Matrix) -> f32 {
+    fn compute_error(&self, y: &Tensor, output: &Tensor) -> f32 {
         let mut error = 0.0;
         for i in 0..y.rows() {
             let diff = y.get(i, 0) - output.get(i, 0);
@@ -164,11 +164,11 @@ impl Network {
         error * 0.5
     }
 
-    pub fn predict_many(&self, inputs: &Vec<Matrix>) -> Vec<Matrix> {
+    pub fn predict_many(&self, inputs: &Vec<Tensor>) -> Vec<Tensor> {
         inputs.iter().map(|x| self.predict(x)).collect()
     }
 
-    pub fn predict(&self, x: &Matrix) -> Matrix {
+    pub fn predict(&self, x: &Tensor) -> Tensor {
         // TODO add constant bias
         // Add a constant for bias
         //x.push(1.0);

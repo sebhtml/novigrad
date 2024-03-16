@@ -4,13 +4,13 @@ use std::{
 };
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Matrix {
+pub struct Tensor {
     rows: usize,
     cols: usize,
     values: Vec<f32>,
 }
 
-impl Matrix {
+impl Tensor {
     pub fn new(rows: usize, cols: usize, values: Vec<f32>) -> Self {
         Self { rows, cols, values }
     }
@@ -36,7 +36,7 @@ impl Matrix {
     }
 
     pub fn transpose(&self) -> Self {
-        let mut other = Matrix::new(self.cols, self.rows, self.values.clone());
+        let mut other = Tensor::new(self.cols, self.rows, self.values.clone());
         let mut row = 0;
         let rows = self.rows;
         while row < rows {
@@ -57,8 +57,8 @@ pub enum Error {
     IncompatibleMatrixShapes,
 }
 
-impl Add for &Matrix {
-    type Output = Result<Matrix, Error>;
+impl Add for &Tensor {
+    type Output = Result<Tensor, Error>;
 
     fn add(self, right: Self) -> Self::Output {
         let left = self;
@@ -69,7 +69,7 @@ impl Add for &Matrix {
         let mut values = Vec::new();
         values.resize(left.values.len(), 0.0);
 
-        let mut result = Matrix::new(left.rows, left.cols, values);
+        let mut result = Tensor::new(left.rows, left.cols, values);
         let result_ptr = result.values.as_mut_ptr();
         let left_ptr = left.values.as_ptr();
         let right_ptr = right.values.as_ptr();
@@ -92,11 +92,11 @@ impl Add for &Matrix {
 // from https://siboehm.com/articles/22/Fast-MMM-on-CPU
 // from Simon Boehm who works at Anthropic
 // Also see "matmulImplTiling" from this link.
-impl Mul for &Matrix {
-    type Output = Result<Matrix, Error>;
+impl Mul for &Tensor {
+    type Output = Result<Tensor, Error>;
 
-    fn mul(self, right: &Matrix) -> Self::Output {
-        let left: &Matrix = self;
+    fn mul(self, right: &Tensor) -> Self::Output {
+        let left: &Tensor = self;
         if left.cols != right.rows {
             return Err(Error::IncompatibleMatrixShapes);
         }
@@ -128,18 +128,18 @@ impl Mul for &Matrix {
             }
         }
 
-        let result = Matrix::new(left.rows, right.cols, result_values);
+        let result = Tensor::new(left.rows, right.cols, result_values);
         Ok(result)
     }
 }
 
-impl Into<Vec<f32>> for Matrix {
+impl Into<Vec<f32>> for Tensor {
     fn into(self) -> Vec<f32> {
         self.values
     }
 }
 
-impl Display for Matrix {
+impl Display for Tensor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         _ = write!(f, "Shape: {}x{}", self.rows, self.cols);
         _ = write!(f, "\n");

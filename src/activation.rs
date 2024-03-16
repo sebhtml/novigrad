@@ -1,9 +1,9 @@
-use crate::{Matrix, Sigmoid, Softmax};
+use crate::{Sigmoid, Softmax, Tensor};
 
 pub trait ActivationFunction {
-    fn activate_matrix(&self, product_matrix: Matrix) -> Matrix;
+    fn activate_matrix(&self, product_matrix: Tensor) -> Tensor;
 
-    fn derive_matrix(&self, activation_matrix: Matrix) -> Matrix;
+    fn derive_matrix(&self, activation_matrix: Tensor) -> Tensor;
 }
 
 #[derive(Clone)]

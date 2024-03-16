@@ -1,6 +1,6 @@
 use std::f32::consts::E;
 
-use crate::{ActivationFunction, Matrix};
+use crate::{ActivationFunction, Tensor};
 
 pub struct Sigmoid {}
 
@@ -11,7 +11,7 @@ impl Default for Sigmoid {
 }
 
 impl ActivationFunction for Sigmoid {
-    fn activate_matrix(&self, mut matrix: Matrix) -> Matrix {
+    fn activate_matrix(&self, mut matrix: Tensor) -> Tensor {
         let rows = matrix.rows();
         let cols = matrix.cols();
         let mut row = 0;
@@ -28,7 +28,7 @@ impl ActivationFunction for Sigmoid {
         matrix
     }
 
-    fn derive_matrix(&self, mut matrix: Matrix) -> Matrix {
+    fn derive_matrix(&self, mut matrix: Tensor) -> Tensor {
         let rows = matrix.rows();
         let cols = matrix.cols();
         let mut row = 0;

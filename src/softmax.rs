@@ -1,6 +1,6 @@
 use std::f32::consts::E;
 
-use crate::{ActivationFunction, Matrix};
+use crate::{ActivationFunction, Tensor};
 
 pub struct Softmax {}
 
@@ -11,7 +11,7 @@ impl Default for Softmax {
 }
 
 impl ActivationFunction for Softmax {
-    fn activate_matrix(&self, mut product_matrix: Matrix) -> Matrix {
+    fn activate_matrix(&self, mut product_matrix: Tensor) -> Tensor {
         // Find max
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
@@ -59,7 +59,7 @@ impl ActivationFunction for Softmax {
         product_matrix
     }
 
-    fn derive_matrix(&self, mut matrix: Matrix) -> Matrix {
+    fn derive_matrix(&self, mut matrix: Tensor) -> Tensor {
         let rows = matrix.rows();
         let cols = matrix.cols();
         let mut row = 0;

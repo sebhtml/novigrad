@@ -34,6 +34,22 @@ impl Matrix {
     pub fn set(&mut self, row: usize, col: usize, value: f32) {
         self.values[row * self.cols + col] = value;
     }
+
+    pub fn transpose(&self) -> Self {
+        let mut other = Matrix::new(self.cols, self.rows, self.values.clone());
+        let mut row = 0;
+        let rows = self.rows;
+        while row < rows {
+            let mut col = 0;
+            let cols = self.cols;
+            while col < cols {
+                other.set(col, row, self.get(row, col));
+                col += 1;
+            }
+            row += 1;
+        }
+        other
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -296,5 +312,16 @@ mod tests {
         }
         let m = Matrix::new(rows, cols, values);
         let _result = &m + &m;
+    }
+
+    #[test]
+    fn transpose() {
+        let matrix = Matrix::new(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+        let matrix2 = matrix.transpose();
+        for row in 0..matrix.rows() {
+            for col in 0..matrix.cols() {
+                assert_eq!(matrix2.get(col, row), matrix.get(row, col));
+            }
+        }
     }
 }

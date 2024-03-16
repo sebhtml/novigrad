@@ -5,45 +5,47 @@ use std::{
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {
-    rows: usize,
-    cols: usize,
+    dimensions: Vec<usize>,
     values: Vec<f32>,
 }
 
 impl Tensor {
-    pub fn new(rows: usize, cols: usize, values: Vec<f32>) -> Self {
-        Self { rows, cols, values }
+    pub fn new(dimensions: Vec<usize>, values: Vec<f32>) -> Self {
+        Self { dimensions, values }
     }
 
-    pub fn shape(&self) -> (usize, usize) {
-        (self.rows, self.cols)
+    pub fn dimensions(&self) -> Vec<usize> {
+        self.dimensions.clone()
     }
 
-    pub fn rows(&self) -> usize {
-        self.rows
+    pub fn index(&self, indices: &Vec<usize>) -> usize {
+        // TODO generalize
+        let index = indices[0] * self.dimensions[1] + indices[1];
+        index
     }
 
-    pub fn cols(&self) -> usize {
-        self.cols
+    pub fn get(&self, indices: &Vec<usize>) -> f32 {
+        let index = self.index(indices);
+        self.values[index]
     }
 
-    pub fn get(&self, row: usize, col: usize) -> f32 {
-        self.values[row * self.cols + col]
-    }
-
-    pub fn set(&mut self, row: usize, col: usize, value: f32) {
-        self.values[row * self.cols + col] = value;
+    pub fn set(&mut self, indices: &Vec<usize>, value: f32) {
+        let index = self.index(indices);
+        self.values[index] = value;
     }
 
     pub fn transpose(&self) -> Self {
-        let mut other = Tensor::new(self.cols, self.rows, self.values.clone());
+        // TODO generalize
+        let rev_dimensions = self.dimensions.clone().into_iter().rev().collect();
+        let mut other: Tensor = Tensor::new(rev_dimensions, self.values.clone());
         let mut row = 0;
-        let rows = self.rows;
+        let rows = self.dimensions[0];
+        let cols = self.dimensions[1];
         while row < rows {
             let mut col = 0;
-            let cols = self.cols;
             while col < cols {
-                other.set(col, row, self.get(row, col));
+                let value = self.get(&vec![row, col]);
+                other.set(&vec![col, row], value);
                 col += 1;
             }
             row += 1;
@@ -62,14 +64,14 @@ impl Add for &Tensor {
 
     fn add(self, right: Self) -> Self::Output {
         let left = self;
-        if left.rows != right.rows || left.cols != right.cols {
+        if left.dimensions != right.dimensions {
             return Err(Error::IncompatibleMatrixShapes);
         }
 
         let mut values = Vec::new();
         values.resize(left.values.len(), 0.0);
 
-        let mut result = Tensor::new(left.rows, left.cols, values);
+        let mut result = Tensor::new(left.dimensions.clone(), values);
         let result_ptr = result.values.as_mut_ptr();
         let left_ptr = left.values.as_ptr();
         let right_ptr = right.values.as_ptr();
@@ -87,7 +89,7 @@ impl Add for &Tensor {
     }
 }
 
-// TODO for large matrices, this could be used:
+// for large matrices, this could be used:
 // matmulImplLoopOrder algorithm
 // from https://siboehm.com/articles/22/Fast-MMM-on-CPU
 // from Simon Boehm who works at Anthropic
@@ -97,28 +99,30 @@ impl Mul for &Tensor {
 
     fn mul(self, right: &Tensor) -> Self::Output {
         let left: &Tensor = self;
-        if left.cols != right.rows {
+        // TODO generalize
+        if left.dimensions[1] != right.dimensions[0] {
             return Err(Error::IncompatibleMatrixShapes);
         }
         let mut result_values = Vec::new();
-        result_values.resize(left.rows * right.cols, 0.0);
+        result_values.resize(left.dimensions[0] * right.dimensions[1], 0.0);
         let result_ptr = result_values.as_mut_ptr();
         let left_ptr = left.values.as_ptr();
         let right_ptr = right.values.as_ptr();
 
+        let left_rows = left.dimensions[0];
+        let left_cols = left.dimensions[1];
+        let right_cols = right.dimensions[1];
+
         unsafe {
             let mut row = 0;
-            let left_rows = left.rows;
-            let left_cols = left.cols;
-            let right_cols = right.cols;
             while row != left_rows {
                 let mut inner = 0;
                 while inner != left_cols {
                     let mut col = 0;
                     while col != right_cols {
-                        let left_cell = left_ptr.add(row * left.cols + inner);
-                        let right_cell = right_ptr.add(inner * right.cols + col);
-                        let result_cell = result_ptr.add(row * right.cols + col);
+                        let left_cell = left_ptr.add(row * left.dimensions[1] + inner);
+                        let right_cell = right_ptr.add(inner * right.dimensions[1] + col);
+                        let result_cell = result_ptr.add(row * right.dimensions[1] + col);
                         *result_cell += *left_cell * *right_cell;
                         col += 1;
                     }
@@ -128,7 +132,7 @@ impl Mul for &Tensor {
             }
         }
 
-        let result = Tensor::new(left.rows, right.cols, result_values);
+        let result = Tensor::new(vec![left.dimensions[0], right.dimensions[1]], result_values);
         Ok(result)
     }
 }
@@ -140,12 +144,13 @@ impl Into<Vec<f32>> for Tensor {
 }
 
 impl Display for Tensor {
+    // TODO generalize
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        _ = write!(f, "Shape: {}x{}", self.rows, self.cols);
+        _ = write!(f, "Shape: {:?}", self.dimensions);
         _ = write!(f, "\n");
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                _ = write!(f, " {:2.8}", self.values[row * self.cols + col]);
+        for row in 0..self.dimensions[0] {
+            for col in 0..self.dimensions[1] {
+                _ = write!(f, " {:2.8}", self.get(&vec![row, col]));
             }
             _ = write!(f, "\n");
         }
@@ -157,7 +162,7 @@ impl Display for Tensor {
 mod tests {
     use rand::Rng;
 
-    use crate::matrix::{Error, Matrix};
+    use crate::tensor::{Error, Tensor};
 
     #[test]
     fn new() {
@@ -165,9 +170,8 @@ mod tests {
         // When a matrix is built
         // Then it has the appropriate shape
 
-        let matrix = Matrix::new(
-            4,
-            3,
+        let matrix = Tensor::new(
+            vec![4, 3],
             vec![
                 0.0, 0.0, 0.0, //
                 0.0, 0.0, 0.0, //
@@ -175,7 +179,7 @@ mod tests {
                 0.0, 0.0, 0.0, //
             ],
         );
-        assert_eq!(matrix.shape(), (4, 3));
+        assert_eq!(matrix.dimensions(), vec![4, 3]);
     }
 
     #[test]
@@ -184,17 +188,15 @@ mod tests {
         // When a matrix multiplication is done
         // Then there is an error
 
-        let lhs = Matrix::new(
-            1,
-            1,
+        let lhs = Tensor::new(
+            vec![1, 1],
             vec![
                 0.0, //
             ],
         );
 
-        let rhs = Matrix::new(
-            2,
-            1,
+        let rhs = Tensor::new(
+            vec![2, 1],
             vec![
                 0.0, //
                 0.0, //
@@ -210,27 +212,24 @@ mod tests {
         // When the multiplication lhs * rhs is done
         // Then the resulting matrix has the correct values
 
-        let lhs = Matrix::new(
-            3,
-            2,
+        let lhs = Tensor::new(
+            vec![3, 2],
             vec![
                 1.0, 2.0, //
                 3.0, 4.0, //
                 5.0, 6.0, //
             ],
         );
-        let rhs = Matrix::new(
-            2,
-            3,
+        let rhs = Tensor::new(
+            vec![2, 3],
             vec![
                 11.0, 12.0, 13.0, //
                 14.0, 15.0, 16.0, //
             ],
         );
         let actual_result = &lhs * &rhs;
-        let expected_result = Matrix::new(
-            3,
-            3,
+        let expected_result = Tensor::new(
+            vec![3, 3],
             vec![
                 1.0 * 11.0 + 2.0 * 14.0,
                 1.0 * 12.0 + 2.0 * 15.0,
@@ -253,18 +252,16 @@ mod tests {
         // When the addition lhs + rhs is done
         // Then the resulting matrix has the correct values
 
-        let lhs = Matrix::new(
-            3,
-            2,
+        let lhs = Tensor::new(
+            vec![3, 2],
             vec![
                 1.0, 2.0, //
                 3.0, 4.0, //
                 5.0, 6.0, //
             ],
         );
-        let rhs = Matrix::new(
-            3,
-            2,
+        let rhs: Tensor = Tensor::new(
+            vec![3, 2],
             vec![
                 11.0, 12.0, //
                 14.0, 15.0, //
@@ -272,9 +269,8 @@ mod tests {
             ],
         );
         let actual_result = &lhs + &rhs;
-        let expected_result = Matrix::new(
-            3,
-            2,
+        let expected_result = Tensor::new(
+            vec![3, 2],
             vec![
                 1.0 + 11.0,
                 2.0 + 12.0, //
@@ -297,7 +293,7 @@ mod tests {
         for index in 0..values.len() {
             values[index] = rand::thread_rng().gen_range(0.0..1.0)
         }
-        let m = Matrix::new(rows, cols, values);
+        let m = Tensor::new(vec![rows, cols], values);
         let _result = &m * &m;
     }
 
@@ -310,17 +306,17 @@ mod tests {
         for index in 0..values.len() {
             values[index] = rand::thread_rng().gen_range(0.0..1.0)
         }
-        let m = Matrix::new(rows, cols, values);
+        let m = Tensor::new(vec![rows, cols], values);
         let _result = &m + &m;
     }
 
     #[test]
     fn transpose() {
-        let matrix = Matrix::new(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+        let matrix = Tensor::new(vec![3, 2], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
         let matrix2 = matrix.transpose();
-        for row in 0..matrix.rows() {
-            for col in 0..matrix.cols() {
-                assert_eq!(matrix2.get(col, row), matrix.get(row, col));
+        for row in 0..matrix.dimensions()[0] {
+            for col in 0..matrix.dimensions()[1] {
+                assert_eq!(matrix2.get(&vec![col, row]), matrix.get(&vec![row, col]));
             }
         }
     }

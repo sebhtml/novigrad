@@ -9,36 +9,36 @@ fn add_simple_embeddings(input: Tensor) -> Tensor {
     ];
     let mut values = vec![];
     let mut row = 0;
-    let rows = input.rows();
+    let rows = input.dimensions()[0];
     while row < rows {
-        let index = input.get(row, 0) as usize;
+        let index = input.get(&vec![row, 0]) as usize;
         values.append(&mut table[index].clone());
         row += 1;
     }
-    Tensor::new(input.rows(), table[0].len(), values)
+    Tensor::new(vec![input.dimensions()[0], table[0].len()], values)
 }
 
 pub fn load_simple_examples() -> Vec<(Tensor, Tensor)> {
     let mut examples = Vec::new();
     examples.push((
         //
-        Tensor::new(4, 1, vec![1.0, 0.0, 0.0, 0.0]), //
-        Tensor::new(2, 1, vec![0.1, 0.9]),
+        Tensor::new(vec![4, 1], vec![1.0, 0.0, 0.0, 0.0]), //
+        Tensor::new(vec![2, 1], vec![0.1, 0.9]),
     ));
     examples.push((
         //
-        Tensor::new(4, 1, vec![1.0, 0.0, 0.0, 1.0]), //
-        Tensor::new(2, 1, vec![0.1, 0.9]),
+        Tensor::new(vec![4, 1], vec![1.0, 0.0, 0.0, 1.0]), //
+        Tensor::new(vec![2, 1], vec![0.1, 0.9]),
     ));
     examples.push((
         //
-        Tensor::new(4, 1, vec![0.0, 0.0, 1.0, 0.0]), //
-        Tensor::new(2, 1, vec![0.9, 0.1]),
+        Tensor::new(vec![4, 1], vec![0.0, 0.0, 1.0, 0.0]), //
+        Tensor::new(vec![2, 1], vec![0.9, 0.1]),
     ));
     examples.push((
         //
-        Tensor::new(4, 1, vec![0.0, 1.0, 1.0, 0.0]), //
-        Tensor::new(2, 1, vec![0.9, 0.1]),
+        Tensor::new(vec![4, 1], vec![0.0, 1.0, 1.0, 0.0]), //
+        Tensor::new(vec![2, 1], vec![0.9, 0.1]),
     ));
     examples
         .into_iter()

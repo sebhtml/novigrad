@@ -31,7 +31,7 @@ impl Network {
                     for index in 0..weights.len() {
                         weights[index] = rand::thread_rng().gen_range(0.0..1.0);
                     }
-                    let weights = Tensor::new(rows, cols, weights);
+                    let weights = Tensor::new(vec![rows, cols], weights);
                     Layer {
                         weights,
                         activation: activation.clone().into(),
@@ -107,21 +107,22 @@ impl Network {
         let mut layer_diffs = Vec::new();
         layer_diffs.resize(self.layers.len(), Vec::<f32>::new());
 
+        // TODO generalize how tensor.dimensions() is used.
         for (layer, _) in self.layers.iter().enumerate().rev() {
             let layer = layer.to_owned();
             let layer_weights = &self.layers[layer].weights;
             let activation = &self.layers[layer].activation;
             let layer_activation = &activations[layer];
             let derived_matrix = activation.derive_matrix(layer_activation.clone());
-            for col in 0..layer_weights.cols() {
-                let f_derivative = derived_matrix.get(0, col);
+            for col in 0..layer_weights.dimensions()[1] {
+                let f_derivative = derived_matrix.get(&vec![0, col]);
                 let target_diff = if layer == self.layers.len() - 1 {
-                    y.get(0, col) - layer_activation.get(0, col)
+                    y.get(&vec![0, col]) - layer_activation.get(&vec![0, col])
                 } else {
                     let next_weights = &self.layers[layer + 1].weights;
                     let mut sum = 0.0;
-                    for k in 0..next_weights.cols() {
-                        let next_weight = next_weights.get(k, col);
+                    for k in 0..next_weights.dimensions()[1] {
+                        let next_weight = next_weights.get(&vec![k, col]);
                         let next_diff: f32 = layer_diffs[layer + 1][k];
                         sum += next_weight * next_diff;
                     }
@@ -131,16 +132,16 @@ impl Network {
                 let delta_pi = f_derivative * target_diff;
                 layer_diffs[layer].push(delta_pi);
 
-                for row in 0..layer_weights.rows() {
+                for row in 0..layer_weights.dimensions()[0] {
                     let a_pj = {
                         if layer == 0 {
-                            x.get(0, row)
+                            x.get(&vec![0, row])
                         } else {
-                            activations[layer - 1].get(0, row)
+                            activations[layer - 1].get(&vec![0, row])
                         }
                     };
                     let delta_w_ij = learning_rate * delta_pi * a_pj;
-                    weight_deltas[layer].set(row, col, delta_w_ij);
+                    weight_deltas[layer].set(&vec![row, col], delta_w_ij);
                 }
             }
         }
@@ -157,8 +158,8 @@ impl Network {
 
     fn compute_error(&self, y: &Tensor, output: &Tensor) -> f32 {
         let mut error = 0.0;
-        for i in 0..y.rows() {
-            let diff = y.get(i, 0) - output.get(i, 0);
+        for i in 0..y.dimensions()[0] {
+            let diff = y.get(&vec![i, 0]) - output.get(&vec![i, 0]);
             error += diff.powf(2.0);
         }
         error * 0.5

@@ -12,15 +12,16 @@ impl Default for Sigmoid {
 
 impl ActivationFunction for Sigmoid {
     fn activate_matrix(&self, mut matrix: Tensor) -> Tensor {
-        let rows = matrix.rows();
-        let cols = matrix.cols();
+        // TODO generalize
+        let rows = matrix.dimensions()[0];
+        let cols = matrix.dimensions()[1];
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = matrix.get(row, col);
+                let x = matrix.get(&vec![row, col]);
                 let y = 1.0 / (1.0 + E.powf(-x));
-                matrix.set(row, col, y);
+                matrix.set(&vec![row, col], y);
                 col += 1;
             }
             row += 1;
@@ -29,15 +30,16 @@ impl ActivationFunction for Sigmoid {
     }
 
     fn derive_matrix(&self, mut matrix: Tensor) -> Tensor {
-        let rows = matrix.rows();
-        let cols = matrix.cols();
+        // TODO generalize
+        let rows = matrix.dimensions()[0];
+        let cols = matrix.dimensions()[1];
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = matrix.get(row, col);
+                let x = matrix.get(&vec![row, col]);
                 let y = x * (1.0 - x);
-                matrix.set(row, col, y);
+                matrix.set(&vec![row, col], y);
                 col += 1;
             }
             row += 1;

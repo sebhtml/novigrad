@@ -12,15 +12,16 @@ impl Default for Softmax {
 
 impl ActivationFunction for Softmax {
     fn activate_matrix(&self, mut product_matrix: Tensor) -> Tensor {
+        // TODO generalize
         // Find max
-        let rows = product_matrix.rows();
-        let cols = product_matrix.cols();
-        let mut max = product_matrix.get(0, 0);
+        let rows = product_matrix.dimensions()[0];
+        let cols = product_matrix.dimensions()[1];
+        let mut max = product_matrix.get(&vec![0, 0]);
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = product_matrix.get(row, col);
+                let x = product_matrix.get(&vec![row, col]);
                 max = max.max(x);
                 col += 1;
             }
@@ -35,9 +36,9 @@ impl ActivationFunction for Softmax {
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = product_matrix.get(row, col);
+                let x = product_matrix.get(&vec![row, col]);
                 let y = E.powf(x - max);
-                product_matrix.set(row, col, y);
+                product_matrix.set(&vec![row, col], y);
                 sum += y;
                 col += 1;
             }
@@ -49,9 +50,9 @@ impl ActivationFunction for Softmax {
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = product_matrix.get(row, col);
+                let x = product_matrix.get(&vec![row, col]);
                 let y = x / sum;
-                product_matrix.set(row, col, y);
+                product_matrix.set(&vec![row, col], y);
                 col += 1;
             }
             row += 1;
@@ -60,15 +61,16 @@ impl ActivationFunction for Softmax {
     }
 
     fn derive_matrix(&self, mut matrix: Tensor) -> Tensor {
-        let rows = matrix.rows();
-        let cols = matrix.cols();
+        // TODO generalize
+        let rows = matrix.dimensions()[0];
+        let cols = matrix.dimensions()[1];
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = matrix.get(row, col);
+                let x = matrix.get(&vec![row, col]);
                 let y = x * (1.0 - x);
-                matrix.set(row, col, y);
+                matrix.set(&vec![row, col], y);
                 col += 1;
             }
             row += 1;

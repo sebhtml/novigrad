@@ -14,7 +14,7 @@ pub struct Layer {
 }
 
 pub struct Network {
-    layers: Vec<Layer>,
+    pub layers: Vec<Layer>,
 }
 
 impl Network {

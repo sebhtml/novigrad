@@ -39,7 +39,7 @@ fn main() {
     let outputs = examples.iter().map(|x| x.clone().1).collect();
 
     let mut last_total_error = f32::NAN;
-    for i in 0..100000 {
+    for i in 0..32000 {
         if i % 1000 == 0 {
             let total_error = network.total_error(&inputs, &outputs);
             let change = (total_error - last_total_error) / last_total_error;
@@ -53,4 +53,19 @@ fn main() {
     }
 
     _ = network.predict_many(&inputs);
+
+    println!("");
+    println!("Final weights");
+
+    let mut total_parameters = 0;
+    for (index, layer) in network.layers.iter().enumerate() {
+        println!("Layer {}", index);
+        println!("Weights {}", layer.weights);
+        let mut layer_parameters = 1;
+        for dimension in layer.weights.dimensions() {
+            layer_parameters *= dimension;
+        }
+        total_parameters += layer_parameters;
+    }
+    println!("Total_parameters: {}", total_parameters);
 }

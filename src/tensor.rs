@@ -150,7 +150,12 @@ impl Display for Tensor {
         _ = write!(f, "\n");
         for row in 0..self.dimensions[0] {
             for col in 0..self.dimensions[1] {
-                _ = write!(f, " {:2.8}", self.get(&vec![row, col]));
+                let value = self.get(&vec![row, col]);
+                if value < 0.0 {
+                    _ = write!(f, " {:2.8}", value);
+                } else {
+                    _ = write!(f, " +{:2.8}", value);
+                }
             }
             _ = write!(f, "\n");
         }

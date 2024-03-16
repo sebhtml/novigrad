@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{activation, Activation, ActivationFunction, Matrix};
+use crate::{Activation, ActivationFunction, Matrix};
 
 pub struct LayerConfig {
     pub rows: usize,

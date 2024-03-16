@@ -24,7 +24,7 @@ fn main() {
         LayerConfig {
             rows: 2,
             cols: 16,
-            activation: Activation::Sigmoid,
+            activation: Activation::Softmax,
         },
     ];
 

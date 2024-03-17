@@ -3,6 +3,9 @@ use std::{
     ops::{Add, Mul},
 };
 
+#[cfg(test)]
+mod tests;
+
 // For broadcasting, see https://medium.com/@hunter-j-phillips/a-simple-introduction-to-broadcasting-db8e581368b3
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {

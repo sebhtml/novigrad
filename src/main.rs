@@ -3,6 +3,8 @@ mod network;
 use network::*;
 mod tensor;
 use tensor::*;
+mod tensor_test;
+use tensor_test::*;
 mod activation;
 use activation::*;
 mod sigmoid;

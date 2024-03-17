@@ -90,9 +90,43 @@ fn add_matrix_tensor_and_matrix_tensor(left: &Tensor, right: &Tensor) -> Result<
     Ok(result)
 }
 
+trait F32Op {
+    fn op(&self, left: f32, right: f32) -> f32;
+}
+
+struct F32Add {}
+impl F32Op for F32Add {
+    fn op(&self, left: f32, right: f32) -> f32 {
+        left + right
+    }
+}
+impl Default for F32Add {
+    fn default() -> Self {
+        Self {}
+    }
+}
+struct F32Mul {}
+impl F32Op for F32Mul {
+    fn op(&self, left: f32, right: f32) -> f32 {
+        left * right
+    }
+}
+impl Default for F32Mul {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
 // Use broadcasting
-fn add_matrix_tensor_and_vector_tensor(left: &Tensor, right: &Tensor) -> Result<Tensor, Error> {
-    if left.dimensions[1] != right.dimensions[0] {
+fn op_matrix_tensor_and_vector_tensor(
+    left: &Tensor,
+    right: &Tensor,
+    op: &impl F32Op,
+) -> Result<Tensor, Error> {
+    if !(left.dimensions.len() == 2
+        && right.dimensions.len() == 1
+        && left.dimensions[1] == right.dimensions[0])
+    {
         return Err(Error::IncompatibleMatrixShapes);
     }
 
@@ -107,7 +141,9 @@ fn add_matrix_tensor_and_vector_tensor(left: &Tensor, right: &Tensor) -> Result<
     while row < rows {
         let mut col = 0;
         while col < cols {
-            let value = left.get(&vec![row, col]) + right.get(&vec![col]);
+            let left = left.get(&vec![row, col]);
+            let right = right.get(&vec![col]);
+            let value = op.op(left, right);
             result.set(&vec![row, col], value);
             col += 1;
         }
@@ -124,7 +160,7 @@ impl Add for &Tensor {
         if left.dimensions.len() == 2 && right.dimensions.len() == 2 {
             add_matrix_tensor_and_matrix_tensor(left, right)
         } else if left.dimensions.len() == 2 && right.dimensions.len() == 1 {
-            add_matrix_tensor_and_vector_tensor(left, right)
+            op_matrix_tensor_and_vector_tensor(left, right, &F32Add::default())
         } else {
             Err(Error::UnsupportedTensorShapes)
         }
@@ -213,6 +249,8 @@ impl Mul for &Tensor {
             multiply_matrix_tensor_and_matrix_tensor(left, right)
         } else if left.dimensions.len() == 1 && right.dimensions.len() == 1 {
             multiply_vector_tensor_and_vector_tensor(left, right)
+        } else if left.dimensions.len() == 2 && right.dimensions.len() == 1 {
+            op_matrix_tensor_and_vector_tensor(left, right, &F32Mul::default())
         } else {
             Err(Error::UnsupportedTensorShapes)
         }
@@ -443,5 +481,29 @@ mod tests {
             &tensor1 * &tensor2,
             Ok(Tensor::new(vec![3], vec![2.0, 4.0, 6.0,],))
         );
+    }
+
+    #[test]
+    fn multiply_matrix_tensor_and_vector_tensor() {
+        let tensor1 = Tensor::new(
+            vec![3, 3],
+            vec![
+                //
+                1.0, 2.0, 3.0, //
+                4.0, 5.0, 6.0, //
+                7.0, 8.0, 9.0, //
+            ],
+        );
+        let tensor2 = Tensor::new(vec![3], vec![1.0, 2.0, 3.0]);
+        let expected = Tensor::new(
+            vec![3, 3],
+            vec![
+                //
+                1.0, 4.0, 9.0, //
+                4.0, 10.0, 18.0, //
+                7.0, 16.0, 27.0, //
+            ],
+        );
+        assert_eq!(&tensor1 * &tensor2, Ok(expected));
     }
 }

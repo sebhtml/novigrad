@@ -3,6 +3,7 @@ use std::{
     ops::{Add, Mul},
 };
 
+// For broadcasting, see https://medium.com/@hunter-j-phillips/a-simple-introduction-to-broadcasting-db8e581368b3
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {
     dimensions: Vec<usize>,
@@ -19,9 +20,13 @@ impl Tensor {
     }
 
     pub fn index(&self, indices: &Vec<usize>) -> usize {
-        // TODO generalize
-        let index = indices[0] * self.dimensions[1] + indices[1];
-        index
+        if indices.len() == 2 {
+            indices[0] * self.dimensions[1] + indices[1]
+        } else
+        /*indices.len() == 1 */
+        {
+            indices[0]
+        }
     }
 
     pub fn get(&self, indices: &Vec<usize>) -> f32 {
@@ -57,6 +62,57 @@ impl Tensor {
 #[derive(Debug, PartialEq)]
 pub enum Error {
     IncompatibleMatrixShapes,
+    UnsupportedTensorShapes,
+}
+
+fn add_matrix_tensor_and_matrix_tensor(left: &Tensor, right: &Tensor) -> Result<Tensor, Error> {
+    if left.dimensions != right.dimensions {
+        return Err(Error::IncompatibleMatrixShapes);
+    }
+
+    let mut values = Vec::new();
+    values.resize(left.values.len(), 0.0);
+
+    let mut result = Tensor::new(left.dimensions.clone(), values);
+    let result_ptr = result.values.as_mut_ptr();
+    let left_ptr = left.values.as_ptr();
+    let right_ptr = right.values.as_ptr();
+
+    unsafe {
+        for index in 0..left.values.len() {
+            let left_cell = left_ptr.add(index);
+            let right_cell = right_ptr.add(index);
+            let result_cell = result_ptr.add(index);
+            *result_cell = *left_cell + *right_cell;
+        }
+    }
+
+    Ok(result)
+}
+
+fn add_matrix_tensor_and_vector_tensor(left: &Tensor, right: &Tensor) -> Result<Tensor, Error> {
+    if left.dimensions[1] != right.dimensions[0] {
+        return Err(Error::IncompatibleMatrixShapes);
+    }
+
+    let mut values = Vec::new();
+    values.resize(left.values.len(), 0.0);
+
+    let mut result = Tensor::new(left.dimensions.clone(), values);
+
+    let rows = left.dimensions[0];
+    let cols = left.dimensions[1];
+    let mut row = 0;
+    while row < rows {
+        let mut col = 0;
+        while col < cols {
+            let value = left.get(&vec![row, col]) + right.get(&vec![col]);
+            result.set(&vec![row, col], value);
+            col += 1;
+        }
+        row += 1;
+    }
+    Ok(result)
 }
 
 impl Add for &Tensor {
@@ -64,28 +120,13 @@ impl Add for &Tensor {
 
     fn add(self, right: Self) -> Self::Output {
         let left = self;
-        if left.dimensions != right.dimensions {
-            return Err(Error::IncompatibleMatrixShapes);
+        if left.dimensions.len() == 2 && right.dimensions.len() == 2 {
+            add_matrix_tensor_and_matrix_tensor(left, right)
+        } else if left.dimensions.len() == 2 && right.dimensions.len() == 1 {
+            add_matrix_tensor_and_vector_tensor(left, right)
+        } else {
+            Err(Error::UnsupportedTensorShapes)
         }
-
-        let mut values = Vec::new();
-        values.resize(left.values.len(), 0.0);
-
-        let mut result = Tensor::new(left.dimensions.clone(), values);
-        let result_ptr = result.values.as_mut_ptr();
-        let left_ptr = left.values.as_ptr();
-        let right_ptr = right.values.as_ptr();
-
-        unsafe {
-            for index in 0..left.values.len() {
-                let left_cell = left_ptr.add(index);
-                let right_cell = right_ptr.add(index);
-                let result_cell = result_ptr.add(index);
-                *result_cell = *left_cell + *right_cell;
-            }
-        }
-
-        Ok(result)
     }
 }
 
@@ -324,5 +365,32 @@ mod tests {
                 assert_eq!(matrix2.get(&vec![col, row]), matrix.get(&vec![row, col]));
             }
         }
+    }
+
+    #[test]
+    fn broadcasting_add() {
+        let tensor1 = Tensor::new(
+            vec![4, 3],
+            vec![
+                //
+                0.0, 0.0, 0.0, //
+                10.0, 10.0, 10.0, //
+                20.0, 20.0, 20.0, //
+                30.0, 30.0, 30.0, //
+            ],
+        );
+        let tensor2 = Tensor::new(vec![3], vec![1.0, 2.0, 3.0]);
+        let result = &tensor1 + &tensor2;
+        let expected = Tensor::new(
+            vec![4, 3],
+            vec![
+                //
+                1.0, 2.0, 3.0, //
+                11.0, 12.0, 13.0, //
+                21.0, 22.0, 23.0, //
+                31.0, 32.0, 33.0, //
+            ],
+        );
+        assert_eq!(result, Ok(expected));
     }
 }

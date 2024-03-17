@@ -231,6 +231,64 @@ fn op_tensor_and_matrix(left: &Tensor, right: &Tensor, op: &impl F32Op) -> Resul
     Ok(result)
 }
 
+/*
+For matrix multiplication:
+
+    (m, n) x (n, r) = (c, m, r)
+
+For 3D tensor multiplication:
+
+    (c, m, n) x (c, n, r) = (c, m, r)
+
+For 4D tensor multiplication:
+
+    (z, c, m, n) x (z, c, n, r) = (z, c, m, r)
+*/
+// Use broadcasting
+fn mul_tensor_and_matrix_dot_product(left: &Tensor, right: &Tensor) -> Result<Tensor, Error> {
+    if !(left.dimensions.len() == 3
+        && right.dimensions.len() == 2
+        && left.dimensions[2] == right.dimensions[0])
+    {
+        return Err(Error::IncompatibleTensorShapes);
+    }
+
+    let result_dimensions = vec![left.dimensions[0], left.dimensions[1], right.dimensions[1]];
+    let result_len = result_dimensions[0] * result_dimensions[1] * result_dimensions[2];
+    let mut values = Vec::new();
+    values.resize(result_len, 0.0);
+
+    let mut result = Tensor::new(result_dimensions.clone(), values);
+
+    let result_subs = result_dimensions[0];
+    let result_rows = result_dimensions[1];
+    let result_cols = result_dimensions[2];
+    let mut result_sub = 0;
+    while result_sub < result_subs {
+        let mut result_row = 0;
+        while result_row < result_rows {
+            let mut result_col = 0;
+            while result_col < result_cols {
+                let mut dot_product = 0.0;
+                let left_cols = left.dimensions[2];
+                let mut dot_product_iterator = 0;
+                while dot_product_iterator < left_cols {
+                    let left = left.get(&vec![result_sub, result_row, dot_product_iterator]);
+                    let right = right.get(&vec![dot_product_iterator, result_col]);
+                    let value = left * right;
+                    dot_product += value;
+                    dot_product_iterator += 1;
+                }
+                result.set(&vec![result_sub, result_row, result_col], dot_product);
+                result_col += 1;
+            }
+            result_row += 1;
+        }
+        result_sub += 1;
+    }
+    Ok(result)
+}
+
 impl Add for &Tensor {
     type Output = Result<Tensor, Error>;
 
@@ -343,6 +401,11 @@ impl Mul for &Tensor {
             && left.dimensions[2] == right.dimensions[1]
         {
             op_tensor_and_matrix(left, right, &F32Mul::default())
+        } else if left.dimensions.len() == 3
+            && right.dimensions.len() == 2
+            && left.dimensions[2] == right.dimensions[0]
+        {
+            mul_tensor_and_matrix_dot_product(left, right)
         } else if left.dimensions.len() == 1 && right.dimensions.len() == 1 {
             multiply_vector_tensor_and_vector_tensor(left, right)
         } else if left.dimensions.len() == 2 && right.dimensions.len() == 1 {
@@ -715,6 +778,46 @@ mod tests {
                 1.0, 4.0, 9.0, //
                 4.0, 10.0, 18.0, //
                 7.0, 16.0, 27.0, //
+            ],
+        );
+        assert_eq!(&tensor1 * &tensor2, Ok(expected));
+    }
+
+    #[test]
+    fn multiply_tensor_and_matrix_reduction() {
+        let tensor1 = Tensor::new(
+            vec![2, 3, 3],
+            vec![
+                //
+                1.0, 2.0, 3.0, //
+                4.0, 5.0, 6.0, //
+                7.0, 8.0, 9.0, //
+                //
+                1.0, 2.0, 3.0, //
+                4.0, 5.0, 6.0, //
+                7.0, 8.0, 9.0, //
+            ],
+        );
+        let tensor2 = Tensor::new(
+            vec![3, 2],
+            vec![
+                //
+                1.0, 2.0, //
+                1.0, 2.0, //
+                1.0, 2.0, //
+            ],
+        );
+        let expected = Tensor::new(
+            vec![2, 3, 2],
+            vec![
+                //
+                6.0, 12.0, //
+                15.0, 30.0, //
+                24.0, 48.0, //
+                //
+                6.0, 12.0, //
+                15.0, 30.0, //
+                24.0, 48.0, //
             ],
         );
         assert_eq!(&tensor1 * &tensor2, Ok(expected));

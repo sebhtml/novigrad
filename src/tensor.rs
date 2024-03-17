@@ -193,54 +193,11 @@ fn op_matrix_tensor_and_column_matrix_tensor(
 }
 
 // Use broadcasting
-fn op_tensor_and_column_vector(
-    left: &Tensor,
-    right: &Tensor,
-    op: &impl F32Op,
-) -> Result<Tensor, Error> {
-    if !(left.dimensions.len() == 3
-        && right.dimensions.len() == 2
-        && left.dimensions[1] == right.dimensions[0]
-        && left.dimensions[2] != 1
-        && right.dimensions[1] == 1)
-    {
-        return Err(Error::IncompatibleTensorShapes);
-    }
-
-    let mut values = Vec::new();
-    values.resize(left.values.len(), 0.0);
-
-    let mut result = Tensor::new(left.dimensions.clone(), values);
-
-    let subs = left.dimensions[0];
-    let rows = left.dimensions[1];
-    let cols = left.dimensions[2];
-    let mut sub = 0;
-    while sub < subs {
-        let mut row = 0;
-        while row < rows {
-            let mut col = 0;
-            while col < cols {
-                let left_indices = vec![sub, row, col];
-                let left = left.get(&left_indices);
-                let right = right.get(&vec![row, 0]);
-                let value = op.op(left, right);
-                result.set(&left_indices, value);
-                col += 1;
-            }
-            row += 1;
-        }
-        sub += 1;
-    }
-    Ok(result)
-}
-
-// Use broadcasting
 fn op_tensor_and_matrix(left: &Tensor, right: &Tensor, op: &impl F32Op) -> Result<Tensor, Error> {
     if !(left.dimensions.len() == 3
         && right.dimensions.len() == 2
         && left.dimensions[1] == right.dimensions[0]
-        && left.dimensions[2] == right.dimensions[1])
+        && (left.dimensions[2] == right.dimensions[1] || right.dimensions[1] == 1))
     {
         return Err(Error::IncompatibleTensorShapes);
     }
@@ -261,7 +218,8 @@ fn op_tensor_and_matrix(left: &Tensor, right: &Tensor, op: &impl F32Op) -> Resul
             while col < cols {
                 let left_indices = vec![sub, row, col];
                 let left = left.get(&left_indices);
-                let right = right.get(&vec![row, col]);
+                let right_col = if right.dimensions[1] == 1 { 0 } else { col };
+                let right = right.get(&vec![row, right_col]);
                 let value = op.op(left, right);
                 result.set(&left_indices, value);
                 col += 1;
@@ -378,7 +336,7 @@ impl Mul for &Tensor {
             && left.dimensions[1] == right.dimensions[0]
             && right.dimensions[1] == 1
         {
-            op_tensor_and_column_vector(left, right, &F32Mul::default())
+            op_tensor_and_matrix(left, right, &F32Mul::default())
         } else if left.dimensions.len() == 3
             && right.dimensions.len() == 2
             && left.dimensions[1] == right.dimensions[0]

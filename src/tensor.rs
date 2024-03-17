@@ -90,6 +90,7 @@ fn add_matrix_tensor_and_matrix_tensor(left: &Tensor, right: &Tensor) -> Result<
     Ok(result)
 }
 
+// Use broadcasting
 fn add_matrix_tensor_and_vector_tensor(left: &Tensor, right: &Tensor) -> Result<Tensor, Error> {
     if left.dimensions[1] != right.dimensions[0] {
         return Err(Error::IncompatibleMatrixShapes);
@@ -130,6 +131,73 @@ impl Add for &Tensor {
     }
 }
 
+fn multiply_matrix_tensor_and_matrix_tensor(
+    left: &Tensor,
+    right: &Tensor,
+) -> Result<Tensor, Error> {
+    if left.dimensions[1] != right.dimensions[0] {
+        return Err(Error::IncompatibleMatrixShapes);
+    }
+    let mut result_values = Vec::new();
+    result_values.resize(left.dimensions[0] * right.dimensions[1], 0.0);
+    let result_ptr = result_values.as_mut_ptr();
+    let left_ptr = left.values.as_ptr();
+    let right_ptr = right.values.as_ptr();
+
+    let left_rows = left.dimensions[0];
+    let left_cols = left.dimensions[1];
+    let right_cols = right.dimensions[1];
+
+    unsafe {
+        let mut row = 0;
+        while row != left_rows {
+            let mut inner = 0;
+            while inner != left_cols {
+                let mut col = 0;
+                while col != right_cols {
+                    let left_cell = left_ptr.add(row * left.dimensions[1] + inner);
+                    let right_cell = right_ptr.add(inner * right.dimensions[1] + col);
+                    let result_cell = result_ptr.add(row * right.dimensions[1] + col);
+                    *result_cell += *left_cell * *right_cell;
+                    col += 1;
+                }
+                inner += 1;
+            }
+            row += 1;
+        }
+    }
+
+    let result = Tensor::new(vec![left.dimensions[0], right.dimensions[1]], result_values);
+    Ok(result)
+}
+
+fn multiply_vector_tensor_and_vector_tensor(
+    left: &Tensor,
+    right: &Tensor,
+) -> Result<Tensor, Error> {
+    if !(left.dimensions.len() == 1
+        && right.dimensions.len() == 1
+        && left.dimensions[0] != 1
+        && right.dimensions[0] == 1)
+    {
+        return Err(Error::IncompatibleMatrixShapes);
+    }
+
+    let mut values = Vec::new();
+    values.resize(left.values.len(), 0.0);
+
+    let mut result = Tensor::new(left.dimensions.clone(), values);
+
+    let rows = left.dimensions[0];
+    let mut row = 0;
+    while row < rows {
+        let value = left.get(&vec![row]) * right.get(&vec![0]);
+        result.set(&vec![row], value);
+        row += 1;
+    }
+    Ok(result)
+}
+
 // for large matrices, this could be used:
 // matmulImplLoopOrder algorithm
 // from https://siboehm.com/articles/22/Fast-MMM-on-CPU
@@ -141,40 +209,13 @@ impl Mul for &Tensor {
     fn mul(self, right: &Tensor) -> Self::Output {
         let left: &Tensor = self;
         // TODO generalize
-        if left.dimensions[1] != right.dimensions[0] {
-            return Err(Error::IncompatibleMatrixShapes);
+        if left.dimensions.len() == 2 && right.dimensions.len() == 2 {
+            multiply_matrix_tensor_and_matrix_tensor(left, right)
+        } else if left.dimensions.len() == 1 && right.dimensions.len() == 1 {
+            multiply_vector_tensor_and_vector_tensor(left, right)
+        } else {
+            Err(Error::UnsupportedTensorShapes)
         }
-        let mut result_values = Vec::new();
-        result_values.resize(left.dimensions[0] * right.dimensions[1], 0.0);
-        let result_ptr = result_values.as_mut_ptr();
-        let left_ptr = left.values.as_ptr();
-        let right_ptr = right.values.as_ptr();
-
-        let left_rows = left.dimensions[0];
-        let left_cols = left.dimensions[1];
-        let right_cols = right.dimensions[1];
-
-        unsafe {
-            let mut row = 0;
-            while row != left_rows {
-                let mut inner = 0;
-                while inner != left_cols {
-                    let mut col = 0;
-                    while col != right_cols {
-                        let left_cell = left_ptr.add(row * left.dimensions[1] + inner);
-                        let right_cell = right_ptr.add(inner * right.dimensions[1] + col);
-                        let result_cell = result_ptr.add(row * right.dimensions[1] + col);
-                        *result_cell += *left_cell * *right_cell;
-                        col += 1;
-                    }
-                    inner += 1;
-                }
-                row += 1;
-            }
-        }
-
-        let result = Tensor::new(vec![left.dimensions[0], right.dimensions[1]], result_values);
-        Ok(result)
     }
 }
 
@@ -368,7 +409,7 @@ mod tests {
     }
 
     #[test]
-    fn broadcasting_add() {
+    fn add_matrix_tensor_and_vector_tensor() {
         let tensor1 = Tensor::new(
             vec![4, 3],
             vec![
@@ -392,5 +433,15 @@ mod tests {
             ],
         );
         assert_eq!(result, Ok(expected));
+    }
+
+    #[test]
+    fn multiply_vector_tensor_and_vector_tensor() {
+        let tensor1 = Tensor::new(vec![3], vec![1.0, 2.0, 3.0]);
+        let tensor2 = Tensor::new(vec![1], vec![2.0]);
+        assert_eq!(
+            &tensor1 * &tensor2,
+            Ok(Tensor::new(vec![3], vec![2.0, 4.0, 6.0,],))
+        );
     }
 }

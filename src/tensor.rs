@@ -20,12 +20,16 @@ impl Tensor {
     }
 
     pub fn index(&self, indices: &Vec<usize>) -> usize {
-        if indices.len() == 2 {
+        if indices.len() == 3 {
+            indices[0] * self.dimensions[1] * self.dimensions[2]
+                + indices[1] * self.dimensions[2]
+                + indices[2]
+        } else if indices.len() == 2 {
             indices[0] * self.dimensions[1] + indices[1]
-        } else
-        /*indices.len() == 1 */
-        {
+        } else if indices.len() == 1 {
             indices[0]
+        } else {
+            usize::MAX
         }
     }
 
@@ -188,6 +192,49 @@ fn op_matrix_tensor_and_column_matrix_tensor(
     Ok(result)
 }
 
+// Use broadcasting
+fn op_tensor_and_column_vector(
+    left: &Tensor,
+    right: &Tensor,
+    op: &impl F32Op,
+) -> Result<Tensor, Error> {
+    if !(left.dimensions.len() == 3
+        && right.dimensions.len() == 2
+        && left.dimensions[1] == right.dimensions[0]
+        && left.dimensions[2] != 1
+        && right.dimensions[1] == 1)
+    {
+        return Err(Error::IncompatibleTensorShapes);
+    }
+
+    let mut values = Vec::new();
+    values.resize(left.values.len(), 0.0);
+
+    let mut result = Tensor::new(left.dimensions.clone(), values);
+
+    let subs = left.dimensions[0];
+    let rows = left.dimensions[1];
+    let cols = left.dimensions[2];
+    let mut sub = 0;
+    while sub < subs {
+        let mut row = 0;
+        while row < rows {
+            let mut col = 0;
+            while col < cols {
+                let left_indices = vec![sub, row, col];
+                let left = left.get(&left_indices);
+                let right = right.get(&vec![row, 0]);
+                let value = op.op(left, right);
+                result.set(&left_indices, value);
+                col += 1;
+            }
+            row += 1;
+        }
+        sub += 1;
+    }
+    Ok(result)
+}
+
 impl Add for &Tensor {
     type Output = Result<Tensor, Error>;
 
@@ -288,6 +335,12 @@ impl Mul for &Tensor {
             && right.dimensions[1] == 1
         {
             op_matrix_tensor_and_column_matrix_tensor(left, right, &F32Mul::default())
+        } else if left.dimensions.len() == 3
+            && right.dimensions.len() == 2
+            && left.dimensions[1] == right.dimensions[0]
+            && right.dimensions[1] == 1
+        {
+            op_tensor_and_column_vector(left, right, &F32Mul::default())
         } else if left.dimensions.len() == 1 && right.dimensions.len() == 1 {
             multiply_vector_tensor_and_vector_tensor(left, right)
         } else if left.dimensions.len() == 2 && right.dimensions.len() == 1 {
@@ -576,6 +629,46 @@ mod tests {
         let expected = Tensor::new(
             vec![3, 3],
             vec![
+                //
+                1.0, 2.0, 3.0, //
+                8.0, 10.0, 12.0, //
+                21.0, 24.0, 27.0, //
+            ],
+        );
+        assert_eq!(&tensor1 * &tensor2, Ok(expected));
+    }
+
+    #[test]
+    fn multiply_tensor_and_column_vector() {
+        let tensor1 = Tensor::new(
+            vec![2, 3, 3],
+            vec![
+                //
+                1.0, 2.0, 3.0, //
+                4.0, 5.0, 6.0, //
+                7.0, 8.0, 9.0, //
+                //
+                1.0, 2.0, 3.0, //
+                4.0, 5.0, 6.0, //
+                7.0, 8.0, 9.0, //
+            ],
+        );
+        let tensor2 = Tensor::new(
+            vec![3, 1],
+            vec![
+                //
+                1.0, //
+                2.0, //
+                3.0, //
+            ],
+        );
+        let expected = Tensor::new(
+            vec![2, 3, 3],
+            vec![
+                //
+                1.0, 2.0, 3.0, //
+                8.0, 10.0, 12.0, //
+                21.0, 24.0, 27.0, //
                 //
                 1.0, 2.0, 3.0, //
                 8.0, 10.0, 12.0, //

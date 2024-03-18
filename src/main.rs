@@ -5,6 +5,8 @@ mod tensor;
 use tensor::*;
 mod activation;
 use activation::*;
+mod layer;
+use layer::*;
 mod dataset;
 use dataset::*;
 
@@ -58,9 +60,9 @@ fn main() {
     let mut total_parameters = 0;
     for (index, layer) in network.layers.iter().enumerate() {
         println!("Layer {}", index);
-        println!("Weights {}", layer.weights);
+        println!("Weights {}", layer.weights().as_ref().borrow());
         let mut layer_parameters = 1;
-        for dimension in layer.weights.dimensions() {
+        for dimension in layer.weights().as_ref().borrow().dimensions() {
             layer_parameters *= dimension;
         }
         total_parameters += layer_parameters;

@@ -1,4 +1,6 @@
 mod sigmoid;
+use std::rc::Rc;
+
 use sigmoid::*;
 mod softmax;
 use softmax::*;
@@ -17,11 +19,11 @@ pub enum Activation {
     Softmax,
 }
 
-impl Into<Box<dyn ActivationFunction>> for Activation {
-    fn into(self) -> Box<dyn ActivationFunction> {
+impl Into<Rc<dyn ActivationFunction>> for Activation {
+    fn into(self) -> Rc<dyn ActivationFunction> {
         match self {
-            Activation::Sigmoid => Box::new(Sigmoid::default()),
-            Activation::Softmax => Box::new(Softmax::default()),
+            Activation::Sigmoid => Rc::new(Sigmoid::default()),
+            Activation::Softmax => Rc::new(Softmax::default()),
         }
     }
 }

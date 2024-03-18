@@ -11,7 +11,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 # Roadmap
 
 - rename matrix to tensor
-- implement Linear layer
 - load megaman
 - implement transformer
 - gelu

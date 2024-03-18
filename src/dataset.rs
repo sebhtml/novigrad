@@ -3,9 +3,9 @@ use crate::Tensor;
 fn add_simple_embeddings(input: Tensor) -> Tensor {
     let table = vec![
         // 0.0
-        vec![0.0], //, 0.0, 1.0, 0.0], //
+        vec![0.0, 0.0, 1.0, 0.0], //
         // 1.0
-        vec![1.0], //, 0.0, 0.0, 0.0], //
+        vec![1.0, 0.0, 0.0, 0.0], //
     ];
     let mut values = vec![];
     let mut row = 0;
@@ -15,7 +15,7 @@ fn add_simple_embeddings(input: Tensor) -> Tensor {
         values.append(&mut table[index].clone());
         row += 1;
     }
-    Tensor::new(vec![table[0].len(), input.dimensions()[0]], values)
+    Tensor::new(vec![1, input.dimensions()[0] * table[0].len(), ], values)
 }
 
 pub fn load_simple_examples() -> Vec<(Tensor, Tensor)> {

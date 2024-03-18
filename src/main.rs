@@ -14,11 +14,13 @@ use dataset::*;
 
 fn main() {
     let examples = load_simple_examples();
+    let input_size = examples[0].0.dimensions()[1];
+    let output_size = examples[0].1.dimensions()[1];
 
     let layers = vec![
         LayerConfig {
             rows: 16,
-            cols: 4,
+            cols: input_size,
             activation: Activation::Sigmoid,
         },
         LayerConfig {
@@ -27,7 +29,7 @@ fn main() {
             activation: Activation::Sigmoid,
         },
         LayerConfig {
-            rows: 2,
+            rows: output_size,
             cols: 16,
             activation: Activation::Softmax,
         },

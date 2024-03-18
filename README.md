@@ -10,9 +10,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- embeddings
 - rename matrix to tensor
-- configure network according to dataset
 - load megaman
 - implement transformer
 - gelu

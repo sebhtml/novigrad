@@ -5,10 +5,6 @@ mod tensor;
 use tensor::*;
 mod activation;
 use activation::*;
-mod sigmoid;
-use sigmoid::*;
-mod softmax;
-use softmax::*;
 mod dataset;
 use dataset::*;
 

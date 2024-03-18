@@ -1,4 +1,9 @@
-use crate::{Sigmoid, Softmax, Tensor};
+mod sigmoid;
+use sigmoid::*;
+mod softmax;
+use softmax::*;
+
+use crate::Tensor;
 
 pub trait ActivationFunction {
     fn activate_matrix(&self, product_matrix: Tensor) -> Tensor;

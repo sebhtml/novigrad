@@ -12,7 +12,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 - rename matrix to tensor
 - implement Linear layer
-- move action things to a activation module
 - load megaman
 - implement transformer
 - gelu

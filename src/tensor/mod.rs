@@ -6,7 +6,6 @@ use std::{
 #[cfg(test)]
 mod tests;
 
-// For broadcasting, see https://medium.com/@hunter-j-phillips/a-simple-introduction-to-broadcasting-db8e581368b3
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {
     dimensions: Vec<usize>,
@@ -374,11 +373,6 @@ fn multiply_vector_tensor_and_vector_tensor(
     Ok(result)
 }
 
-// for large matrices, this could be used:
-// matmulImplLoopOrder algorithm
-// from https://siboehm.com/articles/22/Fast-MMM-on-CPU
-// from Simon Boehm who works at Anthropic
-// Also see "matmulImplTiling" from this link.
 impl Mul for &Tensor {
     type Output = Result<Tensor, Error>;
 

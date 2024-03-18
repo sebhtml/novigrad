@@ -15,7 +15,6 @@ use dataset::*;
 fn main() {
     let examples = load_simple_examples();
 
-    // see https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
     let layers = vec![
         LayerConfig {
             rows: 16,

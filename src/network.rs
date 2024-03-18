@@ -63,7 +63,6 @@ impl Network {
         total_error
     }
 
-    // https://web.stanford.edu/group/pdplab/originalpdphandbook/Chapter%205.pdf
     fn train_back_propagation(&mut self, _example: usize, x: &Tensor, y: &Tensor) {
         let learning_rate = 0.5;
         let x = x;

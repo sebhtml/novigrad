@@ -15,10 +15,11 @@ use dataset::*;
 fn main() {
     let examples = load_simple_examples();
 
+    // see https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
     let layers = vec![
         LayerConfig {
-            rows: 4,
-            cols: 16,
+            rows: 16,
+            cols: 4,
             activation: Activation::Sigmoid,
         },
         LayerConfig {
@@ -27,8 +28,8 @@ fn main() {
             activation: Activation::Sigmoid,
         },
         LayerConfig {
-            rows: 16,
-            cols: 2,
+            rows: 2,
+            cols: 16,
             activation: Activation::Softmax,
         },
     ];

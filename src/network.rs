@@ -66,8 +66,8 @@ impl Network {
     // https://web.stanford.edu/group/pdplab/originalpdphandbook/Chapter%205.pdf
     fn train_back_propagation(&mut self, _example: usize, x: &Tensor, y: &Tensor) {
         let learning_rate = 0.5;
-        let x = x.transpose();
-        let y = y.transpose();
+        let x = x;
+        let y = y;
         let mut matrix_products: Vec<Tensor> = Vec::new();
         let mut activations: Vec<Tensor> = Vec::new();
         // TODO add constant bias
@@ -85,8 +85,12 @@ impl Network {
 
             let layer_weights = &layer.weights;
             let activation = &layer.activation;
-            // C = X * W
-            let matrix_product = previous_activation * layer_weights;
+            // Use the same convention that is used in tensorflow:
+            //  y= x W^T+b
+            // Weights is on the right.
+            // W is transposed.
+            // X is not transposed.
+            let matrix_product = previous_activation * &layer_weights.transpose();
 
             match matrix_product {
                 Ok(matrix_product) => {
@@ -114,14 +118,14 @@ impl Network {
             let activation = &self.layers[layer].activation;
             let layer_activation = &activations[layer];
             let derived_matrix = activation.derive_matrix(layer_activation.clone());
-            for col in 0..layer_weights.dimensions()[1] {
+            for col in 0..layer_weights.dimensions()[0] {
                 let f_derivative = derived_matrix.get(&vec![0, col]);
                 let target_diff = if layer == self.layers.len() - 1 {
                     y.get(&vec![0, col]) - layer_activation.get(&vec![0, col])
                 } else {
                     let next_weights = &self.layers[layer + 1].weights;
                     let mut sum = 0.0;
-                    for k in 0..next_weights.dimensions()[1] {
+                    for k in 0..next_weights.dimensions()[0] {
                         let next_weight = next_weights.get(&vec![k, col]);
                         let next_diff: f32 = layer_diffs[layer + 1][k];
                         sum += next_weight * next_diff;
@@ -132,7 +136,7 @@ impl Network {
                 let delta_pi = f_derivative * target_diff;
                 layer_diffs[layer].push(delta_pi);
 
-                for row in 0..layer_weights.dimensions()[0] {
+                for row in 0..layer_weights.dimensions()[1] {
                     let a_pj = {
                         if layer == 0 {
                             x.get(&vec![0, row])
@@ -141,7 +145,7 @@ impl Network {
                         }
                     };
                     let delta_w_ij = learning_rate * delta_pi * a_pj;
-                    weight_deltas[layer].set(&vec![row, col], delta_w_ij);
+                    weight_deltas[layer].set(&vec![col, row], delta_w_ij);
                 }
             }
         }
@@ -173,12 +177,12 @@ impl Network {
         // TODO add constant bias
         // Add a constant for bias
         //x.push(1.0);
-        let mut previous_activation = x.transpose();
+        let mut previous_activation = x.clone();
 
         for layer in self.layers.iter() {
             let layer_weights = &layer.weights;
             let activation = &layer.activation;
-            let matrix_product = &previous_activation * layer_weights;
+            let matrix_product = &previous_activation * &layer_weights.transpose();
 
             match matrix_product {
                 Ok(matrix_product) => {
@@ -192,6 +196,6 @@ impl Network {
             }
         }
 
-        previous_activation.transpose()
+        previous_activation
     }
 }

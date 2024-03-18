@@ -12,7 +12,13 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 # Roadmap
 
 - embeddings
+- move all links in README
+- rename matrix to tensor
 - configure network according to dataset
 - load megaman
 - implement transformer
 - gelu
+
+# Links
+
+- https://pytorch.org/docs/stable/generated/torch.nn.Linear.html

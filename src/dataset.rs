@@ -15,7 +15,7 @@ fn add_simple_embeddings(input: Tensor) -> Tensor {
         values.append(&mut table[index].clone());
         row += 1;
     }
-    Tensor::new(vec![input.dimensions()[0], table[0].len()], values)
+    Tensor::new(vec![table[0].len(), input.dimensions()[0]], values)
 }
 
 pub fn load_simple_examples() -> Vec<(Tensor, Tensor)> {
@@ -23,22 +23,22 @@ pub fn load_simple_examples() -> Vec<(Tensor, Tensor)> {
     examples.push((
         //
         Tensor::new(vec![4, 1], vec![1.0, 0.0, 0.0, 0.0]), //
-        Tensor::new(vec![2, 1], vec![0.1, 0.9]),
+        Tensor::new(vec![1, 2], vec![0.1, 0.9]),
     ));
     examples.push((
         //
         Tensor::new(vec![4, 1], vec![1.0, 0.0, 0.0, 1.0]), //
-        Tensor::new(vec![2, 1], vec![0.1, 0.9]),
+        Tensor::new(vec![1, 2], vec![0.1, 0.9]),
     ));
     examples.push((
         //
         Tensor::new(vec![4, 1], vec![0.0, 0.0, 1.0, 0.0]), //
-        Tensor::new(vec![2, 1], vec![0.9, 0.1]),
+        Tensor::new(vec![1, 2], vec![0.9, 0.1]),
     ));
     examples.push((
         //
         Tensor::new(vec![4, 1], vec![0.0, 1.0, 1.0, 0.0]), //
-        Tensor::new(vec![2, 1], vec![0.9, 0.1]),
+        Tensor::new(vec![1, 2], vec![0.9, 0.1]),
     ));
     examples
         .into_iter()

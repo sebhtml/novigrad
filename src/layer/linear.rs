@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{ActivationFunction, Layer, Tensor};
+use crate::{ActivationFunction, Error, Layer, Tensor};
 
 pub struct Linear {
     pub weights: Rc<RefCell<Tensor>>,
@@ -14,5 +14,9 @@ impl Layer for Linear {
 
     fn activation(&self) -> Rc<dyn ActivationFunction> {
         self.activation.clone()
+    }
+
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        input * &(*self.weights.borrow()).transpose()
     }
 }

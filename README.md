@@ -10,6 +10,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
+- add tape like in pytorch
 - rename matrix to tensor
 - load megaman
 - implement transformer

@@ -80,14 +80,13 @@ impl Network {
                 }
             };
 
-            let layer_weights = layer.weights();
             let activation = layer.activation();
             // Use the same convention that is used in tensorflow:
             //  y= x W^T+b
             // Weights is on the right.
             // W is transposed.
             // X is not transposed.
-            let matrix_product = &*previous_activation * &(*layer_weights.borrow()).transpose();
+            let matrix_product = layer.forward(&previous_activation);
 
             match matrix_product {
                 Ok(matrix_product) => {
@@ -96,6 +95,7 @@ impl Network {
                     activations.push(activation);
                 }
                 _ => {
+                    let layer_weights = layer.weights();
                     println!("Incompatible shapes in matrix multiplication");
                     println!(
                         "Between  X {} and W {}",
@@ -185,16 +185,15 @@ impl Network {
         let mut previous_activation = x.clone();
 
         for layer in self.layers.iter() {
-            let layer_weights = layer.weights();
             let activation = layer.activation();
-            let matrix_product = &previous_activation * &(*layer_weights.borrow()).transpose();
-
+            let matrix_product = layer.forward(&previous_activation);
             match matrix_product {
                 Ok(matrix_product) => {
                     let activation = activation.activate_matrix(matrix_product);
                     previous_activation = activation;
                 }
                 _ => {
+                    let layer_weights = layer.weights();
                     println!("Incompatible shapes in matrix multiplication");
                     println!(
                         "Between  X {} and W {}",

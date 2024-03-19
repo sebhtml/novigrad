@@ -51,10 +51,6 @@ impl Network {
             let predicted = self.predict(&inputs[i]);
             let target = &outputs[i];
             let example_error = self.compute_error(target, &predicted);
-            println!(
-                "Example Error example {} target {:?} predicted {:?} error {}",
-                i, target, predicted, example_error
-            );
             total_error += example_error;
         }
 

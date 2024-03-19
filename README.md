@@ -1,7 +1,8 @@
 # Run the program
 
-cargo build --release
-time RUST_BACKTRACE=1 cargo run &> log
+```bash
+cargo run --release
+```
 
 # Mega_man
 
@@ -10,12 +11,15 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- load megaman
+- implement cross-entropy loss
+- optimize code to reduce calls to malloc() and free() (transpose in place, mat mul in place)
+- shuffle examples in each epoch
 - bpe tokenizer
 - add tape like in pytorch
 - rename matrix to tensor
 - implement transformer
 - gelu
+
 
 # Links
 

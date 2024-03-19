@@ -10,8 +10,24 @@ use layer::*;
 mod dataset;
 use dataset::*;
 
+fn print_total_error(
+    network: &Network,
+    inputs: &Vec<Tensor>,
+    outputs: &Vec<Tensor>,
+    last_total_error: f32,
+    epoch: usize,
+) -> f32 {
+    let total_error = network.total_error(inputs, outputs);
+    let change = (total_error - last_total_error) / last_total_error;
+    println!(
+        "Epoch {} Total_error {}, change: {}",
+        epoch, total_error, change
+    );
+    total_error
+}
+
 fn main() {
-    let examples = load_simple_examples();
+    let examples = load_megaman_examples();
     let input_size = examples[0].0.dimensions()[1];
     let output_size = examples[0].1.dimensions()[1];
 
@@ -39,20 +55,25 @@ fn main() {
     let outputs = examples.iter().map(|x| x.clone().1).collect();
 
     let mut last_total_error = f32::NAN;
-    for i in 0..32000 {
-        if i % 1000 == 0 {
-            let total_error = network.total_error(&inputs, &outputs);
-            let change = (total_error - last_total_error) / last_total_error;
-            println!(
-                "Iteration {} Total_error {}, change: {}",
-                i, total_error, change
-            );
-            last_total_error = total_error;
+    let epochs = 10000;
+    for epoch in 0..epochs {
+        if epoch % 1000 == 0 {
+            last_total_error =
+                print_total_error(&network, &inputs, &outputs, last_total_error, epoch);
         }
         network.train(&inputs, &outputs);
     }
+    _ = print_total_error(&network, &inputs, &outputs, last_total_error, epochs);
 
-    _ = network.predict_many(&inputs);
+    let predictions = network.predict_many(&inputs);
+
+    for i in 0..inputs.len() {
+        let output = &outputs[i];
+        let prediction = &predictions[i];
+        println!("Example {}", i);
+        println!("Expected {}", output);
+        println!("Actual   {}", prediction);
+    }
 
     println!("");
     println!("Final weights");

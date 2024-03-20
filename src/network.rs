@@ -88,6 +88,12 @@ impl Network {
 
             match error {
                 Ok(_) => {
+                    /*
+                    println!("Layer {}", layer_index);
+                    println!("previous_activation {}", previous_activation);
+                    println!("weights^T {}", layer.weights().borrow().transpose());
+                    println!("matrix_product {}", matrix_product);
+                     */
                     matrix_products.push(matrix_product.clone());
                     let activation = activation.activate_matrix(matrix_product.clone());
                     activations.push(activation);
@@ -122,6 +128,10 @@ impl Network {
             for col in 0..layer_weights.as_ref().borrow().rows() {
                 let f_derivative = derived_matrix.get(0, col);
                 let target_diff = if layer == self.layers.len() - 1 {
+                    /*
+                    println!("y {}", y);
+                    println!("layer_activation {}", layer_activation);
+                     */
                     y.get(0, col) - layer_activation.get(0, col)
                 } else {
                     let next_weights = self.layers[layer + 1].weights();

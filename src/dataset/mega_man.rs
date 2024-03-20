@@ -4,12 +4,12 @@ use crate::Tensor;
 
 fn add_mega_man_embeddings(
     embeddings_table: &Vec<Vec<f32>>,
+    num_embeddings: usize,
     embedding_dim: usize,
     input: Vec<u8>,
 ) -> Tensor {
     let mut values = vec![];
     let mut col = 0;
-    let num_embeddings = input.len();
     while col < num_embeddings {
         let token = input[col];
         values.append(&mut embeddings_table[token as usize].clone());
@@ -62,10 +62,19 @@ pub fn load_megaman_examples() -> Vec<(Tensor, Tensor)> {
     let mut i = 0;
     while i + context_size < tokens.len() && i < 100 {
         let next_token_index = i + context_size;
+        let num_embeddings = context_size;
         let input_tokens = tokens[i..next_token_index].to_owned();
-        let input_embeddings =
-            add_mega_man_embeddings(&embedding_table, embedding_dim, input_tokens);
         let next_token = tokens[next_token_index];
+        /*
+        println!("input_tokens {:?}", input_tokens);
+        println!("next_token {}", next_token);
+         */
+        let input_embeddings = add_mega_man_embeddings(
+            &embedding_table,
+            num_embeddings,
+            embedding_dim,
+            input_tokens,
+        );
         let output_multiclass = to_multi_class(next_token, token_count);
 
         examples.push((

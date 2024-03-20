@@ -27,8 +27,8 @@ fn print_total_error(
 }
 
 fn main() {
-    //let examples = load_examples(Dataset::Simple);
-    let examples = load_examples(Dataset::MegaMan);
+    let examples = load_examples(Dataset::Simple);
+    //let examples = load_examples(Dataset::MegaMan);
     let input_size = examples[0].0.cols();
     let output_size = examples[0].1.cols();
 
@@ -66,6 +66,7 @@ fn main() {
     }
     _ = print_total_error(&network, &inputs, &outputs, last_total_error, epochs);
 
+    /*
     let predictions = network.predict_many(&inputs);
 
     for i in 0..inputs.len() {
@@ -89,4 +90,5 @@ fn main() {
         total_parameters += layer_parameters;
     }
     println!("Total_parameters: {}", total_parameters);
+     */
 }

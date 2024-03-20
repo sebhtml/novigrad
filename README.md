@@ -11,9 +11,12 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- output is taken in the last column of softmax (probability of next token)
-- avoid transpose and instead implement a matmul with lhs transpose semantics
 - activate matrix in place
+- derive matrix in place
+- avoid transpose and instead implement a matmul with lhs transpose semantics
+- make static embeddings work for simple dataset
+- make static embeddings work for megaman dataset
+- output is taken in the last column of softmax (probability of next token)
 - implement cross-entropy loss
 - embeddings are learned
 - shuffle examples in each epoch

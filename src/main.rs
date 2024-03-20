@@ -27,7 +27,7 @@ fn print_total_error(
 }
 
 fn main() {
-    let examples = load_megaman_examples();
+    let examples = load_examples(Dataset::Simple);
     let input_size = examples[0].0.dimensions()[1];
     let output_size = examples[0].1.dimensions()[1];
 

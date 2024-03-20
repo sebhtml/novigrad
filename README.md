@@ -11,8 +11,11 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- implement cross-entropy loss
+- remove broadcasting
 - optimize code to reduce calls to malloc() and free() -> avoid transpose and instead implement a matmul with lhs transpose semantics
+- output is taken in the last column of softmax (probability of next token)
+- implement cross-entropy loss
+- embeddings are learned
 - shuffle examples in each epoch
 - bpe tokenizer
 - add tape like in pytorch

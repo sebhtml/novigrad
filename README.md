@@ -12,7 +12,8 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 # Roadmap
 
 - output is taken in the last column of softmax (probability of next token)
-- optimize code to reduce calls to malloc() and free() -> avoid transpose and instead implement a matmul with lhs transpose semantics
+- avoid transpose and instead implement a matmul with lhs transpose semantics
+- activate matrix in place
 - implement cross-entropy loss
 - embeddings are learned
 - shuffle examples in each epoch

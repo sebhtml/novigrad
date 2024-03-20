@@ -27,9 +27,10 @@ fn print_total_error(
 }
 
 fn main() {
-    let examples = load_examples(Dataset::Simple);
-    let input_size = examples[0].0.dimensions()[1];
-    let output_size = examples[0].1.dimensions()[1];
+    //let examples = load_examples(Dataset::Simple);
+    let examples = load_examples(Dataset::MegaMan);
+    let input_size = examples[0].0.cols();
+    let output_size = examples[0].1.cols();
 
     let layers = vec![
         LayerConfig {
@@ -82,10 +83,9 @@ fn main() {
     for (index, layer) in network.layers.iter().enumerate() {
         println!("Layer {}", index);
         println!("Weights {}", layer.weights().as_ref().borrow());
-        let mut layer_parameters = 1;
-        for dimension in layer.weights().as_ref().borrow().dimensions() {
-            layer_parameters *= dimension;
-        }
+        let rows = layer.weights().as_ref().borrow().rows();
+        let cols = layer.weights().as_ref().borrow().cols();
+        let layer_parameters = rows * cols;
         total_parameters += layer_parameters;
     }
     println!("Total_parameters: {}", total_parameters);

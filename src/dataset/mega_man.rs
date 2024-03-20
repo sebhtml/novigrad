@@ -15,14 +15,14 @@ fn add_mega_man_embeddings(
         values.append(&mut embeddings_table[token as usize].clone());
         col += 1;
     }
-    Tensor::new(vec![1, num_embeddings * embedding_dim], values)
+    Tensor::new(1, num_embeddings * embedding_dim, values)
 }
 
 fn to_multi_class(next_token: u8, token_count: usize) -> Tensor {
     let mut values = vec![];
     values.resize(token_count, 0.0);
     values[next_token as usize] = 1.0;
-    Tensor::new(vec![1, token_count], values)
+    Tensor::new(1, token_count, values)
 }
 
 fn get_mega_man_embedding_table(token_count: usize) -> Vec<Vec<f32>> {

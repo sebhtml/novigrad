@@ -9,7 +9,8 @@ fn new() {
     // Then it has the appropriate shape
 
     let matrix = Tensor::new(
-        vec![4, 3],
+        4,
+        3,
         vec![
             0.0, 0.0, 0.0, //
             0.0, 0.0, 0.0, //
@@ -17,7 +18,7 @@ fn new() {
             0.0, 0.0, 0.0, //
         ],
     );
-    assert_eq!(matrix.dimensions(), vec![4, 3]);
+    assert_eq!((matrix.rows(), matrix.cols()), (4, 3));
 }
 
 #[test]
@@ -27,14 +28,16 @@ fn multiplication_shape_compatibility() {
     // Then there is an error
 
     let lhs = Tensor::new(
-        vec![1, 1],
+        1,
+        1,
         vec![
             0.0, //
         ],
     );
 
     let rhs = Tensor::new(
-        vec![2, 1],
+        2,
+        1,
         vec![
             0.0, //
             0.0, //
@@ -53,7 +56,8 @@ fn matrix_multiplication_result() {
     // Then the resulting matrix has the correct values
 
     let lhs = Tensor::new(
-        vec![3, 2],
+        3,
+        2,
         vec![
             1.0, 2.0, //
             3.0, 4.0, //
@@ -61,14 +65,16 @@ fn matrix_multiplication_result() {
         ],
     );
     let rhs = Tensor::new(
-        vec![2, 3],
+        2,
+        3,
         vec![
             11.0, 12.0, 13.0, //
             14.0, 15.0, 16.0, //
         ],
     );
     let expected_result = Tensor::new(
-        vec![3, 3],
+        3,
+        3,
         vec![
             1.0 * 11.0 + 2.0 * 14.0,
             1.0 * 12.0 + 2.0 * 15.0,
@@ -94,7 +100,8 @@ fn matrix_addition_result() {
     // Then the resulting matrix has the correct values
 
     let lhs = Tensor::new(
-        vec![3, 2],
+        3,
+        2,
         vec![
             1.0, 2.0, //
             3.0, 4.0, //
@@ -102,7 +109,8 @@ fn matrix_addition_result() {
         ],
     );
     let rhs: Tensor = Tensor::new(
-        vec![3, 2],
+        3,
+        2,
         vec![
             11.0, 12.0, //
             14.0, 15.0, //
@@ -110,7 +118,8 @@ fn matrix_addition_result() {
         ],
     );
     let expected_result = Tensor::new(
-        vec![3, 2],
+        3,
+        2,
         vec![
             1.0 + 11.0,
             2.0 + 12.0, //
@@ -135,7 +144,7 @@ fn big_matrix_multiplication() {
     for index in 0..values.len() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
-    let m = Tensor::new(vec![rows, cols], values);
+    let m = Tensor::new(rows, cols, values);
 
     let mut result = Tensor::default();
     m.mul(&m, &mut result);
@@ -150,7 +159,7 @@ fn big_matrix_addition() {
     for index in 0..values.len() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
-    let m = Tensor::new(vec![rows, cols], values);
+    let m = Tensor::new(rows, cols, values);
 
     let mut result = Tensor::default();
     m.add(&m, &mut result);
@@ -158,11 +167,11 @@ fn big_matrix_addition() {
 
 #[test]
 fn transpose() {
-    let matrix = Tensor::new(vec![3, 2], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    let matrix = Tensor::new(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     let matrix2 = matrix.transpose();
-    for row in 0..matrix.dimensions()[0] {
-        for col in 0..matrix.dimensions()[1] {
-            assert_eq!(matrix2.get(&vec![col, row]), matrix.get(&vec![row, col]));
+    for row in 0..matrix.rows() {
+        for col in 0..matrix.cols() {
+            assert_eq!(matrix2.get(col, row), matrix.get(row, col));
         }
     }
 }

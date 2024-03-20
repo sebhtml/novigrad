@@ -11,9 +11,8 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- remove broadcasting
-- optimize code to reduce calls to malloc() and free() -> avoid transpose and instead implement a matmul with lhs transpose semantics
 - output is taken in the last column of softmax (probability of next token)
+- optimize code to reduce calls to malloc() and free() -> avoid transpose and instead implement a matmul with lhs transpose semantics
 - implement cross-entropy loss
 - embeddings are learned
 - shuffle examples in each epoch

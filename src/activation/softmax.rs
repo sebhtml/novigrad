@@ -12,7 +12,6 @@ impl Default for Softmax {
 
 impl ActivationFunction for Softmax {
     fn activate_matrix(&self, mut product_matrix: Tensor) -> Tensor {
-        // TODO generalize
         // Find max
         let rows = product_matrix.dimensions()[0];
         let cols = product_matrix.dimensions()[1];
@@ -61,7 +60,6 @@ impl ActivationFunction for Softmax {
     }
 
     fn derive_matrix(&self, mut matrix: Tensor) -> Tensor {
-        // TODO generalize
         let rows = matrix.dimensions()[0];
         let cols = matrix.dimensions()[1];
         let mut row = 0;

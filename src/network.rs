@@ -113,7 +113,6 @@ impl Network {
         let mut layer_diffs = Vec::new();
         layer_diffs.resize(self.layers.len(), Vec::<f32>::new());
 
-        // TODO generalize how tensor.dimensions() is used.
         for (layer, _) in self.layers.iter().enumerate().rev() {
             let layer = layer.to_owned();
             let layer_weights = self.layers[layer].weights();
@@ -179,7 +178,6 @@ impl Network {
     }
 
     pub fn predict(&self, x: &Tensor) -> Tensor {
-        // TODO add constant bias
         // Add a constant for bias
         //x.push(1.0);
         let mut previous_activation = x.clone();

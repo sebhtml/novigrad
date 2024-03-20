@@ -65,7 +65,6 @@ impl Tensor {
     }
 
     pub fn transpose(&self) -> Self {
-        // TODO generalize
         let rev_dimensions = self.dimensions.clone().into_iter().rev().collect();
         let mut other: Tensor = Tensor::new(rev_dimensions, self.values.clone());
         let mut row = 0;
@@ -116,207 +115,11 @@ fn add_matrix_tensor_and_matrix_tensor(
     Ok(())
 }
 
-trait F32Op {
-    fn op(&self, left: f32, right: f32) -> f32;
-}
-
-struct F32Add {}
-impl F32Op for F32Add {
-    fn op(&self, left: f32, right: f32) -> f32 {
-        left + right
-    }
-}
-impl Default for F32Add {
-    fn default() -> Self {
-        Self {}
-    }
-}
-struct F32Mul {}
-impl F32Op for F32Mul {
-    fn op(&self, left: f32, right: f32) -> f32 {
-        left * right
-    }
-}
-impl Default for F32Mul {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-// Use broadcasting
-fn op_matrix_tensor_and_vector_tensor(
-    left: &Tensor,
-    right: &Tensor,
-    result: &mut Tensor,
-    op: &impl F32Op,
-) -> Result<(), Error> {
-    if !(left.dimensions.len() == 2
-        && right.dimensions.len() == 1
-        && left.dimensions[1] == right.dimensions[0])
-    {
-        return Err(Error::IncompatibleTensorShapes);
-    }
-
-    result.reshape(&left.dimensions);
-
-    let rows = left.dimensions[0];
-    let cols = left.dimensions[1];
-    let mut row = 0;
-    while row < rows {
-        let mut col = 0;
-        while col < cols {
-            let left = left.get(&vec![row, col]);
-            let right = right.get(&vec![col]);
-            let value = op.op(left, right);
-            result.set(&vec![row, col], value);
-            col += 1;
-        }
-        row += 1;
-    }
-    Ok(())
-}
-
-// Use broadcasting
-fn op_matrix_tensor_and_column_matrix_tensor(
-    left: &Tensor,
-    right: &Tensor,
-    result: &mut Tensor,
-    op: &impl F32Op,
-) -> Result<(), Error> {
-    if !(left.dimensions.len() == 2
-        && right.dimensions.len() == 2
-        && left.dimensions[0] == right.dimensions[0]
-        && left.dimensions[1] != 1
-        && right.dimensions[1] == 1)
-    {
-        return Err(Error::IncompatibleTensorShapes);
-    }
-
-    result.reshape(&left.dimensions);
-
-    let rows = left.dimensions[0];
-    let cols = left.dimensions[1];
-    let mut row = 0;
-    while row < rows {
-        let mut col = 0;
-        while col < cols {
-            let left = left.get(&vec![row, col]);
-            let right = right.get(&vec![row, 0]);
-            let value = op.op(left, right);
-            result.set(&vec![row, col], value);
-            col += 1;
-        }
-        row += 1;
-    }
-    Ok(())
-}
-
-// Use broadcasting
-fn op_tensor_and_matrix(
-    left: &Tensor,
-    right: &Tensor,
-    result: &mut Tensor,
-    op: &impl F32Op,
-) -> Result<(), Error> {
-    if !(left.dimensions.len() == 3
-        && right.dimensions.len() == 2
-        && left.dimensions[1] == right.dimensions[0]
-        && (left.dimensions[2] == right.dimensions[1] || right.dimensions[1] == 1))
-    {
-        return Err(Error::IncompatibleTensorShapes);
-    }
-
-    result.reshape(&left.dimensions);
-
-    let subs = left.dimensions[0];
-    let rows = left.dimensions[1];
-    let cols = left.dimensions[2];
-    let mut sub = 0;
-    while sub < subs {
-        let mut row = 0;
-        while row < rows {
-            let mut col = 0;
-            while col < cols {
-                let left_indices = vec![sub, row, col];
-                let left = left.get(&left_indices);
-                let right_col = if right.dimensions[1] == 1 { 0 } else { col };
-                let right = right.get(&vec![row, right_col]);
-                let value = op.op(left, right);
-                result.set(&left_indices, value);
-                col += 1;
-            }
-            row += 1;
-        }
-        sub += 1;
-    }
-    Ok(())
-}
-
-/*
-For matrix multiplication:
-
-    (m, n) x (n, r) = (c, m, r)
-
-For 3D tensor multiplication:
-
-    (c, m, n) x (c, n, r) = (c, m, r)
-
-For 4D tensor multiplication:
-
-    (z, c, m, n) x (z, c, n, r) = (z, c, m, r)
-*/
-// Use broadcasting
-fn mul_tensor_and_matrix_dot_product(
-    left: &Tensor,
-    right: &Tensor,
-    result: &mut Tensor,
-) -> Result<(), Error> {
-    if !(left.dimensions.len() == 3
-        && right.dimensions.len() == 2
-        && left.dimensions[2] == right.dimensions[0])
-    {
-        return Err(Error::IncompatibleTensorShapes);
-    }
-
-    let result_dimensions = vec![left.dimensions[0], left.dimensions[1], right.dimensions[1]];
-    result.reshape(&result_dimensions);
-
-    let result_subs = result_dimensions[0];
-    let result_rows = result_dimensions[1];
-    let result_cols = result_dimensions[2];
-    let mut result_sub = 0;
-    while result_sub < result_subs {
-        let mut result_row = 0;
-        while result_row < result_rows {
-            let mut result_col = 0;
-            while result_col < result_cols {
-                let mut dot_product = 0.0;
-                let left_cols = left.dimensions[2];
-                let mut dot_product_iterator = 0;
-                while dot_product_iterator < left_cols {
-                    let left = left.get(&vec![result_sub, result_row, dot_product_iterator]);
-                    let right = right.get(&vec![dot_product_iterator, result_col]);
-                    let value = left * right;
-                    dot_product += value;
-                    dot_product_iterator += 1;
-                }
-                result.set(&vec![result_sub, result_row, result_col], dot_product);
-                result_col += 1;
-            }
-            result_row += 1;
-        }
-        result_sub += 1;
-    }
-    Ok(())
-}
-
 impl Tensor {
     pub fn add(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         let left = self;
         if left.dimensions.len() == 2 && right.dimensions.len() == 2 {
             add_matrix_tensor_and_matrix_tensor(left, right, result)
-        } else if left.dimensions.len() == 2 && right.dimensions.len() == 1 {
-            op_matrix_tensor_and_vector_tensor(left, right, result, &F32Add::default())
         } else {
             Err(Error::IncompatibleTensorShapes)
         }
@@ -364,64 +167,10 @@ fn multiply_matrix_tensor_and_matrix_tensor(
     Ok(())
 }
 
-fn multiply_vector_tensor_and_vector_tensor(
-    left: &Tensor,
-    right: &Tensor,
-    result: &mut Tensor,
-) -> Result<(), Error> {
-    if !(left.dimensions.len() == 1
-        && right.dimensions.len() == 1
-        && left.dimensions[0] != 1
-        && right.dimensions[0] == 1)
-    {
-        return Err(Error::IncompatibleTensorShapes);
-    }
-
-    result.reshape(&left.dimensions);
-
-    let rows = left.dimensions[0];
-    let mut row = 0;
-    while row < rows {
-        let value = left.get(&vec![row]) * right.get(&vec![0]);
-        result.set(&vec![row], value);
-        row += 1;
-    }
-    Ok(())
-}
-
 impl Tensor {
     pub fn mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         let left: &Tensor = self;
-        // TODO generalize
         if left.dimensions.len() == 2
-            && right.dimensions.len() == 2
-            && left.dimensions[0] == right.dimensions[0]
-            && left.dimensions[1] != 1
-            && right.dimensions[1] == 1
-        {
-            op_matrix_tensor_and_column_matrix_tensor(left, right, result, &F32Mul::default())
-        } else if left.dimensions.len() == 3
-            && right.dimensions.len() == 2
-            && left.dimensions[1] == right.dimensions[0]
-            && right.dimensions[1] == 1
-        {
-            op_tensor_and_matrix(left, right, result, &F32Mul::default())
-        } else if left.dimensions.len() == 3
-            && right.dimensions.len() == 2
-            && left.dimensions[1] == right.dimensions[0]
-            && left.dimensions[2] == right.dimensions[1]
-        {
-            op_tensor_and_matrix(left, right, result, &F32Mul::default())
-        } else if left.dimensions.len() == 3
-            && right.dimensions.len() == 2
-            && left.dimensions[2] == right.dimensions[0]
-        {
-            mul_tensor_and_matrix_dot_product(left, right, result)
-        } else if left.dimensions.len() == 1 && right.dimensions.len() == 1 {
-            multiply_vector_tensor_and_vector_tensor(left, right, result)
-        } else if left.dimensions.len() == 2 && right.dimensions.len() == 1 {
-            op_matrix_tensor_and_vector_tensor(left, right, result, &F32Mul::default())
-        } else if left.dimensions.len() == 2
             && right.dimensions.len() == 2
             && left.dimensions[1] == right.dimensions[0]
         {
@@ -439,7 +188,6 @@ impl Into<Vec<f32>> for Tensor {
 }
 
 impl Display for Tensor {
-    // TODO generalize
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         _ = write!(f, "Shape: {:?}", self.dimensions);
         _ = write!(f, "\n");

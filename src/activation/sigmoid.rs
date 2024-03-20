@@ -12,7 +12,6 @@ impl Default for Sigmoid {
 
 impl ActivationFunction for Sigmoid {
     fn activate_matrix(&self, mut matrix: Tensor) -> Tensor {
-        // TODO generalize
         let rows = matrix.dimensions()[0];
         let cols = matrix.dimensions()[1];
         let mut row = 0;
@@ -30,7 +29,6 @@ impl ActivationFunction for Sigmoid {
     }
 
     fn derive_matrix(&self, mut matrix: Tensor) -> Tensor {
-        // TODO generalize
         let rows = matrix.dimensions()[0];
         let cols = matrix.dimensions()[1];
         let mut row = 0;

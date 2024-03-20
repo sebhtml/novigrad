@@ -40,8 +40,10 @@ fn multiplication_shape_compatibility() {
             0.0, //
         ],
     );
-    let actual_product = &lhs * &rhs;
-    assert_eq!(actual_product, Err(Error::IncompatibleTensorShapes))
+
+    let mut result = Tensor::default();
+    let error = lhs.mul(&rhs, &mut result);
+    assert_eq!(error, Err(Error::IncompatibleTensorShapes))
 }
 
 #[test]
@@ -65,7 +67,6 @@ fn matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let actual_result = &lhs * &rhs;
     let expected_result = Tensor::new(
         vec![3, 3],
         vec![
@@ -81,7 +82,9 @@ fn matrix_multiplication_result() {
         ],
     );
 
-    assert_eq!(actual_result, Ok(expected_result));
+    let mut result = Tensor::default();
+    lhs.mul(&rhs, &mut result);
+    assert_eq!(result, expected_result);
 }
 
 #[test]
@@ -106,7 +109,6 @@ fn matrix_addition_result() {
             13.0, 16.0, //
         ],
     );
-    let actual_result = &lhs + &rhs;
     let expected_result = Tensor::new(
         vec![3, 2],
         vec![
@@ -119,7 +121,9 @@ fn matrix_addition_result() {
         ],
     );
 
-    assert_eq!(actual_result, Ok(expected_result));
+    let mut result = Tensor::default();
+    &lhs.add(&rhs, &mut result);
+    assert_eq!(result, expected_result);
 }
 
 #[test]
@@ -132,7 +136,9 @@ fn big_matrix_multiplication() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
     let m = Tensor::new(vec![rows, cols], values);
-    let _result = &m * &m;
+
+    let mut result = Tensor::default();
+    m.mul(&m, &mut result);
 }
 
 #[test]
@@ -145,7 +151,9 @@ fn big_matrix_addition() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
     let m = Tensor::new(vec![rows, cols], values);
-    let _result = &m + &m;
+
+    let mut result = Tensor::default();
+    m.add(&m, &mut result);
 }
 
 #[test]
@@ -172,7 +180,6 @@ fn add_matrix_tensor_and_vector_tensor() {
         ],
     );
     let tensor2 = Tensor::new(vec![3], vec![1.0, 2.0, 3.0]);
-    let result = &tensor1 + &tensor2;
     let expected = Tensor::new(
         vec![4, 3],
         vec![
@@ -183,17 +190,21 @@ fn add_matrix_tensor_and_vector_tensor() {
             31.0, 32.0, 33.0, //
         ],
     );
-    assert_eq!(result, Ok(expected));
+
+    let mut result = Tensor::default();
+    tensor1.add(&tensor2, &mut result);
+    assert_eq!(result, expected);
 }
 
 #[test]
 fn multiply_vector_tensor_and_vector_tensor() {
     let tensor1 = Tensor::new(vec![3], vec![1.0, 2.0, 3.0]);
     let tensor2 = Tensor::new(vec![1], vec![2.0]);
-    assert_eq!(
-        &tensor1 * &tensor2,
-        Ok(Tensor::new(vec![3], vec![2.0, 4.0, 6.0,],))
-    );
+    let expected = Tensor::new(vec![3], vec![2.0, 4.0, 6.0]);
+    let mut result = Tensor::default();
+
+    tensor1.mul(&tensor2, &mut result);
+    assert_eq!(result, expected);
 }
 
 #[test]
@@ -217,7 +228,9 @@ fn multiply_matrix_tensor_and_vector_tensor() {
             7.0, 16.0, 27.0, //
         ],
     );
-    assert_eq!(&tensor1 * &tensor2, Ok(expected));
+    let mut result = Tensor::default();
+    tensor1.mul(&tensor2, &mut result);
+    assert_eq!(result, expected);
 }
 
 #[test]
@@ -249,7 +262,9 @@ fn multiply_matrix_tensor_and_column_matrix_tensor() {
             21.0, 24.0, 27.0, //
         ],
     );
-    assert_eq!(&tensor1 * &tensor2, Ok(expected));
+    let mut result = Tensor::default();
+    tensor1.mul(&tensor2, &mut result);
+    assert_eq!(result, expected);
 }
 
 #[test]
@@ -289,7 +304,9 @@ fn multiply_tensor_and_column_vector() {
             21.0, 24.0, 27.0, //
         ],
     );
-    assert_eq!(&tensor1 * &tensor2, Ok(expected));
+    let mut result = Tensor::default();
+    tensor1.mul(&tensor2, &mut result);
+    assert_eq!(result, expected);
 }
 
 #[test]
@@ -329,7 +346,10 @@ fn multiply_tensor_and_matrix() {
             7.0, 16.0, 27.0, //
         ],
     );
-    assert_eq!(&tensor1 * &tensor2, Ok(expected));
+
+    let mut result = Tensor::default();
+    tensor1.mul(&tensor2, &mut result);
+    assert_eq!(result, expected);
 }
 
 #[test]
@@ -369,5 +389,7 @@ fn multiply_tensor_and_matrix_reduction() {
             24.0, 48.0, //
         ],
     );
-    assert_eq!(&tensor1 * &tensor2, Ok(expected));
+    let mut result = Tensor::default();
+    tensor1.mul(&tensor2, &mut result);
+    assert_eq!(result, expected);
 }

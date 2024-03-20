@@ -66,6 +66,8 @@ impl Network {
         // TODO add constant bias
         // Add a constant for bias
         //x.push(1.0);
+        let mut matrix_product = Tensor::default();
+        let mut addition = Tensor::default();
 
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let previous_activation = {
@@ -82,12 +84,12 @@ impl Network {
             // Weights is on the right.
             // W is transposed.
             // X is not transposed.
-            let matrix_product = layer.forward(&previous_activation);
+            let error = layer.forward(&previous_activation, &mut matrix_product);
 
-            match matrix_product {
-                Ok(matrix_product) => {
+            match error {
+                Ok(_) => {
                     matrix_products.push(matrix_product.clone());
-                    let activation = activation.activate_matrix(matrix_product);
+                    let activation = activation.activate_matrix(matrix_product.clone());
                     activations.push(activation);
                 }
                 _ => {
@@ -151,10 +153,12 @@ impl Network {
         }
 
         for layer in 0..self.layers.len() {
-            let addition = &*(*self.layers[layer].weights()).borrow() + &weight_deltas[layer];
-            match addition {
-                Ok(matrix) => {
-                    *self.layers[layer].weights().as_ref().borrow_mut() = matrix;
+            let error = (*self.layers[layer].weights())
+                .borrow()
+                .add(&weight_deltas[layer], &mut addition);
+            match error {
+                Ok(_) => {
+                    *self.layers[layer].weights().as_ref().borrow_mut() = addition.clone();
                 }
                 _ => (),
             }
@@ -179,13 +183,14 @@ impl Network {
         // Add a constant for bias
         //x.push(1.0);
         let mut previous_activation = x.clone();
+        let mut matrix_product = Tensor::default();
 
         for layer in self.layers.iter() {
             let activation = layer.activation();
-            let matrix_product = layer.forward(&previous_activation);
-            match matrix_product {
-                Ok(matrix_product) => {
-                    let activation = activation.activate_matrix(matrix_product);
+            let error = layer.forward(&previous_activation, &mut matrix_product);
+            match error {
+                Ok(_) => {
+                    let activation = activation.activate_matrix(matrix_product.clone());
                     previous_activation = activation;
                 }
                 _ => {

@@ -16,7 +16,7 @@ impl Layer for Linear {
         self.activation.clone()
     }
 
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        input * &(*self.weights.borrow()).transpose()
+    fn forward(&self, input: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        input.mul(&(*self.weights.borrow()).transpose(), result)
     }
 }

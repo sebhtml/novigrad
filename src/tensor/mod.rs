@@ -115,52 +115,43 @@ impl Tensor {
     pub fn add(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         add_matrix_tensor_and_matrix_tensor(self, right, result)
     }
-}
 
-fn multiply_matrix_tensor_and_matrix_tensor(
-    left: &Tensor,
-    right: &Tensor,
-    result: &mut Tensor,
-) -> Result<(), Error> {
-    if left.cols != right.rows {
-        return Err(Error::IncompatibleTensorShapes);
-    }
-
-    result.reshape(left.rows, right.cols);
-
-    let result_ptr = result.values.as_mut_ptr();
-    let left_ptr = left.values.as_ptr();
-    let right_ptr = right.values.as_ptr();
-
-    let left_rows = left.rows;
-    let left_cols = left.cols;
-    let right_cols = right.cols;
-
-    unsafe {
-        let mut row = 0;
-        while row != left_rows {
-            let mut inner = 0;
-            while inner != left_cols {
-                let mut col = 0;
-                while col != right_cols {
-                    let left_cell = left_ptr.add(row * left_cols + inner);
-                    let right_cell = right_ptr.add(inner * right_cols + col);
-                    let result_cell = result_ptr.add(row * right_cols + col);
-                    *result_cell += *left_cell * *right_cell;
-                    col += 1;
-                }
-                inner += 1;
-            }
-            row += 1;
-        }
-    }
-
-    Ok(())
-}
-
-impl Tensor {
     pub fn matmul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        multiply_matrix_tensor_and_matrix_tensor(self, right, result)
+        let left = self;
+        if left.cols != right.rows {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+
+        result.reshape(left.rows, right.cols);
+
+        let result_ptr = result.values.as_mut_ptr();
+        let left_ptr = left.values.as_ptr();
+        let right_ptr = right.values.as_ptr();
+
+        let left_rows = left.rows;
+        let left_cols = left.cols;
+        let right_cols = right.cols;
+
+        unsafe {
+            let mut row = 0;
+            while row != left_rows {
+                let mut inner = 0;
+                while inner != left_cols {
+                    let mut col = 0;
+                    while col != right_cols {
+                        let left_cell = left_ptr.add(row * left_cols + inner);
+                        let right_cell = right_ptr.add(inner * right_cols + col);
+                        let result_cell = result_ptr.add(row * right_cols + col);
+                        *result_cell += *left_cell * *right_cell;
+                        col += 1;
+                    }
+                    inner += 1;
+                }
+                row += 1;
+            }
+        }
+
+        Ok(())
     }
 }
 

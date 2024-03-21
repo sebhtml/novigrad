@@ -204,7 +204,7 @@ impl Network {
 
                     // TODO the indexing into layer_diffs here is probably wrong.
                     let delta_pi = layer_diffs[layer].get(row, col);
-                    let delta_w_ij = learning_rate * delta_pi * a_pj;
+                    let delta_w_ij = -learning_rate * delta_pi * a_pj;
                     weight_deltas[layer].set(row, col, delta_w_ij);
                 }
             }
@@ -214,7 +214,7 @@ impl Network {
         for layer in 0..self.layers.len() {
             let error = (*self.layers[layer].weights())
                 .borrow()
-                .add(&weight_deltas[layer], &mut addition);
+                .sub(&weight_deltas[layer], &mut addition);
             match error {
                 Ok(_) => {
                     *self.layers[layer].weights().as_ref().borrow_mut() = addition.clone();

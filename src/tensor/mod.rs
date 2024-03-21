@@ -146,6 +146,33 @@ impl Tensor {
 
         Ok(())
     }
+
+    pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        let left = self;
+        if left.rows != right.rows || left.cols != right.cols {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+
+        result.reshape(left.rows, left.cols);
+
+        let result_ptr = result.values.as_mut_ptr();
+        let left_ptr = left.values.as_ptr();
+        let right_ptr = right.values.as_ptr();
+
+        unsafe {
+            let mut index = 0;
+            let len = left.values.len();
+            while index < len {
+                let left_cell = left_ptr.add(index);
+                let right_cell = right_ptr.add(index);
+                let result_cell = result_ptr.add(index);
+                *result_cell = *left_cell * *right_cell;
+                index += 1;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl Display for Tensor {

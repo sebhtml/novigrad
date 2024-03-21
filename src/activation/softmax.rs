@@ -12,27 +12,25 @@ impl Default for Softmax {
 
 impl ActivationFunction for Softmax {
     fn activate_matrix(&self, mut product_matrix: Tensor) -> Tensor {
-        // Find max
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
-        let mut max = product_matrix.get(0, 0);
         let mut row = 0;
         while row < rows {
+            // Find max
+
+            let mut max = product_matrix.get(row, 0);
             let mut col = 0;
             while col < cols {
                 let x = product_matrix.get(row, col);
                 max = max.max(x);
                 col += 1;
             }
-            row += 1;
-        }
-        // For each value:
-        // 1. substract the max
-        // 2. compute E^x
-        // 3. add result to sum
-        let mut sum = 0.0;
-        let mut row = 0;
-        while row < rows {
+
+            // For each value:
+            // 1. substract the max
+            // 2. compute E^x
+            // 3. add result to sum
+            let mut sum = 0.0;
             let mut col = 0;
             while col < cols {
                 let x = product_matrix.get(row, col);
@@ -41,12 +39,9 @@ impl ActivationFunction for Softmax {
                 sum += y;
                 col += 1;
             }
-            row += 1;
-        }
 
-        // Divide every value by sum.
-        let mut row = 0;
-        while row < rows {
+            // Divide every value by sum.
+
             let mut col = 0;
             while col < cols {
                 let x = product_matrix.get(row, col);

@@ -34,19 +34,14 @@ fn main() {
 
     let layers = vec![
         LayerConfig {
-            rows: 16,
+            rows: 6,
             cols: input_size,
             activation: Activation::Sigmoid,
         },
         LayerConfig {
-            rows: 16,
-            cols: 16,
-            activation: Activation::Sigmoid,
-        },
-        LayerConfig {
             rows: output_size,
-            cols: 16,
-            activation: Activation::Softmax,
+            cols: 6,
+            activation: Activation::Sigmoid,
         },
     ];
 
@@ -66,7 +61,6 @@ fn main() {
     }
     _ = print_total_error(&network, &inputs, &outputs, last_total_error, epochs);
 
-    /*
     let predictions = network.predict_many(&inputs);
 
     for i in 0..inputs.len() {
@@ -77,6 +71,7 @@ fn main() {
         println!("Actual   {}", prediction);
     }
 
+    /*
     println!("");
     println!("Final weights");
 

@@ -89,11 +89,11 @@ impl Network {
             match error {
                 Ok(_) => {
                     /*
-                    println!("Layer {}", layer_index);
-                    println!("previous_activation {}", previous_activation);
-                    println!("weights^T {}", layer.weights().borrow().transpose());
-                    println!("matrix_product {}", matrix_product);
-                     */
+                                        println!("Layer {}", layer_index);
+                                        println!("previous_activation {}", previous_activation);
+                                        println!("weights^T {}", layer.weights().borrow().transpose());
+                                        println!("matrix_product {}", matrix_product);
+                    */
                     matrix_products.push(matrix_product.clone());
                     let activation = activation.activate_matrix(matrix_product.clone());
                     activations.push(activation);
@@ -117,50 +117,100 @@ impl Network {
             .map(|x| x.weights().as_ref().borrow().clone())
             .collect();
         let mut layer_diffs = Vec::new();
-        layer_diffs.resize(self.layers.len(), Vec::<f32>::new());
+        layer_diffs.resize(self.layers.len(), Tensor::default());
 
         for (layer, _) in self.layers.iter().enumerate().rev() {
             let layer = layer.to_owned();
-            let layer_weights = self.layers[layer].weights();
             let activation = self.layers[layer].activation();
             let layer_activation = &activations[layer];
             let derived_matrix = activation.derive_matrix(layer_activation.clone());
-            for col in 0..layer_weights.as_ref().borrow().rows() {
-                let f_derivative = derived_matrix.get(0, col);
-                let target_diff = if layer == self.layers.len() - 1 {
-                    /*
-                    println!("y {}", y);
-                    println!("layer_activation {}", layer_activation);
-                     */
-                    y.get(0, col) - layer_activation.get(0, col)
-                } else {
-                    let next_weights = self.layers[layer + 1].weights();
-                    let mut sum = 0.0;
-                    for k in 0..next_weights.as_ref().borrow().rows() {
-                        let next_weight = next_weights.as_ref().borrow().get(k, col);
-                        let next_diff: f32 = layer_diffs[layer + 1][k];
-                        sum += next_weight * next_diff;
-                    }
-                    sum
-                };
+            //println!("layer {}, layer_activation {}", layer, layer_activation);
+            //println!("layer {}, derived_matrix {}", layer, derived_matrix);
+            layer_diffs[layer].reshape(layer_activation.rows(), layer_activation.cols());
+            let activation_rows = layer_activation.rows();
+            let activation_cols = layer_activation.cols();
+            for row in 0..activation_rows {
+                for col in 0..activation_cols {
+                    // For that activation value, how far off are we ?
+                    let target_diff = if layer == self.layers.len() - 1 {
+                        // If it's the final layer, compare with example Y.
+                        let diff = y.get(0, col) - layer_activation.get(row, col);
+                        /*
+                        println!("Output row {}", row);
+                        println!("y {}", y);
+                        println!("layer_activation {}", layer_activation);
+                        println!("diff {}", diff);
+                        */
+                        diff
+                    } else {
+                        // If it's not the final layer, sum the errors of each neuron in the next layer
+                        // that are using this activation value, weighted by the weight of the connection.
+                        let next_weights = self.layers[layer + 1].weights();
+                        let mut diff = 0.0;
+                        /*
 
-                let delta_pi = f_derivative * target_diff;
-                layer_diffs[layer].push(delta_pi);
+                        println!("---");
+                        println!("activation shape {:?}", layer_activation.shape());
+                        println!("activation row {} col {}", row, col);
+                        println!("next_weights shape {:?}", next_weights.borrow().shape());
+                        println!("next_activation shape {:?}", layer_diffs[layer + 1].shape());
+                        println!("next_diffs shape {:?}", activations[layer + 1].shape());
+                                                */
 
-                for row in 0..layer_weights.as_ref().borrow().cols() {
+                        for k in 0..next_weights.borrow().cols() {
+                            // TODO the 0s here are probably bad.
+                            let next_weight = next_weights.as_ref().borrow().get(0, col);
+                            let next_diff: f32 = layer_diffs[layer + 1].get(k, 0);
+                            diff += next_weight * next_diff;
+                        }
+                        diff
+                    };
+
+                    let f_derivative = derived_matrix.get(row, col);
+                    let delta_pi = f_derivative * target_diff;
+                    layer_diffs[layer].set(row, col, delta_pi);
+                }
+            }
+
+            //println!("Layer {} activation {}", layer, layer_activation);
+            //println!("Layer {} Layer_diffs  {}", layer, layer_diffs[layer]);
+
+            let layer_weights = self.layers[layer].weights();
+            let weight_rows = layer_weights.borrow().rows();
+            let weight_cols = layer_weights.borrow().cols();
+            for row in 0..weight_rows {
+                for col in 0..weight_cols {
+                    // Linear is X * W^t
+                    // X has tokens in rows.
+                    // X cols match W cols (because of the transpose)
                     let a_pj = {
                         if layer == 0 {
-                            x.get(0, row)
+                            /*
+                            println!("apj thing");
+                            println!("row {}, col {}", row, col);
+                            println!("x {}", x);
+                             */
+                            x.get(row, col)
                         } else {
-                            activations[layer - 1].get(0, row)
+                            activations[layer - 1].get(row, col)
                         }
                     };
+                    /*
+                    println!("----");
+                    println!("weights shape {:?}", layer_weights.borrow().shape());
+                    println!("layer_diffs shape {:?}", layer_diffs[layer].shape());
+                    println!("weights row {} col {}", row, col);
+                     */
+
+                    // TODO the indexing into layer_diffs here is probably wrong.
+                    let delta_pi = layer_diffs[layer].get(row, col);
                     let delta_w_ij = learning_rate * delta_pi * a_pj;
-                    weight_deltas[layer].set(col, row, delta_w_ij);
+                    weight_deltas[layer].set(row, col, delta_w_ij);
                 }
             }
         }
 
+        // Apply deltas
         for layer in 0..self.layers.len() {
             let error = (*self.layers[layer].weights())
                 .borrow()
@@ -174,10 +224,16 @@ impl Network {
         }
     }
 
+    fn col_diff(&self, y: &Tensor, output: &Tensor, col: usize) -> f32 {
+        // TODO we should check the last row
+        let diff = y.get(0, col) - output.get(0, col);
+        diff
+    }
+
     fn compute_error(&self, y: &Tensor, output: &Tensor) -> f32 {
         let mut error = 0.0;
-        for i in 0..y.rows() {
-            let diff = y.get(i, 0) - output.get(i, 0);
+        for col in 0..y.cols() {
+            let diff = self.col_diff(y, output, col);
             error += diff.powf(2.0);
         }
         error * 0.5

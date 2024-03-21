@@ -33,6 +33,10 @@ impl Tensor {
         self.cols
     }
 
+    pub fn shape(&self) -> (usize, usize) {
+        (self.rows, self.cols)
+    }
+
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) {
         self.rows = new_rows;
         self.cols = new_cols;

@@ -3,6 +3,11 @@ use std::fmt::Display;
 #[cfg(test)]
 mod tests;
 
+#[derive(Debug, PartialEq)]
+pub enum Error {
+    IncompatibleTensorShapes,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {
     rows: usize,
@@ -48,6 +53,22 @@ impl Tensor {
         row * self.cols + col
     }
 
+    pub fn row(&self, row: usize, result: &mut Tensor) {
+        result.reshape(1, self.cols);
+        for col in 0..self.cols {
+            let value = self.get(row, col);
+            result.set(0, col, value);
+        }
+    }
+
+    pub fn column(&self, col: usize, result: &mut Tensor) {
+        result.reshape(self.rows, 1);
+        for row in 0..self.rows {
+            let value = self.get(row, col);
+            result.set(row, 0, value);
+        }
+    }
+
     pub fn get(&self, row: usize, col: usize) -> f32 {
         let index = self.index(row, col);
         self.values[index]
@@ -74,14 +95,7 @@ impl Tensor {
         }
         other
     }
-}
 
-#[derive(Debug, PartialEq)]
-pub enum Error {
-    IncompatibleTensorShapes,
-}
-
-impl Tensor {
     pub fn add(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         let left = self;
         if left.rows != right.rows || left.cols != right.cols {
@@ -198,6 +212,14 @@ impl Tensor {
             }
         }
 
+        Ok(())
+    }
+
+    pub fn scalar_mul(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {
+        result.reshape(self.rows, self.cols);
+        for i in 0..self.values.len() {
+            result.values[i] = self.values[i] * right;
+        }
         Ok(())
     }
 }

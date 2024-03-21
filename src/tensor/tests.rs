@@ -131,7 +131,7 @@ fn matrix_addition_result() {
     );
 
     let mut result = Tensor::default();
-    _ = &lhs.add(&rhs, &mut result);
+    _ = lhs.add(&rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -173,7 +173,7 @@ fn sub_result() {
     );
 
     let mut result = Tensor::default();
-    _ = &lhs.sub(&rhs, &mut result);
+    _ = lhs.sub(&rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -215,7 +215,85 @@ fn element_wise_mul_result() {
     );
 
     let mut result = Tensor::default();
-    _ = &lhs.element_wise_mul(&rhs, &mut result);
+    _ = lhs.element_wise_mul(&rhs, &mut result);
+    assert_eq!(result, expected_result);
+}
+
+#[test]
+fn scalar_mul() {
+    // Given a left-hand side matrix and and a right-hand side matrix
+    // When the element-wise multiplication is done
+    // Then the resulting matrix has the correct values
+
+    let lhs = Tensor::new(
+        3,
+        2,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+            5.0, 6.0, //
+        ],
+    );
+    let rhs = -2.0;
+    let expected_result = Tensor::new(
+        3,
+        2,
+        vec![
+            1.0 * -2.0,
+            2.0 * -2.0, //
+            3.0 * -2.0,
+            4.0 * -2.0, //
+            5.0 * -2.0,
+            6.0 * -2.0, //
+        ],
+    );
+
+    let mut result = Tensor::default();
+    _ = lhs.scalar_mul(rhs, &mut result);
+    assert_eq!(result, expected_result);
+}
+
+#[test]
+fn row() {
+    let lhs = Tensor::new(
+        3,
+        2,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+            5.0, 6.0, //
+        ],
+    );
+    let expected_result = Tensor::new(1, 2, vec![3.0, 4.0]);
+
+    let mut result = Tensor::default();
+    _ = lhs.row(1, &mut result);
+    assert_eq!(result, expected_result);
+}
+
+#[test]
+fn column() {
+    let lhs = Tensor::new(
+        3,
+        2,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+            5.0, 6.0, //
+        ],
+    );
+    let expected_result = Tensor::new(
+        3,
+        1,
+        vec![
+            2.0, //
+            4.0, //
+            6.0, //
+        ],
+    );
+
+    let mut result = Tensor::default();
+    _ = lhs.column(1, &mut result);
     assert_eq!(result, expected_result);
 }
 

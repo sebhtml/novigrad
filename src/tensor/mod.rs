@@ -159,7 +159,7 @@ fn multiply_matrix_tensor_and_matrix_tensor(
 }
 
 impl Tensor {
-    pub fn mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+    pub fn matmul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         multiply_matrix_tensor_and_matrix_tensor(self, right, result)
     }
 }

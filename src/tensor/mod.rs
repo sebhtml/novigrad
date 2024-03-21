@@ -155,12 +155,6 @@ impl Tensor {
     }
 }
 
-impl Into<Vec<f32>> for Tensor {
-    fn into(self) -> Vec<f32> {
-        self.values
-    }
-}
-
 impl Display for Tensor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         _ = write!(f, "Shape: {:?}", (self.rows, self.cols));

@@ -81,39 +81,32 @@ pub enum Error {
     IncompatibleTensorShapes,
 }
 
-fn add_matrix_tensor_and_matrix_tensor(
-    left: &Tensor,
-    right: &Tensor,
-    result: &mut Tensor,
-) -> Result<(), Error> {
-    if left.rows != right.rows || left.cols != right.cols {
-        return Err(Error::IncompatibleTensorShapes);
-    }
-
-    result.reshape(left.rows, left.cols);
-
-    let result_ptr = result.values.as_mut_ptr();
-    let left_ptr = left.values.as_ptr();
-    let right_ptr = right.values.as_ptr();
-
-    unsafe {
-        let mut index = 0;
-        let len = left.values.len();
-        while index < len {
-            let left_cell = left_ptr.add(index);
-            let right_cell = right_ptr.add(index);
-            let result_cell = result_ptr.add(index);
-            *result_cell = *left_cell + *right_cell;
-            index += 1;
-        }
-    }
-
-    Ok(())
-}
-
 impl Tensor {
     pub fn add(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        add_matrix_tensor_and_matrix_tensor(self, right, result)
+        let left = self;
+        if left.rows != right.rows || left.cols != right.cols {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+
+        result.reshape(left.rows, left.cols);
+
+        let result_ptr = result.values.as_mut_ptr();
+        let left_ptr = left.values.as_ptr();
+        let right_ptr = right.values.as_ptr();
+
+        unsafe {
+            let mut index = 0;
+            let len = left.values.len();
+            while index < len {
+                let left_cell = left_ptr.add(index);
+                let right_cell = right_ptr.add(index);
+                let result_cell = result_ptr.add(index);
+                *result_cell = *left_cell + *right_cell;
+                index += 1;
+            }
+        }
+
+        Ok(())
     }
 
     pub fn matmul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {

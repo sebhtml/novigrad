@@ -1,64 +1,44 @@
-use crate::Tensor;
+use crate::{get_u8_embedding_table, Tensor};
 
-// num_embeddings = 2
-// embedding_dim = 4
-fn get_embedding_table() -> Vec<Vec<f32>> {
-    let embeddings_table = vec![
-        // 0.0
-        vec![0.0, 0.0, 1.0, 0.0], //
-        // 1.0
-        vec![1.0, 0.0, 0.0, 0.0], //
-    ];
-    embeddings_table
-}
-
-// TODO the input should be a Tensor with integers, not a Tensor with floats
-fn add_simple_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Tensor) -> Tensor {
+fn add_simple_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<u8>) -> Tensor {
     let mut values = vec![];
     let mut row = 0;
-    let rows = input.rows();
+    let rows = input.len();
     while row < rows {
-        let index = input.get(row, 0) as usize;
-        values.append(&mut embedding_table[index].clone());
+        let index = input[row];
+        values.append(&mut embedding_table[index as usize].clone());
         row += 1;
     }
-    Tensor::new(input.rows(), embedding_table[0].len(), values)
+    Tensor::new(input.len(), embedding_table[0].len(), values)
 }
 
 pub fn load_simple_examples() -> Vec<(Tensor, Tensor)> {
-    let embedding_table = get_embedding_table();
+    let embedding_table = get_u8_embedding_table();
     let mut examples = Vec::new();
+
     examples.push((
         //
-        Tensor::new(6, 1, vec![0.9, 0.1, 0.1, 0.1, 0.1, 0.1]), //
-        Tensor::new(1, 1, vec![0.1]),
-    ));
-    examples.push((
-        //
-        Tensor::new(6, 1, vec![0.9, 0.1, 0.1, 0.1, 0.1, 0.1]), //
-        Tensor::new(1, 1, vec![0.1]),
-    ));
-    examples.push((
-        //
-        Tensor::new(6, 1, vec![0.1, 0.1, 0.9, 0.1, 0.1, 0.1]), //
-        Tensor::new(1, 1, vec![0.9]),
-    ));
-    examples.push((
-        //
-        Tensor::new(6, 1, vec![0.1, 0.1, 0.9, 0.1, 0.1, 0.1]), //
-        Tensor::new(1, 1, vec![0.9]),
+        vec![1, 2, 3, 4, 5, 6], //
+        vec![1.0, 0.0, 0.0, 0.0],
     ));
 
-    // TODO instead of manually adding constant embeddings, they should be learned.
-    examples
     /*
-    .into_iter()
-    .map(|example| {
-        (
-            add_simple_embeddings(&embedding_table, &example.0),
-            example.1,
-        )
-    })
-    .collect()
-     */
+       examples.push((
+           //
+           vec![7, 8, 9, 10, 11, 12], //
+           vec![0.0, 0.0, 0.0, 0.1,],
+       ));
+    */
+    // TODO instead of manually adding constant embeddings, they should be learned.
+    let examples: Vec<(Tensor, Tensor)> = examples
+        .into_iter()
+        .map(|example| {
+            (
+                add_simple_embeddings(&embedding_table, &example.0),
+                Tensor::new(1, example.1.len(), example.1),
+            )
+        })
+        .collect();
+
+    examples
 }

@@ -25,10 +25,10 @@ fn to_multi_class(next_token: u8, token_count: usize) -> Tensor {
     Tensor::new(1, token_count, values)
 }
 
-fn get_mega_man_embedding_table(token_count: usize) -> Vec<Vec<f32>> {
+pub fn get_u8_embedding_table() -> Vec<Vec<f32>> {
     let mut embeddings_table = Vec::new();
     let mut token = 0;
-    while token < token_count {
+    while token < 256 {
         let token_embeddings: Vec<f32> = vec![
             (token >> 0) & 0x01,
             (token >> 1) & 0x01,
@@ -52,7 +52,7 @@ pub fn load_megaman_examples() -> Vec<(Tensor, Tensor)> {
     let token_count = 256;
     let context_size = 32;
     let embedding_dim = 8;
-    let embedding_table = get_mega_man_embedding_table(token_count);
+    let embedding_table = get_u8_embedding_table();
     let mut examples = Vec::new();
     let file_path = "Mega_Man.txt";
     let contents = fs::read_to_string(file_path).expect("contents");

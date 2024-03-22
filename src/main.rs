@@ -29,20 +29,19 @@ fn print_total_error(
 fn main() {
     let examples = load_examples(Dataset::Simple);
     //let examples = load_examples(Dataset::MegaMan);
-    let input_size = examples[0].0.cols();
-    let output_size = examples[0].1.cols();
 
     let layers = vec![
         LayerConfig {
-            rows: 6,
-            cols: input_size,
-            activation: Activation::Sigmoid,
+            rows: 4,
+            cols: 8,
+            activation: Activation::Softmax,
         },
+        /*
         LayerConfig {
-            rows: output_size,
-            cols: 6,
+            rows: 4,
+            cols: 2,
             activation: Activation::Sigmoid,
-        },
+        },*/
     ];
 
     let mut network = Network::new(layers);
@@ -51,13 +50,13 @@ fn main() {
     let outputs = examples.iter().map(|x| x.clone().1).collect();
 
     let mut last_total_error = f32::NAN;
-    let epochs = 10000;
+    let epochs = 10000000;
     for epoch in 0..epochs {
         if epoch % 1000 == 0 {
             last_total_error =
                 print_total_error(&network, &inputs, &outputs, last_total_error, epoch);
         }
-        network.train(&inputs, &outputs);
+        network.train(epoch, &inputs, &outputs);
     }
     _ = print_total_error(&network, &inputs, &outputs, last_total_error, epochs);
 

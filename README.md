@@ -11,9 +11,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- make simple dataset work with words as rows
-
-- make static embeddings work for simple dataset
 - make static embeddings work for megaman dataset
 - output is taken in the last column of softmax (probability of next token)- activate matrix in place
 - add an abstraction for loss

@@ -1,6 +1,6 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{borrow::Borrow, cell::RefCell, rc::Rc};
 
-use rand::Rng;
+use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{Activation, ActivationFunction, Layer, Linear, Tensor};
 
@@ -16,6 +16,8 @@ pub struct Network {
 
 impl Network {
     pub fn new(layer_configs: Vec<LayerConfig>) -> Self {
+        let mut rng = thread_rng();
+
         Self {
             layers: layer_configs
                 .into_iter()
@@ -23,10 +25,14 @@ impl Network {
                     let mut weights = Vec::new();
                     let rows = layer_config.rows;
                     let cols = layer_config.cols;
+                    let right = ((6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt());
+                    let left = -right;
+                    // Xavier Initialization, or Glorot Initialization,
+                    let uniform = Uniform::new(left, right);
                     let activation = layer_config.activation;
                     weights.resize(rows * cols, 0.0);
                     for index in 0..weights.len() {
-                        weights[index] = rand::thread_rng().gen_range(0.0..1.0);
+                        weights[index] = rng.sample(uniform);
                     }
                     let weights = Tensor::new(rows, cols, weights);
                     let activation: Rc<dyn ActivationFunction> = activation.into();
@@ -39,9 +45,9 @@ impl Network {
         }
     }
 
-    pub fn train(&mut self, inputs: &Vec<Tensor>, outputs: &Vec<Tensor>) {
+    pub fn train(&mut self, epoch: usize, inputs: &Vec<Tensor>, outputs: &Vec<Tensor>) {
         for i in 0..inputs.len() {
-            self.train_back_propagation(i, &inputs[i], &outputs[i]);
+            self.train_back_propagation(epoch, i, &inputs[i], &outputs[i]);
         }
     }
 
@@ -57,8 +63,9 @@ impl Network {
         total_error
     }
 
-    fn train_back_propagation(&mut self, _example: usize, x: &Tensor, y: &Tensor) {
-        let learning_rate = 0.5;
+    fn train_back_propagation(&mut self, epoch: usize, _example: usize, x: &Tensor, y: &Tensor) {
+        let learning_rate: f32 = 0.5;
+        //println!("Learning rate {}", learning_rate);
         let x = x;
         let y = y;
         let mut matrix_products: Vec<Tensor> = Vec::new();
@@ -89,10 +96,10 @@ impl Network {
             match error {
                 Ok(_) => {
                     /*
-                                        println!("Layer {}", layer_index);
-                                        println!("previous_activation {}", previous_activation);
-                                        println!("weights^T {}", layer.weights().borrow().transpose());
-                                        println!("matrix_product {}", matrix_product);
+                                       println!("Forward Layer {}", layer_index);
+                                       println!("previous_activation {}", previous_activation);
+                                       println!("weights^T {}", (*layer.weights()).borrow().transpose());
+                                       println!("matrix_product {}", matrix_product);
                     */
                     matrix_products.push(matrix_product.clone());
                     let activation = activation.activate_matrix(matrix_product.clone());
@@ -104,123 +111,82 @@ impl Network {
                     println!(
                         "Between  X {} and W {}",
                         previous_activation,
-                        *layer_weights.borrow(),
+                        (*layer_weights).borrow().clone().transpose(),
                     );
                 }
             }
         }
 
+        let mut layer_deltas = Vec::new();
+        layer_deltas.resize(self.layers.len(), Tensor::default());
+
+        let mut weight_deltas: Vec<Tensor> = Vec::new();
+        weight_deltas.resize(self.layers.len(), Tensor::default());
+
         // Back-propagation
-        let mut weight_deltas: Vec<Tensor> = self
-            .layers
-            .iter()
-            .map(|x| x.weights().as_ref().borrow().clone())
-            .collect();
-        let mut layer_diffs = Vec::new();
-        layer_diffs.resize(self.layers.len(), Tensor::default());
+        for (layer_index, _) in self.layers.iter().enumerate().rev() {
+            let layer = &self.layers[layer_index];
+            let activation_function = &layer.activation();
+            let activation_tensor = &activations[layer_index];
 
-        for (layer, _) in self.layers.iter().enumerate().rev() {
-            let layer = layer.to_owned();
-            let activation = self.layers[layer].activation();
-            let layer_activation = &activations[layer];
-            let derived_matrix = activation.derive_matrix(layer_activation.clone());
-            //println!("layer {}, layer_activation {}", layer, layer_activation);
-            //println!("layer {}, derived_matrix {}", layer, derived_matrix);
-            layer_diffs[layer].reshape(layer_activation.rows(), layer_activation.cols());
-            let activation_rows = layer_activation.rows();
-            let activation_cols = layer_activation.cols();
-            for row in 0..activation_rows {
-                for col in 0..activation_cols {
-                    // For that activation value, how far off are we ?
-                    let target_diff = if layer == self.layers.len() - 1 {
-                        // If it's the final layer, compare with example Y.
-                        let diff = y.get(0, col) - layer_activation.get(row, col);
-                        /*
-                        println!("Output row {}", row);
-                        println!("y {}", y);
-                        println!("layer_activation {}", layer_activation);
-                        println!("diff {}", diff);
-                        */
-                        diff
-                    } else {
-                        // If it's not the final layer, sum the errors of each neuron in the next layer
-                        // that are using this activation value, weighted by the weight of the connection.
-                        let next_weights = self.layers[layer + 1].weights();
-                        let mut diff = 0.0;
-                        /*
+            assert_eq!(layer_index, self.layers.len() - 1);
 
-                        println!("---");
-                        println!("activation shape {:?}", layer_activation.shape());
-                        println!("activation row {} col {}", row, col);
-                        println!("next_weights shape {:?}", next_weights.borrow().shape());
-                        println!("next_activation shape {:?}", layer_diffs[layer + 1].shape());
-                        println!("next_diffs shape {:?}", activations[layer + 1].shape());
-                                                */
+            if layer_index == self.layers.len() - 1 {
+                /*
+                               println!("expected_tensor {}", y);
+                               println!("activation_tensor {}", activation_tensor);
+                */
+                let f_derivative = activation_function.derive_matrix(activation_tensor.clone());
+                let mut output_diff = Tensor::default();
+                let op_result = y.sub(&activation_tensor, &mut output_diff);
+                op_result.expect("Ok");
+                let mut layer_delta = Tensor::default();
+                let op_result = f_derivative.element_wise_mul(&output_diff, &mut layer_delta);
+                op_result.expect("Ok");
+                /*
+                               println!("f_derivative {}", f_derivative);
+                               println!("output_diff {}", output_diff);
+                               println!("layer_delta {}", layer_delta);
+                */
+                let weights = &layer.weights();
+                //println!("weights^T {}", (**weights).borrow().clone().transpose());
 
-                        for k in 0..next_weights.borrow().cols() {
-                            // TODO the 0s here are probably bad.
-                            let next_weight = next_weights.as_ref().borrow().get(0, col);
-                            let next_diff: f32 = layer_diffs[layer + 1].get(k, 0);
-                            diff += next_weight * next_diff;
-                        }
-                        diff
-                    };
+                let previous_activation = &x;
+                //println!("previous_activation {}", previous_activation);
 
-                    let f_derivative = derived_matrix.get(row, col);
-                    let delta_pi = f_derivative * target_diff;
-                    layer_diffs[layer].set(row, col, delta_pi);
-                }
-            }
+                let mut previous_a_time_output_delta = Tensor::default();
+                let previous_action_t = previous_activation.transpose();
+                let op_result =
+                    previous_action_t.matmul(&layer_delta, &mut previous_a_time_output_delta);
+                op_result.expect("Ok");
+                let mut weight_delta = Tensor::default();
+                let op_result =
+                    previous_a_time_output_delta.scalar_mul(learning_rate, &mut weight_delta);
+                op_result.expect("Ok");
+                //println!("weight_delta {}", weight_delta);
 
-            //println!("Layer {} activation {}", layer, layer_activation);
-            //println!("Layer {} Layer_diffs  {}", layer, layer_diffs[layer]);
+                //assert!(false);
 
-            let layer_weights = self.layers[layer].weights();
-            let weight_rows = layer_weights.borrow().rows();
-            let weight_cols = layer_weights.borrow().cols();
-            for row in 0..weight_rows {
-                for col in 0..weight_cols {
-                    // Linear is X * W^t
-                    // X has tokens in rows.
-                    // X cols match W cols (because of the transpose)
-                    let a_pj = {
-                        if layer == 0 {
-                            /*
-                            println!("apj thing");
-                            println!("row {}, col {}", row, col);
-                            println!("x {}", x);
-                             */
-                            x.get(row, col)
-                        } else {
-                            activations[layer - 1].get(row, col)
-                        }
-                    };
-                    /*
-                    println!("----");
-                    println!("weights shape {:?}", layer_weights.borrow().shape());
-                    println!("layer_diffs shape {:?}", layer_diffs[layer].shape());
-                    println!("weights row {} col {}", row, col);
-                     */
-
-                    // TODO the indexing into layer_diffs here is probably wrong.
-                    let delta_pi = layer_diffs[layer].get(row, col);
-                    let delta_w_ij = -learning_rate * delta_pi * a_pj;
-                    weight_deltas[layer].set(row, col, delta_w_ij);
-                }
+                layer_deltas[layer_index] = layer_delta;
+                weight_deltas[layer_index] = weight_delta.transpose();
             }
         }
 
         // Apply deltas
         for layer in 0..self.layers.len() {
-            let error = (*self.layers[layer].weights())
+            /*
+            println!("Weight delta {}", weight_deltas[layer]);
+            println!(
+                "Weights before {}",
+                (*self.layers[layer].weights()).borrow()
+            );
+            */
+            let op_result = (*self.layers[layer].weights())
                 .borrow()
-                .sub(&weight_deltas[layer], &mut addition);
-            match error {
-                Ok(_) => {
-                    *self.layers[layer].weights().as_ref().borrow_mut() = addition.clone();
-                }
-                _ => (),
-            }
+                .add(&weight_deltas[layer], &mut addition);
+            op_result.expect("Ok");
+            *self.layers[layer].weights().as_ref().borrow_mut() = addition.clone();
+            //println!("Weights after {}", (*self.layers[layer].weights()).borrow());
         }
     }
 
@@ -263,7 +229,7 @@ impl Network {
                     println!(
                         "Between  X {} and W {}",
                         previous_activation,
-                        *layer_weights.borrow(),
+                        (*layer_weights).borrow().clone().transpose(),
                     );
                 }
             }

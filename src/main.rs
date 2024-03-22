@@ -39,9 +39,10 @@ fn main() {
         /*
         LayerConfig {
             rows: 4,
-            cols: 2,
-            activation: Activation::Sigmoid,
-        },*/
+            cols: 4,
+            activation: Activation::Softmax,
+        }
+         */
     ];
 
     let mut network = Network::new(layers);

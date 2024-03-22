@@ -22,13 +22,12 @@ pub fn load_simple_examples() -> Vec<(Tensor, Tensor)> {
         vec![1.0, 0.0, 0.0, 0.0],
     ));
 
-    /*
-       examples.push((
-           //
-           vec![7, 8, 9, 10, 11, 12], //
-           vec![0.0, 0.0, 0.0, 0.1,],
-       ));
-    */
+    examples.push((
+        //
+        vec![7, 8, 9, 10, 11, 12], //
+        vec![0.0, 0.0, 0.0, 1.0],
+    ));
+
     // TODO instead of manually adding constant embeddings, they should be learned.
     let examples: Vec<(Tensor, Tensor)> = examples
         .into_iter()

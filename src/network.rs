@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -25,7 +25,7 @@ impl Network {
                     let mut weights = Vec::new();
                     let rows = layer_config.rows;
                     let cols = layer_config.cols;
-                    let right = ((6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt());
+                    let right = (6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt();
                     let left = -right;
                     // Xavier Initialization, or Glorot Initialization,
                     let uniform = Uniform::new(left, right);
@@ -63,7 +63,7 @@ impl Network {
         total_error
     }
 
-    fn train_back_propagation(&mut self, epoch: usize, _example: usize, x: &Tensor, y: &Tensor) {
+    fn train_back_propagation(&mut self, _epoch: usize, _example: usize, x: &Tensor, y: &Tensor) {
         let learning_rate: f32 = 0.5;
         //println!("Learning rate {}", learning_rate);
         let x = x;
@@ -126,30 +126,34 @@ impl Network {
         // Back-propagation
         for (layer_index, _) in self.layers.iter().enumerate().rev() {
             let layer = &self.layers[layer_index];
-            let activation_function = &layer.activation();
-            let activation_tensor = &activations[layer_index];
+            let layer_activation_function = &layer.activation();
+            let layer_activation_tensor = &activations[layer_index];
+            let layer_f_derivative =
+                layer_activation_function.derive_matrix(layer_activation_tensor.clone());
 
-            assert_eq!(layer_index, self.layers.len() - 1);
+            let mut layer_delta = Tensor::default();
+            let mut layer_weight_delta = Tensor::default();
 
             if layer_index == self.layers.len() - 1 {
                 /*
-                               println!("expected_tensor {}", y);
-                               println!("activation_tensor {}", activation_tensor);
-                */
-                let f_derivative = activation_function.derive_matrix(activation_tensor.clone());
+                println!("expected_tensor {}", y);
+                println!("activation_tensor {}", activation_tensor);
+                 */
+
                 let mut output_diff = Tensor::default();
-                let op_result = y.sub(&activation_tensor, &mut output_diff);
+                let op_result = y.sub(&layer_activation_tensor, &mut output_diff);
                 op_result.expect("Ok");
-                let mut layer_delta = Tensor::default();
-                let op_result = f_derivative.element_wise_mul(&output_diff, &mut layer_delta);
+
+                let op_result = layer_f_derivative.element_wise_mul(&output_diff, &mut layer_delta);
                 op_result.expect("Ok");
                 /*
-                               println!("f_derivative {}", f_derivative);
-                               println!("output_diff {}", output_diff);
-                               println!("layer_delta {}", layer_delta);
+                                               println!("f_derivative {}", f_derivative);
+                                               println!("output_diff {}", output_diff);
+                                               println!("layer_delta {}", layer_delta);
+
+                                let weights = &layer.weights();
+                                println!("weights^T {}", (**weights).borrow().clone().transpose());
                 */
-                let weights = &layer.weights();
-                //println!("weights^T {}", (**weights).borrow().clone().transpose());
 
                 let previous_activation = &x;
                 //println!("previous_activation {}", previous_activation);
@@ -159,17 +163,17 @@ impl Network {
                 let op_result =
                     previous_action_t.matmul(&layer_delta, &mut previous_a_time_output_delta);
                 op_result.expect("Ok");
-                let mut weight_delta = Tensor::default();
                 let op_result =
-                    previous_a_time_output_delta.scalar_mul(learning_rate, &mut weight_delta);
+                    previous_a_time_output_delta.scalar_mul(learning_rate, &mut layer_weight_delta);
                 op_result.expect("Ok");
                 //println!("weight_delta {}", weight_delta);
-
-                //assert!(false);
-
-                layer_deltas[layer_index] = layer_delta;
-                weight_deltas[layer_index] = weight_delta.transpose();
+            } else {
+                // TODO implement back-propagation for hidden layers
+                assert!(false);
             }
+
+            layer_deltas[layer_index] = layer_delta;
+            weight_deltas[layer_index] = layer_weight_delta.transpose();
         }
 
         // Apply deltas
@@ -190,16 +194,11 @@ impl Network {
         }
     }
 
-    fn col_diff(&self, y: &Tensor, output: &Tensor, col: usize) -> f32 {
-        // TODO we should check the last row
-        let diff = y.get(0, col) - output.get(0, col);
-        diff
-    }
-
     fn compute_error(&self, y: &Tensor, output: &Tensor) -> f32 {
         let mut error = 0.0;
+        let last_row = output.rows() - 1;
         for col in 0..y.cols() {
-            let diff = self.col_diff(y, output, col);
+            let diff = y.get(0, col) - output.get(last_row, col);
             error += diff.powf(2.0);
         }
         error * 0.5

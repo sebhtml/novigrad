@@ -125,6 +125,31 @@ impl Tensor {
 
     pub fn sub(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         let left = self;
+        if left.rows == 1 && right.rows != 1 && left.cols == right.cols {
+            self.sub_broadcast(right, result)
+        } else if left.rows == right.rows && left.cols == right.cols {
+            self.sub_same_shape(right, result)
+        } else {
+            Err(Error::IncompatibleTensorShapes)
+        }
+    }
+
+    fn sub_broadcast(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        let left = self;
+        result.reshape(right.rows, right.cols);
+        for row in 0..result.rows {
+            for col in 0..result.cols {
+                let left = left.get(0, col);
+                let right = right.get(row, col);
+                let value = left - right;
+                result.set(row, col, value);
+            }
+        }
+        Ok(())
+    }
+
+    fn sub_same_shape(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        let left = self;
         if left.rows != right.rows || left.cols != right.cols {
             return Err(Error::IncompatibleTensorShapes);
         }

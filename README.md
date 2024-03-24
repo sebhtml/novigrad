@@ -15,6 +15,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 - activate matrix with &mut argument
 - derive matrix with &mut argument
 - transpose with &mut argument
+- use 3 layers instead of 2 layers
 - make static embeddings work for megaman dataset
 - add an abstraction for loss
 - implement cross-entropy loss

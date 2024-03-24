@@ -65,7 +65,6 @@ impl Network {
 
     fn train_back_propagation(&mut self, _epoch: usize, _example: usize, x: &Tensor, y: &Tensor) {
         let learning_rate: f32 = 0.5;
-        //println!("Learning rate {}", learning_rate);
         let x = x;
         let y = y;
         let mut matrix_products: Vec<Tensor> = Vec::new();
@@ -95,12 +94,6 @@ impl Network {
 
             match error {
                 Ok(_) => {
-                    /*
-                                        println!("Forward Layer {}", layer_index);
-                                        println!("previous_activation {}", previous_activation);
-                                        println!("weights^T {}", (*layer.weights()).borrow().transpose());
-                                        println!("matrix_product {}", matrix_product);
-                    */
                     matrix_products.push(matrix_product.clone());
                     let activation = activation.activate_matrix(matrix_product.clone());
                     activations.push(activation);
@@ -145,129 +138,52 @@ impl Network {
                 }
             };
 
+            let mut output_diff = Tensor::default();
+
             if layer_index == self.layers.len() - 1 {
                 // Output layer
-                /*
-
-                println!("input tensor {}", x);
-                println!("expected_tensor {}", y);
-                println!("activation_tensor {}", layer_activation_tensor);
-
-                println!("Output layer");
-                */
-                let mut output_diff = Tensor::default();
                 assert_eq!(y.cols(), layer_activation_tensor.cols());
                 let op_result = y.sub_broadcast(&layer_activation_tensor, &mut output_diff);
                 op_result.expect("Ok");
-
-                let op_result = layer_f_derivative.element_wise_mul(&output_diff, &mut layer_delta);
-                op_result.expect("Ok");
-                /*
-                                println!("f_derivative {}", layer_f_derivative);
-                                println!("output_diff {}", output_diff);
-                                println!("layer_delta {}", layer_delta);
-                */
-                let weights = &layer.weights();
-                //println!("weights^T {}", (**weights).borrow().clone().transpose());
-
-                //println!("previous_activation {}", previous_activation);
-
-                let mut previous_a_time_output_delta = Tensor::default();
-                let previous_action_t = previous_activation.transpose();
-                /*
-                println!("----");
-                println!("previous_action_t {}", previous_action_t);
-                println!("layer_delta {}", layer_delta);
-                 */
-                let op_result =
-                    previous_action_t.matmul(&layer_delta, &mut previous_a_time_output_delta);
-                op_result.expect("Ok");
-                let op_result =
-                    previous_a_time_output_delta.scalar_mul(learning_rate, &mut layer_weight_delta);
-                op_result.expect("Ok");
-                layer_weight_delta = layer_weight_delta.transpose();
-                assert_eq!(layer_weights.shape(), layer_weight_delta.shape());
-                //println!("weight_delta {}", weight_delta);
             } else {
-                // TODO implement back-propagation for hidden layers
                 // Hidden layer
-                /*
-                println!("expected_tensor {}", y);
-                println!("activation_tensor {}", activation_tensor);
-                 */
-
-                //println!("MARK");
                 let next_layer_index = layer_index + 1;
                 let next_layer_delta = &layer_deltas[next_layer_index];
                 let binding = self.layers[next_layer_index].weights();
                 let next_layer_weights: &Tensor = &binding.borrow();
-                let mut output_diff = Tensor::default();
-                /*
-                println!("----");
-                println!("next_layer_weights {}", next_layer_weights);
-                println!("next_layer_delta {}", next_layer_delta);
-                 */
                 let op_result = next_layer_weights
                     .transpose()
                     .matmul(&next_layer_delta.transpose(), &mut output_diff);
                 output_diff = output_diff.transpose();
                 op_result.expect("Ok");
-
-                /*
-                println!("----");
-                println!("layer_f_derivative {}", layer_f_derivative);
-                println!("output_diff {}", output_diff);
-                println!("layer_delta {}", layer_delta);
-                 */
-                let op_result = layer_f_derivative.element_wise_mul(&output_diff, &mut layer_delta);
-                op_result.expect("Ok");
-                /*
-                                               println!("f_derivative {}", f_derivative);
-                                               println!("output_diff {}", output_diff);
-                                               println!("layer_delta {}", layer_delta);
-
-                                let weights = &layer.weights();
-                                println!("weights^T {}", (**weights).borrow().clone().transpose());
-                */
-
-                //println!("previous_activation {}", previous_activation);
-
-                let mut previous_a_time_output_delta = Tensor::default();
-                let previous_action_t = previous_activation.transpose();
-
-                let op_result =
-                    previous_action_t.matmul(&layer_delta, &mut previous_a_time_output_delta);
-                op_result.expect("Ok");
-                let op_result =
-                    previous_a_time_output_delta.scalar_mul(learning_rate, &mut layer_weight_delta);
-                op_result.expect("Ok");
-                layer_weight_delta = layer_weight_delta.transpose();
-                assert_eq!(layer_weights.shape(), layer_weight_delta.shape());
-                //println!("weight_delta {}", weight_delta);
             }
 
-            layer_deltas[layer_index] = layer_delta;
+            let op_result = layer_f_derivative.element_wise_mul(&output_diff, &mut layer_delta);
+            op_result.expect("Ok");
+
+            let mut previous_a_time_output_delta = Tensor::default();
+            let previous_action_t = previous_activation.transpose();
+
+            let op_result =
+                previous_action_t.matmul(&layer_delta, &mut previous_a_time_output_delta);
+            op_result.expect("Ok");
+            let op_result =
+                previous_a_time_output_delta.scalar_mul(learning_rate, &mut layer_weight_delta);
+            op_result.expect("Ok");
+            layer_weight_delta = layer_weight_delta.transpose();
             assert_eq!(layer_weights.shape(), layer_weight_delta.shape());
+
+            layer_deltas[layer_index] = layer_delta;
             weight_deltas[layer_index] = layer_weight_delta;
         }
 
-        // Apply deltas
+        // Apply weight deltas
         for layer in 0..self.layers.len() {
-            /*
-            println!("----");
-            println!("Weight delta {}", weight_deltas[layer]);
-            println!(
-                "Weights before {}",
-                (*self.layers[layer].weights()).borrow()
-            );
-            */
-
             let op_result = (*self.layers[layer].weights())
                 .borrow()
                 .add(&weight_deltas[layer], &mut addition);
             op_result.expect("Ok");
             *self.layers[layer].weights().as_ref().borrow_mut() = addition.clone();
-            //println!("Weights after {}", (*self.layers[layer].weights()).borrow());
         }
     }
 

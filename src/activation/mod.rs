@@ -9,7 +9,7 @@ use crate::Tensor;
 
 pub trait ActivationFunction {
     fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error>;
-    fn derive(&self, activation_matrix: Tensor) -> Tensor;
+    fn derive(&self, activation_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error>;
 }
 
 #[derive(Clone)]

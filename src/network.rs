@@ -125,8 +125,10 @@ impl Network {
             let layer = &self.layers[layer_index];
             let layer_activation_function = &layer.activation();
             let layer_activation_tensor = &activations[layer_index];
-            let layer_f_derivative =
-                layer_activation_function.derive(layer_activation_tensor.clone());
+            let mut layer_f_derivative = Tensor::default();
+            let op_result =
+                layer_activation_function.derive(&layer_activation_tensor, &mut layer_f_derivative);
+            op_result.expect("Ok");
             let binding = self.layers[layer_index].weights();
             let layer_weights: &Tensor = &binding.borrow();
             let mut layer_delta = Tensor::default();

@@ -53,22 +53,6 @@ impl Tensor {
         row * self.cols + col
     }
 
-    pub fn row(&self, row: usize, result: &mut Tensor) {
-        result.reshape(1, self.cols);
-        for col in 0..self.cols {
-            let value = self.get(row, col);
-            result.set(0, col, value);
-        }
-    }
-
-    pub fn column(&self, col: usize, result: &mut Tensor) {
-        result.reshape(self.rows, 1);
-        for row in 0..self.rows {
-            let value = self.get(row, col);
-            result.set(row, 0, value);
-        }
-    }
-
     pub fn get(&self, row: usize, col: usize) -> f32 {
         let index = self.index(row, col);
         self.values[index]

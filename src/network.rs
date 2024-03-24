@@ -84,9 +84,9 @@ impl Network {
                 }
             };
 
-            let activation = layer.activation();
+            let activation_function = &layer.activation();
             // Use the same convention that is used in tensorflow:
-            //  y= x W^T+b
+            // y = x @ W^T+b
             // Weights is on the right.
             // W is transposed.
             // X is not transposed.
@@ -95,8 +95,8 @@ impl Network {
             match error {
                 Ok(_) => {
                     matrix_products.push(matrix_product.clone());
-                    let activation = activation.activate_matrix(matrix_product.clone());
-                    activations.push(activation);
+                    let activation_tensor = activation_function.activate(matrix_product.clone());
+                    activations.push(activation_tensor);
                 }
                 _ => {
                     let layer_weights = layer.weights();
@@ -123,7 +123,7 @@ impl Network {
             let layer_activation_function = &layer.activation();
             let layer_activation_tensor = &activations[layer_index];
             let layer_f_derivative =
-                layer_activation_function.derive_matrix(layer_activation_tensor.clone());
+                layer_activation_function.derive(layer_activation_tensor.clone());
             let binding = self.layers[layer_index].weights();
             let layer_weights: &Tensor = &binding.borrow();
             let mut layer_delta = Tensor::default();
@@ -208,12 +208,12 @@ impl Network {
         let mut matrix_product = Tensor::default();
 
         for (layer_index, layer) in self.layers.iter().enumerate() {
-            let activation = layer.activation();
+            let activation_function = layer.activation();
             let error = layer.forward(&previous_activation, &mut matrix_product);
             match error {
                 Ok(_) => {
-                    let activation = activation.activate_matrix(matrix_product.clone());
-                    previous_activation = activation;
+                    let activation_tensor = activation_function.activate(matrix_product.clone());
+                    previous_activation = activation_tensor;
                 }
                 _ => {
                     let layer_weights = layer.weights();

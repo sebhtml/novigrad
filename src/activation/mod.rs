@@ -8,9 +8,8 @@ use softmax::*;
 use crate::Tensor;
 
 pub trait ActivationFunction {
-    fn activate_matrix(&self, product_matrix: Tensor) -> Tensor;
-
-    fn derive_matrix(&self, activation_matrix: Tensor) -> Tensor;
+    fn activate(&self, product_matrix: Tensor) -> Tensor;
+    fn derive(&self, activation_matrix: Tensor) -> Tensor;
 }
 
 #[derive(Clone)]

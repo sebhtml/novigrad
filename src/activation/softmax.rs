@@ -11,7 +11,7 @@ impl Default for Softmax {
 }
 
 impl ActivationFunction for Softmax {
-    fn activate_matrix(&self, mut product_matrix: Tensor) -> Tensor {
+    fn activate(&self, mut product_matrix: Tensor) -> Tensor {
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
         let mut row = 0;
@@ -54,7 +54,7 @@ impl ActivationFunction for Softmax {
         product_matrix
     }
 
-    fn derive_matrix(&self, mut matrix: Tensor) -> Tensor {
+    fn derive(&self, mut matrix: Tensor) -> Tensor {
         let rows = matrix.rows();
         let cols = matrix.cols();
         let mut row = 0;

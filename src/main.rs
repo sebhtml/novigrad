@@ -36,11 +36,14 @@ fn main() {
             cols: 8,
             activation: Activation::Sigmoid,
         },
-        /*
-         */
+        LayerConfig {
+            rows: 8,
+            cols: 4,
+            activation: Activation::Sigmoid,
+        },
         LayerConfig {
             rows: 4,
-            cols: 4,
+            cols: 8,
             activation: Activation::Softmax,
         },
     ];

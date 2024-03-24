@@ -65,8 +65,6 @@ impl Network {
 
     fn train_back_propagation(&mut self, _epoch: usize, _example: usize, x: &Tensor, y: &Tensor) {
         let learning_rate: f32 = 0.5;
-        let x = x;
-        let y = y;
         let mut matrix_products: Vec<Tensor> = Vec::new();
         let mut activations: Vec<Tensor> = Vec::new();
         // TODO add constant bias
@@ -74,6 +72,7 @@ impl Network {
         //x.push(1.0);
         let mut matrix_product = Tensor::default();
         let mut addition = Tensor::default();
+        let mut w_t = Tensor::default();
 
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let previous_activation = {
@@ -90,7 +89,7 @@ impl Network {
             // Weights is on the right.
             // W is transposed.
             // X is not transposed.
-            let error = layer.forward(&previous_activation, &mut matrix_product);
+            let error = layer.forward(&previous_activation, &mut w_t, &mut matrix_product);
 
             match error {
                 Ok(_) => {
@@ -103,7 +102,6 @@ impl Network {
                 }
                 _ => {
                     let layer_weights = layer.weights();
-                    let mut w_t = Tensor::default();
                     (*layer_weights).borrow().transpose(&mut w_t);
                     println!("Incompatible shapes in matrix multiplication");
                     println!("Between  X {} and W {}", previous_activation, w_t,);
@@ -231,12 +229,14 @@ impl Network {
     pub fn predict(&self, x: &Tensor) -> Tensor {
         // Add a constant for bias
         //x.push(1.0);
-        let mut previous_activation = x.clone();
+        let mut previous_activation = Tensor::default();
         let mut matrix_product = Tensor::default();
+        let mut w_t = Tensor::default();
 
+        previous_activation = x.clone();
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let activation_function = layer.activation();
-            let error = layer.forward(&previous_activation, &mut matrix_product);
+            let error = layer.forward(&previous_activation, &mut w_t, &mut matrix_product);
             match error {
                 Ok(_) => {
                     let mut activation_tensor = Tensor::default();
@@ -247,7 +247,6 @@ impl Network {
                 }
                 _ => {
                     let layer_weights = layer.weights();
-                    let mut w_t = Tensor::default();
                     (*layer_weights).borrow().transpose(&mut w_t);
                     println!("In layer {}", layer_index);
                     println!("Incompatible shapes in matrix multiplication");

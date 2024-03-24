@@ -123,18 +123,7 @@ impl Tensor {
         Ok(())
     }
 
-    pub fn sub(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        let left = self;
-        if left.rows == 1 && right.rows != 1 && left.cols == right.cols {
-            self.sub_broadcast(right, result)
-        } else if left.rows == right.rows && left.cols == right.cols {
-            self.sub_same_shape(right, result)
-        } else {
-            Err(Error::IncompatibleTensorShapes)
-        }
-    }
-
-    fn sub_broadcast(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+    pub fn sub_broadcast(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         let left = self;
         result.reshape(right.rows, right.cols);
         for row in 0..result.rows {
@@ -148,7 +137,7 @@ impl Tensor {
         Ok(())
     }
 
-    fn sub_same_shape(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+    pub fn sub(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         let left = self;
         if left.rows != right.rows || left.cols != right.cols {
             return Err(Error::IncompatibleTensorShapes);

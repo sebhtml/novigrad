@@ -141,7 +141,7 @@ impl Network {
                  */
 
                 let mut output_diff = Tensor::default();
-                let op_result = y.sub(&layer_activation_tensor, &mut output_diff);
+                let op_result = y.sub_broadcast(&layer_activation_tensor, &mut output_diff);
                 op_result.expect("Ok");
 
                 let op_result = layer_f_derivative.element_wise_mul(&output_diff, &mut layer_delta);

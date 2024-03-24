@@ -12,11 +12,11 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 # Roadmap
 
 - implement back-propagation for hidden layers
-- make static embeddings work for megaman dataset
-- output is taken in the last column of softmax (probability of next token)- activate matrix in place
-- add an abstraction for loss
+- activate matrix in place
 - derive matrix in place
 - avoid transpose and instead implement a matmul with lhs transpose semantics
+- make static embeddings work for megaman dataset
+- add an abstraction for loss
 - implement cross-entropy loss
 - embeddings are learned
 - shuffle examples in each epoch

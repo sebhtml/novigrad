@@ -213,7 +213,7 @@ fn sub_broadcast_result() {
     );
 
     let mut result = Tensor::default();
-    _ = lhs.sub(&rhs, &mut result);
+    _ = lhs.sub_broadcast(&rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 

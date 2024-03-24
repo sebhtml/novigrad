@@ -106,7 +106,7 @@ impl Network {
                         previous_activation,
                         (*layer_weights).borrow().clone().transpose(),
                     );
-                    assert!(false);
+                    debug_assert!(false);
                 }
             }
         }
@@ -142,7 +142,7 @@ impl Network {
 
             if layer_index == self.layers.len() - 1 {
                 // Output layer
-                assert_eq!(y.cols(), layer_activation_tensor.cols());
+                debug_assert_eq!(y.cols(), layer_activation_tensor.cols());
                 let op_result = y.sub_broadcast(&layer_activation_tensor, &mut output_diff);
                 op_result.expect("Ok");
             } else {
@@ -171,7 +171,7 @@ impl Network {
                 previous_a_time_output_delta.scalar_mul(learning_rate, &mut layer_weight_delta);
             op_result.expect("Ok");
             layer_weight_delta = layer_weight_delta.transpose();
-            assert_eq!(layer_weights.shape(), layer_weight_delta.shape());
+            debug_assert_eq!(layer_weights.shape(), layer_weight_delta.shape());
 
             layer_deltas[layer_index] = layer_delta;
             weight_deltas[layer_index] = layer_weight_delta;
@@ -224,7 +224,7 @@ impl Network {
                         previous_activation,
                         (*layer_weights).borrow().clone().transpose(),
                     );
-                    assert!(false);
+                    debug_assert!(false);
                 }
             }
         }

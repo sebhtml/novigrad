@@ -11,7 +11,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- use debug_assert instead of assert in non-test code
 - activate matrix with &mut argument
 - derive matrix with &mut argument
 - transpose with &mut argument
@@ -26,7 +25,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 - bpe tokenizer
 - add gelu
 
-
 # Links
 
 - [Training Hidden Units: The Generalized Delta Rule](https://web.stanford.edu/group/pdplab/originalpdphandbook/Chapter%205.pdf)
@@ -39,3 +37,4 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 - [Prof. Geoffrey Hinton - "Will digital intelligence replace biological intelligence?" Romanes Lecture](https://www.youtube.com/watch?v=N1TEjTeQeg0)
 - [Attention Is All You Need](https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf)
 - [GAUSSIAN ERROR LINEAR UNITS (GELUS)](https://arxiv.org/pdf/1606.08415.pdf)
+- [What is Cross-Entropy Loss: LLMs Explained](https://www.chatgptguide.ai/2024/03/03/what-is-cross-entropy-loss-llms-explained/)

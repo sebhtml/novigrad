@@ -1,14 +1,14 @@
 mod sigmoid;
-use std::rc::Rc;
-
+use crate::Error;
 use sigmoid::*;
+use std::rc::Rc;
 mod softmax;
 use softmax::*;
 
 use crate::Tensor;
 
 pub trait ActivationFunction {
-    fn activate(&self, product_matrix: Tensor) -> Tensor;
+    fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error>;
     fn derive(&self, activation_matrix: Tensor) -> Tensor;
 }
 

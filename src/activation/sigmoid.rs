@@ -1,6 +1,6 @@
-use std::f32::consts::E;
-
+use crate::Error;
 use crate::{ActivationFunction, Tensor};
+use std::f32::consts::E;
 
 pub struct Sigmoid {}
 
@@ -11,7 +11,8 @@ impl Default for Sigmoid {
 }
 
 impl ActivationFunction for Sigmoid {
-    fn activate(&self, mut matrix: Tensor) -> Tensor {
+    fn activate(&self, matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        result.reshape(matrix.rows(), matrix.cols());
         let rows = matrix.rows();
         let cols = matrix.cols();
         let mut row = 0;
@@ -20,12 +21,12 @@ impl ActivationFunction for Sigmoid {
             while col < cols {
                 let x = matrix.get(row, col);
                 let y = 1.0 / (1.0 + E.powf(-x));
-                matrix.set(row, col, y);
+                result.set(row, col, y);
                 col += 1;
             }
             row += 1;
         }
-        matrix
+        Ok(())
     }
 
     fn derive(&self, mut matrix: Tensor) -> Tensor {

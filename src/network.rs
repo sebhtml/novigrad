@@ -95,7 +95,10 @@ impl Network {
             match error {
                 Ok(_) => {
                     matrix_products.push(matrix_product.clone());
-                    let activation_tensor = activation_function.activate(matrix_product.clone());
+                    let mut activation_tensor = Tensor::default();
+                    let op_result =
+                        activation_function.activate(&matrix_product, &mut activation_tensor);
+                    op_result.expect("Ok");
                     activations.push(activation_tensor);
                 }
                 _ => {
@@ -212,7 +215,10 @@ impl Network {
             let error = layer.forward(&previous_activation, &mut matrix_product);
             match error {
                 Ok(_) => {
-                    let activation_tensor = activation_function.activate(matrix_product.clone());
+                    let mut activation_tensor = Tensor::default();
+                    let op_result =
+                        activation_function.activate(&matrix_product, &mut activation_tensor);
+                    op_result.expect("Ok");
                     previous_activation = activation_tensor;
                 }
                 _ => {

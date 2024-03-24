@@ -11,7 +11,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- activate matrix with &mut argument
 - derive matrix with &mut argument
 - in derive, add argument for product_matrix
 - transpose with &mut argument

@@ -11,20 +11,19 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- implement back-propagation for hidden layers
-- activate matrix in place
-- derive matrix in place
-- avoid transpose and instead implement a matmul with lhs transpose semantics
+- use debug_assert instead of assert in non-test code
+- activate matrix with &mut argument
+- derive matrix with &mut argument
+- transpose with &mut argument
 - make static embeddings work for megaman dataset
 - add an abstraction for loss
 - implement cross-entropy loss
+- add tape like in pytorch
 - embeddings are learned
 - shuffle examples in each epoch
-- bpe tokenizer
-- add tape like in pytorch
-- rename matrix to tensor
 - implement transformer
-- gelu
+- bpe tokenizer
+- add gelu
 
 
 # Links

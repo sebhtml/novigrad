@@ -34,15 +34,15 @@ fn main() {
         LayerConfig {
             rows: 4,
             cols: 8,
-            activation: Activation::Softmax,
+            activation: Activation::Sigmoid,
         },
         /*
+         */
         LayerConfig {
             rows: 4,
             cols: 4,
             activation: Activation::Softmax,
-        }
-         */
+        },
     ];
 
     let mut network = Network::new(layers);
@@ -51,7 +51,7 @@ fn main() {
     let outputs = examples.iter().map(|x| x.clone().1).collect();
 
     let mut last_total_error = f32::NAN;
-    let epochs = 10000000;
+    let epochs = 1000000;
     for epoch in 0..epochs {
         if epoch % 1000 == 0 {
             last_total_error =

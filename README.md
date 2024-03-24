@@ -11,6 +11,8 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
+- move all tensors used in each back propagation step in a struct BackpropagationTensors to avoid malloc and free
+- add a method assign in Tensor to avoid clone()
 - use 3 layers instead of 2 layers
 - make static embeddings work for megaman dataset
 - add an abstraction for loss

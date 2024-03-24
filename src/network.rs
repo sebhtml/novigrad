@@ -103,12 +103,10 @@ impl Network {
                 }
                 _ => {
                     let layer_weights = layer.weights();
+                    let mut w_t = Tensor::default();
+                    (*layer_weights).borrow().transpose(&mut w_t);
                     println!("Incompatible shapes in matrix multiplication");
-                    println!(
-                        "Between  X {} and W {}",
-                        previous_activation,
-                        (*layer_weights).borrow().clone().transpose(),
-                    );
+                    println!("Between  X {} and W {}", previous_activation, w_t,);
                     debug_assert!(false);
                 }
             }
@@ -157,13 +155,26 @@ impl Network {
             } else {
                 // Hidden layer
                 let next_layer_index = layer_index + 1;
-                let next_layer_delta = &layer_deltas[next_layer_index];
-                let binding = self.layers[next_layer_index].weights();
-                let next_layer_weights: &Tensor = &binding.borrow();
-                let op_result = next_layer_weights
-                    .transpose()
-                    .matmul(&next_layer_delta.transpose(), &mut output_diff);
-                output_diff = output_diff.transpose();
+                let mut next_layer_delta_transpose = Tensor::default();
+                {
+                    let next_layer_delta = &layer_deltas[next_layer_index];
+                    next_layer_delta.transpose(&mut next_layer_delta_transpose);
+                }
+
+                let mut next_layer_weights_transpose = Tensor::default();
+                {
+                    let binding = self.layers[next_layer_index].weights();
+                    let next_layer_weights: &Tensor = &binding.borrow();
+                    next_layer_weights.transpose(&mut next_layer_weights_transpose);
+                }
+                let op_result = next_layer_weights_transpose
+                    .matmul(&next_layer_delta_transpose, &mut output_diff);
+                {
+                    let mut output_diff_transpose = Tensor::default();
+                    output_diff.transpose(&mut output_diff_transpose);
+                    output_diff = output_diff_transpose;
+                }
+
                 op_result.expect("Ok");
             }
 
@@ -171,7 +182,8 @@ impl Network {
             op_result.expect("Ok");
 
             let mut previous_a_time_output_delta = Tensor::default();
-            let previous_action_t = previous_activation.transpose();
+            let mut previous_action_t = Tensor::default();
+            previous_activation.transpose(&mut previous_action_t);
 
             let op_result =
                 previous_action_t.matmul(&layer_delta, &mut previous_a_time_output_delta);
@@ -179,7 +191,13 @@ impl Network {
             let op_result =
                 previous_a_time_output_delta.scalar_mul(learning_rate, &mut layer_weight_delta);
             op_result.expect("Ok");
-            layer_weight_delta = layer_weight_delta.transpose();
+
+            {
+                let mut layer_weight_delta_transpose = Tensor::default();
+                layer_weight_delta.transpose(&mut layer_weight_delta_transpose);
+                layer_weight_delta = layer_weight_delta_transpose;
+            }
+
             debug_assert_eq!(layer_weights.shape(), layer_weight_delta.shape());
 
             layer_deltas[layer_index] = layer_delta;
@@ -229,13 +247,11 @@ impl Network {
                 }
                 _ => {
                     let layer_weights = layer.weights();
+                    let mut w_t = Tensor::default();
+                    (*layer_weights).borrow().transpose(&mut w_t);
                     println!("In layer {}", layer_index);
                     println!("Incompatible shapes in matrix multiplication");
-                    println!(
-                        "Between  X {} and W^T {}",
-                        previous_activation,
-                        (*layer_weights).borrow().clone().transpose(),
-                    );
+                    println!("Between  X {} and W^T {}", previous_activation, w_t,);
                     debug_assert!(false);
                 }
             }

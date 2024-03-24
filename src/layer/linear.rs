@@ -17,6 +17,8 @@ impl Layer for Linear {
     }
 
     fn forward(&self, input: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        input.matmul(&(*self.weights.borrow()).transpose(), result)
+        let mut w_t = Tensor::default();
+        self.weights.borrow().transpose(&mut w_t);
+        input.matmul(&w_t, result)
     }
 }

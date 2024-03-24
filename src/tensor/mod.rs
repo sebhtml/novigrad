@@ -63,8 +63,8 @@ impl Tensor {
         self.values[index] = value;
     }
 
-    pub fn transpose(&self) -> Self {
-        let mut other: Tensor = Tensor::new(self.cols, self.rows, self.values.clone());
+    pub fn transpose(&self, other: &mut Tensor) {
+        other.reshape(self.cols, self.rows);
         let rows = self.rows;
         let cols = self.cols;
         let mut row = 0;
@@ -77,7 +77,6 @@ impl Tensor {
             }
             row += 1;
         }
-        other
     }
 
     pub fn add(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {

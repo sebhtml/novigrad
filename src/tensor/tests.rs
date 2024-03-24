@@ -326,7 +326,8 @@ fn big_matrix_addition() {
 #[test]
 fn transpose() {
     let matrix = Tensor::new(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
-    let matrix2 = matrix.transpose();
+    let mut matrix2 = Tensor::default();
+    matrix.transpose(&mut matrix2);
     for row in 0..matrix.rows() {
         for col in 0..matrix.cols() {
             assert_eq!(matrix2.get(col, row), matrix.get(row, col));

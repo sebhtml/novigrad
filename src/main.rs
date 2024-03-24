@@ -53,7 +53,7 @@ fn main() {
     let mut last_total_error = f32::NAN;
     let epochs = 1000000;
     for epoch in 0..epochs {
-        if epoch % 1000 == 0 {
+        if epoch % 10000 == 0 {
             last_total_error =
                 print_total_error(&network, &inputs, &outputs, last_total_error, epoch);
         }

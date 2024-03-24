@@ -55,15 +55,15 @@ impl ActivationFunction for Softmax {
         Ok(())
     }
 
-    fn derive(&self, matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        result.reshape(matrix.rows(), matrix.cols());
-        let rows = matrix.rows();
-        let cols = matrix.cols();
+    fn derive(&self, activation_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        result.reshape(activation_matrix.rows(), activation_matrix.cols());
+        let rows = activation_matrix.rows();
+        let cols = activation_matrix.cols();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = matrix.get(row, col);
+                let x = activation_matrix.get(row, col);
                 let y = x * (1.0 - x);
                 result.set(row, col, y);
                 col += 1;

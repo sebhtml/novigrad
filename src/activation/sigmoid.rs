@@ -11,15 +11,15 @@ impl Default for Sigmoid {
 }
 
 impl ActivationFunction for Sigmoid {
-    fn activate(&self, matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        result.reshape(matrix.rows(), matrix.cols());
-        let rows = matrix.rows();
-        let cols = matrix.cols();
+    fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        result.reshape(product_matrix.rows(), product_matrix.cols());
+        let rows = product_matrix.rows();
+        let cols = product_matrix.cols();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = matrix.get(row, col);
+                let x = product_matrix.get(row, col);
                 let y = 1.0 / (1.0 + E.powf(-x));
                 result.set(row, col, y);
                 col += 1;
@@ -29,15 +29,15 @@ impl ActivationFunction for Sigmoid {
         Ok(())
     }
 
-    fn derive(&self, matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        result.reshape(matrix.rows(), matrix.cols());
-        let rows = matrix.rows();
-        let cols = matrix.cols();
+    fn derive(&self, activation_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        result.reshape(activation_matrix.rows(), activation_matrix.cols());
+        let rows = activation_matrix.rows();
+        let cols = activation_matrix.cols();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = matrix.get(row, col);
+                let x = activation_matrix.get(row, col);
                 let y = x * (1.0 - x);
                 result.set(row, col, y);
                 col += 1;

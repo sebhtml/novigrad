@@ -55,7 +55,12 @@ impl ActivationFunction for Softmax {
         Ok(())
     }
 
-    fn derive(&self, activation_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+    fn derive(
+        &self,
+        _product_matrix: &Tensor,
+        activation_matrix: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
         result.reshape(activation_matrix.rows(), activation_matrix.cols());
         let rows = activation_matrix.rows();
         let cols = activation_matrix.cols();

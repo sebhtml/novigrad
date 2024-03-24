@@ -11,7 +11,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- in derive, add argument for product_matrix
 - transpose with &mut argument
 - use 3 layers instead of 2 layers
 - make static embeddings work for megaman dataset

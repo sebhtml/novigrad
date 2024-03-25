@@ -18,6 +18,6 @@ impl Layer for Linear {
 
     fn forward(&self, input: &Tensor, w_t: &mut Tensor, result: &mut Tensor) -> Result<(), Error> {
         self.weights.borrow().transpose(w_t);
-        input.matmul(&w_t, result)
+        input.matmul(w_t, result)
     }
 }

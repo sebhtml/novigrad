@@ -26,9 +26,7 @@ fn print_total_error(
     total_error
 }
 
-fn main() {
-    let dataset = Dataset::Simple;
-    //let dataset = Dataset::MegaMan;
+fn test_network_on_dataset(dataset: &Dataset) {
     let dataset_details = load_dataset(&dataset);
     let examples = dataset_details.examples;
     let layers = dataset_details.layers;
@@ -59,4 +57,10 @@ fn main() {
         println!("Expected {}", output);
         println!("Actual   {}", prediction);
     }
+}
+
+fn main() {
+    //let dataset = Dataset::Simple;
+    let dataset = Dataset::MegaMan;
+    test_network_on_dataset(&dataset);
 }

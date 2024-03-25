@@ -1,6 +1,4 @@
-use crate::{Activation, DatasetDetails, LayerConfig, Tensor};
-
-use super::mega_man::get_u8_embedding_table;
+use crate::{get_u8_embedding_table, Activation, DatasetDetails, LayerConfig, Tensor};
 
 fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<u8>) -> Tensor {
     let mut values = vec![];

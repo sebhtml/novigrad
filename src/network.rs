@@ -103,8 +103,13 @@ impl Network {
                 _ => {
                     let layer_weights = layer.weights();
                     (*layer_weights).borrow().transpose(&mut w_t);
+                    println!("In layer {}", layer_index);
                     println!("Incompatible shapes in matrix multiplication");
-                    println!("Between  X {} and W {}", previous_activation, w_t,);
+                    println!(
+                        "Between X {:?} and W^T {:?}",
+                        previous_activation.shape(),
+                        w_t.shape(),
+                    );
                     debug_assert!(false);
                 }
             }
@@ -216,6 +221,7 @@ impl Network {
     fn compute_error(&self, y: &Tensor, output: &Tensor) -> f32 {
         let mut error = 0.0;
         let last_row = output.rows() - 1;
+        debug_assert_eq!(output.cols(), y.cols());
         for col in 0..y.cols() {
             let diff = y.get(0, col) - output.get(last_row, col);
             error += diff.powf(2.0);
@@ -251,7 +257,11 @@ impl Network {
                     (*layer_weights).borrow().transpose(&mut w_t);
                     println!("In layer {}", layer_index);
                     println!("Incompatible shapes in matrix multiplication");
-                    println!("Between  X {} and W^T {}", previous_activation, w_t,);
+                    println!(
+                        "Between X {:?} and W^T {:?}",
+                        previous_activation.shape(),
+                        w_t.shape(),
+                    );
                     debug_assert!(false);
                 }
             }

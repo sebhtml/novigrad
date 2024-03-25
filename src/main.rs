@@ -39,9 +39,10 @@ fn main() {
     let outputs = examples.iter().map(|x| x.clone().1).collect();
 
     let mut last_total_error = f32::NAN;
-    let epochs = 1000000;
+    let epochs = dataset_details.epochs;
+    let progress = dataset_details.progress;
     for epoch in 0..epochs {
-        if epoch % 10000 == 0 {
+        if epoch % progress == 0 {
             last_total_error =
                 print_total_error(&network, &inputs, &outputs, last_total_error, epoch);
         }

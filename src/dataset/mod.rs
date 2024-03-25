@@ -10,6 +10,8 @@ pub enum Dataset {
 pub struct DatasetDetails {
     pub examples: Vec<(Tensor, Tensor)>,
     pub layers: Vec<LayerConfig>,
+    pub epochs: usize,
+    pub progress: usize,
 }
 
 pub fn load_dataset(dataset: &Dataset) -> DatasetDetails {

@@ -4,6 +4,12 @@
 cargo run --release
 ```
 
+# Run the tests
+
+```bash
+cargo test --release
+```
+
 # Mega_man
 
 Mega_man.txt comes from Wikipedia .
@@ -11,10 +17,9 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- fix import of more_asserts
-- separate Linear and activation
 - move all tensors used in each back propagation step in a struct BackpropagationTensors to avoid malloc and free
 - make static embeddings work for megaman dataset
+- separate Linear and activation
 - add a method assign in Tensor to avoid clone()
 - add an abstraction for loss
 - implement cross-entropy loss

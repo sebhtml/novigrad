@@ -1,3 +1,4 @@
+pub mod tests;
 use std::{cell::RefCell, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};

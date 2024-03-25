@@ -1,3 +1,6 @@
+use more_asserts::assert_gt;
+use more_asserts::assert_lt;
+
 use crate::load_dataset;
 use crate::Dataset;
 use crate::Network;
@@ -19,8 +22,14 @@ fn print_total_error(
     total_error
 }
 
-pub fn test_network_on_dataset(dataset: &Dataset) {
-    let dataset_details = load_dataset(&dataset);
+pub struct NetworkTestOutput {
+    initial_total_error: f32,
+    final_total_error: f32,
+}
+
+pub fn test_network_on_dataset(dataset: &Dataset) -> NetworkTestOutput {
+    let mut initial_total_error = f32::NAN;
+    let dataset_details = load_dataset(dataset);
     let examples = dataset_details.examples;
     let layers = dataset_details.layers;
 
@@ -34,12 +43,17 @@ pub fn test_network_on_dataset(dataset: &Dataset) {
     let progress = dataset_details.progress;
     for epoch in 0..epochs {
         if epoch % progress == 0 {
-            last_total_error =
+            let total_error =
                 print_total_error(&network, &inputs, &outputs, last_total_error, epoch);
+            if epoch == 0 {
+                initial_total_error = total_error;
+            }
+            last_total_error = total_error;
         }
         network.train(epoch, &inputs, &outputs);
     }
-    _ = print_total_error(&network, &inputs, &outputs, last_total_error, epochs);
+    let final_total_error =
+        print_total_error(&network, &inputs, &outputs, last_total_error, epochs);
 
     let predictions = network.predict_many(&inputs);
 
@@ -50,4 +64,25 @@ pub fn test_network_on_dataset(dataset: &Dataset) {
         println!("Expected {}", output);
         println!("Actual   {}", prediction);
     }
+
+    NetworkTestOutput {
+        initial_total_error,
+        final_total_error,
+    }
+}
+
+#[test]
+fn simple_dataset() {
+    let dataset = Dataset::Simple;
+    let test_output = test_network_on_dataset(&dataset);
+    assert_gt!(test_output.initial_total_error, 0.40);
+    assert_lt!(test_output.final_total_error, 0.0000001);
+}
+
+#[test]
+fn mega_man_dataset() {
+    let dataset = Dataset::MegaMan;
+    let test_output = test_network_on_dataset(&dataset);
+    assert_gt!(test_output.initial_total_error, 4.90);
+    assert_lt!(test_output.final_total_error, 0.000014);
 }

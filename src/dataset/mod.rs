@@ -1,6 +1,6 @@
 mod mega_man;
 mod simple;
-use crate::Tensor;
+use crate::{LayerConfig, Tensor};
 
 pub enum Dataset {
     Simple,
@@ -9,6 +9,7 @@ pub enum Dataset {
 
 pub struct DatasetDetails {
     pub examples: Vec<(Tensor, Tensor)>,
+    pub layers: Vec<LayerConfig>,
 }
 
 pub fn load_dataset(dataset: &Dataset) -> DatasetDetails {

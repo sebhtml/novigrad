@@ -1,4 +1,4 @@
-use crate::{DatasetDetails, Tensor};
+use crate::{Activation, DatasetDetails, LayerConfig, Tensor};
 
 use super::mega_man::get_u8_embedding_table;
 
@@ -47,5 +47,22 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
 pub fn load_dataset() -> DatasetDetails {
     DatasetDetails {
         examples: load_examples(),
+        layers: vec![
+            LayerConfig {
+                rows: 4,
+                cols: 8,
+                activation: Activation::Sigmoid,
+            },
+            LayerConfig {
+                rows: 8,
+                cols: 4,
+                activation: Activation::Sigmoid,
+            },
+            LayerConfig {
+                rows: 4,
+                cols: 8,
+                activation: Activation::Softmax,
+            },
+        ],
     }
 }

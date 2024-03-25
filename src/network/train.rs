@@ -1,4 +1,4 @@
-use crate::{load_dataset, Dataset, Network, Tensor};
+use crate::{load_dataset, Dataset, Network, Tensor, TrainWorkingMemory};
 
 fn print_total_error(
     network: &Network,
@@ -22,6 +22,7 @@ pub struct NetworkTestOutput {
 }
 
 pub fn train_network_on_dataset(dataset: &Dataset) -> NetworkTestOutput {
+    let mut train_working_memory = TrainWorkingMemory::default();
     let mut initial_total_error = f32::NAN;
     let dataset_details = load_dataset(dataset);
     let examples = dataset_details.examples;
@@ -44,7 +45,7 @@ pub fn train_network_on_dataset(dataset: &Dataset) -> NetworkTestOutput {
             }
             last_total_error = total_error;
         }
-        network.train(epoch, &inputs, &outputs);
+        network.train(&mut train_working_memory, epoch, &inputs, &outputs);
     }
     let final_total_error =
         print_total_error(&network, &inputs, &outputs, last_total_error, epochs);

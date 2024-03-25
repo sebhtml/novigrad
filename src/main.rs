@@ -59,20 +59,4 @@ fn main() {
         println!("Expected {}", output);
         println!("Actual   {}", prediction);
     }
-
-    /*
-    println!("");
-    println!("Final weights");
-
-    let mut total_parameters = 0;
-    for (index, layer) in network.layers.iter().enumerate() {
-        println!("Layer {}", index);
-        println!("Weights {}", layer.weights().as_ref().borrow());
-        let rows = layer.weights().as_ref().borrow().rows();
-        let cols = layer.weights().as_ref().borrow().cols();
-        let layer_parameters = rows * cols;
-        total_parameters += layer_parameters;
-    }
-    println!("Total_parameters: {}", total_parameters);
-     */
 }

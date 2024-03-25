@@ -1,8 +1,8 @@
 use std::fs;
 
-use crate::Tensor;
+use crate::{DatasetDetails, Tensor};
 
-fn add_mega_man_embeddings(
+fn add_embeddings(
     embeddings_table: &Vec<Vec<f32>>,
     num_embeddings: usize,
     embedding_dim: usize,
@@ -48,7 +48,7 @@ pub fn get_u8_embedding_table() -> Vec<Vec<f32>> {
     embeddings_table
 }
 
-pub fn load_megaman_examples() -> Vec<(Tensor, Tensor)> {
+fn load_examples() -> Vec<(Tensor, Tensor)> {
     let token_count = 256;
     let context_size = 32;
     let embedding_dim = 8;
@@ -69,7 +69,7 @@ pub fn load_megaman_examples() -> Vec<(Tensor, Tensor)> {
         println!("input_tokens {:?}", input_tokens);
         println!("next_token {}", next_token);
          */
-        let input_embeddings = add_mega_man_embeddings(
+        let input_embeddings = add_embeddings(
             &embedding_table,
             num_embeddings,
             embedding_dim,
@@ -85,4 +85,10 @@ pub fn load_megaman_examples() -> Vec<(Tensor, Tensor)> {
         i += 1;
     }
     examples
+}
+
+pub fn load_dataset() -> DatasetDetails {
+    DatasetDetails {
+        examples: load_examples(),
+    }
 }

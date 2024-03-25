@@ -27,8 +27,10 @@ fn print_total_error(
 }
 
 fn main() {
-    let examples = load_examples(Dataset::Simple);
-    //let examples = load_examples(Dataset::MegaMan);
+    let dataset = Dataset::Simple;
+    //let dataset = Dataset::MegaMan;
+    let dataset_details = load_dataset(&dataset);
+    let examples = dataset_details.examples;
 
     let layers = vec![
         LayerConfig {

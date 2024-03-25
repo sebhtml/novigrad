@@ -1,6 +1,8 @@
-use crate::{get_u8_embedding_table, Tensor};
+use crate::{DatasetDetails, Tensor};
 
-fn add_simple_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<u8>) -> Tensor {
+use super::mega_man::get_u8_embedding_table;
+
+fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<u8>) -> Tensor {
     let mut values = vec![];
     let mut row = 0;
     let rows = input.len();
@@ -12,7 +14,7 @@ fn add_simple_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<u8>) -> Te
     Tensor::new(input.len(), embedding_table[0].len(), values)
 }
 
-pub fn load_simple_examples() -> Vec<(Tensor, Tensor)> {
+fn load_examples() -> Vec<(Tensor, Tensor)> {
     let embedding_table = get_u8_embedding_table();
     let mut examples = Vec::new();
 
@@ -33,11 +35,17 @@ pub fn load_simple_examples() -> Vec<(Tensor, Tensor)> {
         .into_iter()
         .map(|example| {
             (
-                add_simple_embeddings(&embedding_table, &example.0),
+                add_embeddings(&embedding_table, &example.0),
                 Tensor::new(1, example.1.len(), example.1),
             )
         })
         .collect();
 
     examples
+}
+
+pub fn load_dataset() -> DatasetDetails {
+    DatasetDetails {
+        examples: load_examples(),
+    }
 }

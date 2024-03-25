@@ -46,6 +46,7 @@ impl Tensor {
         self.rows = new_rows;
         self.cols = new_cols;
         let values = self.rows * self.cols;
+        self.values.clear();
         self.values.resize(values, 0.0)
     }
 

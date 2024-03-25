@@ -50,6 +50,31 @@ fn multiplication_shape_compatibility() {
 }
 
 #[test]
+fn reshape() {
+    // Given a tensor
+    // When it is reshaped to a bigger shape
+    // Then all values are set to 0.0
+
+    let mut tensor = Tensor::new(
+        1,
+        1,
+        vec![
+            1.0, //
+        ],
+    );
+    tensor.reshape(2, 1);
+    let expected = Tensor::new(
+        2,
+        1,
+        vec![
+            0.0, //
+            0.0, //
+        ],
+    );
+    assert_eq!(tensor, expected)
+}
+
+#[test]
 fn matrix_multiplication_result() {
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done

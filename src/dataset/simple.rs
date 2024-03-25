@@ -47,13 +47,13 @@ pub fn load_dataset() -> DatasetDetails {
         examples: load_examples(),
         layers: vec![
             LayerConfig {
-                rows: 4,
+                rows: 8,
                 cols: 8,
                 activation: Activation::Sigmoid,
             },
             LayerConfig {
                 rows: 8,
-                cols: 4,
+                cols: 8,
                 activation: Activation::Sigmoid,
             },
             LayerConfig {

@@ -17,7 +17,8 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- move all tensors used in each back propagation step in a struct BackpropagationTensors to avoid malloc and free
+- add PredictWorkingMemory
+- do not use clone()
 - make static embeddings work for megaman dataset
 - separate Linear and activation
 - add a method assign in Tensor to avoid clone()

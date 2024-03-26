@@ -1,29 +1,13 @@
 use std::fs;
 
 use crate::{
-    get_u8_embedding_table, to_multi_class, Activation, DatasetDetails, LayerConfig, Tensor,
+    add_embeddings, get_u8_embedding_table, to_multi_class, Activation, DatasetDetails,
+    LayerConfig, Tensor,
 };
-
-fn add_embeddings(
-    embeddings_table: &Vec<Vec<f32>>,
-    num_embeddings: usize,
-    embedding_dim: usize,
-    input: Vec<u8>,
-) -> Tensor {
-    let mut values = vec![];
-    let mut col = 0;
-    while col < num_embeddings {
-        let token = input[col];
-        values.append(&mut embeddings_table[token as usize].clone());
-        col += 1;
-    }
-    Tensor::new(1, num_embeddings * embedding_dim, values)
-}
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
     let token_count = 256;
     let context_size = 32;
-    let embedding_dim = 8;
     let embedding_table = get_u8_embedding_table();
     let mut examples = Vec::new();
     let file_path = "Mega_Man.txt";
@@ -32,21 +16,17 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
     let tokens = contents.as_bytes().to_owned();
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
-    while i + context_size < tokens.len() && i < 10 {
+    // TODO load more than 1 example.
+    let max_number_of_examples = 1;
+    while i + context_size < tokens.len() && i < max_number_of_examples {
         let next_token_index = i + context_size;
-        let num_embeddings = context_size;
         let input_tokens = tokens[i..next_token_index].to_owned();
         let next_token = tokens[next_token_index];
         /*
         println!("input_tokens {:?}", input_tokens);
         println!("next_token {}", next_token);
          */
-        let input_embeddings = add_embeddings(
-            &embedding_table,
-            num_embeddings,
-            embedding_dim,
-            input_tokens,
-        );
+        let input_embeddings = add_embeddings(&embedding_table, &input_tokens);
         let output_multiclass = to_multi_class(next_token, token_count);
 
         examples.push((
@@ -69,17 +49,12 @@ pub fn load_dataset() -> DatasetDetails {
                 activation: Activation::Sigmoid,
             },
             LayerConfig {
-                rows: 8,
-                cols: 4,
-                activation: Activation::Sigmoid,
-            },
-            LayerConfig {
                 rows: 256,
-                cols: 8,
+                cols: 4,
                 activation: Activation::Softmax,
             },
         ],
-        epochs: 1000000,
+        epochs: 100000,
         progress: 10000,
     }
 }

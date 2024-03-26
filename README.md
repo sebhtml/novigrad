@@ -20,9 +20,10 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 - add PredictWorkingMemory
 - add a method assign in Tensor to avoid clone()
 - do not use clone()
-- make static embeddings work for megaman dataset
 - separate Linear and activation
 - learned Embedding
+- Dropout
+- move learning rate in dataset details
 - add an abstraction for loss
 - implement cross-entropy loss
 - add tape like in pytorch

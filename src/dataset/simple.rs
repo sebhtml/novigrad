@@ -48,7 +48,7 @@ pub fn load_dataset() -> DatasetDetails {
         layers: vec![
             LayerConfig {
                 rows: 8,
-                cols: 8,
+                cols: 256,
                 activation: Activation::Sigmoid,
             },
             LayerConfig {

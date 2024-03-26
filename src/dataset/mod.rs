@@ -1,5 +1,7 @@
 mod mega_man;
 mod simple;
+use rand::{distributions::Uniform, thread_rng, Rng};
+
 use crate::{LayerConfig, Tensor};
 
 pub enum Dataset {
@@ -29,22 +31,19 @@ pub fn to_multi_class(next_token: u8, token_count: usize) -> Tensor {
 }
 
 pub fn get_u8_embedding_table() -> Vec<Vec<f32>> {
+    let mut rng = thread_rng();
     let mut embeddings_table = Vec::new();
     let mut token = 0;
-    while token < 256 {
-        let token_embeddings: Vec<f32> = vec![
-            (token >> 0) & 0x01,
-            (token >> 1) & 0x01,
-            (token >> 2) & 0x01,
-            (token >> 3) & 0x01,
-            (token >> 4) & 0x01,
-            (token >> 5) & 0x01,
-            (token >> 6) & 0x01,
-            (token >> 7) & 0x01,
-        ]
-        .into_iter()
-        .map(|x| x as f32)
-        .collect();
+    let left = 0.0;
+    let right = 1.0;
+    let width = 256;
+    let uniform = Uniform::new(left, right);
+    while token < width {
+        let mut token_embeddings: Vec<f32> = Vec::new();
+        for _ in 0..width {
+            let value = rng.sample(uniform);
+            token_embeddings.push(value);
+        }
         embeddings_table.push(token_embeddings);
         token += 1;
     }

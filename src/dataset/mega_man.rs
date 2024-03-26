@@ -54,7 +54,7 @@ pub fn load_dataset() -> DatasetDetails {
                 activation: Activation::Softmax,
             },
         ],
-        epochs: 100000,
+        epochs: 1000000,
         progress: 10000,
     }
 }

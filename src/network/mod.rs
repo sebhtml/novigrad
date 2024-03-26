@@ -221,8 +221,17 @@ impl Network {
             if layer_index == self.layers.len() - 1 {
                 // Output layer
                 debug_assert_eq!(y.cols(), layer_activation_tensor.cols());
-                let op_result = y.sub_broadcast(layer_activation_tensor, output_diff);
-                op_result.expect("Ok");
+                let rows = layer_activation_tensor.rows();
+                let cols = layer_activation_tensor.cols();
+                let last_row = rows - 1;
+                output_diff.reshape(rows, cols);
+                let mut col = 0;
+                // TODO Is it normal for rows that are not the last row to have a diff of 0.0 ?
+                while col < cols {
+                    let value = y.get(0, col) - layer_activation_tensor.get(last_row, col);
+                    output_diff.set(last_row, col, value);
+                    col += 1;
+                }
             } else {
                 // Hidden layer
                 let next_layer_index = layer_index + 1;

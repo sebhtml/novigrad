@@ -11,7 +11,7 @@ mod dataset;
 use dataset::*;
 
 fn main() {
-    //let dataset = Dataset::Simple;
-    let dataset = Dataset::MegaMan;
+    let dataset = Dataset::Simple;
+    //let dataset = Dataset::MegaMan;
     train_network_on_dataset(&dataset);
 }

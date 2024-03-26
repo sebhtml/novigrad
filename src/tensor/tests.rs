@@ -161,46 +161,6 @@ fn matrix_addition_result() {
 }
 
 #[test]
-fn sub_broadcast_result() {
-    // Given a left-hand side matrix and and a right-hand side matrix
-    // When the addition lhs + rhs is done
-    // Then the resulting matrix has the correct values
-
-    let lhs = Tensor::new(
-        1,
-        2,
-        vec![
-            1.0, 2.0, //
-        ],
-    );
-    let rhs: Tensor = Tensor::new(
-        3,
-        2,
-        vec![
-            11.0, 12.0, //
-            14.0, 15.0, //
-            13.0, 16.0, //
-        ],
-    );
-    let expected_result = Tensor::new(
-        3,
-        2,
-        vec![
-            1.0 - 11.0,
-            2.0 - 12.0, //
-            1.0 - 14.0,
-            2.0 - 15.0, //
-            1.0 - 13.0,
-            2.0 - 16.0, //
-        ],
-    );
-
-    let mut result = Tensor::default();
-    _ = lhs.sub_broadcast(&rhs, &mut result);
-    assert_eq!(result, expected_result);
-}
-
-#[test]
 fn element_wise_mul_result() {
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the element-wise multiplication is done

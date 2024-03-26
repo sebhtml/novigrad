@@ -107,20 +107,6 @@ impl Tensor {
         Ok(())
     }
 
-    pub fn sub_broadcast(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        let left = self;
-        result.reshape(right.rows, right.cols);
-        for row in 0..result.rows {
-            for col in 0..result.cols {
-                let left = left.get(0, col);
-                let right = right.get(row, col);
-                let value = left - right;
-                result.set(row, col, value);
-            }
-        }
-        Ok(())
-    }
-
     pub fn matmul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         let left = self;
         if left.cols != right.rows {

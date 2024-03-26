@@ -49,3 +49,15 @@ pub fn get_u8_embedding_table() -> Vec<Vec<f32>> {
     }
     embeddings_table
 }
+
+pub fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<u8>) -> Tensor {
+    let mut values = vec![];
+    let mut row = 0;
+    let rows = input.len();
+    while row < rows {
+        let index = input[row];
+        values.append(&mut embedding_table[index as usize].clone());
+        row += 1;
+    }
+    Tensor::new(input.len(), embedding_table[0].len(), values)
+}

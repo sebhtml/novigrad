@@ -1,16 +1,6 @@
-use crate::{get_u8_embedding_table, Activation, DatasetDetails, LayerConfig, Tensor};
-
-fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<u8>) -> Tensor {
-    let mut values = vec![];
-    let mut row = 0;
-    let rows = input.len();
-    while row < rows {
-        let index = input[row];
-        values.append(&mut embedding_table[index as usize].clone());
-        row += 1;
-    }
-    Tensor::new(input.len(), embedding_table[0].len(), values)
-}
+use crate::{
+    add_embeddings, get_u8_embedding_table, Activation, DatasetDetails, LayerConfig, Tensor,
+};
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
     let embedding_table = get_u8_embedding_table();

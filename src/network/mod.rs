@@ -108,8 +108,9 @@ impl Network {
 
     pub fn total_error(&self, inputs: &Vec<Tensor>, outputs: &Vec<Tensor>) -> f32 {
         let mut total_error = 0.0;
+        let mut predicted = Tensor::default();
         for i in 0..inputs.len() {
-            let predicted = self.predict(&inputs[i]);
+            self.predict(&inputs[i], &mut predicted);
             let target = &outputs[i];
             let example_error = self.compute_error(target, &predicted);
             total_error += example_error;
@@ -301,27 +302,32 @@ impl Network {
     }
 
     pub fn predict_many(&self, inputs: &Vec<Tensor>) -> Vec<Tensor> {
-        inputs.iter().map(|x| self.predict(x)).collect()
+        let mut predicted = Tensor::default();
+        let mut outputs = Vec::new();
+        for input in inputs {
+            self.predict(input, &mut predicted);
+            outputs.push(predicted.clone());
+        }
+        outputs
     }
 
-    pub fn predict(&self, x: &Tensor) -> Tensor {
+    pub fn predict(&self, x: &Tensor, predicted: &mut Tensor) {
         // Add a constant for bias
         //x.push(1.0);
-        let mut previous_activation = Tensor::default();
         let mut matrix_product = Tensor::default();
         let mut w_t = Tensor::default();
+        let mut activation_tensor = Tensor::default();
 
-        previous_activation = x.clone();
+        *predicted = x.clone();
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let activation_function = layer.activation();
-            let error = layer.forward(&previous_activation, &mut w_t, &mut matrix_product);
+            let error = layer.forward(predicted, &mut w_t, &mut matrix_product);
             match error {
                 Ok(_) => {
-                    let mut activation_tensor = Tensor::default();
                     let op_result =
                         activation_function.activate(&matrix_product, &mut activation_tensor);
                     op_result.expect("Ok");
-                    previous_activation = activation_tensor;
+                    *predicted = activation_tensor.clone();
                 }
                 _ => {
                     let layer_weights = layer.weights();
@@ -330,14 +336,12 @@ impl Network {
                     println!("Incompatible shapes in matrix multiplication");
                     println!(
                         "Between X {:?} and W^T {:?}",
-                        previous_activation.shape(),
+                        predicted.shape(),
                         w_t.shape(),
                     );
                     debug_assert!(false);
                 }
             }
         }
-
-        previous_activation
     }
 }

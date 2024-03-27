@@ -17,6 +17,8 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
+- slice output before giving it to loss function
+- implement cross-entropy loss
 - add PredictWorkingMemory
 - add a method assign in Tensor to avoid clone()
 - do not use clone()
@@ -24,8 +26,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 - learned Embedding
 - Dropout
 - move learning rate in dataset details
-- add an abstraction for loss
-- implement cross-entropy loss
 - add tape like in pytorch
 - embeddings are learned
 - shuffle examples in each epoch

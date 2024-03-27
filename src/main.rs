@@ -9,9 +9,10 @@ mod layer;
 use layer::*;
 mod dataset;
 use dataset::*;
+mod loss;
 
 fn main() {
     //let dataset = Dataset::Simple;
     let dataset = Dataset::MegaMan;
-    train_network_on_dataset(&dataset);
+    train_network_on_dataset(&dataset).expect("Ok");
 }

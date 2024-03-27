@@ -5,7 +5,10 @@ use std::{cell::RefCell, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{Activation, ActivationFunction, Layer, Linear, Tensor};
+use crate::{
+    loss::{LossFunction, ResidualSumOfSquares},
+    Activation, ActivationFunction, Error, Layer, Linear, Tensor,
+};
 
 pub struct LayerConfig {
     pub rows: usize,
@@ -15,6 +18,7 @@ pub struct LayerConfig {
 
 pub struct Network {
     pub layers: Vec<Box<dyn Layer>>,
+    loss_function: ResidualSumOfSquares,
 }
 
 pub struct TrainWorkingMemory {
@@ -91,6 +95,7 @@ impl Network {
                     })
                 })
                 .collect(),
+            loss_function: Default::default(),
         }
     }
 
@@ -106,17 +111,17 @@ impl Network {
         }
     }
 
-    pub fn total_error(&self, inputs: &Vec<Tensor>, outputs: &Vec<Tensor>) -> f32 {
+    pub fn total_error(&self, inputs: &Vec<Tensor>, outputs: &Vec<Tensor>) -> Result<f32, Error> {
         let mut total_error = 0.0;
         let mut predicted = Tensor::default();
         for i in 0..inputs.len() {
             self.predict(&inputs[i], &mut predicted);
             let target = &outputs[i];
-            let example_error = self.compute_error(target, &predicted);
+            let example_error = self.loss_function.evaluate(target, &predicted)?;
             total_error += example_error;
         }
 
-        total_error
+        Ok(total_error)
     }
 
     fn train_back_propagation(
@@ -221,18 +226,10 @@ impl Network {
 
             if layer_index == self.layers.len() - 1 {
                 // Output layer
-                debug_assert_eq!(y.cols(), layer_activation_tensor.cols());
-                let rows = layer_activation_tensor.rows();
-                let cols = layer_activation_tensor.cols();
-                let last_row = rows - 1;
-                output_diff.reshape(rows, cols);
-                let mut col = 0;
-                // TODO Is it normal for rows that are not the last row to have a diff of 0.0 ?
-                while col < cols {
-                    let value = y.get(0, col) - layer_activation_tensor.get(last_row, col);
-                    output_diff.set(last_row, col, value);
-                    col += 1;
-                }
+                let op_result = self
+                    .loss_function
+                    .derive(y, layer_activation_tensor, output_diff);
+                op_result.expect("Ok");
             } else {
                 // Hidden layer
                 let next_layer_index = layer_index + 1;
@@ -288,17 +285,6 @@ impl Network {
             op_result.expect("Ok");
             *self.layers[layer].weights().as_ref().borrow_mut() = addition.clone();
         }
-    }
-
-    fn compute_error(&self, y: &Tensor, output: &Tensor) -> f32 {
-        let mut error = 0.0;
-        let last_row = output.rows() - 1;
-        debug_assert_eq!(output.cols(), y.cols());
-        for col in 0..y.cols() {
-            let diff = y.get(0, col) - output.get(last_row, col);
-            error += diff.powf(2.0);
-        }
-        error * 0.5
     }
 
     pub fn predict_many(&self, inputs: &Vec<Tensor>) -> Vec<Tensor> {

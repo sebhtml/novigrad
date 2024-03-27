@@ -1,4 +1,4 @@
-use crate::{load_dataset, Dataset, Network, Tensor, TrainWorkingMemory};
+use crate::{load_dataset, Dataset, Error, Network, Tensor, TrainWorkingMemory};
 
 fn print_total_error(
     network: &Network,
@@ -6,14 +6,14 @@ fn print_total_error(
     outputs: &Vec<Tensor>,
     last_total_error: f32,
     epoch: usize,
-) -> f32 {
-    let total_error = network.total_error(inputs, outputs);
+) -> Result<f32, Error> {
+    let total_error = network.total_error(inputs, outputs)?;
     let change = (total_error - last_total_error) / last_total_error;
     println!(
         "Epoch {} Total_error {}, change: {}",
         epoch, total_error, change
     );
-    total_error
+    Ok(total_error)
 }
 
 pub struct NetworkTestOutput {
@@ -21,7 +21,7 @@ pub struct NetworkTestOutput {
     pub final_total_error: f32,
 }
 
-pub fn train_network_on_dataset(dataset: &Dataset) -> NetworkTestOutput {
+pub fn train_network_on_dataset(dataset: &Dataset) -> Result<NetworkTestOutput, Error> {
     let mut train_working_memory = TrainWorkingMemory::default();
     let mut initial_total_error = f32::NAN;
     let dataset_details = load_dataset(dataset);
@@ -39,7 +39,7 @@ pub fn train_network_on_dataset(dataset: &Dataset) -> NetworkTestOutput {
     for epoch in 0..epochs {
         if epoch % progress == 0 {
             let total_error =
-                print_total_error(&network, &inputs, &outputs, last_total_error, epoch);
+                print_total_error(&network, &inputs, &outputs, last_total_error, epoch)?;
             if epoch == 0 {
                 initial_total_error = total_error;
             }
@@ -48,7 +48,7 @@ pub fn train_network_on_dataset(dataset: &Dataset) -> NetworkTestOutput {
         network.train(&mut train_working_memory, epoch, &inputs, &outputs);
     }
     let final_total_error =
-        print_total_error(&network, &inputs, &outputs, last_total_error, epochs);
+        print_total_error(&network, &inputs, &outputs, last_total_error, epochs)?;
 
     let predictions = network.predict_many(&inputs);
 
@@ -82,8 +82,9 @@ pub fn train_network_on_dataset(dataset: &Dataset) -> NetworkTestOutput {
         println!("Actual   {}", actual_output);
     }
 
-    NetworkTestOutput {
+    let output = NetworkTestOutput {
         initial_total_error,
         final_total_error,
-    }
+    };
+    Ok(output)
 }

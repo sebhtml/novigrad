@@ -1,4 +1,7 @@
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    ops::{Add, Mul, Sub},
+};
 
 #[cfg(test)]
 mod tests;
@@ -11,7 +14,15 @@ struct F32Add {}
 
 impl F32Operation for F32Add {
     fn op(left: f32, right: f32) -> f32 {
-        left + right
+        <f32 as Add>::add(left, right)
+    }
+}
+
+struct F32Sub {}
+
+impl F32Operation for F32Sub {
+    fn op(left: f32, right: f32) -> f32 {
+        <f32 as Sub>::sub(left, right)
     }
 }
 
@@ -19,7 +30,7 @@ struct F32Mul {}
 
 impl F32Operation for F32Mul {
     fn op(left: f32, right: f32) -> f32 {
-        left * right
+        <f32 as Mul>::mul(left, right)
     }
 }
 
@@ -104,6 +115,14 @@ impl Tensor {
         self.operation::<F32Add>(right, result)
     }
 
+    pub fn sub(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        self.operation::<F32Sub>(right, result)
+    }
+
+    pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        self.operation::<F32Mul>(right, result)
+    }
+
     fn operation<Operation>(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error>
     where
         Operation: F32Operation,
@@ -172,10 +191,6 @@ impl Tensor {
         }
 
         Ok(())
-    }
-
-    pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        self.operation::<F32Mul>(right, result)
     }
 
     pub fn scalar_mul(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {

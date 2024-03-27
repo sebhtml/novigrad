@@ -27,8 +27,9 @@ pub fn train_network_on_dataset(dataset: &Dataset) -> Result<NetworkTestOutput, 
     let dataset_details = load_dataset(dataset);
     let examples = dataset_details.examples;
     let layers = dataset_details.layers;
+    let loss_function_name = &dataset_details.loss_function_name;
 
-    let mut network = Network::new(layers);
+    let mut network = Network::new(layers, loss_function_name);
 
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();

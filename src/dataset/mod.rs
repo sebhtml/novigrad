@@ -2,7 +2,7 @@ mod mega_man;
 mod simple;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{LayerConfig, Tensor};
+use crate::{loss::LossFunctionName, LayerConfig, Tensor};
 
 pub enum Dataset {
     Simple,
@@ -12,6 +12,7 @@ pub enum Dataset {
 pub struct DatasetDetails {
     pub examples: Vec<(Tensor, Tensor)>,
     pub layers: Vec<LayerConfig>,
+    pub loss_function_name: LossFunctionName,
     pub epochs: usize,
     pub progress: usize,
 }

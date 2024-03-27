@@ -6,7 +6,7 @@ use std::{cell::RefCell, rc::Rc};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    loss::{LossFunction, ResidualSumOfSquares},
+    loss::{LossFunction, LossFunctionName, ResidualSumOfSquares},
     Activation, ActivationFunction, Error, Layer, Linear, Tensor,
 };
 
@@ -18,7 +18,7 @@ pub struct LayerConfig {
 
 pub struct Network {
     pub layers: Vec<Box<dyn Layer>>,
-    loss_function: ResidualSumOfSquares,
+    loss_function: Box<dyn LossFunction>,
 }
 
 pub struct TrainWorkingMemory {
@@ -68,7 +68,7 @@ impl Default for TrainWorkingMemory {
 }
 
 impl Network {
-    pub fn new(layer_configs: Vec<LayerConfig>) -> Self {
+    pub fn new(layer_configs: Vec<LayerConfig>, loss_function_name: &LossFunctionName) -> Self {
         let mut rng = thread_rng();
 
         Self {
@@ -95,7 +95,7 @@ impl Network {
                     })
                 })
                 .collect(),
-            loss_function: Default::default(),
+            loss_function: loss_function_name.into(),
         }
     }
 

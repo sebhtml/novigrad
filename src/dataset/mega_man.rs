@@ -1,8 +1,8 @@
 use std::fs;
 
 use crate::{
-    add_embeddings, get_u8_embedding_table, to_multi_class, Activation, DatasetDetails,
-    LayerConfig, Tensor,
+    add_embeddings, get_u8_embedding_table, loss::LossFunctionName, to_multi_class, Activation,
+    DatasetDetails, LayerConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -55,5 +55,6 @@ pub fn load_dataset() -> DatasetDetails {
         ],
         epochs: 200000,
         progress: 10000,
+        loss_function_name: LossFunctionName::ResidualSumOfSquares,
     }
 }

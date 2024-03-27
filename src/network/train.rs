@@ -53,11 +53,33 @@ pub fn train_network_on_dataset(dataset: &Dataset) -> NetworkTestOutput {
     let predictions = network.predict_many(&inputs);
 
     for i in 0..inputs.len() {
-        let output = &outputs[i];
-        let prediction = &predictions[i];
+        let expected_output = &outputs[i];
+        let actual_output = &predictions[i];
+        let cols = expected_output.cols();
+        let mut expected_argmax = 0;
+        for col in 0..cols {
+            if expected_output.get(0, col) > expected_output.get(0, expected_argmax) {
+                expected_argmax = col;
+            }
+        }
+
+        let last_row = actual_output.rows() - 1;
+        let mut actual_argmax = 0;
+        for col in 0..cols {
+            if actual_output.get(last_row, col) > actual_output.get(last_row, actual_argmax) {
+                actual_argmax = col;
+            }
+        }
+
+        println!("----");
         println!("Example {}", i);
-        println!("Expected {}", output);
-        println!("Actual   {}", prediction);
+        println!(
+            "expected_argmax {}, actual_argmax {}",
+            expected_argmax, actual_argmax
+        );
+        println!("");
+        println!("Expected {}", expected_output);
+        println!("Actual   {}", actual_output);
     }
 
     NetworkTestOutput {

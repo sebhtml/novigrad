@@ -40,6 +40,8 @@ pub struct TrainWorkingMemory {
     pub previous_a_time_output_delta: Tensor,
     pub previous_action_t: Tensor,
     pub layer_weight_delta_transpose: Tensor,
+    pub last_activation_row: Tensor,
+    pub loss: Tensor,
 }
 
 impl Default for TrainWorkingMemory {
@@ -63,6 +65,8 @@ impl Default for TrainWorkingMemory {
             previous_a_time_output_delta: Default::default(),
             previous_action_t: Default::default(),
             layer_weight_delta_transpose: Default::default(),
+            last_activation_row: Default::default(),
+            loss: Default::default(),
         }
     }
 }
@@ -114,10 +118,13 @@ impl Network {
     pub fn total_error(&self, inputs: &Vec<Tensor>, outputs: &Vec<Tensor>) -> Result<f32, Error> {
         let mut total_error = 0.0;
         let mut predicted = Tensor::default();
+        let mut last_activation_row = Tensor::default();
         for i in 0..inputs.len() {
             self.predict(&inputs[i], &mut predicted);
             let target = &outputs[i];
-            let example_error = self.loss_function.evaluate(target, &predicted)?;
+            let last_row = predicted.rows() - 1;
+            predicted.row(last_row, &mut last_activation_row);
+            let example_error = self.loss_function.evaluate(target, &last_activation_row)?;
             total_error += example_error;
         }
 
@@ -226,10 +233,23 @@ impl Network {
 
             if layer_index == self.layers.len() - 1 {
                 // Output layer
-                let op_result = self
-                    .loss_function
-                    .derive(y, layer_activation_tensor, output_diff);
+                let last_activation_row = &mut working_memory.last_activation_row;
+                let loss = &mut working_memory.loss;
+                let last_row = layer_activation_tensor.rows() - 1;
+                layer_activation_tensor.row(last_row, last_activation_row);
+                let op_result = self.loss_function.derive(y, last_activation_row, loss);
                 op_result.expect("Ok");
+                output_diff.reshape(
+                    layer_activation_tensor.rows(),
+                    layer_activation_tensor.cols(),
+                );
+                let mut col = 0;
+                let cols = loss.cols();
+                while col < cols {
+                    let value = loss.get(0, col);
+                    output_diff.set(last_row, col, value);
+                    col += 1;
+                }
             } else {
                 // Hidden layer
                 let next_layer_index = layer_index + 1;

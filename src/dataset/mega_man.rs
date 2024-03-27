@@ -16,8 +16,7 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
     let tokens = contents.as_bytes().to_owned();
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
-    // TODO load more than 1 example.
-    let max_number_of_examples = 1;
+    let max_number_of_examples = 10;
     while i + context_size < tokens.len() && i < max_number_of_examples {
         let next_token_index = i + context_size;
         let input_tokens = tokens[i..next_token_index].to_owned();
@@ -25,7 +24,7 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
         /*
         println!("input_tokens {:?}", input_tokens);
         println!("next_token {}", next_token);
-         */
+        */
         let input_embeddings = add_embeddings(&embedding_table, &input_tokens);
         let output_multiclass = to_multi_class(next_token, token_count);
 
@@ -54,7 +53,7 @@ pub fn load_dataset() -> DatasetDetails {
                 activation: Activation::Softmax,
             },
         ],
-        epochs: 1000000,
+        epochs: 200000,
         progress: 10000,
     }
 }

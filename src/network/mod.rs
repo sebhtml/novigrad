@@ -245,6 +245,7 @@ impl Network {
                 );
                 let mut col = 0;
                 let cols = loss.cols();
+
                 while col < cols {
                     let value = loss.get(0, col);
                     output_diff.set(last_row, col, value);
@@ -301,7 +302,7 @@ impl Network {
         for layer in 0..self.layers.len() {
             let op_result = (*self.layers[layer].weights())
                 .borrow()
-                .add(&weight_deltas[layer], addition);
+                .sub(&weight_deltas[layer], addition);
             op_result.expect("Ok");
             *self.layers[layer].weights().as_ref().borrow_mut() = addition.clone();
         }

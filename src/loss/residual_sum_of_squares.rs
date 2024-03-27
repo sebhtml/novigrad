@@ -2,7 +2,6 @@ use crate::{Error, Tensor};
 
 use super::LossFunction;
 
-// RSS = 1/2 * sum (y_i - f(x_i))^2
 pub struct ResidualSumOfSquares {}
 
 impl Default for ResidualSumOfSquares {
@@ -12,6 +11,7 @@ impl Default for ResidualSumOfSquares {
 }
 
 impl LossFunction for ResidualSumOfSquares {
+    /// RSS = Σ (y_i - f(x_i))^2
     fn evaluate(&self, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
         let cols = expected.cols();
         let mut sum = 0.0;
@@ -21,12 +21,14 @@ impl LossFunction for ResidualSumOfSquares {
         }
         for col in 0..cols {
             let diff = expected.get(0, col) - actual.get(last_row, col);
-            sum += diff.powf(2.0);
+            sum += diff * diff;
         }
-        Ok(sum * 0.5)
+        Ok(sum)
     }
 
     fn derive(&self, expected: &Tensor, actual: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        expected.sub(actual, result)
+        let mut tmp = Tensor::default();
+        expected.sub(actual, &mut tmp)?;
+        tmp.scalar_mul(-2.0, result)
     }
 }

@@ -3,6 +3,18 @@ use std::fmt::Display;
 #[cfg(test)]
 mod tests;
 
+pub trait F32Operation {
+    fn op(left: f32, right: f32) -> f32;
+}
+
+struct F32Add {}
+
+impl F32Operation for F32Add {
+    fn op(left: f32, right: f32) -> f32 {
+        left + right
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Error {
     IncompatibleTensorShapes,
@@ -81,6 +93,13 @@ impl Tensor {
     }
 
     pub fn add(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        self.operation::<F32Add>(right, result)
+    }
+
+    fn operation<Operation>(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error>
+    where
+        Operation: F32Operation,
+    {
         let left = self;
         if left.rows != right.rows || left.cols != right.cols {
             return Err(Error::IncompatibleTensorShapes);
@@ -99,7 +118,9 @@ impl Tensor {
                 let left_cell = left_ptr.add(index);
                 let right_cell = right_ptr.add(index);
                 let result_cell = result_ptr.add(index);
-                *result_cell = *left_cell + *right_cell;
+                let left = *left_cell;
+                let right = *right_cell;
+                *result_cell = Operation::op(left, right);
                 index += 1;
             }
         }

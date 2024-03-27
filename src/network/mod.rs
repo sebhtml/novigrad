@@ -6,7 +6,7 @@ use std::{cell::RefCell, rc::Rc};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    loss::{LossFunction, LossFunctionName, ResidualSumOfSquares},
+    loss::{LossFunction, LossFunctionName},
     Activation, ActivationFunction, Error, Layer, Linear, Tensor,
 };
 

@@ -1,5 +1,49 @@
 use crate::{load_dataset, Dataset, Error, Network, Tensor, TrainWorkingMemory};
 
+pub fn print_expected_output_and_actual_output(
+    example: usize,
+    expected_output: &Tensor,
+    actual_output: &Tensor,
+    loss: Option<&Tensor>,
+) {
+    let cols = expected_output.cols();
+    let mut expected_argmax = 0;
+    for col in 0..cols {
+        if expected_output.get(0, col) > expected_output.get(0, expected_argmax) {
+            expected_argmax = col;
+        }
+    }
+
+    let last_row = actual_output.rows() - 1;
+    let mut actual_argmax = 0;
+    for col in 0..cols {
+        if actual_output.get(last_row, col) > actual_output.get(last_row, actual_argmax) {
+            actual_argmax = col;
+        }
+    }
+
+    println!("----");
+    println!("Example {}", example);
+    println!(
+        "expected_argmax {}, actual_argmax {}",
+        expected_argmax, actual_argmax
+    );
+    println!("");
+    for col in 0..cols {
+        let loss = match loss {
+            Some(loss) => loss.get(0, col),
+            _ => Default::default(),
+        };
+        println!(
+            "index {}  expected {}  actual {}  loss {}",
+            col,
+            expected_output.get(0, col),
+            actual_output.get(last_row, col),
+            loss
+        );
+    }
+}
+
 fn print_total_error(
     network: &Network,
     inputs: &Vec<Tensor>,
@@ -56,31 +100,8 @@ pub fn train_network_on_dataset(dataset: &Dataset) -> Result<NetworkTestOutput, 
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
         let actual_output = &predictions[i];
-        let cols = expected_output.cols();
-        let mut expected_argmax = 0;
-        for col in 0..cols {
-            if expected_output.get(0, col) > expected_output.get(0, expected_argmax) {
-                expected_argmax = col;
-            }
-        }
 
-        let last_row = actual_output.rows() - 1;
-        let mut actual_argmax = 0;
-        for col in 0..cols {
-            if actual_output.get(last_row, col) > actual_output.get(last_row, actual_argmax) {
-                actual_argmax = col;
-            }
-        }
-
-        println!("----");
-        println!("Example {}", i);
-        println!(
-            "expected_argmax {}, actual_argmax {}",
-            expected_argmax, actual_argmax
-        );
-        println!("");
-        println!("Expected {}", expected_output);
-        println!("Actual   {}", actual_output);
+        print_expected_output_and_actual_output(i, expected_output, actual_output, None);
     }
 
     let output = NetworkTestOutput {

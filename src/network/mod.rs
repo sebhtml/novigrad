@@ -7,6 +7,7 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
     loss::{LossFunction, LossFunctionName},
+    train::print_expected_output_and_actual_output,
     Activation, ActivationFunction, Error, Layer, Linear, Tensor,
 };
 
@@ -159,7 +160,7 @@ impl Network {
         &mut self,
         working_memory: &mut TrainWorkingMemory,
         _epoch: usize,
-        _example: usize,
+        example_index: usize,
         x: &Tensor,
         y: &Tensor,
     ) {
@@ -197,6 +198,7 @@ impl Network {
                     matrix_products.push(matrix_product.clone());
                     let op_result = activation_function.activate(matrix_product, activation_tensor);
                     op_result.expect("Ok");
+                    //println!("layer_index {}  activation_shape {:?}", layer_index, activation_tensor.shape());
                     activations.push(activation_tensor.clone());
                 }
                 _ => {
@@ -270,12 +272,9 @@ impl Network {
                 clip(&last_activation_row, &mut clipped_tensor);
                 let op_result = self.loss_function.derive(y, &clipped_tensor, loss);
                 op_result.expect("Ok");
-                /*
-                                println!("y {}", y);
-                                println!("last_activation_row {}", last_activation_row);
-                                println!("loss {}", loss);
-                                assert!(false);
-                */
+                //print_expected_output_and_actual_output(example_index, y, &clipped_tensor, Some(loss));
+                //assert!(false);
+
                 output_diff.reshape(
                     layer_activation_tensor.rows(),
                     layer_activation_tensor.cols(),

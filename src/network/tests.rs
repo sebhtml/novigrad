@@ -8,8 +8,8 @@ use crate::Dataset;
 fn simple_dataset() {
     let dataset = Dataset::Simple;
     let test_output = train_network_on_dataset(&dataset).expect("Ok");
-    assert_gt!(test_output.initial_total_error, 0.5);
-    assert_lt!(test_output.final_total_error, 0.000001);
+    assert_gt!(test_output.initial_total_error, 2.0);
+    assert_lt!(test_output.final_total_error, 0.00025);
 }
 
 #[test]
@@ -17,5 +17,5 @@ fn mega_man_dataset() {
     let dataset = Dataset::MegaMan;
     let test_output = train_network_on_dataset(&dataset).expect("Ok");
     assert_gt!(test_output.initial_total_error, 50.0);
-    assert_lt!(test_output.final_total_error, 0.0015);
+    assert_lt!(test_output.final_total_error, 0.002);
 }

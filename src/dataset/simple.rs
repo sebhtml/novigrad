@@ -38,23 +38,23 @@ pub fn load_dataset() -> DatasetDetails {
         examples: load_examples(),
         layers: vec![
             LayerConfig {
-                rows: 8,
+                rows: 256,
                 cols: 256,
                 activation: Activation::Sigmoid,
             },
             LayerConfig {
-                rows: 8,
-                cols: 8,
+                rows: 256,
+                cols: 256,
                 activation: Activation::Sigmoid,
             },
             LayerConfig {
                 rows: 4,
-                cols: 8,
+                cols: 256,
                 activation: Activation::Softmax,
             },
         ],
-        epochs: 1000000,
-        progress: 10000,
+        epochs: 1000,
+        progress: 10,
         loss_function_name: LossFunctionName::CrossEntropyLoss,
     }
 }

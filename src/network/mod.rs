@@ -176,6 +176,7 @@ impl Network {
         let w_t = &mut working_memory.w_t;
         let activation_tensor = &mut working_memory.activation_tensor;
 
+        //println!("input_shape {:?}", x.shape());
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let previous_activation = {
                 if layer_index == 0 {

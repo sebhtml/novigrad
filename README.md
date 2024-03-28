@@ -17,6 +17,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
+- test argmax in output
 - add PredictWorkingMemory
 - add a method assign in Tensor to avoid clone()
 - do not use clone()

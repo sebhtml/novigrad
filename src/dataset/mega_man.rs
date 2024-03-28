@@ -43,18 +43,23 @@ pub fn load_dataset() -> DatasetDetails {
         examples: load_examples(),
         layers: vec![
             LayerConfig {
-                rows: 4,
+                rows: 256,
                 cols: 256,
                 activation: Activation::Sigmoid,
             },
             LayerConfig {
                 rows: 256,
-                cols: 4,
+                cols: 256,
+                activation: Activation::Sigmoid,
+            },
+            LayerConfig {
+                rows: 256,
+                cols: 256,
                 activation: Activation::Softmax,
             },
         ],
-        epochs: 200000,
-        progress: 10000,
-        loss_function_name: LossFunctionName::ResidualSumOfSquares,
+        epochs: 1000,
+        progress: 10,
+        loss_function_name: LossFunctionName::CrossEntropyLoss,
     }
 }

@@ -16,6 +16,6 @@ fn simple_dataset() {
 fn mega_man_dataset() {
     let dataset = Dataset::MegaMan;
     let test_output = train_network_on_dataset(&dataset).expect("Ok");
-    assert_gt!(test_output.initial_total_error, 0.4);
-    assert_lt!(test_output.final_total_error, 0.000001);
+    assert_gt!(test_output.initial_total_error, 50.0);
+    assert_lt!(test_output.final_total_error, 0.0015);
 }

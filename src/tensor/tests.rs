@@ -50,6 +50,60 @@ fn multiplication_shape_compatibility() {
 }
 
 #[test]
+fn get() {
+    let tensor = Tensor::new(
+        2,
+        2,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+        ],
+    );
+
+    assert_eq!(tensor.get(0, 1), 2.0);
+}
+
+#[test]
+fn set() {
+    let mut tensor = Tensor::new(
+        2,
+        2,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+        ],
+    );
+
+    tensor.set(1, 0, 99.0);
+    assert_eq!(tensor.get(1, 0), 99.0);
+}
+
+#[test]
+fn assign() {
+    let mut tensor = Tensor::new(
+        2,
+        2,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+        ],
+    );
+
+    let tensor2 = Tensor::new(
+        3,
+        3,
+        vec![
+            11.0, 12.0, 13.0, //
+            14.0, 15.0, 16.0, //
+            17.0, 18.0, 19.0, //
+        ],
+    );
+
+    tensor.assign(&tensor2);
+    assert_eq!(tensor, tensor2);
+}
+
+#[test]
 fn reshape() {
     // Given a tensor
     // When it is reshaped to a bigger shape
@@ -203,9 +257,82 @@ fn element_wise_mul_result() {
 }
 
 #[test]
-fn scalar_mul() {
+fn div_result() {
     // Given a left-hand side matrix and and a right-hand side matrix
-    // When the element-wise multiplication is done
+    // When the division is done
+    // Then the resulting matrix has the correct values
+
+    let lhs = Tensor::new(
+        3,
+        2,
+        vec![
+            10.0, 20.0, //
+            30.0, 40.0, //
+            50.0, 60.0, //
+        ],
+    );
+    let rhs: Tensor = Tensor::new(
+        3,
+        2,
+        vec![
+            2.0, 2.0, //
+            2.0, 2.0, //
+            2.0, 2.0, //
+        ],
+    );
+    let expected_result = Tensor::new(
+        3,
+        2,
+        vec![
+            5.0, 10.0, //
+            15.0, 20.0, //
+            25.0, 30.0, //
+        ],
+    );
+
+    let mut result = Tensor::default();
+    lhs.div(&rhs, &mut result).expect("Ok");
+    assert_eq!(result, expected_result);
+}
+
+#[test]
+fn scalar_add() {
+    // Given a left-hand side matrix and and a right-hand side scalar
+    // When a scalar addition is done
+    // Then the resulting matrix has the correct values
+
+    let lhs = Tensor::new(
+        3,
+        2,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+            5.0, 6.0, //
+        ],
+    );
+    let rhs = -2.0;
+    let expected_result = Tensor::new(
+        3,
+        2,
+        vec![
+            1.0 + -2.0,
+            2.0 + -2.0, //
+            3.0 + -2.0,
+            4.0 + -2.0, //
+            5.0 + -2.0,
+            6.0 + -2.0, //
+        ],
+    );
+
+    let mut result = Tensor::default();
+    _ = lhs.scalar_add(rhs, &mut result);
+    assert_eq!(result, expected_result);
+}
+
+#[test]
+fn scalar_mul() {
+    // Given a left-hand side matrix and and a right-hand scalar
+    // When scalar multiplication is done
     // Then the resulting matrix has the correct values
 
     let lhs = Tensor::new(

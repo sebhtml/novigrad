@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    ops::{Add, Mul, Sub},
+    ops::{Add, Div, Mul, Sub},
 };
 
 #[cfg(test)]
@@ -31,6 +31,14 @@ struct F32Mul {}
 impl F32Operation for F32Mul {
     fn op(left: f32, right: f32) -> f32 {
         <f32 as Mul>::mul(left, right)
+    }
+}
+
+struct F32Div {}
+
+impl F32Operation for F32Div {
+    fn op(left: f32, right: f32) -> f32 {
+        <f32 as Div>::div(left, right)
     }
 }
 
@@ -103,6 +111,16 @@ impl Tensor {
         self.values[index] = value;
     }
 
+    pub fn assign(&mut self, from: &Tensor) {
+        self.reshape(from.rows, from.cols);
+        let len = from.values.len();
+        let mut index = 0;
+        while index < len {
+            self.values[index] = from.values[index];
+            index += 1;
+        }
+    }
+
     pub fn transpose(&self, other: &mut Tensor) {
         other.reshape(self.cols, self.rows);
         let rows = self.rows;
@@ -131,6 +149,10 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
+    pub fn div(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        self.operation::<F32Div>(right, result)
+    }
+
     fn operation<Operation>(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error>
     where
         Operation: F32Operation,
@@ -155,7 +177,9 @@ impl Tensor {
                 let result_cell = result_ptr.add(index);
                 let left = *left_cell;
                 let right = *right_cell;
-                *result_cell = Operation::op(left, right);
+                let value = Operation::op(left, right);
+                debug_assert!(value.is_finite());
+                *result_cell = value;
                 index += 1;
             }
         }
@@ -201,10 +225,23 @@ impl Tensor {
         Ok(())
     }
 
+    pub fn scalar_add(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {
+        self.scalar_op::<F32Add>(right, result)
+    }
+
     pub fn scalar_mul(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {
+        self.scalar_op::<F32Mul>(right, result)
+    }
+
+    fn scalar_op<Operation>(&self, right: f32, result: &mut Tensor) -> Result<(), Error>
+    where
+        Operation: F32Operation,
+    {
         result.reshape(self.rows, self.cols);
         for i in 0..self.values.len() {
-            result.values[i] = self.values[i] * right;
+            let left = self.values[i];
+            let value = Operation::op(left, right);
+            result.values[i] = value;
         }
         Ok(())
     }

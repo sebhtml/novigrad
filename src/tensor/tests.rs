@@ -64,6 +64,38 @@ fn get() {
 }
 
 #[test]
+fn clip() {
+    // Given a tensor with 0.0 and 1.0 values
+    // When it is clipped
+    // Then the clipped tensor contains clipped values
+
+    let epsilon = 1e-8;
+    let tensor = Tensor::new(
+        1,
+        4,
+        vec![
+            0.0, 1.0, //
+            0.5, 0.7, //
+        ],
+    );
+    let mut clipped = Tensor::default();
+    tensor.clip(0.0 + epsilon, 1.0 - epsilon, &mut clipped);
+
+    let expected = Tensor::new(
+        1,
+        4,
+        vec![
+            0.0 + epsilon,
+            1.0 - epsilon, //
+            0.5,
+            0.7, //
+        ],
+    );
+
+    assert_eq!(clipped, expected);
+}
+
+#[test]
 fn set() {
     let mut tensor = Tensor::new(
         2,

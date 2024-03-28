@@ -225,6 +225,19 @@ impl Tensor {
         Ok(())
     }
 
+    pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {
+        result.reshape(self.rows, self.cols);
+        let len = self.values.len();
+        let mut index = 0;
+        while index < len {
+            let mut value = self.values[index];
+            value = value.max(min);
+            value = value.min(max);
+            result.values[index] = value;
+            index += 1;
+        }
+    }
+
     pub fn scalar_add(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {
         self.scalar_op::<F32Add>(right, result)
     }

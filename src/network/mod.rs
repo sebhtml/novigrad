@@ -27,6 +27,7 @@ fn clip(tensor: &Tensor, clipped: &mut Tensor) {
 pub struct Network {
     pub layers: Vec<Box<dyn Layer>>,
     loss_function: Box<dyn LossFunction>,
+    using_softmax_and_cross_entropy_loss: bool,
 }
 
 pub struct TrainWorkingMemory {
@@ -82,7 +83,19 @@ impl Default for TrainWorkingMemory {
 impl Network {
     pub fn new(layer_configs: Vec<LayerConfig>, loss_function_name: &LossFunctionName) -> Self {
         let mut rng = thread_rng();
-
+        let mut using_softmax_and_cross_entropy_loss = false;
+        if loss_function_name == &LossFunctionName::CrossEntropyLoss {
+            match layer_configs.last() {
+                Some(config) => {
+                    if config.activation != Activation::Softmax {
+                        assert!(false, "CrossEntropyLoss only works with Softmax");
+                    } else {
+                        using_softmax_and_cross_entropy_loss = true;
+                    }
+                }
+                _ => (),
+            }
+        }
         Self {
             layers: layer_configs
                 .into_iter()
@@ -108,6 +121,7 @@ impl Network {
                 })
                 .collect(),
             loss_function: loss_function_name.into(),
+            using_softmax_and_cross_entropy_loss,
         }
     }
 
@@ -224,12 +238,17 @@ impl Network {
             let layer_activation_function = &layer.activation();
             let layer_product_tensor = &matrix_products[layer_index];
             let layer_activation_tensor = &activations[layer_index];
-            let op_result = layer_activation_function.derive(
-                layer_product_tensor,
-                layer_activation_tensor,
-                layer_f_derivative,
-            );
-            op_result.expect("Ok");
+            if layer_index == self.layers.len() - 1 && self.using_softmax_and_cross_entropy_loss {
+                layer_activation_tensor.clip(1.0, 1.0, layer_f_derivative);
+            } else {
+                let op_result = layer_activation_function.derive(
+                    layer_product_tensor,
+                    layer_activation_tensor,
+                    layer_f_derivative,
+                );
+                op_result.expect("Ok");
+            }
+
             let binding = self.layers[layer_index].weights();
             let layer_weights: &Tensor = &binding.borrow();
 

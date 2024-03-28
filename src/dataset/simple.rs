@@ -55,6 +55,6 @@ pub fn load_dataset() -> DatasetDetails {
         ],
         epochs: 1000000,
         progress: 10000,
-        loss_function_name: LossFunctionName::ResidualSumOfSquares,
+        loss_function_name: LossFunctionName::CrossEntropyLoss,
     }
 }

@@ -16,6 +16,14 @@ pub struct LayerConfig {
     pub activation: Activation,
 }
 
+const EPSILON: f32 = 1e-8;
+const MIN: f32 = 0.0 + EPSILON;
+const MAX: f32 = 1.0 - EPSILON;
+
+fn clip(tensor: &Tensor, clipped: &mut Tensor) {
+    tensor.clip(MIN, MAX, clipped)
+}
+
 pub struct Network {
     pub layers: Vec<Box<dyn Layer>>,
     loss_function: Box<dyn LossFunction>,
@@ -119,12 +127,14 @@ impl Network {
         let mut total_error = 0.0;
         let mut predicted = Tensor::default();
         let mut last_activation_row = Tensor::default();
+        let mut clipped_tensor = Tensor::default();
         for i in 0..inputs.len() {
             self.predict(&inputs[i], &mut predicted);
             let target = &outputs[i];
             let last_row = predicted.rows() - 1;
             predicted.row(last_row, &mut last_activation_row);
-            let example_error = self.loss_function.evaluate(target, &last_activation_row)?;
+            clip(&last_activation_row, &mut clipped_tensor);
+            let example_error = self.loss_function.evaluate(target, &clipped_tensor)?;
             total_error += example_error;
         }
 
@@ -206,6 +216,7 @@ impl Network {
         let previous_a_time_output_delta = &mut working_memory.previous_a_time_output_delta;
         let previous_action_t = &mut working_memory.previous_action_t;
         let layer_weight_delta_transpose = &mut working_memory.layer_weight_delta_transpose;
+        let mut clipped_tensor = Tensor::default();
 
         // Back-propagation
         for (layer_index, _) in self.layers.iter().enumerate().rev() {
@@ -237,8 +248,15 @@ impl Network {
                 let loss = &mut working_memory.loss;
                 let last_row = layer_activation_tensor.rows() - 1;
                 layer_activation_tensor.row(last_row, last_activation_row);
-                let op_result = self.loss_function.derive(y, last_activation_row, loss);
+                clip(&last_activation_row, &mut clipped_tensor);
+                let op_result = self.loss_function.derive(y, &clipped_tensor, loss);
                 op_result.expect("Ok");
+                /*
+                                println!("y {}", y);
+                                println!("last_activation_row {}", last_activation_row);
+                                println!("loss {}", loss);
+                                assert!(false);
+                */
                 output_diff.reshape(
                     layer_activation_tensor.rows(),
                     layer_activation_tensor.cols(),

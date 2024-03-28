@@ -15,6 +15,8 @@ pub struct DatasetDetails {
     pub loss_function_name: LossFunctionName,
     pub epochs: usize,
     pub progress: usize,
+    pub initial_total_error_min: f32,
+    pub final_total_error_max: f32,
 }
 
 pub fn load_dataset(dataset: &Dataset) -> DatasetDetails {

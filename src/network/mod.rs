@@ -82,7 +82,7 @@ impl Default for TrainWorkingMemory {
 }
 
 impl Network {
-    pub fn new(layer_configs: Vec<LayerConfig>, loss_function_name: &LossFunctionName) -> Self {
+    pub fn new(layer_configs: &Vec<LayerConfig>, loss_function_name: &LossFunctionName) -> Self {
         let mut rng = thread_rng();
         let mut using_softmax_and_cross_entropy_loss = false;
         if loss_function_name == &LossFunctionName::CrossEntropyLoss {
@@ -108,13 +108,13 @@ impl Network {
                     let left = -right;
                     // Xavier Initialization, or Glorot Initialization,
                     let uniform = Uniform::new(left, right);
-                    let activation = layer_config.activation;
                     weights.resize(rows * cols, 0.0);
                     for index in 0..weights.len() {
                         weights[index] = rng.sample(uniform);
                     }
                     let weights = Tensor::new(rows, cols, weights);
-                    let activation: Rc<dyn ActivationFunction> = activation.into();
+                    let activation: Rc<dyn ActivationFunction> =
+                        layer_config.activation.clone().into();
                     Box::new(Linear {
                         weights: Rc::new(RefCell::new(weights)),
                         activation,

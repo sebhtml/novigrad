@@ -1,4 +1,4 @@
-use crate::{load_dataset, Dataset, Error, Network, Tensor, TrainWorkingMemory};
+use crate::{DatasetDetails, Error, Network, Tensor, TrainWorkingMemory};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -56,12 +56,13 @@ pub struct NetworkTestOutput {
     pub actual_argmax_values: Vec<usize>,
 }
 
-pub fn train_network_on_dataset(dataset: &Dataset) -> Result<NetworkTestOutput, Error> {
+pub fn train_network_on_dataset(
+    dataset_details: &DatasetDetails,
+) -> Result<NetworkTestOutput, Error> {
     let mut train_working_memory = TrainWorkingMemory::default();
     let mut initial_total_error = f32::NAN;
-    let dataset_details = load_dataset(dataset);
-    let examples = dataset_details.examples;
-    let layers = dataset_details.layers;
+    let examples = &dataset_details.examples;
+    let layers = &dataset_details.layers;
     let loss_function_name = &dataset_details.loss_function_name;
 
     let mut network = Network::new(layers, loss_function_name);

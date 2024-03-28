@@ -4,23 +4,12 @@ pub fn print_expected_output_and_actual_output(
     example: usize,
     expected_output: &Tensor,
     actual_output: &Tensor,
+    expected_argmax: usize,
+    actual_argmax: usize,
     loss: Option<&Tensor>,
 ) {
     let cols = expected_output.cols();
-    let mut expected_argmax = 0;
-    for col in 0..cols {
-        if expected_output.get(0, col) > expected_output.get(0, expected_argmax) {
-            expected_argmax = col;
-        }
-    }
-
     let last_row = actual_output.rows() - 1;
-    let mut actual_argmax = 0;
-    for col in 0..cols {
-        if actual_output.get(last_row, col) > actual_output.get(last_row, actual_argmax) {
-            actual_argmax = col;
-        }
-    }
 
     println!("----");
     println!("Example {}", example);
@@ -63,6 +52,8 @@ fn print_total_error(
 pub struct NetworkTestOutput {
     pub initial_total_error: f32,
     pub final_total_error: f32,
+    pub expected_argmax_values: Vec<usize>,
+    pub actual_argmax_values: Vec<usize>,
 }
 
 pub fn train_network_on_dataset(dataset: &Dataset) -> Result<NetworkTestOutput, Error> {
@@ -97,16 +88,47 @@ pub fn train_network_on_dataset(dataset: &Dataset) -> Result<NetworkTestOutput, 
 
     let predictions = network.predict_many(&inputs);
 
+    let mut expected_argmax_values = Vec::new();
+    let mut actual_argmax_values = Vec::new();
+
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
         let actual_output = &predictions[i];
 
-        print_expected_output_and_actual_output(i, expected_output, actual_output, None);
+        let cols = expected_output.cols();
+        let mut expected_argmax = 0;
+        for col in 0..cols {
+            if expected_output.get(0, col) > expected_output.get(0, expected_argmax) {
+                expected_argmax = col;
+            }
+        }
+
+        let last_row = actual_output.rows() - 1;
+        let mut actual_argmax = 0;
+        for col in 0..cols {
+            if actual_output.get(last_row, col) > actual_output.get(last_row, actual_argmax) {
+                actual_argmax = col;
+            }
+        }
+
+        expected_argmax_values.push(expected_argmax);
+        actual_argmax_values.push(actual_argmax);
+
+        print_expected_output_and_actual_output(
+            i,
+            expected_output,
+            actual_output,
+            expected_argmax,
+            actual_argmax,
+            None,
+        );
     }
 
     let output = NetworkTestOutput {
         initial_total_error,
         final_total_error,
+        expected_argmax_values,
+        actual_argmax_values,
     };
     Ok(output)
 }

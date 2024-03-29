@@ -24,12 +24,11 @@ pub struct Network {
 
 pub struct TrainWorkingMemory {
     pub matrix_products: Vec<Tensor>,
-    pub activations: Vec<Tensor>,
+    pub activation_tensors: Vec<Tensor>,
     pub layer_deltas: Vec<Tensor>,
     pub weight_deltas: Vec<Tensor>,
     pub addition: Tensor,
     pub w_t: Tensor,
-    pub activation_tensor: Tensor,
     pub layer_f_derivative: Tensor,
     pub layer_delta: Tensor,
     pub layer_weight_delta: Tensor,
@@ -48,12 +47,11 @@ impl Default for TrainWorkingMemory {
     fn default() -> Self {
         Self {
             matrix_products: Default::default(),
-            activations: Default::default(),
+            activation_tensors: Default::default(),
             layer_deltas: Default::default(),
             weight_deltas: Default::default(),
             addition: Default::default(),
             w_t: Default::default(),
-            activation_tensor: Default::default(),
             layer_f_derivative: Default::default(),
             layer_delta: Default::default(),
             layer_weight_delta: Default::default(),
@@ -155,26 +153,28 @@ impl Network {
         let learning_rate: f32 = 0.5;
         let matrix_products = &mut working_memory.matrix_products;
         matrix_products.resize_with(layers_count, Tensor::default);
-        let activations = &mut working_memory.activations;
-        activations.resize_with(0, Tensor::default);
+        let activation_tensors = &mut working_memory.activation_tensors;
+        activation_tensors.resize_with(layers_count, Tensor::default);
+
         // TODO add constant bias
         // Add a constant for bias
         //x.push(1.0);
+
         let w_t = &mut working_memory.w_t;
-        let activation_tensor = &mut working_memory.activation_tensor;
 
         //println!("input_shape {:?}", x.shape());
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let matrix_product = &mut matrix_products[layer_index];
+
             let previous_activation = {
                 if layer_index == 0 {
                     &x
                 } else {
-                    &activations[activations.len() - 1]
+                    let previous_layer_index = layer_index - 1;
+                    &activation_tensors[previous_layer_index]
                 }
             };
 
-            let activation_function = &layer.activation();
             // Use the same convention that is used in tensorflow:
             // y = x @ W^T+b
             // Weights is on the right.
@@ -184,10 +184,11 @@ impl Network {
 
             match error {
                 Ok(_) => {
+                    let activation_function = &layer.activation();
+                    let activation_tensor = &mut activation_tensors[layer_index];
                     let op_result = activation_function.activate(matrix_product, activation_tensor);
                     op_result.expect("Ok");
                     //println!("layer_index {}  activation_shape {:?}", layer_index, activation_tensor.shape());
-                    activations.push(activation_tensor.clone());
                 }
                 _ => {
                     let layer_weights = layer.weights();
@@ -226,7 +227,7 @@ impl Network {
             let layer = &self.layers[layer_index];
             let layer_activation_function = &layer.activation();
             let layer_product_tensor = &matrix_products[layer_index];
-            let layer_activation_tensor = &activations[layer_index];
+            let layer_activation_tensor = &activation_tensors[layer_index];
             if layer_index == self.layers.len() - 1 && self.using_softmax_and_cross_entropy_loss {
                 layer_activation_tensor
                     .scalar_add(1.0, layer_f_derivative)
@@ -248,7 +249,7 @@ impl Network {
                     &x
                 } else {
                     let previous_layer_index = layer_index - 1;
-                    &activations[previous_layer_index]
+                    &activation_tensors[previous_layer_index]
                 }
             };
 

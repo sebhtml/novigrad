@@ -7,7 +7,6 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
     loss::{LossFunction, LossFunctionName},
-    train::print_expected_output_and_actual_output,
     Activation, ActivationFunction, Error, Layer, Linear, Tensor,
 };
 
@@ -15,14 +14,6 @@ pub struct LayerConfig {
     pub rows: usize,
     pub cols: usize,
     pub activation: Activation,
-}
-
-const EPSILON: f32 = 1e-8;
-const MIN: f32 = 0.0 + EPSILON;
-const MAX: f32 = 1.0 - EPSILON;
-
-fn clip(tensor: &Tensor, clipped: &mut Tensor) {
-    tensor.clip(MIN, MAX, clipped)
 }
 
 pub struct Network {
@@ -142,14 +133,12 @@ impl Network {
         let mut total_error = 0.0;
         let mut predicted = Tensor::default();
         let mut last_activation_row = Tensor::default();
-        let mut clipped_tensor = Tensor::default();
         for i in 0..inputs.len() {
             self.predict(&inputs[i], &mut predicted);
             let target = &outputs[i];
             let last_row = predicted.rows() - 1;
             predicted.row(last_row, &mut last_activation_row);
-            clip(&last_activation_row, &mut clipped_tensor);
-            let example_error = self.loss_function.evaluate(target, &clipped_tensor)?;
+            let example_error = self.loss_function.evaluate(target, &last_activation_row)?;
             total_error += example_error;
         }
 
@@ -160,7 +149,7 @@ impl Network {
         &mut self,
         working_memory: &mut TrainWorkingMemory,
         _epoch: usize,
-        example_index: usize,
+        _example_index: usize,
         x: &Tensor,
         y: &Tensor,
     ) {
@@ -233,7 +222,6 @@ impl Network {
         let previous_a_time_output_delta = &mut working_memory.previous_a_time_output_delta;
         let previous_action_t = &mut working_memory.previous_action_t;
         let layer_weight_delta_transpose = &mut working_memory.layer_weight_delta_transpose;
-        let mut clipped_tensor = Tensor::default();
 
         // Back-propagation
         for (layer_index, _) in self.layers.iter().enumerate().rev() {
@@ -242,7 +230,9 @@ impl Network {
             let layer_product_tensor = &matrix_products[layer_index];
             let layer_activation_tensor = &activations[layer_index];
             if layer_index == self.layers.len() - 1 && self.using_softmax_and_cross_entropy_loss {
-                layer_activation_tensor.clip(1.0, 1.0, layer_f_derivative);
+                layer_activation_tensor
+                    .scalar_add(1.0, layer_f_derivative)
+                    .expect("Ok");
             } else {
                 let op_result = layer_activation_function.derive(
                     layer_product_tensor,
@@ -270,8 +260,7 @@ impl Network {
                 let loss = &mut working_memory.loss;
                 let last_row = layer_activation_tensor.rows() - 1;
                 layer_activation_tensor.row(last_row, last_activation_row);
-                clip(&last_activation_row, &mut clipped_tensor);
-                let op_result = self.loss_function.derive(y, &clipped_tensor, loss);
+                let op_result = self.loss_function.derive(y, &last_activation_row, loss);
                 op_result.expect("Ok");
                 //print_expected_output_and_actual_output(example_index, y, &clipped_tensor, Some(loss));
                 //assert!(false);

@@ -17,7 +17,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- remove most use of Tensor::default() in training
+- add transpose_rhs_and_matmul
 - separate Linear and activation
 - learned Embedding
 - Dropout

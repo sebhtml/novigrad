@@ -72,12 +72,20 @@ impl Default for TrainWorkingMemory {
 
 pub struct PredictWorkingMemory {
     pub matrix_product: Tensor,
+    pub last_activation_row: Tensor,
+    pub w_t: Tensor,
+    pub predicted: Tensor,
+    pub predictions: Vec<Tensor>,
 }
 
 impl Default for PredictWorkingMemory {
     fn default() -> Self {
         Self {
             matrix_product: Default::default(),
+            last_activation_row: Default::default(),
+            w_t: Default::default(),
+            predicted: Default::default(),
+            predictions: Default::default(),
         }
     }
 }
@@ -146,13 +154,15 @@ impl Network {
         outputs: &Vec<Tensor>,
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
-        let mut predicted = Tensor::default();
-        let mut last_activation_row = Tensor::default();
+        let predicted = &mut working_memory.predicted;
+        let last_activation_row = &mut working_memory.last_activation_row;
+        let matrix_product = &mut working_memory.matrix_product;
+        let w_t = &mut working_memory.w_t;
         for i in 0..inputs.len() {
-            self.predict(working_memory, &inputs[i], &mut predicted);
+            self.predict(matrix_product, w_t, &inputs[i], predicted);
             let target = &outputs[i];
             let last_row = predicted.rows() - 1;
-            predicted.row(last_row, &mut last_activation_row);
+            predicted.row(last_row, last_activation_row);
             let example_error = self.loss_function.evaluate(target, &last_activation_row)?;
             total_error += example_error;
         }
@@ -361,53 +371,50 @@ impl Network {
 
     pub fn predict_many(
         &self,
-        working_memory: &mut PredictWorkingMemory,
+        matrix_product: &mut Tensor,
+        w_t: &mut Tensor,
         inputs: &Vec<Tensor>,
-    ) -> Vec<Tensor> {
-        let mut outputs = Vec::new();
+        outputs: &mut Vec<Tensor>,
+    ) {
         let len = inputs.len();
-        outputs.resize_with(len, Tensor::default);
         let mut i = 0;
+        outputs.resize_with(len, Tensor::default);
         while i < len {
             let input = &inputs[i];
             let predicted = &mut outputs[i];
-            self.predict(working_memory, input, predicted);
+            self.predict(matrix_product, w_t, input, predicted);
             i += 1;
         }
-        outputs
     }
 
     pub fn predict(
         &self,
-        working_memory: &mut PredictWorkingMemory,
+        matrix_product: &mut Tensor,
+        w_t: &mut Tensor,
         x: &Tensor,
-        predicted: &mut Tensor,
+        activation_tensor: &mut Tensor,
     ) {
         // Add a constant for bias
         //x.push(1.0);
-        let matrix_product = &mut working_memory.matrix_product;
-        let mut w_t = Tensor::default();
-        let mut activation_tensor = Tensor::default();
 
-        predicted.assign(x);
+        activation_tensor.assign(x);
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let activation_function = layer.activation();
-            let error = layer.forward(predicted, &mut w_t, matrix_product);
+            let error = layer.forward(activation_tensor, w_t, matrix_product);
             match error {
                 Ok(_) => {
                     let op_result =
-                        activation_function.activate(&matrix_product, &mut activation_tensor);
+                        activation_function.activate(&matrix_product, activation_tensor);
                     op_result.expect("Ok");
-                    swap(predicted, &mut activation_tensor);
                 }
                 _ => {
                     let layer_weights = layer.weights();
-                    (*layer_weights).borrow().transpose(&mut w_t);
+                    (*layer_weights).borrow().transpose(w_t);
                     println!("In layer {}", layer_index);
                     println!("Incompatible shapes in matrix multiplication");
                     println!(
                         "Between X {:?} and W^T {:?}",
-                        predicted.shape(),
+                        activation_tensor.shape(),
                         w_t.shape(),
                     );
                     debug_assert!(false);

@@ -54,7 +54,7 @@ pub fn load_dataset() -> DatasetDetails {
             },
         ],
         epochs: 1000,
-        progress: 10,
+        progress: 100,
         loss_function_name: LossFunctionName::CrossEntropyLoss,
         initial_total_error_min: 2.0,
         final_total_error_max: 0.00025,

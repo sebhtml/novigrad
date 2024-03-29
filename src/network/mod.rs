@@ -334,16 +334,20 @@ impl Network {
             }
             let binding = &self.layers[layer].weights();
             let weights: &mut Tensor = &mut binding.borrow_mut();
-            *weights = addition.clone();
+            swap(weights, addition);
         }
     }
 
     pub fn predict_many(&self, inputs: &Vec<Tensor>) -> Vec<Tensor> {
-        let mut predicted = Tensor::default();
         let mut outputs = Vec::new();
-        for input in inputs {
-            self.predict(input, &mut predicted);
-            outputs.push(predicted.clone());
+        let len = inputs.len();
+        outputs.resize_with(len, Tensor::default);
+        let mut i = 0;
+        while i < len {
+            let input = &inputs[i];
+            let predicted = &mut outputs[i];
+            self.predict(input, predicted);
+            i += 1;
         }
         outputs
     }

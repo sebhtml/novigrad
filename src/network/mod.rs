@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod tests;
 pub mod train;
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, mem::swap, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -351,7 +351,7 @@ impl Network {
         let mut w_t = Tensor::default();
         let mut activation_tensor = Tensor::default();
 
-        *predicted = x.clone();
+        predicted.assign(x);
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let activation_function = layer.activation();
             let error = layer.forward(predicted, &mut w_t, &mut matrix_product);
@@ -360,7 +360,7 @@ impl Network {
                     let op_result =
                         activation_function.activate(&matrix_product, &mut activation_tensor);
                     op_result.expect("Ok");
-                    *predicted = activation_tensor.clone();
+                    swap(predicted, &mut activation_tensor);
                 }
                 _ => {
                     let layer_weights = layer.weights();

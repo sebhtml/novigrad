@@ -1,5 +1,5 @@
 use super::LossFunction;
-use crate::{Error, Tensor};
+use crate::{Error, Tensor, TrainWorkingMemory};
 
 pub struct CrossEntropyLoss {}
 
@@ -36,7 +36,13 @@ impl LossFunction for CrossEntropyLoss {
     /// then we don't need to derive the softmax activations.
     /// The derivative of the Loss in respect to logits (before activation) is
     /// output of the softmax function - expected output (one-hot encoded)
-    fn derive(&self, expected: &Tensor, actual: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+    fn derive(
+        &self,
+        tmp: &mut Tensor,
+        expected: &Tensor,
+        actual: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
         actual.sub(expected, result)
     }
 }

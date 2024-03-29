@@ -17,9 +17,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- add a method assign in Tensor to avoid clone()
-- do not use clone()
-- add PredictWorkingMemory
+- remove most use of Tensor::default() in training
 - separate Linear and activation
 - learned Embedding
 - Dropout

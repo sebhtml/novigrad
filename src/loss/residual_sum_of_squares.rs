@@ -1,4 +1,4 @@
-use crate::{Error, Tensor};
+use crate::{Error, Tensor, TrainWorkingMemory};
 
 use super::LossFunction;
 
@@ -26,9 +26,14 @@ impl LossFunction for ResidualSumOfSquares {
         Ok(sum)
     }
 
-    fn derive(&self, expected: &Tensor, actual: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        let mut tmp = Tensor::default();
-        expected.sub(actual, &mut tmp)?;
+    fn derive(
+        &self,
+        tmp: &mut Tensor,
+        expected: &Tensor,
+        actual: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        expected.sub(actual, tmp)?;
         tmp.scalar_mul(-2.0, result)
     }
 }

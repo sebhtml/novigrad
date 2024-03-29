@@ -41,6 +41,7 @@ pub struct TrainWorkingMemory {
     pub layer_weight_delta_transpose: Tensor,
     pub last_activation_row: Tensor,
     pub loss: Tensor,
+    pub tmp: Tensor,
 }
 
 impl Default for TrainWorkingMemory {
@@ -64,6 +65,19 @@ impl Default for TrainWorkingMemory {
             layer_weight_delta_transpose: Default::default(),
             last_activation_row: Default::default(),
             loss: Default::default(),
+            tmp: Default::default(),
+        }
+    }
+}
+
+pub struct PredictWorkingMemory {
+    pub matrix_product: Tensor,
+}
+
+impl Default for PredictWorkingMemory {
+    fn default() -> Self {
+        Self {
+            matrix_product: Default::default(),
         }
     }
 }
@@ -125,12 +139,17 @@ impl Network {
         }
     }
 
-    pub fn total_error(&self, inputs: &Vec<Tensor>, outputs: &Vec<Tensor>) -> Result<f32, Error> {
+    pub fn total_error(
+        &self,
+        working_memory: &mut PredictWorkingMemory,
+        inputs: &Vec<Tensor>,
+        outputs: &Vec<Tensor>,
+    ) -> Result<f32, Error> {
         let mut total_error = 0.0;
         let mut predicted = Tensor::default();
         let mut last_activation_row = Tensor::default();
         for i in 0..inputs.len() {
-            self.predict(&inputs[i], &mut predicted);
+            self.predict(working_memory, &inputs[i], &mut predicted);
             let target = &outputs[i];
             let last_row = predicted.rows() - 1;
             predicted.row(last_row, &mut last_activation_row);
@@ -256,10 +275,13 @@ impl Network {
             if layer_index == self.layers.len() - 1 {
                 // Output layer
                 let last_activation_row = &mut working_memory.last_activation_row;
+                let tmp = &mut working_memory.tmp;
                 let loss = &mut working_memory.loss;
                 let last_row = layer_activation_tensor.rows() - 1;
                 layer_activation_tensor.row(last_row, last_activation_row);
-                let op_result = self.loss_function.derive(y, &last_activation_row, loss);
+                let op_result = self
+                    .loss_function
+                    .derive(tmp, y, &last_activation_row, loss);
                 op_result.expect("Ok");
                 //print_expected_output_and_actual_output(example_index, y, &clipped_tensor, Some(loss));
                 //assert!(false);
@@ -337,7 +359,11 @@ impl Network {
         }
     }
 
-    pub fn predict_many(&self, inputs: &Vec<Tensor>) -> Vec<Tensor> {
+    pub fn predict_many(
+        &self,
+        working_memory: &mut PredictWorkingMemory,
+        inputs: &Vec<Tensor>,
+    ) -> Vec<Tensor> {
         let mut outputs = Vec::new();
         let len = inputs.len();
         outputs.resize_with(len, Tensor::default);
@@ -345,23 +371,28 @@ impl Network {
         while i < len {
             let input = &inputs[i];
             let predicted = &mut outputs[i];
-            self.predict(input, predicted);
+            self.predict(working_memory, input, predicted);
             i += 1;
         }
         outputs
     }
 
-    pub fn predict(&self, x: &Tensor, predicted: &mut Tensor) {
+    pub fn predict(
+        &self,
+        working_memory: &mut PredictWorkingMemory,
+        x: &Tensor,
+        predicted: &mut Tensor,
+    ) {
         // Add a constant for bias
         //x.push(1.0);
-        let mut matrix_product = Tensor::default();
+        let matrix_product = &mut working_memory.matrix_product;
         let mut w_t = Tensor::default();
         let mut activation_tensor = Tensor::default();
 
         predicted.assign(x);
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let activation_function = layer.activation();
-            let error = layer.forward(predicted, &mut w_t, &mut matrix_product);
+            let error = layer.forward(predicted, &mut w_t, matrix_product);
             match error {
                 Ok(_) => {
                     let op_result =

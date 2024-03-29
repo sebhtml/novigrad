@@ -295,7 +295,7 @@ impl Network {
                     next_layer_weights_transpose.matmul(next_layer_delta_transpose, output_diff);
                 {
                     output_diff.transpose(output_diff_transpose);
-                    *output_diff = output_diff_transpose.clone();
+                    swap(output_diff, output_diff_transpose);
                 }
 
                 op_result.expect("Ok");
@@ -314,23 +314,27 @@ impl Network {
 
             {
                 layer_weight_delta.transpose(layer_weight_delta_transpose);
-                *layer_weight_delta = layer_weight_delta_transpose.clone();
+                swap(layer_weight_delta, layer_weight_delta_transpose);
             }
 
             debug_assert_eq!(layer_weights.shape(), layer_weight_delta.shape());
 
-            layer_deltas[layer_index] = layer_delta.clone();
-            weight_deltas[layer_index] = layer_weight_delta.clone();
+            swap(&mut layer_deltas[layer_index], layer_delta);
+            swap(&mut weight_deltas[layer_index], layer_weight_delta);
         }
 
         // Apply weight deltas
         let addition = &mut working_memory.addition;
         for layer in 0..self.layers.len() {
-            let op_result = (*self.layers[layer].weights())
-                .borrow()
-                .sub(&weight_deltas[layer], addition);
-            op_result.expect("Ok");
-            *self.layers[layer].weights().as_ref().borrow_mut() = addition.clone();
+            {
+                let binding = &self.layers[layer].weights();
+                let weights: &Tensor = &binding.borrow();
+                let op_result = weights.sub(&weight_deltas[layer], addition);
+                op_result.expect("Ok");
+            }
+            let binding = &self.layers[layer].weights();
+            let weights: &mut Tensor = &mut binding.borrow_mut();
+            *weights = addition.clone();
         }
     }
 

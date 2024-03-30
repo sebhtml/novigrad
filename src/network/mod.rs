@@ -34,6 +34,7 @@ pub struct TrainWorkingMemory {
     pub next_layer_delta_transpose: Tensor,
     pub next_layer_weights_transpose: Tensor,
     pub output_diff_transpose: Tensor,
+    pub previous_activation_tensor: Tensor,
     pub previous_a_time_output_delta: Tensor,
     pub previous_action_t: Tensor,
     pub layer_weight_delta_transpose: Tensor,
@@ -58,6 +59,7 @@ impl Default for TrainWorkingMemory {
             next_layer_delta_transpose: Default::default(),
             next_layer_weights_transpose: Default::default(),
             output_diff_transpose: Default::default(),
+            previous_activation_tensor: Default::default(),
             previous_a_time_output_delta: Default::default(),
             previous_action_t: Default::default(),
             layer_weight_delta_transpose: Default::default(),
@@ -189,25 +191,26 @@ impl Network {
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let matrix_product = &mut matrix_products[layer_index];
 
-            let previous_activation = {
-                if layer_index == 0 {
-                    &x
-                } else {
-                    let previous_layer_index = layer_index - 1;
-                    &activation_tensors[previous_layer_index]
-                }
-            };
+            let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
+            if layer_index == 0 {
+                previous_activation_tensor.assign(x);
+            } else {
+                let previous_layer_index = layer_index - 1;
+                previous_activation_tensor.assign(&activation_tensors[previous_layer_index]);
+            }
 
             // Use the same convention that is used in tensorflow:
             // y = x @ W^T+b
             // Weights is on the right.
             // W is transposed.
             // X is not transposed.
-            let op_result = layer.forward(previous_activation, w_t, matrix_product);
-            op_result.expect("Ok");
-            let activation_function = &layer.activation();
             let activation_tensor = &mut activation_tensors[layer_index];
-            let op_result = activation_function.activate(matrix_product, activation_tensor);
+            let op_result = layer.forward(
+                previous_activation_tensor,
+                w_t,
+                matrix_product,
+                activation_tensor,
+            );
             op_result.expect("Ok");
         }
 
@@ -384,11 +387,12 @@ impl Network {
 
         previous_activation_tensor.assign(input);
         for layer in self.layers.iter() {
-            let op_result = layer.forward(previous_activation_tensor, w_t, matrix_product);
-            op_result.expect("Ok");
-
-            let activation_function = layer.activation();
-            let op_result = activation_function.activate(&matrix_product, activation_tensor);
+            let op_result = layer.forward(
+                previous_activation_tensor,
+                w_t,
+                matrix_product,
+                activation_tensor,
+            );
             op_result.expect("Ok");
             previous_activation_tensor.assign(activation_tensor);
         }

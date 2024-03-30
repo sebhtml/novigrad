@@ -37,9 +37,15 @@ impl Layer for Linear {
         self.activation.clone()
     }
 
-    fn forward(&self, input: &Tensor, w_t: &mut Tensor, result: &mut Tensor) -> Result<(), Error> {
+    fn forward(
+        &self,
+        input: &Tensor,
+        w_t: &mut Tensor,
+        matrix_product: &mut Tensor,
+        activation_tensor: &mut Tensor,
+    ) -> Result<(), Error> {
         self.weights.borrow().transpose(w_t);
-        let op_result = input.matmul(w_t, result);
+        let op_result = input.matmul(w_t, matrix_product);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -48,6 +54,9 @@ impl Layer for Linear {
                 debug_assert!(false);
             }
         }
+        let activation_function = &self.activation;
+        let op_result = activation_function.activate(&matrix_product, activation_tensor);
+        op_result.expect("Ok");
         Ok(())
     }
 }

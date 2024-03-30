@@ -6,7 +6,7 @@ use crate::{ActivationFunction, Error, Layer, Tensor};
 
 pub struct Linear {
     weights: Rc<RefCell<Tensor>>,
-    pub activation: Rc<dyn ActivationFunction>,
+    activation: Rc<dyn ActivationFunction>,
 }
 
 impl Linear {
@@ -39,6 +39,15 @@ impl Layer for Linear {
 
     fn forward(&self, input: &Tensor, w_t: &mut Tensor, result: &mut Tensor) -> Result<(), Error> {
         self.weights.borrow().transpose(w_t);
-        input.matmul(w_t, result)
+        let op_result = input.matmul(w_t, result);
+        match op_result {
+            Ok(_) => (),
+            Err(_) => {
+                println!("Incompatible shapes in matrix multiplication");
+                println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
+                debug_assert!(false);
+            }
+        }
+        Ok(())
     }
 }

@@ -177,7 +177,6 @@ impl Network {
 
         let w_t = &mut working_memory.w_t;
 
-        //println!("input_shape {:?}", x.shape());
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let matrix_product = &mut matrix_products[layer_index];
 
@@ -195,29 +194,12 @@ impl Network {
             // Weights is on the right.
             // W is transposed.
             // X is not transposed.
-            let error = layer.forward(previous_activation, w_t, matrix_product);
-
-            match error {
-                Ok(_) => {
-                    let activation_function = &layer.activation();
-                    let activation_tensor = &mut activation_tensors[layer_index];
-                    let op_result = activation_function.activate(matrix_product, activation_tensor);
-                    op_result.expect("Ok");
-                    //println!("layer_index {}  activation_shape {:?}", layer_index, activation_tensor.shape());
-                }
-                _ => {
-                    let layer_weights = layer.weights();
-                    (*layer_weights).borrow().transpose(w_t);
-                    println!("In layer {}", layer_index);
-                    println!("Incompatible shapes in matrix multiplication");
-                    println!(
-                        "Between X {:?} and W^T {:?}",
-                        previous_activation.shape(),
-                        w_t.shape(),
-                    );
-                    debug_assert!(false);
-                }
-            }
+            let op_result = layer.forward(previous_activation, w_t, matrix_product);
+            op_result.expect("Ok");
+            let activation_function = &layer.activation();
+            let activation_tensor = &mut activation_tensors[layer_index];
+            let op_result = activation_function.activate(matrix_product, activation_tensor);
+            op_result.expect("Ok");
         }
 
         let layer_deltas = &mut working_memory.layer_deltas;
@@ -384,28 +366,13 @@ impl Network {
         //x.push(1.0);
 
         activation_tensor.assign(x);
-        for (layer_index, layer) in self.layers.iter().enumerate() {
+        for layer in self.layers.iter() {
             let activation_function = layer.activation();
-            let error = layer.forward(activation_tensor, w_t, matrix_product);
-            match error {
-                Ok(_) => {
-                    let op_result =
-                        activation_function.activate(&matrix_product, activation_tensor);
-                    op_result.expect("Ok");
-                }
-                _ => {
-                    let layer_weights = layer.weights();
-                    (*layer_weights).borrow().transpose(w_t);
-                    println!("In layer {}", layer_index);
-                    println!("Incompatible shapes in matrix multiplication");
-                    println!(
-                        "Between X {:?} and W^T {:?}",
-                        activation_tensor.shape(),
-                        w_t.shape(),
-                    );
-                    debug_assert!(false);
-                }
-            }
+            let op_result = layer.forward(activation_tensor, w_t, matrix_product);
+            op_result.expect("Ok");
+
+            let op_result = activation_function.activate(&matrix_product, activation_tensor);
+            op_result.expect("Ok");
         }
     }
 }

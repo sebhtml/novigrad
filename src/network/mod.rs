@@ -293,11 +293,9 @@ impl Network {
 
             let op_result = Tensor::matmul(
                 previous_action_t,
-                false,
                 layer_delta,
-                false,
                 previous_a_time_output_delta,
-                false,
+                Default::default(),
             );
             op_result.expect("Ok");
             let op_result =
@@ -424,11 +422,9 @@ impl Network {
             }
             let op_result = Tensor::matmul(
                 next_layer_weights_transpose,
-                false,
                 next_layer_delta_transpose,
-                false,
                 output_diff,
-                false,
+                Default::default(),
             );
             {
                 output_diff.transpose(output_diff_transpose);

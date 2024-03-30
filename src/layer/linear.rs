@@ -62,7 +62,7 @@ impl Layer for Linear {
         activation_tensor: &mut Tensor,
     ) -> Result<(), Error> {
         self.weights.borrow().transpose(w_t);
-        let op_result = Tensor::matmul(input, false, w_t, false, matrix_product, false);
+        let op_result = Tensor::matmul(input, w_t, matrix_product, Default::default());
         match op_result {
             Ok(_) => (),
             Err(_) => {

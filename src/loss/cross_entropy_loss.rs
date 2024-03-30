@@ -1,5 +1,5 @@
 use super::LossFunction;
-use crate::{Error, Tensor, TrainWorkingMemory};
+use crate::{Error, Tensor};
 
 pub struct CrossEntropyLoss {}
 
@@ -38,7 +38,7 @@ impl LossFunction for CrossEntropyLoss {
     /// output of the softmax function - expected output (one-hot encoded)
     fn derive(
         &self,
-        tmp: &mut Tensor,
+        _tmp: &mut Tensor,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,

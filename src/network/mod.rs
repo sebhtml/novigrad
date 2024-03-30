@@ -72,8 +72,9 @@ pub struct PredictWorkingMemory {
     pub matrix_product: Tensor,
     pub last_activation_row: Tensor,
     pub w_t: Tensor,
-    pub predicted: Tensor,
-    pub predictions: Vec<Tensor>,
+    pub previous_activation_tensor: Tensor,
+    pub activation_tensor: Tensor,
+    pub activation_tensors: Vec<Tensor>,
 }
 
 impl Default for PredictWorkingMemory {
@@ -82,8 +83,9 @@ impl Default for PredictWorkingMemory {
             matrix_product: Default::default(),
             last_activation_row: Default::default(),
             w_t: Default::default(),
-            predicted: Default::default(),
-            predictions: Default::default(),
+            previous_activation_tensor: Default::default(),
+            activation_tensor: Default::default(),
+            activation_tensors: Default::default(),
         }
     }
 }
@@ -140,15 +142,22 @@ impl Network {
         outputs: &Vec<Tensor>,
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
-        let predicted = &mut working_memory.predicted;
+        let activation_tensor = &mut working_memory.activation_tensor;
+        let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
         let last_activation_row = &mut working_memory.last_activation_row;
         let matrix_product = &mut working_memory.matrix_product;
         let w_t = &mut working_memory.w_t;
         for i in 0..inputs.len() {
-            self.predict(matrix_product, w_t, &inputs[i], predicted);
+            self.predict(
+                matrix_product,
+                w_t,
+                previous_activation_tensor,
+                &inputs[i],
+                activation_tensor,
+            );
             let target = &outputs[i];
-            let last_row = predicted.rows() - 1;
-            predicted.row(last_row, last_activation_row);
+            let last_row = activation_tensor.rows() - 1;
+            activation_tensor.row(last_row, last_activation_row);
             let example_error = self.loss_function.evaluate(target, &last_activation_row)?;
             total_error += example_error;
         }
@@ -341,6 +350,7 @@ impl Network {
         &self,
         matrix_product: &mut Tensor,
         w_t: &mut Tensor,
+        previous_activation_tensor: &mut Tensor,
         inputs: &Vec<Tensor>,
         outputs: &mut Vec<Tensor>,
     ) {
@@ -349,8 +359,14 @@ impl Network {
         outputs.resize_with(len, Tensor::default);
         while i < len {
             let input = &inputs[i];
-            let predicted = &mut outputs[i];
-            self.predict(matrix_product, w_t, input, predicted);
+            let activation_tensor = &mut outputs[i];
+            self.predict(
+                matrix_product,
+                w_t,
+                previous_activation_tensor,
+                input,
+                activation_tensor,
+            );
             i += 1;
         }
     }
@@ -359,20 +375,22 @@ impl Network {
         &self,
         matrix_product: &mut Tensor,
         w_t: &mut Tensor,
-        x: &Tensor,
+        previous_activation_tensor: &mut Tensor,
+        input: &Tensor,
         activation_tensor: &mut Tensor,
     ) {
         // Add a constant for bias
         //x.push(1.0);
 
-        activation_tensor.assign(x);
+        previous_activation_tensor.assign(input);
         for layer in self.layers.iter() {
-            let activation_function = layer.activation();
-            let op_result = layer.forward(activation_tensor, w_t, matrix_product);
+            let op_result = layer.forward(previous_activation_tensor, w_t, matrix_product);
             op_result.expect("Ok");
 
+            let activation_function = layer.activation();
             let op_result = activation_function.activate(&matrix_product, activation_tensor);
             op_result.expect("Ok");
+            previous_activation_tensor.assign(activation_tensor);
         }
     }
 }

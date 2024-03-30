@@ -101,17 +101,24 @@ pub fn train_network_on_dataset(
         epochs,
     )?;
 
-    let predictions = &mut predict_working_memory.predictions;
+    let activation_tensors = &mut predict_working_memory.activation_tensors;
     let matrix_product = &mut predict_working_memory.matrix_product;
+    let previous_activation_tensor = &mut predict_working_memory.previous_activation_tensor;
     let w_t = &mut predict_working_memory.w_t;
-    network.predict_many(matrix_product, w_t, &inputs, predictions);
+    network.predict_many(
+        matrix_product,
+        w_t,
+        previous_activation_tensor,
+        &inputs,
+        activation_tensors,
+    );
 
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();
 
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
-        let actual_output = &predictions[i];
+        let actual_output = &activation_tensors[i];
 
         let cols = expected_output.cols();
         let mut expected_argmax = 0;

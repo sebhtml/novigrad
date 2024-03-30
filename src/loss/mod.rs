@@ -1,4 +1,4 @@
-use crate::{Error, Tensor, TrainWorkingMemory};
+use crate::{Error, Tensor};
 mod residual_sum_of_squares;
 pub use residual_sum_of_squares::*;
 mod cross_entropy_loss;

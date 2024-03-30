@@ -1,4 +1,7 @@
-use crate::{DatasetDetails, Error, Network, PredictWorkingMemory, Tensor, TrainWorkingMemory};
+use crate::{
+    DatasetDetails, Error, ErrorWorkingMemory, Network, PredictWorkingMemory, Tensor,
+    TrainWorkingMemory,
+};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -61,6 +64,7 @@ pub fn train_network_on_dataset(
     dataset_details: &DatasetDetails,
 ) -> Result<NetworkTestOutput, Error> {
     let mut train_working_memory = TrainWorkingMemory::default();
+    let mut error_working_memory = ErrorWorkingMemory::default();
     let mut predict_working_memory = PredictWorkingMemory::default();
     let mut initial_total_error = f32::NAN;
     let examples = &dataset_details.examples;
@@ -90,7 +94,13 @@ pub fn train_network_on_dataset(
             }
             last_total_error = total_error;
         }
-        network.train(&mut train_working_memory, epoch, &inputs, &outputs);
+        network.train(
+            &mut train_working_memory,
+            &mut error_working_memory,
+            epoch,
+            &inputs,
+            &outputs,
+        );
     }
     let final_total_error = print_total_error(
         &mut predict_working_memory,

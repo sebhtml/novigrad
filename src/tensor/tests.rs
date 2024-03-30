@@ -45,7 +45,7 @@ fn multiplication_shape_compatibility() {
     );
 
     let mut result = Tensor::default();
-    let error = lhs.matmul(&rhs, &mut result);
+    let error = Tensor::matmul(&lhs, &rhs, &mut result);
     assert_eq!(error, Err(Error::IncompatibleTensorShapes))
 }
 
@@ -200,7 +200,7 @@ fn matrix_multiplication_result() {
     );
 
     let mut result = Tensor::default();
-    _ = lhs.matmul(&rhs, &mut result);
+    _ = Tensor::matmul(&lhs, &rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -425,7 +425,7 @@ fn big_matrix_multiplication() {
     let m = Tensor::new(rows, cols, values);
 
     let mut result = Tensor::default();
-    _ = m.matmul(&m, &mut result);
+    _ = Tensor::matmul(&m, &m, &mut result);
 }
 
 #[test]

@@ -187,8 +187,7 @@ impl Tensor {
         Ok(())
     }
 
-    pub fn matmul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        let left = self;
+    pub fn matmul(left: &Tensor, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         if left.cols != right.rows {
             return Err(Error::IncompatibleTensorShapes);
         }

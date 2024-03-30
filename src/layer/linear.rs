@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, mem::swap, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -31,6 +31,23 @@ impl Linear {
 impl Layer for Linear {
     fn weights(&self) -> Rc<RefCell<Tensor>> {
         self.weights.clone()
+    }
+
+    fn apply_weight_deltas(
+        &self,
+        addition: &mut Tensor,
+        weight_deltas: &Tensor,
+    ) -> Result<(), Error> {
+        {
+            let binding = &self.weights;
+            let weights: &Tensor = &binding.borrow();
+            let op_result = weights.sub(weight_deltas, addition);
+            op_result.expect("Ok");
+        }
+        let binding = &self.weights;
+        let weights: &mut Tensor = &mut binding.borrow_mut();
+        swap(weights, addition);
+        Ok(())
     }
 
     fn activation(&self) -> Rc<dyn ActivationFunction> {

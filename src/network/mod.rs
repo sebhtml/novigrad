@@ -254,9 +254,6 @@ impl Network {
             let layer_product_tensor = &matrix_products[layer_index];
             let layer_activation_tensor = &activation_tensors[layer_index];
 
-            let binding = self.layers[layer_index].weights();
-            let layer_weights: &Tensor = &binding.borrow();
-
             let previous_activation = {
                 if layer_index == 0 {
                     &x
@@ -305,8 +302,6 @@ impl Network {
                 swap(layer_weight_delta, layer_weight_delta_transpose);
             }
 
-            debug_assert_eq!(layer_weights.shape(), layer_weight_delta.shape());
-
             swap(&mut layer_deltas[layer_index], layer_delta);
             swap(&mut weight_deltas[layer_index], layer_weight_delta);
         }
@@ -314,15 +309,8 @@ impl Network {
         // Apply weight deltas
         let addition = &mut working_memory.addition;
         for layer in 0..self.layers.len() {
-            {
-                let binding = &self.layers[layer].weights();
-                let weights: &Tensor = &binding.borrow();
-                let op_result = weights.sub(&weight_deltas[layer], addition);
-                op_result.expect("Ok");
-            }
-            let binding = &self.layers[layer].weights();
-            let weights: &mut Tensor = &mut binding.borrow_mut();
-            swap(weights, addition);
+            let op_result = self.layers[layer].apply_weight_deltas(addition, &weight_deltas[layer]);
+            op_result.expect("Ok");
         }
     }
 

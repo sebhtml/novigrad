@@ -18,7 +18,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 # Roadmap
 
 - add transpose_rhs_and_matmul
-- separate Linear and activation
+- add biases
 - learned Embedding
 - Dropout
 - move learning rate in dataset details

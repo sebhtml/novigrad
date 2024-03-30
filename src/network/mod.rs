@@ -1,13 +1,11 @@
 #[cfg(test)]
 pub mod tests;
 pub mod train;
-use std::{cell::RefCell, mem::swap, rc::Rc};
-
-use rand::{distributions::Uniform, thread_rng, Rng};
+use std::mem::swap;
 
 use crate::{
     loss::{LossFunction, LossFunctionName},
-    Activation, ActivationFunction, Error, Layer, Linear, Tensor,
+    Activation, Error, Layer, Linear, Tensor,
 };
 
 pub struct LayerConfig {
@@ -92,7 +90,6 @@ impl Default for PredictWorkingMemory {
 
 impl Network {
     pub fn new(layer_configs: &Vec<LayerConfig>, loss_function_name: &LossFunctionName) -> Self {
-        let mut rng = thread_rng();
         let mut using_softmax_and_cross_entropy_loss = false;
         if loss_function_name == &LossFunctionName::CrossEntropyLoss {
             match layer_configs.last() {
@@ -110,24 +107,13 @@ impl Network {
             layers: layer_configs
                 .into_iter()
                 .map(|layer_config| -> Box<dyn Layer> {
-                    let mut weights = Vec::new();
                     let rows = layer_config.rows;
                     let cols = layer_config.cols;
-                    let right = (6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt();
-                    let left = -right;
-                    // Xavier Initialization, or Glorot Initialization,
-                    let uniform = Uniform::new(left, right);
-                    weights.resize(rows * cols, 0.0);
-                    for index in 0..weights.len() {
-                        weights[index] = rng.sample(uniform);
-                    }
-                    let weights = Tensor::new(rows, cols, weights);
-                    let activation: Rc<dyn ActivationFunction> =
-                        layer_config.activation.clone().into();
-                    Box::new(Linear {
-                        weights: Rc::new(RefCell::new(weights)),
-                        activation,
-                    })
+                    Box::new(Linear::new(
+                        rows,
+                        cols,
+                        layer_config.activation.clone().into(),
+                    ))
                 })
                 .collect(),
             loss_function: loss_function_name.into(),

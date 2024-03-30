@@ -45,6 +45,7 @@ impl F32Operation for F32Div {
 #[derive(Debug, PartialEq)]
 pub enum Error {
     IncompatibleTensorShapes,
+    UnsupportedOperation,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -187,20 +188,35 @@ impl Tensor {
         Ok(())
     }
 
-    pub fn matmul(left: &Tensor, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        if left.cols != right.rows {
+    pub fn matmul(
+        lhs: &Tensor,
+        tranpose_lhs: bool,
+        rhs: &Tensor,
+        transpose_rhs: bool,
+        result: &mut Tensor,
+        transpose_result: bool,
+    ) -> Result<(), Error> {
+        if !tranpose_lhs && !transpose_rhs && !transpose_result {
+            Self::matmul_lhs_rhs_result(lhs, rhs, result)
+        } else {
+            Err(Error::UnsupportedOperation)
+        }
+    }
+
+    fn matmul_lhs_rhs_result(lhs: &Tensor, rhs: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        if lhs.cols != rhs.rows {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reshape(left.rows, right.cols);
+        result.reshape(lhs.rows, rhs.cols);
 
         let result_ptr = result.values.as_mut_ptr();
-        let left_ptr = left.values.as_ptr();
-        let right_ptr = right.values.as_ptr();
+        let left_ptr = lhs.values.as_ptr();
+        let right_ptr = rhs.values.as_ptr();
 
-        let left_rows = left.rows;
-        let left_cols = left.cols;
-        let right_cols = right.cols;
+        let left_rows = lhs.rows;
+        let left_cols = lhs.cols;
+        let right_cols = rhs.cols;
 
         unsafe {
             let mut row = 0;

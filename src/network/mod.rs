@@ -291,8 +291,14 @@ impl Network {
 
             previous_activation.transpose(previous_action_t);
 
-            let op_result =
-                Tensor::matmul(previous_action_t, layer_delta, previous_a_time_output_delta);
+            let op_result = Tensor::matmul(
+                previous_action_t,
+                false,
+                layer_delta,
+                false,
+                previous_a_time_output_delta,
+                false,
+            );
             op_result.expect("Ok");
             let op_result =
                 previous_a_time_output_delta.scalar_mul(learning_rate, layer_weight_delta);
@@ -418,8 +424,11 @@ impl Network {
             }
             let op_result = Tensor::matmul(
                 next_layer_weights_transpose,
+                false,
                 next_layer_delta_transpose,
+                false,
                 output_diff,
+                false,
             );
             {
                 output_diff.transpose(output_diff_transpose);

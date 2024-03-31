@@ -2,7 +2,7 @@ use std::{cell::RefCell, mem::swap, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{ActivationFunction, Error, Layer, Tensor};
+use crate::{ActivationFunction, Error, Layer, Tensor, TRANSPOSE_RHS};
 
 pub struct Linear {
     weights: Rc<RefCell<Tensor>>,
@@ -57,15 +57,16 @@ impl Layer for Linear {
     fn forward(
         &self,
         input: &Tensor,
-        w_t: &mut Tensor,
         matrix_product: &mut Tensor,
         activation_tensor: &mut Tensor,
     ) -> Result<(), Error> {
-        self.weights.borrow().transpose(w_t);
-        let op_result = Tensor::matmul(input, w_t, matrix_product, Default::default());
+        let weights: &Tensor = &self.weights.borrow();
+        let op_result = Tensor::matmul(input, weights, matrix_product, TRANSPOSE_RHS);
         match op_result {
             Ok(_) => (),
             Err(_) => {
+                let mut w_t = Tensor::default();
+                weights.transpose(&mut w_t);
                 println!("Incompatible shapes in matrix multiplication");
                 println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
                 debug_assert!(false);

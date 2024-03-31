@@ -17,6 +17,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
+- remove Rc and use lifetime instead
 - add transpose_rhs_and_matmul
 - add biases
 - learned Embedding

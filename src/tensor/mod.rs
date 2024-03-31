@@ -6,9 +6,9 @@ use std::{
 #[cfg(test)]
 mod tests;
 
-const TRANSPOSE_LHS: u32 = 1 << 0;
-const TRANSPOSE_RHS: u32 = 1 << 1;
-const TRANSPOSE_RESULT: u32 = 1 << 2;
+pub const TRANSPOSE_LHS: u32 = 1 << 0;
+pub const TRANSPOSE_RHS: u32 = 1 << 1;
+pub const TRANSPOSE_RESULT: u32 = 1 << 2;
 
 pub trait F32Operation {
     fn op(left: f32, right: f32) -> f32;
@@ -265,6 +265,7 @@ impl Tensor {
         result.reshape(lhs_rows, rhs.cols);
 
         let result_ptr = result.values.as_mut_ptr();
+        let lhs_ptr = lhs.values.as_ptr();
         let right_ptr = rhs.values.as_ptr();
 
         let right_cols = rhs.cols;
@@ -276,7 +277,8 @@ impl Tensor {
                 while inner != lhs_cols {
                     let mut col = 0;
                     while col != right_cols {
-                        let lhs_value = lhs.get(inner, row);
+                        //let lhs_value = lhs.get(inner, row);
+                        let lhs_value = *lhs_ptr.add(inner * lhs_rows + row);
                         let right_cell = right_ptr.add(inner * right_cols + col);
                         let result_cell = result_ptr.add(row * right_cols + col);
                         *result_cell += lhs_value * *right_cell;
@@ -307,6 +309,7 @@ impl Tensor {
 
         let result_ptr = result.values.as_mut_ptr();
         let left_ptr = lhs.values.as_ptr();
+        let rhs_ptr = rhs.values.as_ptr();
 
         let left_rows = lhs.rows;
         let left_cols = lhs.cols;
@@ -319,7 +322,8 @@ impl Tensor {
                     let mut col = 0;
                     while col != rhs_cols {
                         let left_cell = left_ptr.add(row * left_cols + inner);
-                        let rhs_value = rhs.get(col, inner);
+                        //let rhs_value = rhs.get(col, inner);
+                        let rhs_value = *rhs_ptr.add(col * rhs_rows + inner);
                         let result_cell = result_ptr.add(row * rhs_cols + col);
                         *result_cell += *left_cell * rhs_value;
                         col += 1;

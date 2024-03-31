@@ -16,7 +16,6 @@ pub trait Layer {
     fn forward(
         &self,
         input: &Tensor,
-        w_t: &mut Tensor,
         matrix_product: &mut Tensor,
         activation_tensor: &mut Tensor,
     ) -> Result<(), Error>;

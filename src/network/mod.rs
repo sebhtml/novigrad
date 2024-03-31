@@ -26,7 +26,6 @@ pub struct TrainWorkingMemory {
     pub layer_deltas: Vec<Tensor>,
     pub weight_deltas: Vec<Tensor>,
     pub addition: Tensor,
-    pub w_t: Tensor,
     pub layer_f_derivative: Tensor,
     pub layer_delta: Tensor,
     pub layer_weight_delta: Tensor,
@@ -45,7 +44,6 @@ impl Default for TrainWorkingMemory {
             layer_deltas: Default::default(),
             weight_deltas: Default::default(),
             addition: Default::default(),
-            w_t: Default::default(),
             layer_f_derivative: Default::default(),
             layer_delta: Default::default(),
             layer_weight_delta: Default::default(),
@@ -83,7 +81,6 @@ impl Default for ErrorWorkingMemory {
 pub struct PredictWorkingMemory {
     pub matrix_product: Tensor,
     pub last_activation_row: Tensor,
-    pub w_t: Tensor,
     pub previous_activation_tensor: Tensor,
     pub activation_tensor: Tensor,
     pub activation_tensors: Vec<Tensor>,
@@ -94,7 +91,6 @@ impl Default for PredictWorkingMemory {
         Self {
             matrix_product: Default::default(),
             last_activation_row: Default::default(),
-            w_t: Default::default(),
             previous_activation_tensor: Default::default(),
             activation_tensor: Default::default(),
             activation_tensors: Default::default(),
@@ -166,11 +162,9 @@ impl Network {
         let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
         let last_activation_row = &mut working_memory.last_activation_row;
         let matrix_product = &mut working_memory.matrix_product;
-        let w_t = &mut working_memory.w_t;
         for i in 0..inputs.len() {
             self.predict(
                 matrix_product,
-                w_t,
                 previous_activation_tensor,
                 &inputs[i],
                 activation_tensor,
@@ -205,8 +199,6 @@ impl Network {
         // Add a constant for bias
         //x.push(1.0);
 
-        let w_t = &mut working_memory.w_t;
-
         for (layer_index, layer) in self.layers.iter().enumerate() {
             let matrix_product = &mut matrix_products[layer_index];
 
@@ -226,7 +218,6 @@ impl Network {
             let activation_tensor = &mut activation_tensors[layer_index];
             let op_result = layer.forward(
                 previous_activation_tensor,
-                w_t,
                 matrix_product,
                 activation_tensor,
             );
@@ -322,7 +313,6 @@ impl Network {
     pub fn predict_many(
         &self,
         matrix_product: &mut Tensor,
-        w_t: &mut Tensor,
         previous_activation_tensor: &mut Tensor,
         inputs: &Vec<Tensor>,
         outputs: &mut Vec<Tensor>,
@@ -335,7 +325,6 @@ impl Network {
             let activation_tensor = &mut outputs[i];
             self.predict(
                 matrix_product,
-                w_t,
                 previous_activation_tensor,
                 input,
                 activation_tensor,
@@ -347,7 +336,6 @@ impl Network {
     pub fn predict(
         &self,
         matrix_product: &mut Tensor,
-        w_t: &mut Tensor,
         previous_activation_tensor: &mut Tensor,
         input: &Tensor,
         activation_tensor: &mut Tensor,
@@ -359,7 +347,6 @@ impl Network {
         for layer in self.layers.iter() {
             let op_result = layer.forward(
                 previous_activation_tensor,
-                w_t,
                 matrix_product,
                 activation_tensor,
             );

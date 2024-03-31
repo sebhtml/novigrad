@@ -114,10 +114,8 @@ pub fn train_network_on_dataset(
     let activation_tensors = &mut predict_working_memory.activation_tensors;
     let matrix_product = &mut predict_working_memory.matrix_product;
     let previous_activation_tensor = &mut predict_working_memory.previous_activation_tensor;
-    let w_t = &mut predict_working_memory.w_t;
     network.predict_many(
         matrix_product,
-        w_t,
         previous_activation_tensor,
         &inputs,
         activation_tensors,

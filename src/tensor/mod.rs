@@ -294,43 +294,47 @@ impl Tensor {
     }
 
     /// lhs transposed, rhs transposed, result not transposed.
+    /// lhs, rhs, and result are all cache-friendly for the operation.
     fn matmul_lhs_rhs_t_result(
         lhs: &Tensor,
         rhs: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        let rhs_rows = rhs.cols;
-        let rhs_cols = rhs.rows;
-        if lhs.cols != rhs_rows {
+        let lhs_rows = lhs.rows;
+        let lhs_cols = lhs.cols;
+        let rhs_rows = rhs.rows;
+        let rhs_cols = rhs.cols;
+
+        if lhs_cols != rhs_cols {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reshape(lhs.rows, rhs_cols);
-
-        let result_ptr = result.values.as_mut_ptr();
-        let left_ptr = lhs.values.as_ptr();
+        let lhs_ptr = lhs.values.as_ptr();
         let rhs_ptr = rhs.values.as_ptr();
 
-        let left_rows = lhs.rows;
-        let left_cols = lhs.cols;
+        result.reshape(lhs_rows, rhs_rows);
+        let result_ptr = result.values.as_mut_ptr();
 
         unsafe {
-            let mut row = 0;
-            while row != left_rows {
-                let mut inner = 0;
-                while inner != left_cols {
-                    let mut col = 0;
-                    while col != rhs_cols {
-                        let left_cell = left_ptr.add(row * left_cols + inner);
-                        //let rhs_value = rhs.get(col, inner);
-                        let rhs_value = *rhs_ptr.add(col * rhs_rows + inner);
-                        let result_cell = result_ptr.add(row * rhs_cols + col);
-                        *result_cell += *left_cell * rhs_value;
-                        col += 1;
+            let mut lhs_row = 0;
+            while lhs_row != lhs_rows {
+                let lhs_row_index = lhs_row * lhs_cols;
+                let mut rhs_row = 0;
+                while rhs_row != rhs_rows {
+                    let rhs_row_index = rhs_row * rhs_cols;
+                    let mut dot_product = 0.0;
+                    let mut inner = 0;
+                    while inner != lhs_cols {
+                        let lhs_cell = lhs_ptr.add(lhs_row_index + inner);
+                        let rhs_cell = rhs_ptr.add(rhs_row_index + inner);
+                        dot_product += *lhs_cell * *rhs_cell;
+                        inner += 1;
                     }
-                    inner += 1;
+                    let result_cell = result_ptr.add(lhs_row * rhs_rows + rhs_row);
+                    *result_cell = dot_product;
+                    rhs_row += 1;
                 }
-                row += 1;
+                lhs_row += 1;
             }
         }
 

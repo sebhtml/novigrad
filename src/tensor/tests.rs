@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::tensor::{Error, Tensor};
+use crate::tensor::{Error, Tensor, TRANSPOSE_LHS};
 
 #[test]
 fn new() {
@@ -201,6 +201,52 @@ fn matrix_multiplication_result() {
 
     let mut result = Tensor::default();
     _ = Tensor::matmul(&lhs, &rhs, &mut result, Default::default());
+    assert_eq!(result, expected_result);
+}
+
+#[test]
+fn transpose_lhs_matrix_multiplication_result() {
+    // Given a left-hand side matrix and and a right-hand side matrix
+    // When the multiplication lhs * rhs is done
+    // Then the resulting matrix has the correct values
+
+    let lhs2 = Tensor::new(
+        3,
+        2,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+            5.0, 6.0, //
+        ],
+    );
+    let mut lhs = Tensor::default();
+    lhs2.transpose(&mut lhs);
+    let rhs = Tensor::new(
+        2,
+        3,
+        vec![
+            11.0, 12.0, 13.0, //
+            14.0, 15.0, 16.0, //
+        ],
+    );
+    let expected_result = Tensor::new(
+        3,
+        3,
+        vec![
+            1.0 * 11.0 + 2.0 * 14.0,
+            1.0 * 12.0 + 2.0 * 15.0,
+            1.0 * 13.0 + 2.0 * 16.0, //
+            3.0 * 11.0 + 4.0 * 14.0,
+            3.0 * 12.0 + 4.0 * 15.0,
+            3.0 * 13.0 + 4.0 * 16.0, //
+            5.0 * 11.0 + 6.0 * 14.0,
+            5.0 * 12.0 + 6.0 * 15.0,
+            5.0 * 13.0 + 6.0 * 16.0, //
+        ],
+    );
+
+    let mut result = Tensor::default();
+    _ = Tensor::matmul(&lhs, &rhs, &mut result, TRANSPOSE_LHS);
     assert_eq!(result, expected_result);
 }
 

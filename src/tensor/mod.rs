@@ -6,9 +6,9 @@ use std::{
 #[cfg(test)]
 mod tests;
 
-const TRANSPOSE_LHS: u32 = (1 << 0);
-const TRANSPOSE_RHS: u32 = (1 << 1);
-const TRANSPOSE_RESULT: u32 = (1 << 2);
+const TRANSPOSE_LHS: u32 = 1 << 0;
+const TRANSPOSE_RHS: u32 = 1 << 1;
+const TRANSPOSE_RESULT: u32 = 1 << 2;
 
 pub trait F32Operation {
     fn op(left: f32, right: f32) -> f32;
@@ -203,11 +203,14 @@ impl Tensor {
         let transpose_result = (options & TRANSPOSE_RESULT) > 0;
         if !tranpose_lhs && !transpose_rhs && !transpose_result {
             Self::matmul_lhs_rhs_result(lhs, rhs, result)
+        } else if tranpose_lhs && !transpose_rhs && !transpose_result {
+            Self::matmul_lhs_t_rhs_result(lhs, rhs, result)
         } else {
             Err(Error::UnsupportedOperation)
         }
     }
 
+    /// lhs not transposed, rhs not transposed, result not transposed.
     fn matmul_lhs_rhs_result(lhs: &Tensor, rhs: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         if lhs.cols != rhs.rows {
             return Err(Error::IncompatibleTensorShapes);
@@ -234,6 +237,47 @@ impl Tensor {
                         let right_cell = right_ptr.add(inner * right_cols + col);
                         let result_cell = result_ptr.add(row * right_cols + col);
                         *result_cell += *left_cell * *right_cell;
+                        col += 1;
+                    }
+                    inner += 1;
+                }
+                row += 1;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// lhs transposed, rhs not transposed, result not transposed.
+    fn matmul_lhs_t_rhs_result(
+        lhs: &Tensor,
+        rhs: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        let lhs_rows = lhs.cols;
+        let lhs_cols = lhs.rows;
+        if lhs_cols != rhs.rows {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+
+        result.reshape(lhs_rows, rhs.cols);
+
+        let result_ptr = result.values.as_mut_ptr();
+        let right_ptr = rhs.values.as_ptr();
+
+        let right_cols = rhs.cols;
+
+        unsafe {
+            let mut row = 0;
+            while row != lhs_rows {
+                let mut inner = 0;
+                while inner != lhs_cols {
+                    let mut col = 0;
+                    while col != right_cols {
+                        let lhs_value = lhs.get(inner, row);
+                        let right_cell = right_ptr.add(inner * right_cols + col);
+                        let result_cell = result_ptr.add(row * right_cols + col);
+                        *result_cell += lhs_value * *right_cell;
                         col += 1;
                     }
                     inner += 1;

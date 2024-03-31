@@ -205,6 +205,8 @@ impl Tensor {
             Self::matmul_lhs_rhs_result(lhs, rhs, result)
         } else if tranpose_lhs && !transpose_rhs && !transpose_result {
             Self::matmul_lhs_t_rhs_result(lhs, rhs, result)
+        } else if !tranpose_lhs && transpose_rhs && !transpose_result {
+            Self::matmul_lhs_rhs_t_result(lhs, rhs, result)
         } else {
             Err(Error::UnsupportedOperation)
         }
@@ -278,6 +280,48 @@ impl Tensor {
                         let right_cell = right_ptr.add(inner * right_cols + col);
                         let result_cell = result_ptr.add(row * right_cols + col);
                         *result_cell += lhs_value * *right_cell;
+                        col += 1;
+                    }
+                    inner += 1;
+                }
+                row += 1;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// lhs transposed, rhs transposed, result not transposed.
+    fn matmul_lhs_rhs_t_result(
+        lhs: &Tensor,
+        rhs: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        let rhs_rows = rhs.cols;
+        let rhs_cols = rhs.rows;
+        if lhs.cols != rhs_rows {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+
+        result.reshape(lhs.rows, rhs_cols);
+
+        let result_ptr = result.values.as_mut_ptr();
+        let left_ptr = lhs.values.as_ptr();
+
+        let left_rows = lhs.rows;
+        let left_cols = lhs.cols;
+
+        unsafe {
+            let mut row = 0;
+            while row != left_rows {
+                let mut inner = 0;
+                while inner != left_cols {
+                    let mut col = 0;
+                    while col != rhs_cols {
+                        let left_cell = left_ptr.add(row * left_cols + inner);
+                        let rhs_value = rhs.get(col, inner);
+                        let result_cell = result_ptr.add(row * rhs_cols + col);
+                        *result_cell += *left_cell * rhs_value;
                         col += 1;
                     }
                     inner += 1;

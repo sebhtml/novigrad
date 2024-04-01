@@ -363,22 +363,22 @@ impl Tensor {
 
         result.reshape(rhs_rows, lhs_cols);
 
-        let mut lhs_col = 0;
-        while lhs_col != lhs_cols {
-            let mut rhs_row = 0;
-            while rhs_row != rhs_rows {
-                let mut inner = 0;
-                while inner != lhs_rows {
+        let mut rhs_row = 0;
+        while rhs_row != rhs_rows {
+            let mut inner = 0;
+            while inner != lhs_rows {
+                let mut lhs_col = 0;
+                while lhs_col != lhs_cols {
                     let lhs_value = lhs.get(inner, lhs_col);
                     let rhs_value = rhs.get(rhs_row, inner);
                     let old = result.get(rhs_row, lhs_col);
                     let result_value = old + lhs_value * rhs_value;
                     result.set(rhs_row, lhs_col, result_value);
-                    inner += 1;
+                    lhs_col += 1;
                 }
-                rhs_row += 1;
+                inner += 1;
             }
-            lhs_col += 1;
+            rhs_row += 1;
         }
 
         Ok(())

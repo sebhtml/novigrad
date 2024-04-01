@@ -17,7 +17,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- move matrix_product from Network to Linear
 - add biases
 - learned Embedding
 - Dropout

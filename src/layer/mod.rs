@@ -13,19 +13,13 @@ pub trait Layer {
 
     fn commit_change(&mut self) -> Result<(), Error>;
 
-    fn forward(
-        &self,
-        input: &Tensor,
-        matrix_product: &mut Tensor,
-        activation_tensor: &mut Tensor,
-    ) -> Result<(), Error>;
+    fn forward(&mut self, input: &Tensor, activation_tensor: &mut Tensor) -> Result<(), Error>;
 
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor);
 
     fn get_layer_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
-        layer_product_tensor: &Tensor,
         layer_activation_tensor: &Tensor,
         next_layer: Option<&Box<dyn Layer>>,
         next_layer_delta: &Tensor,

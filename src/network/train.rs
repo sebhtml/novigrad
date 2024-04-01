@@ -38,7 +38,7 @@ pub fn print_expected_output_and_actual_output(
 
 fn print_total_error(
     working_memory: &mut PredictWorkingMemory,
-    network: &Network,
+    network: &mut Network,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
     last_total_error: f32,
@@ -85,7 +85,7 @@ pub fn train_network_on_dataset(
         if epoch % progress == 0 {
             let total_error = print_total_error(
                 &mut predict_working_memory,
-                &network,
+                &mut network,
                 &inputs,
                 &outputs,
                 last_total_error,
@@ -106,7 +106,7 @@ pub fn train_network_on_dataset(
     }
     let final_total_error = print_total_error(
         &mut predict_working_memory,
-        &network,
+        &mut network,
         &inputs,
         &outputs,
         last_total_error,
@@ -114,14 +114,8 @@ pub fn train_network_on_dataset(
     )?;
 
     let activation_tensors = &mut predict_working_memory.activation_tensors;
-    let matrix_product = &mut predict_working_memory.matrix_product;
     let previous_activation_tensor = &mut predict_working_memory.previous_activation_tensor;
-    network.predict_many(
-        matrix_product,
-        previous_activation_tensor,
-        &inputs,
-        activation_tensors,
-    );
+    network.predict_many(previous_activation_tensor, &inputs, activation_tensors);
 
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();

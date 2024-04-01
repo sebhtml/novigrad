@@ -10,11 +10,10 @@ use crate::{
 pub struct Linear {
     weights: Tensor,
     activation_function: Box<dyn ActivationFunction>,
+    matrix_product: Tensor,
     weight_delta: Tensor,
     has_pending_change: bool,
-    // Working memory
     previous_a_time_output_delta: Tensor,
-    // Working memory
     addition: Tensor,
 }
 
@@ -34,6 +33,7 @@ impl Linear {
         Linear {
             weights,
             activation_function: activation,
+            matrix_product: Default::default(),
             weight_delta: Default::default(),
             has_pending_change: false,
             previous_a_time_output_delta: Default::default(),
@@ -61,18 +61,14 @@ impl Layer for Linear {
         Ok(())
     }
 
-    fn forward(
-        &self,
-        input: &Tensor,
-        matrix_product: &mut Tensor,
-        activation_tensor: &mut Tensor,
-    ) -> Result<(), Error> {
+    fn forward(&mut self, input: &Tensor, activation_tensor: &mut Tensor) -> Result<(), Error> {
         // Use the same convention that is used in tensorflow:
         // y = x @ W^T+b
         // Weights is on the right.
         // W is transposed.
         // X is not transposed.
         let weights = &self.weights;
+        let matrix_product = &mut self.matrix_product;
         let op_result = Tensor::matmul(input, weights, matrix_product, TRANSPOSE_RHS);
         match op_result {
             Ok(_) => (),
@@ -106,7 +102,6 @@ impl Layer for Linear {
     fn get_layer_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
-        layer_product_tensor: &Tensor,
         layer_activation_tensor: &Tensor,
         next_layer: Option<&Box<dyn Layer>>,
         next_layer_delta: &Tensor,
@@ -135,8 +130,9 @@ impl Layer for Linear {
                 .scalar_add(1.0, layer_f_derivative)
                 .expect("Ok");
         } else {
+            let matrix_product = &self.matrix_product;
             let op_result = layer_activation_function.derive(
-                layer_product_tensor,
+                matrix_product,
                 layer_activation_tensor,
                 layer_f_derivative,
             );

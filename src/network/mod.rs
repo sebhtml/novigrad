@@ -367,16 +367,7 @@ impl Network {
             }
             Some(next_layer) => {
                 // Hidden layer
-                let next_layer_weights = next_layer.weights();
-
-                let op_result = Tensor::matmul(
-                    next_layer_weights,
-                    next_layer_delta,
-                    output_diff,
-                    TRANSPOSE_LHS | TRANSPOSE_RHS | TRANSPOSE_RESULT,
-                );
-
-                op_result.expect("Ok");
+                next_layer.backward(next_layer_delta, output_diff);
             }
         }
 

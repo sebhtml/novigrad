@@ -4,7 +4,6 @@ pub use linear::*;
 use crate::{ActivationFunction, Error, Tensor};
 
 pub trait Layer {
-    fn weights<'a>(&'a self) -> &'a Tensor;
     fn apply_weight_deltas(
         &mut self,
         addition: &mut Tensor,
@@ -17,4 +16,5 @@ pub trait Layer {
         matrix_product: &mut Tensor,
         activation_tensor: &mut Tensor,
     ) -> Result<(), Error>;
+    fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor);
 }

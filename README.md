@@ -17,12 +17,10 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- add biases
 - learned Embedding
+- add biases
 - Dropout
 - move learning rate in dataset details
-- add tape like in pytorch
-- embeddings are learned
 - shuffle examples in each epoch
 - implement transformer
 - bpe tokenizer

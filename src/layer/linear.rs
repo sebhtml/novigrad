@@ -2,7 +2,9 @@ use std::mem::swap;
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{ActivationFunction, Error, Layer, Tensor, TRANSPOSE_RHS};
+use crate::{
+    ActivationFunction, Error, Layer, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
+};
 
 pub struct Linear {
     weights: Tensor,
@@ -27,12 +29,13 @@ impl Linear {
             activation: activation,
         }
     }
-}
-impl Layer for Linear {
+
     fn weights<'a>(&'a self) -> &'a Tensor {
         &self.weights
     }
+}
 
+impl Layer for Linear {
     fn apply_weight_deltas(
         &mut self,
         addition: &mut Tensor,
@@ -75,5 +78,18 @@ impl Layer for Linear {
         let op_result = activation_function.activate(&matrix_product, activation_tensor);
         op_result.expect("Ok");
         Ok(())
+    }
+
+    fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
+        let layer_weights = &self.weights;
+
+        let op_result = Tensor::matmul(
+            layer_weights,
+            layer_delta,
+            output_diff,
+            TRANSPOSE_LHS | TRANSPOSE_RHS | TRANSPOSE_RESULT,
+        );
+
+        op_result.expect("Ok");
     }
 }

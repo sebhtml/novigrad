@@ -258,13 +258,23 @@ impl Network {
                 }
             }
 
+            let is_last_layer = layer_index == self.layers.len() - 1;
+
+            let next_layer = if is_last_layer {
+                None
+            } else {
+                let next_layer_index = layer_index + 1;
+                Some(&self.layers[next_layer_index])
+            };
+
             self.get_layer_delta(
                 layer,
                 layer_product_tensor,
                 error_working_memory,
+                next_layer,
                 next_layer_delta,
                 layer_activation_tensor,
-                layer_index,
+                self.using_softmax_and_cross_entropy_loss,
                 layer_delta,
             );
 
@@ -340,35 +350,39 @@ impl Network {
         layer: &Box<dyn Layer>,
         layer_product_tensor: &Tensor,
         working_memory: &mut DeltaWorkingMemory,
+        next_layer: Option<&Box<dyn Layer>>,
         next_layer_delta: &Tensor,
         layer_activation_tensor: &Tensor,
-        layer_index: usize,
+        using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
     ) {
         let layer_f_derivative = &mut working_memory.layer_f_derivative;
         let layer_activation_function = &layer.activation();
         let output_diff = &mut working_memory.output_diff;
 
-        if layer_index == self.layers.len() - 1 {
-            // use the output of the loss function.
-            output_diff.assign(next_layer_delta);
-        } else {
-            // Hidden layer
-            let next_layer_index = layer_index + 1;
-            let next_layer_weights = self.layers[next_layer_index].weights();
+        match next_layer {
+            None => {
+                // use the output of the loss function.
+                output_diff.assign(next_layer_delta);
+            }
+            Some(next_layer) => {
+                // Hidden layer
+                let next_layer_weights = next_layer.weights();
 
-            let op_result = Tensor::matmul(
-                next_layer_weights,
-                next_layer_delta,
-                output_diff,
-                TRANSPOSE_LHS | TRANSPOSE_RHS | TRANSPOSE_RESULT,
-            );
+                let op_result = Tensor::matmul(
+                    next_layer_weights,
+                    next_layer_delta,
+                    output_diff,
+                    TRANSPOSE_LHS | TRANSPOSE_RHS | TRANSPOSE_RESULT,
+                );
 
-            op_result.expect("Ok");
+                op_result.expect("Ok");
+            }
         }
 
         // Compute activation function derivative.
-        if layer_index == self.layers.len() - 1 && self.using_softmax_and_cross_entropy_loss {
+        let is_last_layer = next_layer.is_none();
+        if is_last_layer && using_softmax_and_cross_entropy_loss {
             layer_activation_tensor
                 .scalar_add(1.0, layer_f_derivative)
                 .expect("Ok");

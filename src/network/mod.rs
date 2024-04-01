@@ -5,7 +5,7 @@ use std::mem::swap;
 
 use crate::{
     loss::{LossFunction, LossFunctionName},
-    Activation, Error, Layer, Linear, Tensor,
+    Activation, Error, Layer, Linear, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
 };
 
 pub struct LayerConfig {
@@ -57,9 +57,6 @@ impl TrainWorkingMemory {
 }
 
 pub struct ErrorWorkingMemory {
-    pub next_layer_weights_transpose: Tensor,
-    pub output_diff_transpose: Tensor,
-    pub next_layer_delta_transpose: Tensor,
     pub last_activation_row: Tensor,
     pub loss: Tensor,
     pub tmp: Tensor,
@@ -70,9 +67,6 @@ impl Default for ErrorWorkingMemory {
         Self {
             loss: Default::default(),
             tmp: Default::default(),
-            next_layer_weights_transpose: Default::default(),
-            output_diff_transpose: Default::default(),
-            next_layer_delta_transpose: Default::default(),
             last_activation_row: Default::default(),
         }
     }
@@ -358,9 +352,6 @@ impl Network {
         layer_index: usize,
         output_diff: &mut Tensor,
     ) {
-        let next_layer_weights_transpose = &mut working_memory.next_layer_weights_transpose;
-        let output_diff_transpose = &mut working_memory.output_diff_transpose;
-        let next_layer_delta_transpose = &mut working_memory.next_layer_delta_transpose;
         if layer_index == self.layers.len() - 1 {
             // Output layer
             let last_activation_row = &mut working_memory.last_activation_row;
@@ -391,26 +382,16 @@ impl Network {
             // Hidden layer
             let next_layer_index = layer_index + 1;
 
-            {
-                let next_layer_delta = &layer_deltas[next_layer_index];
-                next_layer_delta.transpose(next_layer_delta_transpose);
-            }
+            let next_layer_delta = &layer_deltas[next_layer_index];
+            let binding = self.layers[next_layer_index].weights();
+            let next_layer_weights: &Tensor = &binding.borrow();
 
-            {
-                let binding = self.layers[next_layer_index].weights();
-                let next_layer_weights: &Tensor = &binding.borrow();
-                next_layer_weights.transpose(next_layer_weights_transpose);
-            }
             let op_result = Tensor::matmul(
-                next_layer_weights_transpose,
-                next_layer_delta_transpose,
+                next_layer_weights,
+                next_layer_delta,
                 output_diff,
-                Default::default(),
+                TRANSPOSE_LHS | TRANSPOSE_RHS | TRANSPOSE_RESULT,
             );
-            {
-                output_diff.transpose(output_diff_transpose);
-                swap(output_diff, output_diff_transpose);
-            }
 
             op_result.expect("Ok");
         }

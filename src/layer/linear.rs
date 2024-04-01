@@ -1,11 +1,11 @@
-use std::{cell::RefCell, mem::swap, rc::Rc};
+use std::{mem::swap, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{ActivationFunction, Error, Layer, Tensor, TRANSPOSE_RHS};
 
 pub struct Linear {
-    weights: Rc<RefCell<Tensor>>,
+    weights: Tensor,
     activation: Rc<dyn ActivationFunction>,
 }
 
@@ -23,29 +23,28 @@ impl Linear {
         }
         let weights = Tensor::new(rows, cols, weights);
         Linear {
-            weights: Rc::new(RefCell::new(weights)),
+            weights,
             activation: activation,
         }
     }
 }
 impl Layer for Linear {
-    fn weights(&self) -> Rc<RefCell<Tensor>> {
-        self.weights.clone()
+    fn weights<'a>(&'a self) -> &'a Tensor {
+        &self.weights
     }
 
     fn apply_weight_deltas(
-        &self,
+        &mut self,
         addition: &mut Tensor,
         weight_deltas: &Tensor,
     ) -> Result<(), Error> {
         {
-            let binding = &self.weights;
-            let weights: &Tensor = &binding.borrow();
+            let weights = &self.weights;
             let op_result = weights.sub(weight_deltas, addition);
             op_result.expect("Ok");
         }
-        let binding = &self.weights;
-        let weights: &mut Tensor = &mut binding.borrow_mut();
+
+        let weights = &mut self.weights;
         swap(weights, addition);
         Ok(())
     }
@@ -60,7 +59,7 @@ impl Layer for Linear {
         matrix_product: &mut Tensor,
         activation_tensor: &mut Tensor,
     ) -> Result<(), Error> {
-        let weights: &Tensor = &self.weights.borrow();
+        let weights = &self.weights;
         let op_result = Tensor::matmul(input, weights, matrix_product, TRANSPOSE_RHS);
         match op_result {
             Ok(_) => (),

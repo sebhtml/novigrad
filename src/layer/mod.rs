@@ -1,14 +1,14 @@
 mod linear;
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 pub use linear::*;
 
 use crate::{ActivationFunction, Error, Tensor};
 
 pub trait Layer {
-    fn weights(&self) -> Rc<RefCell<Tensor>>;
+    fn weights<'a>(&'a self) -> &'a Tensor;
     fn apply_weight_deltas(
-        &self,
+        &mut self,
         addition: &mut Tensor,
         weight_deltas: &Tensor,
     ) -> Result<(), Error>;

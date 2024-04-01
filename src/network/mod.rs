@@ -383,8 +383,7 @@ impl Network {
             let next_layer_index = layer_index + 1;
 
             let next_layer_delta = &layer_deltas[next_layer_index];
-            let binding = self.layers[next_layer_index].weights();
-            let next_layer_weights: &Tensor = &binding.borrow();
+            let next_layer_weights = self.layers[next_layer_index].weights();
 
             let op_result = Tensor::matmul(
                 next_layer_weights,

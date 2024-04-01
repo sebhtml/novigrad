@@ -24,7 +24,6 @@ pub struct TrainWorkingMemory {
     pub matrix_products: Vec<Tensor>,
     pub activation_tensors: Vec<Tensor>,
     pub next_layer_delta: Tensor,
-    pub addition: Tensor,
     pub layer_delta: Tensor,
     pub previous_activation_tensor: Tensor,
     pub last_activation_row: Tensor,
@@ -38,7 +37,6 @@ impl TrainWorkingMemory {
             matrix_products: vec![Tensor::default(); layers_count],
             activation_tensors: vec![Tensor::default(); layers_count],
             next_layer_delta: Default::default(),
-            addition: Default::default(),
             layer_delta: Default::default(),
             previous_activation_tensor: Default::default(),
             last_activation_row: Default::default(),
@@ -191,11 +189,6 @@ impl Network {
                 previous_activation_tensor.assign(&activation_tensors[previous_layer_index]);
             }
 
-            // Use the same convention that is used in tensorflow:
-            // y = x @ W^T+b
-            // Weights is on the right.
-            // W is transposed.
-            // X is not transposed.
             let activation_tensor = &mut activation_tensors[layer_index];
             let op_result = layer.forward(
                 previous_activation_tensor,
@@ -279,7 +272,7 @@ impl Network {
             swap(next_layer_delta, layer_delta);
         }
 
-        // Apply weight deltas
+        // Apply changes
         for layer in 0..self.layers.len() {
             let op_result = self.layers[layer].commit_change();
             op_result.expect("Ok");

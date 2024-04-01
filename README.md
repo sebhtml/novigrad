@@ -17,8 +17,8 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- learned Embedding
 - add biases
+- learned Embedding
 - Dropout
 - move learning rate in dataset details
 - shuffle examples in each epoch

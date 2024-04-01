@@ -9,8 +9,8 @@ use crate::{
 
 pub struct Linear {
     weights: Tensor,
-    activation: Box<dyn ActivationFunction>,
-    layer_weight_delta: Tensor,
+    activation_function: Box<dyn ActivationFunction>,
+    weight_delta: Tensor,
     has_pending_change: bool,
     // Working memory
     previous_a_time_output_delta: Tensor,
@@ -33,8 +33,8 @@ impl Linear {
         let weights = Tensor::new(rows, cols, weights);
         Linear {
             weights,
-            activation: activation,
-            layer_weight_delta: Default::default(),
+            activation_function: activation,
+            weight_delta: Default::default(),
             has_pending_change: false,
             previous_a_time_output_delta: Default::default(),
             addition: Default::default(),
@@ -49,9 +49,9 @@ impl Layer for Linear {
         }
         let addition = &mut self.addition;
         {
-            let layer_weight_delta = &self.layer_weight_delta;
+            let weight_delta = &self.weight_delta;
             let weights = &self.weights;
-            let op_result = weights.sub(layer_weight_delta, addition);
+            let op_result = weights.sub(weight_delta, addition);
             op_result.expect("Ok");
         }
 
@@ -67,6 +67,11 @@ impl Layer for Linear {
         matrix_product: &mut Tensor,
         activation_tensor: &mut Tensor,
     ) -> Result<(), Error> {
+        // Use the same convention that is used in tensorflow:
+        // y = x @ W^T+b
+        // Weights is on the right.
+        // W is transposed.
+        // X is not transposed.
         let weights = &self.weights;
         let op_result = Tensor::matmul(input, weights, matrix_product, TRANSPOSE_RHS);
         match op_result {
@@ -79,7 +84,7 @@ impl Layer for Linear {
                 debug_assert!(false);
             }
         }
-        let activation_function = &self.activation;
+        let activation_function = &self.activation_function;
         let op_result = activation_function.activate(&matrix_product, activation_tensor);
         op_result.expect("Ok");
         Ok(())
@@ -109,7 +114,7 @@ impl Layer for Linear {
         layer_delta: &mut Tensor,
     ) {
         let layer_f_derivative = &mut working_memory.layer_f_derivative;
-        let layer_activation_function = &self.activation;
+        let layer_activation_function = &self.activation_function;
         let output_diff = &mut working_memory.output_diff;
 
         match next_layer {
@@ -157,8 +162,8 @@ impl Layer for Linear {
         );
         op_result.expect("Ok");
 
-        let layer_weight_delta = &mut self.layer_weight_delta;
-        let op_result = previous_a_time_output_delta.scalar_mul(learning_rate, layer_weight_delta);
+        let weight_delta = &mut self.weight_delta;
+        let op_result = previous_a_time_output_delta.scalar_mul(learning_rate, weight_delta);
         op_result.expect("Ok");
         self.has_pending_change = true;
     }

@@ -4,8 +4,14 @@ pub use linear::*;
 use crate::{DeltaWorkingMemory, Error, Tensor};
 
 pub trait Layer {
-    fn commit_change(&mut self, addition: &mut Tensor, weight_deltas: &Tensor)
-        -> Result<(), Error>;
+    fn plan_change(
+        &mut self,
+        learning_rate: f32,
+        previous_activation: &Tensor,
+        layer_delta: &Tensor,
+    );
+
+    fn commit_change(&mut self) -> Result<(), Error>;
 
     fn forward(
         &self,

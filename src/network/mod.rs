@@ -5,7 +5,7 @@ use std::mem::swap;
 
 use crate::{
     loss::{LossFunction, LossFunctionName},
-    Activation, Error, Layer, Linear, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
+    Activation, Error, Layer, Linear, Tensor,
 };
 
 pub struct LayerConfig {
@@ -24,12 +24,9 @@ pub struct TrainWorkingMemory {
     pub matrix_products: Vec<Tensor>,
     pub activation_tensors: Vec<Tensor>,
     pub next_layer_delta: Tensor,
-    pub weight_deltas: Vec<Tensor>,
     pub addition: Tensor,
     pub layer_delta: Tensor,
-    pub layer_weight_delta: Tensor,
     pub previous_activation_tensor: Tensor,
-    pub previous_a_time_output_delta: Tensor,
     pub last_activation_row: Tensor,
     pub loss: Tensor,
     pub tmp: Tensor,
@@ -41,12 +38,9 @@ impl TrainWorkingMemory {
             matrix_products: vec![Tensor::default(); layers_count],
             activation_tensors: vec![Tensor::default(); layers_count],
             next_layer_delta: Default::default(),
-            weight_deltas: vec![Tensor::default(); layers_count],
             addition: Default::default(),
             layer_delta: Default::default(),
-            layer_weight_delta: Default::default(),
             previous_activation_tensor: Default::default(),
-            previous_a_time_output_delta: Default::default(),
             last_activation_row: Default::default(),
             loss: Default::default(),
             tmp: Default::default(),
@@ -212,10 +206,7 @@ impl Network {
         }
 
         let next_layer_delta = &mut working_memory.next_layer_delta;
-        let weight_deltas = &mut working_memory.weight_deltas;
         let layer_delta = &mut working_memory.layer_delta;
-        let layer_weight_delta = &mut working_memory.layer_weight_delta;
-        let previous_a_time_output_delta = &mut working_memory.previous_a_time_output_delta;
         let layers_count = self.layers.len();
 
         // Back-propagation
@@ -281,26 +272,16 @@ impl Network {
             }
 
             {
-                // TODO move to plan_change
-                let op_result = Tensor::matmul(
-                    previous_activation,
-                    layer_delta,
-                    previous_a_time_output_delta,
-                    TRANSPOSE_LHS | TRANSPOSE_RESULT,
-                );
-                op_result.expect("Ok");
-                let op_result =
-                    previous_a_time_output_delta.scalar_mul(learning_rate, layer_weight_delta);
-                op_result.expect("Ok");
-                swap(&mut weight_deltas[layer_index], layer_weight_delta);
+                let layer = &mut self.layers[layer_index];
+                layer.plan_change(learning_rate, previous_activation, layer_delta);
             }
+
             swap(next_layer_delta, layer_delta);
         }
 
         // Apply weight deltas
-        let addition = &mut working_memory.addition;
         for layer in 0..self.layers.len() {
-            let op_result = self.layers[layer].commit_change(addition, &weight_deltas[layer]);
+            let op_result = self.layers[layer].commit_change();
             op_result.expect("Ok");
         }
     }

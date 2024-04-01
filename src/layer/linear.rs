@@ -10,6 +10,12 @@ use crate::{
 pub struct Linear {
     weights: Tensor,
     activation: Box<dyn ActivationFunction>,
+    layer_weight_delta: Tensor,
+    has_pending_change: bool,
+    // Working memory
+    previous_a_time_output_delta: Tensor,
+    // Working memory
+    addition: Tensor,
 }
 
 impl Linear {
@@ -28,32 +34,30 @@ impl Linear {
         Linear {
             weights,
             activation: activation,
+            layer_weight_delta: Default::default(),
+            has_pending_change: false,
+            previous_a_time_output_delta: Default::default(),
+            addition: Default::default(),
         }
-    }
-
-    fn weights<'a>(&'a self) -> &'a Tensor {
-        &self.weights
-    }
-
-    fn activation<'a>(&'a self) -> &'a Box<dyn ActivationFunction> {
-        &self.activation
     }
 }
 
 impl Layer for Linear {
-    fn commit_change(
-        &mut self,
-        addition: &mut Tensor,
-        weight_deltas: &Tensor,
-    ) -> Result<(), Error> {
+    fn commit_change(&mut self) -> Result<(), Error> {
+        if !self.has_pending_change {
+            return Ok(());
+        }
+        let addition = &mut self.addition;
         {
+            let layer_weight_delta = &self.layer_weight_delta;
             let weights = &self.weights;
-            let op_result = weights.sub(weight_deltas, addition);
+            let op_result = weights.sub(layer_weight_delta, addition);
             op_result.expect("Ok");
         }
 
         let weights = &mut self.weights;
         swap(weights, addition);
+        self.has_pending_change = false;
         Ok(())
     }
 
@@ -136,5 +140,26 @@ impl Layer for Linear {
 
         let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
         op_result.expect("Ok");
+    }
+
+    fn plan_change(
+        &mut self,
+        learning_rate: f32,
+        previous_activation: &Tensor,
+        layer_delta: &Tensor,
+    ) {
+        let previous_a_time_output_delta = &mut self.previous_a_time_output_delta;
+        let op_result = Tensor::matmul(
+            previous_activation,
+            layer_delta,
+            previous_a_time_output_delta,
+            TRANSPOSE_LHS | TRANSPOSE_RESULT,
+        );
+        op_result.expect("Ok");
+
+        let layer_weight_delta = &mut self.layer_weight_delta;
+        let op_result = previous_a_time_output_delta.scalar_mul(learning_rate, layer_weight_delta);
+        op_result.expect("Ok");
+        self.has_pending_change = true;
     }
 }

@@ -219,7 +219,6 @@ impl Network {
 
         // Back-propagation
         for (layer_index, _) in self.layers.iter().enumerate().rev() {
-            let layer = &self.layers[layer_index];
             let layer_product_tensor = &matrix_products[layer_index];
             let layer_activation_tensor = &activation_tensors[layer_index];
 
@@ -260,30 +259,32 @@ impl Network {
 
             let is_last_layer = layer_index == self.layers.len() - 1;
 
-            let next_layer = if is_last_layer {
-                None
-            } else {
-                let next_layer_index = layer_index + 1;
-                Some(&self.layers[next_layer_index])
-            };
+            {
+                let next_layer = if is_last_layer {
+                    None
+                } else {
+                    let next_layer_index = layer_index + 1;
+                    Some(&self.layers[next_layer_index])
+                };
+                let layer = &self.layers[layer_index];
+                layer.get_layer_delta(
+                    error_working_memory,
+                    layer_product_tensor,
+                    layer_activation_tensor,
+                    next_layer,
+                    next_layer_delta,
+                    self.using_softmax_and_cross_entropy_loss,
+                    layer_delta,
+                );
 
-            layer.get_layer_delta(
-                error_working_memory,
-                layer_product_tensor,
-                layer_activation_tensor,
-                next_layer,
-                next_layer_delta,
-                self.using_softmax_and_cross_entropy_loss,
-                layer_delta,
-            );
-
-            let op_result = Tensor::matmul(
-                previous_activation,
-                layer_delta,
-                previous_a_time_output_delta,
-                TRANSPOSE_LHS | TRANSPOSE_RESULT,
-            );
-            op_result.expect("Ok");
+                let op_result = Tensor::matmul(
+                    previous_activation,
+                    layer_delta,
+                    previous_a_time_output_delta,
+                    TRANSPOSE_LHS | TRANSPOSE_RESULT,
+                );
+                op_result.expect("Ok");
+            }
             let op_result =
                 previous_a_time_output_delta.scalar_mul(learning_rate, layer_weight_delta);
             op_result.expect("Ok");

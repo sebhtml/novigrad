@@ -3,6 +3,9 @@ use std::{
     ops::{Add, Div, Mul, Sub},
 };
 
+mod dot_product;
+pub use dot_product::*;
+
 #[cfg(test)]
 mod tests;
 
@@ -206,7 +209,10 @@ impl Tensor {
         } else if tranpose_lhs && !transpose_rhs && !transpose_result {
             Self::matmul_lhs_t_rhs_result(lhs, rhs, result)
         } else if !tranpose_lhs && transpose_rhs && !transpose_result {
-            Self::matmul_lhs_rhs_t_result(lhs, rhs, result)
+            let mut rhs_t = Tensor::default();
+            rhs.transpose(&mut rhs_t);
+            Self::matmul_lhs_rhs_result(lhs, &rhs_t, result)
+            //Self::matmul_lhs_rhs_t_result(lhs, rhs, result)
         } else if tranpose_lhs && transpose_rhs && !transpose_result {
             Self::matmul_lhs_t_rhs_t_result(lhs, rhs, result)
         } else {
@@ -351,33 +357,25 @@ impl Tensor {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        let lhs_ptr = lhs.values.as_ptr();
-        let rhs_ptr = rhs.values.as_ptr();
+        let lhs_slice = lhs.values.as_slice();
+        let rhs_slice = rhs.values.as_slice();
 
         result.reshape(lhs_rows, rhs_rows);
-        let result_ptr = result.values.as_mut_ptr();
+        let result_slice = result.values.as_mut_slice();
 
-        unsafe {
-            let mut lhs_row = 0;
-            while lhs_row != lhs_rows {
-                let lhs_row_index = lhs_row * lhs_cols;
-                let mut rhs_row = 0;
-                while rhs_row != rhs_rows {
-                    let rhs_row_index = rhs_row * rhs_cols;
-                    let mut dot_product = 0.0;
-                    let mut inner = 0;
-                    while inner != lhs_cols {
-                        let lhs_cell = lhs_ptr.add(lhs_row_index + inner);
-                        let rhs_cell = rhs_ptr.add(rhs_row_index + inner);
-                        dot_product += *lhs_cell * *rhs_cell;
-                        inner += 1;
-                    }
-                    let result_cell = result_ptr.add(lhs_row * rhs_rows + rhs_row);
-                    *result_cell = dot_product;
-                    rhs_row += 1;
-                }
-                lhs_row += 1;
+        let mut lhs_row = 0;
+        while lhs_row < lhs_rows {
+            let lhs_row_index = lhs_row * lhs_cols;
+            let lhs_slice = &lhs_slice[lhs_row_index..(lhs_row_index + lhs_cols)];
+            let mut rhs_row = 0;
+            while rhs_row < rhs_rows {
+                let rhs_row_index = rhs_row * rhs_cols;
+                let rhs_slice = &rhs_slice[rhs_row_index..(rhs_row_index + lhs_cols)];
+                let result_value = &mut result_slice[lhs_row * rhs_rows + rhs_row];
+                *result_value = dot_product(lhs_slice, rhs_slice);
+                rhs_row += 1;
             }
+            lhs_row += 1;
         }
 
         Ok(())

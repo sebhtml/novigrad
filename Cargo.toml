@@ -11,8 +11,13 @@ opt-level = 0
 [profile.release]
 opt-level = 3
 
+[profile.release-with-debug]
+inherits = "release"
+debug = true
+
 [dependencies]
 rand = "0.8"
 
 [dev-dependencies]
 more-asserts = "0.3.1"
+

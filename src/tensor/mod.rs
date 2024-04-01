@@ -220,6 +220,8 @@ impl Tensor {
             Self::matmul_lhs_t_rhs_t_result(lhs, rhs, result)
         } else if tranpose_lhs && transpose_rhs && transpose_result {
             Self::matmul_lhs_t_rhs_t_result_t(lhs, rhs, result)
+        } else if tranpose_lhs && !transpose_rhs && transpose_result {
+            Self::matmul_lhs_t_rhs_result_t(lhs, rhs, result)
         } else {
             Err(Error::UnsupportedOperation)
         }
@@ -300,6 +302,48 @@ impl Tensor {
                     inner += 1;
                 }
                 row += 1;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// lhs transposed, rhs not transposed, result transposed.
+    fn matmul_lhs_t_rhs_result_t(
+        lhs: &Tensor,
+        rhs: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        let lhs_rows = lhs.rows;
+        let lhs_cols = lhs.cols;
+        if lhs_rows != rhs.rows {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+
+        result.reshape(rhs.cols, lhs_cols);
+
+        let lhs_ptr = lhs.values.as_ptr();
+        let right_ptr = rhs.values.as_ptr();
+        let result_ptr = result.values.as_mut_ptr();
+
+        let right_cols = rhs.cols;
+
+        unsafe {
+            let mut lhs_col = 0;
+            while lhs_col != lhs_cols {
+                let mut inner = 0;
+                while inner != lhs_rows {
+                    let mut rhs_col = 0;
+                    while rhs_col != right_cols {
+                        let lhs_value = *lhs_ptr.add(inner * lhs_cols + lhs_col);
+                        let right_cell = right_ptr.add(inner * right_cols + rhs_col);
+                        let result_cell = result_ptr.add(rhs_col * lhs_cols + lhs_col);
+                        *result_cell += lhs_value * *right_cell;
+                        rhs_col += 1;
+                    }
+                    inner += 1;
+                }
+                lhs_col += 1;
             }
         }
 

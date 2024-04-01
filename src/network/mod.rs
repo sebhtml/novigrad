@@ -216,14 +216,17 @@ impl Network {
         let layer_delta = &mut working_memory.layer_delta;
         let layer_weight_delta = &mut working_memory.layer_weight_delta;
         let previous_a_time_output_delta = &mut working_memory.previous_a_time_output_delta;
+        let layers_count = self.layers.len();
 
         // Back-propagation
-        for (layer_index, _) in self.layers.iter().enumerate().rev() {
+        for layer_index in (0..layers_count).into_iter().rev() {
+            let is_first_layer = layer_index == 0;
+            let is_last_layer = layer_index == self.layers.len() - 1;
             let layer_product_tensor = &matrix_products[layer_index];
             let layer_activation_tensor = &activation_tensors[layer_index];
 
             let previous_activation = {
-                if layer_index == 0 {
+                if is_first_layer {
                     &x
                 } else {
                     let previous_layer_index = layer_index - 1;
@@ -231,7 +234,7 @@ impl Network {
                 }
             };
 
-            if layer_index == self.layers.len() - 1 {
+            if is_last_layer {
                 // For the output layer, the next layer delta is the loss.
                 let last_activation_row = &mut working_memory.last_activation_row;
                 let tmp = &mut working_memory.tmp;
@@ -257,8 +260,6 @@ impl Network {
                 }
             }
 
-            let is_last_layer = layer_index == self.layers.len() - 1;
-
             {
                 let next_layer = if is_last_layer {
                     None
@@ -266,6 +267,7 @@ impl Network {
                     let next_layer_index = layer_index + 1;
                     Some(&self.layers[next_layer_index])
                 };
+
                 let layer = &self.layers[layer_index];
                 layer.get_layer_delta(
                     error_working_memory,
@@ -276,7 +278,10 @@ impl Network {
                     self.using_softmax_and_cross_entropy_loss,
                     layer_delta,
                 );
+            }
 
+            {
+                // TODO move to plan_change
                 let op_result = Tensor::matmul(
                     previous_activation,
                     layer_delta,
@@ -284,19 +289,18 @@ impl Network {
                     TRANSPOSE_LHS | TRANSPOSE_RESULT,
                 );
                 op_result.expect("Ok");
+                let op_result =
+                    previous_a_time_output_delta.scalar_mul(learning_rate, layer_weight_delta);
+                op_result.expect("Ok");
+                swap(&mut weight_deltas[layer_index], layer_weight_delta);
             }
-            let op_result =
-                previous_a_time_output_delta.scalar_mul(learning_rate, layer_weight_delta);
-            op_result.expect("Ok");
-
             swap(next_layer_delta, layer_delta);
-            swap(&mut weight_deltas[layer_index], layer_weight_delta);
         }
 
         // Apply weight deltas
         let addition = &mut working_memory.addition;
         for layer in 0..self.layers.len() {
-            let op_result = self.layers[layer].apply_weight_deltas(addition, &weight_deltas[layer]);
+            let op_result = self.layers[layer].commit_change(addition, &weight_deltas[layer]);
             op_result.expect("Ok");
         }
     }

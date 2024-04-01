@@ -41,7 +41,7 @@ impl Linear {
 }
 
 impl Layer for Linear {
-    fn apply_weight_deltas(
+    fn commit_change(
         &mut self,
         addition: &mut Tensor,
         weight_deltas: &Tensor,

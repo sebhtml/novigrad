@@ -4,11 +4,8 @@ pub use linear::*;
 use crate::{DeltaWorkingMemory, Error, Tensor};
 
 pub trait Layer {
-    fn apply_weight_deltas(
-        &mut self,
-        addition: &mut Tensor,
-        weight_deltas: &Tensor,
-    ) -> Result<(), Error>;
+    fn commit_change(&mut self, addition: &mut Tensor, weight_deltas: &Tensor)
+        -> Result<(), Error>;
 
     fn forward(
         &self,

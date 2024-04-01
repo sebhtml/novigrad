@@ -36,13 +36,13 @@ pub struct TrainWorkingMemory {
     pub layer_weight_delta_transpose: Tensor,
 }
 
-impl Default for TrainWorkingMemory {
-    fn default() -> Self {
+impl TrainWorkingMemory {
+    pub fn new(layers_count: usize) -> Self {
         Self {
-            matrix_products: Default::default(),
-            activation_tensors: Default::default(),
-            layer_deltas: Default::default(),
-            weight_deltas: Default::default(),
+            matrix_products: vec![Tensor::default(); layers_count],
+            activation_tensors: vec![Tensor::default(); layers_count],
+            layer_deltas: vec![Tensor::default(); layers_count],
+            weight_deltas: vec![Tensor::default(); layers_count],
             addition: Default::default(),
             layer_f_derivative: Default::default(),
             layer_delta: Default::default(),
@@ -86,14 +86,14 @@ pub struct PredictWorkingMemory {
     pub activation_tensors: Vec<Tensor>,
 }
 
-impl Default for PredictWorkingMemory {
-    fn default() -> Self {
+impl PredictWorkingMemory {
+    pub fn new(examples_count: usize) -> Self {
         Self {
             matrix_product: Default::default(),
             last_activation_row: Default::default(),
             previous_activation_tensor: Default::default(),
             activation_tensor: Default::default(),
-            activation_tensors: Default::default(),
+            activation_tensors: vec![Tensor::default(); examples_count],
         }
     }
 }
@@ -188,12 +188,9 @@ impl Network {
         x: &Tensor,
         y: &Tensor,
     ) {
-        let layers_count = self.layers.len();
         let learning_rate: f32 = 0.5;
         let matrix_products = &mut working_memory.matrix_products;
-        matrix_products.resize_with(layers_count, Tensor::default);
         let activation_tensors = &mut working_memory.activation_tensors;
-        activation_tensors.resize_with(layers_count, Tensor::default);
 
         // TODO add constant bias
         // Add a constant for bias
@@ -225,10 +222,8 @@ impl Network {
         }
 
         let layer_deltas = &mut working_memory.layer_deltas;
-        layer_deltas.resize_with(self.layers.len(), Tensor::default);
 
         let weight_deltas = &mut working_memory.weight_deltas;
-        weight_deltas.resize_with(self.layers.len(), Tensor::default);
 
         let layer_f_derivative = &mut working_memory.layer_f_derivative;
         let layer_delta = &mut working_memory.layer_delta;
@@ -315,14 +310,13 @@ impl Network {
         matrix_product: &mut Tensor,
         previous_activation_tensor: &mut Tensor,
         inputs: &Vec<Tensor>,
-        outputs: &mut Vec<Tensor>,
+        activation_tensors: &mut Vec<Tensor>,
     ) {
         let len = inputs.len();
         let mut i = 0;
-        outputs.resize_with(len, Tensor::default);
         while i < len {
             let input = &inputs[i];
-            let activation_tensor = &mut outputs[i];
+            let activation_tensor = &mut activation_tensors[i];
             self.predict(
                 matrix_product,
                 previous_activation_tensor,

@@ -63,13 +63,14 @@ pub struct NetworkTestOutput {
 pub fn train_network_on_dataset(
     dataset_details: &DatasetDetails,
 ) -> Result<NetworkTestOutput, Error> {
-    let mut train_working_memory = TrainWorkingMemory::default();
-    let mut error_working_memory = ErrorWorkingMemory::default();
-    let mut predict_working_memory = PredictWorkingMemory::default();
     let mut initial_total_error = f32::NAN;
     let examples = &dataset_details.examples;
     let layers = &dataset_details.layers;
     let loss_function_name = &dataset_details.loss_function_name;
+
+    let mut train_working_memory = TrainWorkingMemory::new(layers.len());
+    let mut error_working_memory = ErrorWorkingMemory::default();
+    let mut predict_working_memory = PredictWorkingMemory::new(examples.len());
 
     let mut network = Network::new(layers, loss_function_name);
 
@@ -79,6 +80,7 @@ pub fn train_network_on_dataset(
     let mut last_total_error = f32::NAN;
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
+
     for epoch in 0..epochs {
         if epoch % progress == 0 {
             let total_error = print_total_error(

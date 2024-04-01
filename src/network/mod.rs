@@ -26,10 +26,8 @@ pub struct TrainWorkingMemory {
     pub next_layer_delta: Tensor,
     pub weight_deltas: Vec<Tensor>,
     pub addition: Tensor,
-    pub layer_f_derivative: Tensor,
     pub layer_delta: Tensor,
     pub layer_weight_delta: Tensor,
-    pub output_diff: Tensor,
     pub previous_activation_tensor: Tensor,
     pub previous_a_time_output_delta: Tensor,
 }
@@ -42,25 +40,27 @@ impl TrainWorkingMemory {
             next_layer_delta: Default::default(),
             weight_deltas: vec![Tensor::default(); layers_count],
             addition: Default::default(),
-            layer_f_derivative: Default::default(),
             layer_delta: Default::default(),
             layer_weight_delta: Default::default(),
-            output_diff: Default::default(),
             previous_activation_tensor: Default::default(),
             previous_a_time_output_delta: Default::default(),
         }
     }
 }
 
-pub struct ErrorWorkingMemory {
+pub struct DeltaWorkingMemory {
+    pub output_diff: Tensor,
+    pub layer_f_derivative: Tensor,
     pub last_activation_row: Tensor,
     pub loss: Tensor,
     pub tmp: Tensor,
 }
 
-impl Default for ErrorWorkingMemory {
+impl Default for DeltaWorkingMemory {
     fn default() -> Self {
         Self {
+            output_diff: Default::default(),
+            layer_f_derivative: Default::default(),
             loss: Default::default(),
             tmp: Default::default(),
             last_activation_row: Default::default(),
@@ -124,7 +124,7 @@ impl Network {
     pub fn train(
         &mut self,
         working_memory: &mut TrainWorkingMemory,
-        error_working_memory: &mut ErrorWorkingMemory,
+        error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
         inputs: &Vec<Tensor>,
         outputs: &Vec<Tensor>,
@@ -172,7 +172,7 @@ impl Network {
     fn train_back_propagation(
         &mut self,
         working_memory: &mut TrainWorkingMemory,
-        error_working_memory: &mut ErrorWorkingMemory,
+        error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
         x: &Tensor,
@@ -213,16 +213,13 @@ impl Network {
 
         let next_layer_delta = &mut working_memory.next_layer_delta;
         let weight_deltas = &mut working_memory.weight_deltas;
-        let layer_f_derivative = &mut working_memory.layer_f_derivative;
         let layer_delta = &mut working_memory.layer_delta;
         let layer_weight_delta = &mut working_memory.layer_weight_delta;
-        let output_diff = &mut working_memory.output_diff;
         let previous_a_time_output_delta = &mut working_memory.previous_a_time_output_delta;
 
         // Back-propagation
         for (layer_index, _) in self.layers.iter().enumerate().rev() {
             let layer = &self.layers[layer_index];
-            let layer_activation_function = &layer.activation();
             let layer_product_tensor = &matrix_products[layer_index];
             let layer_activation_tensor = &activation_tensors[layer_index];
 
@@ -235,31 +232,16 @@ impl Network {
                 }
             };
 
-            self.get_layer_error(
+            self.get_layer_delta(
+                layer,
+                layer_product_tensor,
                 error_working_memory,
                 next_layer_delta,
                 y,
                 layer_activation_tensor,
                 layer_index,
-                output_diff,
+                layer_delta,
             );
-
-            // Compute activation function derivative.
-            if layer_index == self.layers.len() - 1 && self.using_softmax_and_cross_entropy_loss {
-                layer_activation_tensor
-                    .scalar_add(1.0, layer_f_derivative)
-                    .expect("Ok");
-            } else {
-                let op_result = layer_activation_function.derive(
-                    layer_product_tensor,
-                    layer_activation_tensor,
-                    layer_f_derivative,
-                );
-                op_result.expect("Ok");
-            }
-
-            let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
-            op_result.expect("Ok");
 
             let op_result = Tensor::matmul(
                 previous_activation,
@@ -328,15 +310,21 @@ impl Network {
         }
     }
 
-    fn get_layer_error(
+    fn get_layer_delta(
         &self,
-        working_memory: &mut ErrorWorkingMemory,
+        layer: &Box<dyn Layer>,
+        layer_product_tensor: &Tensor,
+        working_memory: &mut DeltaWorkingMemory,
         next_layer_delta: &Tensor,
         y: &Tensor,
         layer_activation_tensor: &Tensor,
         layer_index: usize,
-        output_diff: &mut Tensor,
+        layer_delta: &mut Tensor,
     ) {
+        let layer_f_derivative = &mut working_memory.layer_f_derivative;
+        let layer_activation_function = &layer.activation();
+        let output_diff = &mut working_memory.output_diff;
+
         if layer_index == self.layers.len() - 1 {
             // Output layer
             let last_activation_row = &mut working_memory.last_activation_row;
@@ -348,8 +336,6 @@ impl Network {
                 .loss_function
                 .derive(tmp, y, &last_activation_row, loss);
             op_result.expect("Ok");
-            //print_expected_output_and_actual_output(example_index, y, &clipped_tensor, Some(loss));
-            //assert!(false);
 
             output_diff.reshape(
                 layer_activation_tensor.rows(),
@@ -377,5 +363,22 @@ impl Network {
 
             op_result.expect("Ok");
         }
+
+        // Compute activation function derivative.
+        if layer_index == self.layers.len() - 1 && self.using_softmax_and_cross_entropy_loss {
+            layer_activation_tensor
+                .scalar_add(1.0, layer_f_derivative)
+                .expect("Ok");
+        } else {
+            let op_result = layer_activation_function.derive(
+                layer_product_tensor,
+                layer_activation_tensor,
+                layer_f_derivative,
+            );
+            op_result.expect("Ok");
+        }
+
+        let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
+        op_result.expect("Ok");
     }
 }

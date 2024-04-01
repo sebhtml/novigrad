@@ -1,5 +1,5 @@
 use crate::{
-    DatasetDetails, Error, ErrorWorkingMemory, Network, PredictWorkingMemory, Tensor,
+    DatasetDetails, DeltaWorkingMemory, Error, Network, PredictWorkingMemory, Tensor,
     TrainWorkingMemory,
 };
 
@@ -69,7 +69,7 @@ pub fn train_network_on_dataset(
     let loss_function_name = &dataset_details.loss_function_name;
 
     let mut train_working_memory = TrainWorkingMemory::new(layers.len());
-    let mut error_working_memory = ErrorWorkingMemory::default();
+    let mut error_working_memory = DeltaWorkingMemory::default();
     let mut predict_working_memory = PredictWorkingMemory::new(examples.len());
 
     let mut network = Network::new(layers, loss_function_name);

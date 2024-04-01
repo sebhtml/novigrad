@@ -30,6 +30,9 @@ pub struct TrainWorkingMemory {
     pub layer_weight_delta: Tensor,
     pub previous_activation_tensor: Tensor,
     pub previous_a_time_output_delta: Tensor,
+    pub last_activation_row: Tensor,
+    pub loss: Tensor,
+    pub tmp: Tensor,
 }
 
 impl TrainWorkingMemory {
@@ -44,6 +47,9 @@ impl TrainWorkingMemory {
             layer_weight_delta: Default::default(),
             previous_activation_tensor: Default::default(),
             previous_a_time_output_delta: Default::default(),
+            last_activation_row: Default::default(),
+            loss: Default::default(),
+            tmp: Default::default(),
         }
     }
 }
@@ -51,9 +57,6 @@ impl TrainWorkingMemory {
 pub struct DeltaWorkingMemory {
     pub output_diff: Tensor,
     pub layer_f_derivative: Tensor,
-    pub last_activation_row: Tensor,
-    pub loss: Tensor,
-    pub tmp: Tensor,
 }
 
 impl Default for DeltaWorkingMemory {
@@ -61,9 +64,6 @@ impl Default for DeltaWorkingMemory {
         Self {
             output_diff: Default::default(),
             layer_f_derivative: Default::default(),
-            loss: Default::default(),
-            tmp: Default::default(),
-            last_activation_row: Default::default(),
         }
     }
 }
@@ -232,12 +232,37 @@ impl Network {
                 }
             };
 
+            if layer_index == self.layers.len() - 1 {
+                // For the output layer, the next layer delta is the loss.
+                let last_activation_row = &mut working_memory.last_activation_row;
+                let tmp = &mut working_memory.tmp;
+                let loss = &mut working_memory.loss;
+                let last_row = layer_activation_tensor.rows() - 1;
+                layer_activation_tensor.row(last_row, last_activation_row);
+                let op_result = self
+                    .loss_function
+                    .derive(tmp, y, &last_activation_row, loss);
+                op_result.expect("Ok");
+
+                next_layer_delta.reshape(
+                    layer_activation_tensor.rows(),
+                    layer_activation_tensor.cols(),
+                );
+                let mut col = 0;
+                let cols = loss.cols();
+
+                while col < cols {
+                    let value = loss.get(0, col);
+                    next_layer_delta.set(last_row, col, value);
+                    col += 1;
+                }
+            }
+
             self.get_layer_delta(
                 layer,
                 layer_product_tensor,
                 error_working_memory,
                 next_layer_delta,
-                y,
                 layer_activation_tensor,
                 layer_index,
                 layer_delta,
@@ -316,7 +341,6 @@ impl Network {
         layer_product_tensor: &Tensor,
         working_memory: &mut DeltaWorkingMemory,
         next_layer_delta: &Tensor,
-        y: &Tensor,
         layer_activation_tensor: &Tensor,
         layer_index: usize,
         layer_delta: &mut Tensor,
@@ -326,29 +350,8 @@ impl Network {
         let output_diff = &mut working_memory.output_diff;
 
         if layer_index == self.layers.len() - 1 {
-            // Output layer
-            let last_activation_row = &mut working_memory.last_activation_row;
-            let tmp = &mut working_memory.tmp;
-            let loss = &mut working_memory.loss;
-            let last_row = layer_activation_tensor.rows() - 1;
-            layer_activation_tensor.row(last_row, last_activation_row);
-            let op_result = self
-                .loss_function
-                .derive(tmp, y, &last_activation_row, loss);
-            op_result.expect("Ok");
-
-            output_diff.reshape(
-                layer_activation_tensor.rows(),
-                layer_activation_tensor.cols(),
-            );
-            let mut col = 0;
-            let cols = loss.cols();
-
-            while col < cols {
-                let value = loss.get(0, col);
-                output_diff.set(last_row, col, value);
-                col += 1;
-            }
+            // use the output of the loss function.
+            output_diff.assign(next_layer_delta);
         } else {
             // Hidden layer
             let next_layer_index = layer_index + 1;

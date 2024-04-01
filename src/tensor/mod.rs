@@ -209,12 +209,17 @@ impl Tensor {
         } else if tranpose_lhs && !transpose_rhs && !transpose_result {
             Self::matmul_lhs_t_rhs_result(lhs, rhs, result)
         } else if !tranpose_lhs && transpose_rhs && !transpose_result {
+            // TODO X @ W^T is supposed to be very fast since lhs and rhs are both using
+            // sequential access. However on my Intel i5-7300U it's 2X slower.
+            // So W is transposed and matmul is done on that.
             let mut rhs_t = Tensor::default();
             rhs.transpose(&mut rhs_t);
             Self::matmul_lhs_rhs_result(lhs, &rhs_t, result)
             //Self::matmul_lhs_rhs_t_result(lhs, rhs, result)
         } else if tranpose_lhs && transpose_rhs && !transpose_result {
             Self::matmul_lhs_t_rhs_t_result(lhs, rhs, result)
+        } else if tranpose_lhs && transpose_rhs && transpose_result {
+            Self::matmul_lhs_t_rhs_t_result_t(lhs, rhs, result)
         } else {
             Err(Error::UnsupportedOperation)
         }
@@ -301,7 +306,7 @@ impl Tensor {
         Ok(())
     }
 
-    /// lhs transposed, rhs transposed, result transposed.
+    /// lhs transposed, rhs transposed, result not transposed.
     fn matmul_lhs_t_rhs_t_result(
         lhs: &Tensor,
         rhs: &Tensor,
@@ -336,6 +341,44 @@ impl Tensor {
                 }
                 lhs_col += 1;
             }
+        }
+
+        Ok(())
+    }
+
+    /// lhs transposed, rhs transposed, result transposed.
+    fn matmul_lhs_t_rhs_t_result_t(
+        lhs: &Tensor,
+        rhs: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        let lhs_rows = lhs.rows;
+        let lhs_cols = lhs.cols;
+        let rhs_rows = rhs.rows;
+        let rhs_cols = rhs.cols;
+
+        if lhs_rows != rhs_cols {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+
+        result.reshape(rhs_rows, lhs_cols);
+
+        let mut lhs_col = 0;
+        while lhs_col != lhs_cols {
+            let mut rhs_row = 0;
+            while rhs_row != rhs_rows {
+                let mut inner = 0;
+                while inner != lhs_rows {
+                    let lhs_value = lhs.get(inner, lhs_col);
+                    let rhs_value = rhs.get(rhs_row, inner);
+                    let old = result.get(rhs_row, lhs_col);
+                    let result_value = old + lhs_value * rhs_value;
+                    result.set(rhs_row, lhs_col, result_value);
+                    inner += 1;
+                }
+                rhs_row += 1;
+            }
+            lhs_col += 1;
         }
 
         Ok(())

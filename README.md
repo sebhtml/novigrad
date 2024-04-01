@@ -17,7 +17,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- for deltas, a vector is not required
 - add transpose_rhs_and_matmul
 - add biases
 - learned Embedding

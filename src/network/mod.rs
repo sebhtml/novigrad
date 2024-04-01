@@ -23,7 +23,7 @@ pub struct Network {
 pub struct TrainWorkingMemory {
     pub matrix_products: Vec<Tensor>,
     pub activation_tensors: Vec<Tensor>,
-    pub layer_deltas: Vec<Tensor>,
+    pub next_layer_delta: Tensor,
     pub weight_deltas: Vec<Tensor>,
     pub addition: Tensor,
     pub layer_f_derivative: Tensor,
@@ -41,7 +41,7 @@ impl TrainWorkingMemory {
         Self {
             matrix_products: vec![Tensor::default(); layers_count],
             activation_tensors: vec![Tensor::default(); layers_count],
-            layer_deltas: vec![Tensor::default(); layers_count],
+            next_layer_delta: Default::default(),
             weight_deltas: vec![Tensor::default(); layers_count],
             addition: Default::default(),
             layer_f_derivative: Default::default(),
@@ -215,10 +215,8 @@ impl Network {
             op_result.expect("Ok");
         }
 
-        let layer_deltas = &mut working_memory.layer_deltas;
-
+        let next_layer_delta = &mut working_memory.next_layer_delta;
         let weight_deltas = &mut working_memory.weight_deltas;
-
         let layer_f_derivative = &mut working_memory.layer_f_derivative;
         let layer_delta = &mut working_memory.layer_delta;
         let layer_weight_delta = &mut working_memory.layer_weight_delta;
@@ -245,7 +243,7 @@ impl Network {
 
             self.get_layer_error(
                 error_working_memory,
-                &layer_deltas,
+                next_layer_delta,
                 y,
                 layer_activation_tensor,
                 layer_index,
@@ -287,7 +285,7 @@ impl Network {
                 swap(layer_weight_delta, layer_weight_delta_transpose);
             }
 
-            swap(&mut layer_deltas[layer_index], layer_delta);
+            swap(next_layer_delta, layer_delta);
             swap(&mut weight_deltas[layer_index], layer_weight_delta);
         }
 
@@ -346,7 +344,7 @@ impl Network {
     fn get_layer_error(
         &self,
         working_memory: &mut ErrorWorkingMemory,
-        layer_deltas: &Vec<Tensor>,
+        next_layer_delta: &Tensor,
         y: &Tensor,
         layer_activation_tensor: &Tensor,
         layer_index: usize,
@@ -381,8 +379,6 @@ impl Network {
         } else {
             // Hidden layer
             let next_layer_index = layer_index + 1;
-
-            let next_layer_delta = &layer_deltas[next_layer_index];
             let next_layer_weights = self.layers[next_layer_index].weights();
 
             let op_result = Tensor::matmul(

@@ -267,13 +267,12 @@ impl Network {
                 Some(&self.layers[next_layer_index])
             };
 
-            self.get_layer_delta(
-                layer,
-                layer_product_tensor,
+            layer.get_layer_delta(
                 error_working_memory,
+                layer_product_tensor,
+                layer_activation_tensor,
                 next_layer,
                 next_layer_delta,
-                layer_activation_tensor,
                 self.using_softmax_and_cross_entropy_loss,
                 layer_delta,
             );
@@ -343,50 +342,5 @@ impl Network {
             op_result.expect("Ok");
             previous_activation_tensor.assign(activation_tensor);
         }
-    }
-
-    fn get_layer_delta(
-        &self,
-        layer: &Box<dyn Layer>,
-        layer_product_tensor: &Tensor,
-        working_memory: &mut DeltaWorkingMemory,
-        next_layer: Option<&Box<dyn Layer>>,
-        next_layer_delta: &Tensor,
-        layer_activation_tensor: &Tensor,
-        using_softmax_and_cross_entropy_loss: bool,
-        layer_delta: &mut Tensor,
-    ) {
-        let layer_f_derivative = &mut working_memory.layer_f_derivative;
-        let layer_activation_function = &layer.activation();
-        let output_diff = &mut working_memory.output_diff;
-
-        match next_layer {
-            None => {
-                // use the output of the loss function.
-                output_diff.assign(next_layer_delta);
-            }
-            Some(next_layer) => {
-                // Hidden layer
-                next_layer.backward(next_layer_delta, output_diff);
-            }
-        }
-
-        // Compute activation function derivative.
-        let is_last_layer = next_layer.is_none();
-        if is_last_layer && using_softmax_and_cross_entropy_loss {
-            layer_activation_tensor
-                .scalar_add(1.0, layer_f_derivative)
-                .expect("Ok");
-        } else {
-            let op_result = layer_activation_function.derive(
-                layer_product_tensor,
-                layer_activation_tensor,
-                layer_f_derivative,
-            );
-            op_result.expect("Ok");
-        }
-
-        let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
-        op_result.expect("Ok");
     }
 }

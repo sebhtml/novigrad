@@ -17,6 +17,8 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
+- move activation_tensor from Network to Linear
+- optimize code a bit with perf
 - add biases
 - learned Embedding
 - Dropout

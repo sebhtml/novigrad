@@ -1,4 +1,4 @@
-use std::{mem::swap, rc::Rc};
+use std::mem::swap;
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -6,11 +6,11 @@ use crate::{ActivationFunction, Error, Layer, Tensor, TRANSPOSE_RHS};
 
 pub struct Linear {
     weights: Tensor,
-    activation: Rc<dyn ActivationFunction>,
+    activation: Box<dyn ActivationFunction>,
 }
 
 impl Linear {
-    pub fn new(rows: usize, cols: usize, activation: Rc<dyn ActivationFunction>) -> Self {
+    pub fn new(rows: usize, cols: usize, activation: Box<dyn ActivationFunction>) -> Self {
         let mut rng = thread_rng();
         let mut weights = Vec::new();
         let right = (6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt();
@@ -49,8 +49,8 @@ impl Layer for Linear {
         Ok(())
     }
 
-    fn activation(&self) -> Rc<dyn ActivationFunction> {
-        self.activation.clone()
+    fn activation<'a>(&'a self) -> &'a Box<dyn ActivationFunction> {
+        &self.activation
     }
 
     fn forward(

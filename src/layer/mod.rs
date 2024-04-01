@@ -1,6 +1,4 @@
 mod linear;
-use std::rc::Rc;
-
 pub use linear::*;
 
 use crate::{ActivationFunction, Error, Tensor};
@@ -12,7 +10,7 @@ pub trait Layer {
         addition: &mut Tensor,
         weight_deltas: &Tensor,
     ) -> Result<(), Error>;
-    fn activation(&self) -> Rc<dyn ActivationFunction>;
+    fn activation<'a>(&'a self) -> &'a Box<dyn ActivationFunction>;
     fn forward(
         &self,
         input: &Tensor,

@@ -221,7 +221,14 @@ impl Tensor {
         } else if tranpose_lhs && transpose_rhs && transpose_result {
             Self::matmul_lhs_t_rhs_t_result_t(lhs, rhs, result)
         } else if tranpose_lhs && !transpose_rhs && transpose_result {
-            Self::matmul_lhs_t_rhs_result_t(lhs, rhs, result)
+            // TODO find why matmul_lhs_t_rhs_result_t is slower than matmul_lhs_rhs_result.
+            let mut lhs_t = Tensor::default();
+            let mut result_raw = Tensor::default();
+            lhs.transpose(&mut lhs_t);
+            let op_result = Self::matmul_lhs_rhs_result(&lhs_t, rhs, &mut result_raw);
+            result_raw.transpose(result);
+            op_result
+            //Self::matmul_lhs_t_rhs_result_t(lhs, rhs, result)
         } else {
             Err(Error::UnsupportedOperation)
         }

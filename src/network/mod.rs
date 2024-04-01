@@ -32,8 +32,6 @@ pub struct TrainWorkingMemory {
     pub output_diff: Tensor,
     pub previous_activation_tensor: Tensor,
     pub previous_a_time_output_delta: Tensor,
-    pub previous_action_t: Tensor,
-    pub layer_weight_delta_transpose: Tensor,
 }
 
 impl TrainWorkingMemory {
@@ -50,8 +48,6 @@ impl TrainWorkingMemory {
             output_diff: Default::default(),
             previous_activation_tensor: Default::default(),
             previous_a_time_output_delta: Default::default(),
-            previous_action_t: Default::default(),
-            layer_weight_delta_transpose: Default::default(),
         }
     }
 }
@@ -222,8 +218,6 @@ impl Network {
         let layer_weight_delta = &mut working_memory.layer_weight_delta;
         let output_diff = &mut working_memory.output_diff;
         let previous_a_time_output_delta = &mut working_memory.previous_a_time_output_delta;
-        let previous_action_t = &mut working_memory.previous_action_t;
-        let layer_weight_delta_transpose = &mut working_memory.layer_weight_delta_transpose;
 
         // Back-propagation
         for (layer_index, _) in self.layers.iter().enumerate().rev() {
@@ -267,23 +261,16 @@ impl Network {
             let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
             op_result.expect("Ok");
 
-            previous_activation.transpose(previous_action_t);
-
             let op_result = Tensor::matmul(
-                previous_action_t,
+                previous_activation,
                 layer_delta,
                 previous_a_time_output_delta,
-                Default::default(),
+                TRANSPOSE_LHS | TRANSPOSE_RESULT,
             );
             op_result.expect("Ok");
             let op_result =
                 previous_a_time_output_delta.scalar_mul(learning_rate, layer_weight_delta);
             op_result.expect("Ok");
-
-            {
-                layer_weight_delta.transpose(layer_weight_delta_transpose);
-                swap(layer_weight_delta, layer_weight_delta_transpose);
-            }
 
             swap(next_layer_delta, layer_delta);
             swap(&mut weight_deltas[layer_index], layer_weight_delta);

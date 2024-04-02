@@ -3,8 +3,8 @@ use std::mem::swap;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    ActivationFunction, ActivationType, DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS,
-    TRANSPOSE_RESULT, TRANSPOSE_RHS,
+    ActivationFunction, ActivationType, DeltaWorkingMemory, Error, Layer, LayerType, Tensor,
+    TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
 };
 
 pub struct Linear {
@@ -144,7 +144,7 @@ impl Layer for Linear {
     fn get_layer_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
-        next_layer: Option<&Box<dyn Layer>>,
+        next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
         using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
@@ -219,13 +219,13 @@ pub struct LinearConfig {
     pub activation: ActivationType,
 }
 
-impl Into<Box<dyn Layer>> for &LinearConfig {
-    fn into(self) -> Box<dyn Layer> {
-        Box::new(Linear::new(
+impl Into<Linear> for &LinearConfig {
+    fn into(self) -> Linear {
+        Linear::new(
             self.input_rows,
             self.rows,
             self.cols,
             self.activation.clone(),
-        ))
+        )
     }
 }

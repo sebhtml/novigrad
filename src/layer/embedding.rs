@@ -1,6 +1,6 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{DeltaWorkingMemory, Error, Layer, Tensor};
+use crate::{DeltaWorkingMemory, Error, Layer, LayerType, Tensor};
 
 pub struct Embedding {
     activation_tensor: Tensor,
@@ -47,7 +47,7 @@ impl Layer for Embedding {
     fn get_layer_delta(
         &self,
         _working_memory: &mut DeltaWorkingMemory,
-        _next_layer: Option<&Box<dyn Layer>>,
+        _next_layer: Option<&LayerType>,
         _next_layer_delta: &Tensor,
         _using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
@@ -63,9 +63,9 @@ pub struct EmbeddingConfig {
     pub hidden_dimensions: usize,
 }
 
-impl Into<Box<dyn Layer>> for &EmbeddingConfig {
-    fn into(self) -> Box<dyn Layer> {
-        Box::new(Embedding::new(self.hidden_dimensions))
+impl Into<Embedding> for &EmbeddingConfig {
+    fn into(self) -> Embedding {
+        Embedding::new(self.hidden_dimensions)
     }
 }
 

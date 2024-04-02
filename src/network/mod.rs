@@ -10,7 +10,7 @@ use crate::{
 };
 
 pub struct Network {
-    layers: Vec<Box<dyn Layer>>,
+    layers: Vec<LayerType>,
     loss_function: Box<dyn LossFunction>,
     using_softmax_and_cross_entropy_loss: bool,
     embedding_table: Vec<Vec<f32>>,

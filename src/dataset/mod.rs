@@ -1,7 +1,7 @@
 mod mega_man;
 mod simple;
 
-use crate::{loss::LossFunctionName, LayerConfig, LayerType, Tensor};
+use crate::{loss::LossFunctionName, LayerConfig, Tensor};
 
 pub enum Dataset {
     Simple,

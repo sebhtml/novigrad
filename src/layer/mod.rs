@@ -1,5 +1,7 @@
 mod linear;
 pub use linear::*;
+mod embedding;
+pub use embedding::*;
 
 use crate::{DeltaWorkingMemory, Error, Tensor};
 
@@ -30,6 +32,7 @@ pub trait Layer {
 }
 
 pub enum LayerType {
+    Embedding(EmbeddingConfig),
     Linear(LinearConfig),
 }
 
@@ -37,6 +40,7 @@ impl Into<Box<dyn Layer>> for &LayerType {
     fn into(self) -> Box<dyn Layer> {
         match self {
             LayerType::Linear(config) => config.into(),
+            LayerType::Embedding(config) => config.into(),
         }
     }
 }

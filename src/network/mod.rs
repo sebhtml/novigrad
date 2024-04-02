@@ -81,6 +81,7 @@ impl Network {
                             using_softmax_and_cross_entropy_loss = true;
                         }
                     }
+                    _ => (),
                 },
                 _ => (),
             }

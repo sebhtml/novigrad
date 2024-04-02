@@ -1,6 +1,6 @@
 use crate::{
     add_embeddings, get_u8_embedding_table, loss::LossFunctionName, Activation, DatasetDetails,
-    LayerType, LinearConfig, Tensor,
+    EmbeddingConfig, LayerType, LinearConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -37,6 +37,9 @@ pub fn load_dataset() -> DatasetDetails {
     DatasetDetails {
         examples: load_examples(),
         layers: vec![
+            LayerType::Embedding(EmbeddingConfig {
+                hidden_dimensions: 256,
+            }),
             LayerType::Linear(LinearConfig {
                 input_rows: 6,
                 rows: 256,

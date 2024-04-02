@@ -2,6 +2,7 @@ use crate::{Error, Tensor};
 
 use super::LossFunction;
 
+#[derive(Clone, PartialEq)]
 pub struct ResidualSumOfSquares {}
 
 impl Default for ResidualSumOfSquares {

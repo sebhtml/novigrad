@@ -1,5 +1,5 @@
 use crate::{
-    loss::LossFunctionName, ActivationType, DatasetDetails, EmbeddingConfig, LayerConfig,
+    loss::LossFunctionType, ActivationType, DatasetDetails, EmbeddingConfig, LayerConfig,
     LayerType, LinearConfig, Tensor,
 };
 
@@ -54,7 +54,7 @@ pub fn load_dataset() -> DatasetDetails {
         ],
         epochs: 1000,
         progress: 100,
-        loss_function_name: LossFunctionName::CrossEntropyLoss,
+        loss_function_name: LossFunctionType::CrossEntropyLoss(Default::default()),
         initial_total_error_min: 2.0,
         final_total_error_max: 0.00025,
     }

@@ -1,7 +1,7 @@
 use std::fs;
 
 use crate::{
-    loss::LossFunctionName, to_multi_class, ActivationType, DatasetDetails, EmbeddingConfig,
+    loss::LossFunctionType, to_multi_class, ActivationType, DatasetDetails, EmbeddingConfig,
     LayerConfig, LayerType, LinearConfig, Tensor,
 };
 
@@ -69,7 +69,7 @@ pub fn load_dataset() -> DatasetDetails {
         ],
         epochs: 1000,
         progress: 100,
-        loss_function_name: LossFunctionName::CrossEntropyLoss,
+        loss_function_name: LossFunctionType::CrossEntropyLoss(Default::default()),
         initial_total_error_min: 50.0,
         final_total_error_max: 0.002,
     }

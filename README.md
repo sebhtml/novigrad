@@ -17,8 +17,8 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
+- remove PartialEq
 - learned Embedding
-- use algebraic type instead of Box<dyn Trait>.
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
 - Dropout
 - move learning rate in dataset details

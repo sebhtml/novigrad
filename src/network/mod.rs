@@ -5,13 +5,13 @@ use std::mem::swap;
 
 use crate::{
     add_embeddings, get_u8_embedding_table,
-    loss::{LossFunction, LossFunctionName},
+    loss::{LossFunction, LossFunctionType},
     ActivationType, Error, Layer, LayerConfig, LayerType, Tensor,
 };
 
 pub struct Network {
     layers: Vec<LayerType>,
-    loss_function: Box<dyn LossFunction>,
+    loss_function: LossFunctionType,
     using_softmax_and_cross_entropy_loss: bool,
     embedding_table: Vec<Vec<f32>>,
 }
@@ -71,10 +71,10 @@ impl PredictWorkingMemory {
 }
 
 impl Network {
-    pub fn new(layer_configs: &Vec<LayerConfig>, loss_function_name: &LossFunctionName) -> Self {
+    pub fn new(layer_configs: &Vec<LayerConfig>, loss_function: &LossFunctionType) -> Self {
         let mut using_softmax_and_cross_entropy_loss = false;
-        if loss_function_name == &LossFunctionName::CrossEntropyLoss {
-            match layer_configs.last() {
+        match loss_function {
+            LossFunctionType::CrossEntropyLoss(_) => match layer_configs.last() {
                 Some(config) => match config {
                     LayerConfig::Linear(config) => match config.activation {
                         ActivationType::Softmax(_) => {
@@ -87,14 +87,17 @@ impl Network {
                     _ => (),
                 },
                 _ => (),
-            }
+            },
+            _ => (),
         }
+
+        let loss_function = loss_function.clone();
         Self {
             layers: layer_configs
                 .into_iter()
                 .map(|layer_config| layer_config.into())
                 .collect(),
-            loss_function: loss_function_name.into(),
+            loss_function,
             using_softmax_and_cross_entropy_loss,
             embedding_table: get_u8_embedding_table(),
         }

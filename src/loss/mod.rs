@@ -16,16 +16,31 @@ pub trait LossFunction {
 }
 
 #[derive(Clone, PartialEq)]
-pub enum LossFunctionName {
-    ResidualSumOfSquares,
-    CrossEntropyLoss,
+pub enum LossFunctionType {
+    ResidualSumOfSquares(ResidualSumOfSquares),
+    CrossEntropyLoss(CrossEntropyLoss),
 }
 
-impl Into<Box<dyn LossFunction>> for &LossFunctionName {
-    fn into(self) -> Box<dyn LossFunction> {
+impl LossFunction for LossFunctionType {
+    fn evaluate(&self, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
         match self {
-            LossFunctionName::ResidualSumOfSquares => Box::new(ResidualSumOfSquares::default()),
-            LossFunctionName::CrossEntropyLoss => Box::new(CrossEntropyLoss::default()),
+            LossFunctionType::ResidualSumOfSquares(that) => that.evaluate(expected, actual),
+            LossFunctionType::CrossEntropyLoss(that) => that.evaluate(expected, actual),
+        }
+    }
+
+    fn derive(
+        &self,
+        tmp: &mut Tensor,
+        expected: &Tensor,
+        actual: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        match self {
+            LossFunctionType::ResidualSumOfSquares(that) => {
+                that.derive(tmp, expected, actual, result)
+            }
+            LossFunctionType::CrossEntropyLoss(that) => that.derive(tmp, expected, actual, result),
         }
     }
 }

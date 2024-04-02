@@ -15,7 +15,6 @@ pub trait LossFunction {
     ) -> Result<(), Error>;
 }
 
-#[derive(Clone)]
 pub enum LossFunctionType {
     ResidualSumOfSquares(ResidualSumOfSquares),
     CrossEntropyLoss(CrossEntropyLoss),

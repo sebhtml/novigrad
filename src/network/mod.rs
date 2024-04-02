@@ -9,9 +9,9 @@ use crate::{
     ActivationType, Error, Layer, LayerConfig, LayerType, Tensor,
 };
 
-pub struct Network {
+pub struct Network<'a> {
     layers: Vec<LayerType>,
-    loss_function: LossFunctionType,
+    loss_function: &'a LossFunctionType,
     using_softmax_and_cross_entropy_loss: bool,
     embedding_table: Vec<Vec<f32>>,
 }
@@ -70,8 +70,8 @@ impl PredictWorkingMemory {
     }
 }
 
-impl Network {
-    pub fn new(layer_configs: &Vec<LayerConfig>, loss_function: &LossFunctionType) -> Self {
+impl<'a> Network<'a> {
+    pub fn new(layer_configs: &Vec<LayerConfig>, loss_function: &'a LossFunctionType) -> Self {
         let mut using_softmax_and_cross_entropy_loss = false;
         match loss_function {
             LossFunctionType::CrossEntropyLoss(_) => match layer_configs.last() {
@@ -96,7 +96,7 @@ impl Network {
                 .into_iter()
                 .map(|layer_config| layer_config.into())
                 .collect(),
-            loss_function: loss_function.clone(),
+            loss_function,
             using_softmax_and_cross_entropy_loss,
             embedding_table: get_u8_embedding_table(),
         }

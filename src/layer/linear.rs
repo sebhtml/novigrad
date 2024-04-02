@@ -9,6 +9,7 @@ use crate::{
 
 pub struct Linear {
     weights: Tensor,
+    biases: Tensor,
     activation_function: Box<dyn ActivationFunction>,
     matrix_product: Tensor,
     activation_tensor: Tensor,
@@ -19,7 +20,12 @@ pub struct Linear {
 }
 
 impl Linear {
-    pub fn new(rows: usize, cols: usize, activation: Box<dyn ActivationFunction>) -> Self {
+    pub fn new(
+        input_rows: usize,
+        rows: usize,
+        cols: usize,
+        activation: Box<dyn ActivationFunction>,
+    ) -> Self {
         let mut rng = thread_rng();
         let mut weights = Vec::new();
         let right = (6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt();
@@ -31,8 +37,11 @@ impl Linear {
             weights[index] = rng.sample(uniform);
         }
         let weights = Tensor::new(rows, cols, weights);
+        let mut biases = Tensor::default();
+        biases.reshape(input_rows, rows);
         Linear {
             weights,
+            biases,
             activation_function: activation,
             matrix_product: Default::default(),
             activation_tensor: Default::default(),
@@ -70,8 +79,8 @@ impl Layer for Linear {
         // W is transposed.
         // X is not transposed.
         let weights = &self.weights;
-        let matrix_product = &mut self.matrix_product;
-        let op_result = Tensor::matmul(input, weights, matrix_product, TRANSPOSE_RHS);
+        let mut x_times_w_t = Tensor::default();
+        let op_result = Tensor::matmul(input, weights, &mut x_times_w_t, TRANSPOSE_RHS);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -82,6 +91,24 @@ impl Layer for Linear {
                 debug_assert!(false);
             }
         }
+
+        let matrix_product = &mut self.matrix_product;
+        let biases = &self.biases;
+        let op_result = x_times_w_t.add(biases, matrix_product);
+        match op_result {
+            Ok(_) => (),
+            Err(_) => {
+                println!("Incompatible shapes in matrix multiplication");
+                println!(
+                    "Between A {:?} and B {:?}",
+                    x_times_w_t.shape(),
+                    biases.shape(),
+                );
+                debug_assert!(false);
+            }
+        }
+
+        op_result.expect("Ok");
         let activation_function = &self.activation_function;
         let activation_tensor = &mut self.activation_tensor;
         let op_result = activation_function.activate(&matrix_product, activation_tensor);

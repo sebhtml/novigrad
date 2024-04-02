@@ -75,7 +75,11 @@ impl PredictWorkingMemory {
 }
 
 impl Network {
-    pub fn new(layer_configs: &Vec<LayerConfig>, loss_function_name: &LossFunctionName) -> Self {
+    pub fn new(
+        input_rows: usize,
+        layer_configs: &Vec<LayerConfig>,
+        loss_function_name: &LossFunctionName,
+    ) -> Self {
         let mut using_softmax_and_cross_entropy_loss = false;
         if loss_function_name == &LossFunctionName::CrossEntropyLoss {
             match layer_configs.last() {
@@ -96,6 +100,7 @@ impl Network {
                     let rows = layer_config.rows;
                     let cols = layer_config.cols;
                     Box::new(Linear::new(
+                        input_rows,
                         rows,
                         cols,
                         layer_config.activation.clone().into(),
@@ -190,7 +195,7 @@ impl Network {
             let is_last_layer = layer_index == self.layers.len() - 1;
 
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-            if layer_index == 0 {
+            if is_first_layer {
                 previous_activation_tensor.assign(x);
             } else {
                 let previous_layer_index = layer_index - 1;

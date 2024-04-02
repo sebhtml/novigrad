@@ -374,24 +374,22 @@ impl Tensor {
 
         result.reshape(lhs_cols, rhs_rows);
 
-        unsafe {
-            let mut lhs_col = 0;
-            while lhs_col != lhs_cols {
-                let mut rhs_row = 0;
-                while rhs_row != rhs_rows {
-                    let mut inner = 0;
-                    while inner != lhs_rows {
-                        let lhs_value = lhs.get(inner, lhs_col);
-                        let rhs_value = rhs.get(rhs_row, inner);
-                        let old = result.get(lhs_col, rhs_row);
-                        let result_value = old + lhs_value * rhs_value;
-                        result.set(lhs_col, rhs_row, result_value);
-                        inner += 1;
-                    }
-                    rhs_row += 1;
+        let mut lhs_col = 0;
+        while lhs_col != lhs_cols {
+            let mut rhs_row = 0;
+            while rhs_row != rhs_rows {
+                let mut inner = 0;
+                while inner != lhs_rows {
+                    let lhs_value = lhs.get(inner, lhs_col);
+                    let rhs_value = rhs.get(rhs_row, inner);
+                    let old = result.get(lhs_col, rhs_row);
+                    let result_value = old + lhs_value * rhs_value;
+                    result.set(lhs_col, rhs_row, result_value);
+                    inner += 1;
                 }
-                lhs_col += 1;
+                rhs_row += 1;
             }
+            lhs_col += 1;
         }
 
         Ok(())

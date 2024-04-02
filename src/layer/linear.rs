@@ -10,7 +10,7 @@ use crate::{
 pub struct Linear {
     weights: Tensor,
     biases: Tensor,
-    activation_function: Box<dyn ActivationFunction>,
+    activation_function: Activation,
     matrix_product: Tensor,
     activation_tensor: Tensor,
     weights_delta: Tensor,
@@ -21,12 +21,7 @@ pub struct Linear {
 }
 
 impl Linear {
-    pub fn new(
-        input_rows: usize,
-        rows: usize,
-        cols: usize,
-        activation: Box<dyn ActivationFunction>,
-    ) -> Self {
+    pub fn new(input_rows: usize, rows: usize, cols: usize, activation: Activation) -> Self {
         let mut rng = thread_rng();
         let mut weights = Vec::new();
         let right = (6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt();
@@ -230,7 +225,7 @@ impl Into<Box<dyn Layer>> for &LinearConfig {
             self.input_rows,
             self.rows,
             self.cols,
-            self.activation.clone().into(),
+            self.activation.clone(),
         ))
     }
 }

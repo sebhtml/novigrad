@@ -18,15 +18,27 @@ pub trait ActivationFunction {
 
 #[derive(Clone, PartialEq)]
 pub enum Activation {
-    Sigmoid,
-    Softmax,
+    Sigmoid(Sigmoid),
+    Softmax(Softmax),
 }
 
-impl Into<Box<dyn ActivationFunction>> for Activation {
-    fn into(self) -> Box<dyn ActivationFunction> {
+impl ActivationFunction for Activation {
+    fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         match self {
-            Activation::Sigmoid => Box::new(Sigmoid::default()),
-            Activation::Softmax => Box::new(Softmax::default()),
+            Activation::Sigmoid(that) => that.activate(product_matrix, result),
+            Activation::Softmax(that) => that.activate(product_matrix, result),
+        }
+    }
+
+    fn derive(
+        &self,
+        product_matrix: &Tensor,
+        activation_matrix: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        match self {
+            Activation::Sigmoid(that) => that.derive(product_matrix, activation_matrix, result),
+            Activation::Softmax(that) => that.derive(product_matrix, activation_matrix, result),
         }
     }
 }

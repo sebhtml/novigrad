@@ -76,13 +76,14 @@ impl Network {
         if loss_function_name == &LossFunctionName::CrossEntropyLoss {
             match layer_configs.last() {
                 Some(config) => match config {
-                    LayerType::Linear(config) => {
-                        if config.activation != Activation::Softmax {
-                            assert!(false, "CrossEntropyLoss only works with Softmax");
-                        } else {
+                    LayerType::Linear(config) => match config.activation {
+                        Activation::Softmax(_) => {
                             using_softmax_and_cross_entropy_loss = true;
                         }
-                    }
+                        _ => {
+                            assert!(false, "CrossEntropyLoss only works with Softmax");
+                        }
+                    },
                     _ => (),
                 },
                 _ => (),

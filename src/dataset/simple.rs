@@ -3,7 +3,7 @@ use crate::{
     Tensor,
 };
 
-fn load_examples() -> Vec<(Vec<usize>, Tensor)> {
+fn load_examples() -> Vec<(Tensor, Tensor)> {
     let mut examples = Vec::new();
 
     examples.push((
@@ -20,7 +20,7 @@ fn load_examples() -> Vec<(Vec<usize>, Tensor)> {
 
     let examples = examples
         .into_iter()
-        .map(|example| (example.0, Tensor::new(1, example.1.len(), example.1)))
+        .map(|example| (example.0.into(), Tensor::new(1, example.1.len(), example.1)))
         .collect();
 
     examples

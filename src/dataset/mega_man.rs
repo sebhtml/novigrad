@@ -5,7 +5,7 @@ use crate::{
     LinearConfig, Tensor,
 };
 
-fn load_examples() -> Vec<(Vec<usize>, Tensor)> {
+fn load_examples() -> Vec<(Tensor, Tensor)> {
     let token_count = 256;
     let context_size = 32;
     let mut examples = Vec::new();
@@ -33,7 +33,7 @@ fn load_examples() -> Vec<(Vec<usize>, Tensor)> {
 
         examples.push((
             //
-            input_tokens, //
+            input_tokens.into(), //
             output_multiclass,
         ));
         i += 1;

@@ -105,7 +105,7 @@ impl Network {
         working_memory: &mut TrainWorkingMemory,
         error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
-        inputs: &Vec<Vec<usize>>,
+        inputs: &Vec<Tensor>,
         outputs: &Vec<Tensor>,
     ) {
         for i in 0..inputs.len() {
@@ -123,7 +123,7 @@ impl Network {
     pub fn total_error(
         &mut self,
         working_memory: &mut PredictWorkingMemory,
-        inputs: &Vec<Vec<usize>>,
+        inputs: &Vec<Tensor>,
         outputs: &Vec<Tensor>,
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
@@ -149,11 +149,12 @@ impl Network {
         error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
-        x_tokens: &Vec<usize>,
+        x_tokens: &Tensor,
         y: &Tensor,
     ) {
         let learning_rate: f32 = 0.5;
 
+        // TODO add embeddings in Embedding.
         let x = add_embeddings(&self.embedding_table, x_tokens);
 
         for layer_index in 0..self.layers.len() {
@@ -252,7 +253,7 @@ impl Network {
     pub fn predict_many(
         &mut self,
         previous_activation_tensor: &mut Tensor,
-        inputs: &Vec<Vec<usize>>,
+        inputs: &Vec<Tensor>,
         activation_tensors: &mut Vec<Tensor>,
     ) {
         let len = inputs.len();
@@ -268,7 +269,7 @@ impl Network {
     pub fn predict(
         &mut self,
         previous_activation_tensor: &mut Tensor,
-        input_tokens: &Vec<usize>,
+        input_tokens: &Tensor,
         activation_tensor: &mut Tensor,
     ) {
         let input = add_embeddings(&self.embedding_table, input_tokens);

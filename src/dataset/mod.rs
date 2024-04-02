@@ -9,7 +9,7 @@ pub enum Dataset {
 }
 
 pub struct DatasetDetails {
-    pub examples: Vec<(Vec<usize>, Tensor)>,
+    pub examples: Vec<(Tensor, Tensor)>,
     pub layers: Vec<LayerType>,
     pub loss_function_name: LossFunctionName,
     pub epochs: usize,

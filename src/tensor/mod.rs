@@ -59,7 +59,12 @@ pub enum Error {
 pub struct Tensor {
     rows: usize,
     cols: usize,
+    // TODO find a better way to do that. Possible solutions:
+    // - use generic Tensor<usize> or Tensor<f32>.
+    // - use algebraic enum type
+    // - keep this solution.
     values: Vec<f32>,
+    int_values: Vec<usize>,
 }
 
 impl Default for Tensor {
@@ -68,17 +73,31 @@ impl Default for Tensor {
             rows: Default::default(),
             cols: Default::default(),
             values: Default::default(),
+            int_values: Default::default(),
         }
     }
 }
 
 impl Tensor {
     pub fn new(rows: usize, cols: usize, values: Vec<f32>) -> Self {
-        Self { rows, cols, values }
+        Self {
+            rows,
+            cols,
+            values,
+            int_values: Default::default(),
+        }
     }
 
     pub fn rows(&self) -> usize {
         self.rows
+    }
+
+    pub fn values<'a>(&'a self) -> &'a Vec<f32> {
+        &self.values
+    }
+
+    pub fn int_values<'a>(&'a self) -> &'a Vec<usize> {
+        &self.int_values
     }
 
     pub fn cols(&self) -> usize {
@@ -505,6 +524,25 @@ impl Tensor {
             result.values[i] = value;
         }
         Ok(())
+    }
+}
+
+impl From<Vec<usize>> for Tensor {
+    fn from(value: Vec<usize>) -> Self {
+        let rows = value.len();
+        let cols = 1;
+        Self {
+            rows,
+            cols,
+            values: Default::default(),
+            int_values: value,
+        }
+    }
+}
+
+impl<'a> Into<&'a Vec<usize>> for &'a Tensor {
+    fn into(self) -> &'a Vec<usize> {
+        &self.int_values
     }
 }
 

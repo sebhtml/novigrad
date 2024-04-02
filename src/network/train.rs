@@ -39,7 +39,7 @@ pub fn print_expected_output_and_actual_output(
 fn print_total_error(
     working_memory: &mut PredictWorkingMemory,
     network: &mut Network,
-    inputs: &Vec<Vec<usize>>,
+    inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
     last_total_error: f32,
     epoch: usize,
@@ -72,7 +72,7 @@ pub fn train_network_on_dataset(
     let mut error_working_memory = DeltaWorkingMemory::default();
     let mut predict_working_memory = PredictWorkingMemory::new(examples.len());
 
-    let inputs: Vec<Vec<usize>> = examples.iter().map(|x| x.clone().0).collect();
+    let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
     let mut network = Network::new(layers, loss_function_name);
 

@@ -89,9 +89,10 @@ pub fn get_u8_embedding_table() -> Vec<Vec<f32>> {
     embeddings_table
 }
 
-pub fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<usize>) -> Tensor {
+pub fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Tensor) -> Tensor {
     let mut values = vec![];
     let mut row = 0;
+    let input: &Vec<usize> = input.into();
     let rows = input.len();
     while row < rows {
         let index = input[row];

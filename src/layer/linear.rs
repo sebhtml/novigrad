@@ -13,7 +13,8 @@ pub struct Linear {
     activation_function: Box<dyn ActivationFunction>,
     matrix_product: Tensor,
     activation_tensor: Tensor,
-    weight_delta: Tensor,
+    weights_delta: Tensor,
+    biases_delta: Tensor,
     has_pending_change: bool,
     previous_a_time_output_delta: Tensor,
     addition: Tensor,
@@ -45,7 +46,8 @@ impl Linear {
             activation_function: activation,
             matrix_product: Default::default(),
             activation_tensor: Default::default(),
-            weight_delta: Default::default(),
+            weights_delta: Default::default(),
+            biases_delta: Default::default(),
             has_pending_change: false,
             previous_a_time_output_delta: Default::default(),
             addition: Default::default(),
@@ -58,16 +60,27 @@ impl Layer for Linear {
         if !self.has_pending_change {
             return Ok(());
         }
-        let addition = &mut self.addition;
+
         {
-            let weight_delta = &self.weight_delta;
+            let addition = &mut self.addition;
+            let weights_delta = &self.weights_delta;
             let weights = &self.weights;
-            let op_result = weights.sub(weight_delta, addition);
+            let op_result = weights.sub(weights_delta, addition);
             op_result.expect("Ok");
+            let weights = &mut self.weights;
+            swap(weights, addition);
         }
 
-        let weights = &mut self.weights;
-        swap(weights, addition);
+        {
+            let addition = &mut self.addition;
+            let biases_delta = &self.biases_delta;
+            let biases = &self.biases;
+            let op_result = biases.sub(biases_delta, addition);
+            op_result.expect("Ok");
+            let biases = &mut self.biases;
+            swap(biases, addition);
+        }
+
         self.has_pending_change = false;
         Ok(())
     }
@@ -192,9 +205,14 @@ impl Layer for Linear {
         );
         op_result.expect("Ok");
 
-        let weight_delta = &mut self.weight_delta;
-        let op_result = previous_a_time_output_delta.scalar_mul(learning_rate, weight_delta);
+        let weights_delta = &mut self.weights_delta;
+        let op_result = previous_a_time_output_delta.scalar_mul(learning_rate, weights_delta);
         op_result.expect("Ok");
+
+        let biases_delta = &mut self.biases_delta;
+        let op_result = layer_delta.scalar_mul(-learning_rate, biases_delta);
+        op_result.expect("Ok");
+
         self.has_pending_change = true;
     }
 }

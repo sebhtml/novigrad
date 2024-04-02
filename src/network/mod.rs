@@ -91,13 +91,12 @@ impl Network {
             _ => (),
         }
 
-        let loss_function = loss_function.clone();
         Self {
             layers: layer_configs
                 .into_iter()
                 .map(|layer_config| layer_config.into())
                 .collect(),
-            loss_function,
+            loss_function: loss_function.clone(),
             using_softmax_and_cross_entropy_loss,
             embedding_table: get_u8_embedding_table(),
         }

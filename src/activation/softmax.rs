@@ -2,7 +2,7 @@ use crate::Error;
 use crate::{ActivationFunction, Tensor};
 use std::f32::consts::E;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct Softmax {}
 
 impl Default for Softmax {

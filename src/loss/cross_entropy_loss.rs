@@ -1,7 +1,7 @@
 use super::LossFunction;
 use crate::{Error, Tensor};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct CrossEntropyLoss {}
 
 impl Default for CrossEntropyLoss {

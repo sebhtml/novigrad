@@ -16,7 +16,7 @@ pub trait ActivationFunction {
     ) -> Result<(), Error>;
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub enum ActivationType {
     Sigmoid(Sigmoid),
     Softmax(Softmax),

@@ -179,7 +179,8 @@ impl Network {
 
             let activation_tensor = &mut activation_tensors[layer_index];
             let layer = &mut self.layers[layer_index];
-            let op_result = layer.forward(previous_activation_tensor, activation_tensor);
+            let op_result = layer.forward(previous_activation_tensor);
+            activation_tensor.assign(layer.get_activation_tensor());
             op_result.expect("Ok");
         }
 
@@ -239,7 +240,6 @@ impl Network {
                 let layer = &self.layers[layer_index];
                 layer.get_layer_delta(
                     error_working_memory,
-                    layer_activation_tensor,
                     next_layer,
                     next_layer_delta,
                     self.using_softmax_and_cross_entropy_loss,
@@ -290,7 +290,8 @@ impl Network {
         previous_activation_tensor.assign(input);
         for layer_index in 0..self.layers.len() {
             let layer = &mut self.layers[layer_index];
-            let op_result = layer.forward(previous_activation_tensor, activation_tensor);
+            let op_result = layer.forward(previous_activation_tensor);
+            activation_tensor.assign(layer.get_activation_tensor());
             op_result.expect("Ok");
             previous_activation_tensor.assign(activation_tensor);
         }

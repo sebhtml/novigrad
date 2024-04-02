@@ -13,14 +13,15 @@ pub trait Layer {
 
     fn commit_change(&mut self) -> Result<(), Error>;
 
-    fn forward(&mut self, input: &Tensor, activation_tensor: &mut Tensor) -> Result<(), Error>;
+    fn forward(&mut self, input: &Tensor) -> Result<(), Error>;
+
+    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor;
 
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor);
 
     fn get_layer_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
-        layer_activation_tensor: &Tensor,
         next_layer: Option<&Box<dyn Layer>>,
         next_layer_delta: &Tensor,
         using_softmax_and_cross_entropy_loss: bool,

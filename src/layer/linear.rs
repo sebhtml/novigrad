@@ -11,6 +11,7 @@ pub struct Linear {
     weights: Tensor,
     activation_function: Box<dyn ActivationFunction>,
     matrix_product: Tensor,
+    activation_tensor: Tensor,
     weight_delta: Tensor,
     has_pending_change: bool,
     previous_a_time_output_delta: Tensor,
@@ -34,6 +35,7 @@ impl Linear {
             weights,
             activation_function: activation,
             matrix_product: Default::default(),
+            activation_tensor: Default::default(),
             weight_delta: Default::default(),
             has_pending_change: false,
             previous_a_time_output_delta: Default::default(),
@@ -61,7 +63,7 @@ impl Layer for Linear {
         Ok(())
     }
 
-    fn forward(&mut self, input: &Tensor, activation_tensor: &mut Tensor) -> Result<(), Error> {
+    fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
         // Use the same convention that is used in tensorflow:
         // y = x @ W^T+b
         // Weights is on the right.
@@ -81,9 +83,14 @@ impl Layer for Linear {
             }
         }
         let activation_function = &self.activation_function;
+        let activation_tensor = &mut self.activation_tensor;
         let op_result = activation_function.activate(&matrix_product, activation_tensor);
         op_result.expect("Ok");
         Ok(())
+    }
+
+    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
+        &self.activation_tensor
     }
 
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
@@ -102,7 +109,6 @@ impl Layer for Linear {
     fn get_layer_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
-        layer_activation_tensor: &Tensor,
         next_layer: Option<&Box<dyn Layer>>,
         next_layer_delta: &Tensor,
         using_softmax_and_cross_entropy_loss: bool,
@@ -124,16 +130,17 @@ impl Layer for Linear {
         }
 
         // Compute activation function derivative.
+        let activation_tensor = &self.activation_tensor;
         let is_last_layer = next_layer.is_none();
         if is_last_layer && using_softmax_and_cross_entropy_loss {
-            layer_activation_tensor
+            activation_tensor
                 .scalar_add(1.0, layer_f_derivative)
                 .expect("Ok");
         } else {
             let matrix_product = &self.matrix_product;
             let op_result = layer_activation_function.derive(
                 matrix_product,
-                layer_activation_tensor,
+                activation_tensor,
                 layer_f_derivative,
             );
             op_result.expect("Ok");

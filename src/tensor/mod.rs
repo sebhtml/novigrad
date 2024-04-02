@@ -140,10 +140,21 @@ impl Tensor {
 
     pub fn assign(&mut self, from: &Tensor) {
         self.reshape(from.rows, from.cols);
+
+        // Copy f32 values
         let len = from.values.len();
         let mut index = 0;
         while index < len {
             self.values[index] = from.values[index];
+            index += 1;
+        }
+
+        // Copy usize values
+        let len = from.int_values.len();
+        self.int_values.resize(len, Default::default());
+        let mut index = 0;
+        while index < len {
+            self.int_values[index] = from.int_values[index];
             index += 1;
         }
     }

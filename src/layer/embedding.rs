@@ -3,6 +3,7 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 use crate::{DeltaWorkingMemory, Error, Layer, LayerType, Tensor};
 
 pub struct Embedding {
+    embedding_table: Vec<Vec<f32>>,
     activation_tensor: Tensor,
 }
 
@@ -11,6 +12,7 @@ impl Embedding {
         // TODO
         Self {
             activation_tensor: Default::default(),
+            embedding_table: get_u8_embedding_table(),
         }
     }
 }
@@ -32,7 +34,8 @@ impl Layer for Embedding {
 
     fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
         // TODO
-        self.activation_tensor.assign(input);
+        let x = add_embeddings(&self.embedding_table, input);
+        self.activation_tensor.assign(&x);
         Ok(())
     }
 
@@ -69,7 +72,7 @@ impl Into<Embedding> for &EmbeddingConfig {
     }
 }
 
-pub fn get_u8_embedding_table() -> Vec<Vec<f32>> {
+fn get_u8_embedding_table() -> Vec<Vec<f32>> {
     let mut rng = thread_rng();
     let mut embeddings_table = Vec::new();
     let mut token = 0;
@@ -89,7 +92,8 @@ pub fn get_u8_embedding_table() -> Vec<Vec<f32>> {
     embeddings_table
 }
 
-pub fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Tensor) -> Tensor {
+// TODO use &mut output argument for result
+fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Tensor) -> Tensor {
     let mut values = vec![];
     let mut row = 0;
     let input: &Vec<usize> = input.into();

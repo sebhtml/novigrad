@@ -4,7 +4,6 @@ pub mod train;
 use std::mem::swap;
 
 use crate::{
-    add_embeddings, get_u8_embedding_table,
     loss::{LossFunction, LossFunctionType},
     ActivationType, Error, Layer, LayerConfig, LayerType, Tensor,
 };
@@ -13,7 +12,6 @@ pub struct Network<'a> {
     layers: Vec<LayerType>,
     loss_function: &'a LossFunctionType,
     using_softmax_and_cross_entropy_loss: bool,
-    embedding_table: Vec<Vec<f32>>,
 }
 
 pub struct TrainWorkingMemory {
@@ -98,7 +96,6 @@ impl<'a> Network<'a> {
                 .collect(),
             loss_function,
             using_softmax_and_cross_entropy_loss,
-            embedding_table: get_u8_embedding_table(),
         }
     }
 
@@ -151,13 +148,10 @@ impl<'a> Network<'a> {
         error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
-        x_tokens: &Tensor,
+        x: &Tensor,
         y: &Tensor,
     ) {
         let learning_rate: f32 = 0.5;
-
-        // TODO add embeddings in Embedding.
-        let x = add_embeddings(&self.embedding_table, x_tokens);
 
         for layer_index in 0..self.layers.len() {
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
@@ -271,11 +265,9 @@ impl<'a> Network<'a> {
     pub fn predict(
         &mut self,
         previous_activation_tensor: &mut Tensor,
-        input_tokens: &Tensor,
+        input: &Tensor,
         activation_tensor: &mut Tensor,
     ) {
-        let input = add_embeddings(&self.embedding_table, input_tokens);
-
         previous_activation_tensor.assign(&input);
         for layer_index in 0..self.layers.len() {
             let layer = &mut self.layers[layer_index];

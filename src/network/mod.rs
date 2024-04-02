@@ -6,7 +6,7 @@ use std::mem::swap;
 use crate::{
     add_embeddings, get_u8_embedding_table,
     loss::{LossFunction, LossFunctionName},
-    Activation, Error, Layer, LayerType, Tensor,
+    ActivationType, Error, Layer, LayerType, Tensor,
 };
 
 pub struct Network {
@@ -77,7 +77,7 @@ impl Network {
             match layer_configs.last() {
                 Some(config) => match config {
                     LayerType::Linear(config) => match config.activation {
-                        Activation::Softmax(_) => {
+                        ActivationType::Softmax(_) => {
                             using_softmax_and_cross_entropy_loss = true;
                         }
                         _ => {

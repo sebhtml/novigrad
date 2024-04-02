@@ -3,14 +3,14 @@ use std::mem::swap;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    Activation, ActivationFunction, DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS,
+    ActivationFunction, ActivationType, DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS,
     TRANSPOSE_RESULT, TRANSPOSE_RHS,
 };
 
 pub struct Linear {
     weights: Tensor,
     biases: Tensor,
-    activation_function: Activation,
+    activation_function: ActivationType,
     matrix_product: Tensor,
     activation_tensor: Tensor,
     weights_delta: Tensor,
@@ -21,7 +21,7 @@ pub struct Linear {
 }
 
 impl Linear {
-    pub fn new(input_rows: usize, rows: usize, cols: usize, activation: Activation) -> Self {
+    pub fn new(input_rows: usize, rows: usize, cols: usize, activation: ActivationType) -> Self {
         let mut rng = thread_rng();
         let mut weights = Vec::new();
         let right = (6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt();
@@ -216,7 +216,7 @@ pub struct LinearConfig {
     pub input_rows: usize,
     pub rows: usize,
     pub cols: usize,
-    pub activation: Activation,
+    pub activation: ActivationType,
 }
 
 impl Into<Box<dyn Layer>> for &LinearConfig {

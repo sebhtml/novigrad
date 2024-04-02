@@ -3,8 +3,8 @@ use std::mem::swap;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    ActivationFunction, DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT,
-    TRANSPOSE_RHS,
+    Activation, ActivationFunction, DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS,
+    TRANSPOSE_RESULT, TRANSPOSE_RHS,
 };
 
 pub struct Linear {
@@ -214,5 +214,23 @@ impl Layer for Linear {
         op_result.expect("Ok");
 
         self.has_pending_change = true;
+    }
+}
+
+pub struct LinearConfig {
+    pub input_rows: usize,
+    pub rows: usize,
+    pub cols: usize,
+    pub activation: Activation,
+}
+
+impl Into<Box<dyn Layer>> for &LinearConfig {
+    fn into(self) -> Box<dyn Layer> {
+        Box::new(Linear::new(
+            self.input_rows,
+            self.rows,
+            self.cols,
+            self.activation.clone().into(),
+        ))
     }
 }

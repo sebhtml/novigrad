@@ -1,7 +1,7 @@
 mod linear;
 pub use linear::*;
 
-use crate::{Activation, DeltaWorkingMemory, Error, Tensor};
+use crate::{DeltaWorkingMemory, Error, Tensor};
 
 pub trait Layer {
     fn plan_change(
@@ -30,24 +30,13 @@ pub trait Layer {
 }
 
 pub enum LayerType {
-    Linear,
+    Linear(LinearConfig),
 }
 
-pub struct LayerConfig {
-    pub layer_type: LayerType,
-    pub input_rows: usize,
-    pub rows: usize,
-    pub cols: usize,
-    pub activation: Activation,
-}
-
-impl Into<Box<dyn Layer>> for &LayerConfig {
+impl Into<Box<dyn Layer>> for &LayerType {
     fn into(self) -> Box<dyn Layer> {
-        Box::new(Linear::new(
-            self.input_rows,
-            self.rows,
-            self.cols,
-            self.activation.clone().into(),
-        ))
+        match self {
+            LayerType::Linear(config) => config.into(),
+        }
     }
 }

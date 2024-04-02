@@ -5,7 +5,7 @@ use std::mem::swap;
 
 use crate::{
     loss::{LossFunction, LossFunctionName},
-    Activation, Error, Layer, LayerConfig, Tensor,
+    Activation, Error, Layer, LayerType, Tensor,
 };
 
 pub struct Network {
@@ -69,17 +69,19 @@ impl PredictWorkingMemory {
 }
 
 impl Network {
-    pub fn new(layer_configs: &Vec<LayerConfig>, loss_function_name: &LossFunctionName) -> Self {
+    pub fn new(layer_configs: &Vec<LayerType>, loss_function_name: &LossFunctionName) -> Self {
         let mut using_softmax_and_cross_entropy_loss = false;
         if loss_function_name == &LossFunctionName::CrossEntropyLoss {
             match layer_configs.last() {
-                Some(config) => {
-                    if config.activation != Activation::Softmax {
-                        assert!(false, "CrossEntropyLoss only works with Softmax");
-                    } else {
-                        using_softmax_and_cross_entropy_loss = true;
+                Some(config) => match config {
+                    LayerType::Linear(config) => {
+                        if config.activation != Activation::Softmax {
+                            assert!(false, "CrossEntropyLoss only works with Softmax");
+                        } else {
+                            using_softmax_and_cross_entropy_loss = true;
+                        }
                     }
-                }
+                },
                 _ => (),
             }
         }

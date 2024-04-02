@@ -21,7 +21,6 @@ pub struct Network {
 }
 
 pub struct TrainWorkingMemory {
-    pub activation_tensors: Vec<Tensor>,
     pub next_layer_delta: Tensor,
     pub layer_delta: Tensor,
     pub previous_activation_tensor: Tensor,
@@ -30,10 +29,9 @@ pub struct TrainWorkingMemory {
     pub tmp: Tensor,
 }
 
-impl TrainWorkingMemory {
-    pub fn new(layers_count: usize) -> Self {
+impl Default for TrainWorkingMemory {
+    fn default() -> Self {
         Self {
-            activation_tensors: vec![Tensor::default(); layers_count],
             next_layer_delta: Default::default(),
             layer_delta: Default::default(),
             previous_activation_tensor: Default::default(),
@@ -162,7 +160,6 @@ impl Network {
         y: &Tensor,
     ) {
         let learning_rate: f32 = 0.5;
-        let activation_tensors = &mut working_memory.activation_tensors;
 
         // TODO add constant bias
         // Add a constant for bias
@@ -174,13 +171,12 @@ impl Network {
                 previous_activation_tensor.assign(x);
             } else {
                 let previous_layer_index = layer_index - 1;
-                previous_activation_tensor.assign(&activation_tensors[previous_layer_index]);
+                previous_activation_tensor
+                    .assign(self.layers[previous_layer_index].get_activation_tensor());
             }
 
-            let activation_tensor = &mut activation_tensors[layer_index];
             let layer = &mut self.layers[layer_index];
             let op_result = layer.forward(previous_activation_tensor);
-            activation_tensor.assign(layer.get_activation_tensor());
             op_result.expect("Ok");
         }
 
@@ -192,19 +188,19 @@ impl Network {
         for layer_index in (0..layers_count).into_iter().rev() {
             let is_first_layer = layer_index == 0;
             let is_last_layer = layer_index == self.layers.len() - 1;
-            let layer_activation_tensor = &activation_tensors[layer_index];
 
-            let previous_activation = {
-                if is_first_layer {
-                    &x
-                } else {
-                    let previous_layer_index = layer_index - 1;
-                    &activation_tensors[previous_layer_index]
-                }
-            };
+            let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
+            if layer_index == 0 {
+                previous_activation_tensor.assign(x);
+            } else {
+                let previous_layer_index = layer_index - 1;
+                previous_activation_tensor
+                    .assign(self.layers[previous_layer_index].get_activation_tensor());
+            }
 
             if is_last_layer {
                 // For the output layer, the next layer delta is the loss.
+                let layer_activation_tensor = self.layers[layer_index].get_activation_tensor();
                 let last_activation_row = &mut working_memory.last_activation_row;
                 let tmp = &mut working_memory.tmp;
                 let loss = &mut working_memory.loss;
@@ -249,7 +245,7 @@ impl Network {
 
             {
                 let layer = &mut self.layers[layer_index];
-                layer.plan_change(learning_rate, previous_activation, layer_delta);
+                layer.plan_change(learning_rate, previous_activation_tensor, layer_delta);
             }
 
             swap(next_layer_delta, layer_delta);

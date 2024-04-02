@@ -74,7 +74,6 @@ pub fn train_network_on_dataset(
 
     let inputs: Vec<Vec<usize>> = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
-    let input_rows = inputs[0].len();
     let mut network = Network::new(layers, loss_function_name);
 
     let mut last_total_error = f32::NAN;

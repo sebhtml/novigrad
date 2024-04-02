@@ -4,14 +4,16 @@ pub mod train;
 use std::mem::swap;
 
 use crate::{
+    add_embeddings, get_u8_embedding_table,
     loss::{LossFunction, LossFunctionName},
     Activation, Error, Layer, LayerType, Tensor,
 };
 
 pub struct Network {
-    pub layers: Vec<Box<dyn Layer>>,
+    layers: Vec<Box<dyn Layer>>,
     loss_function: Box<dyn LossFunction>,
     using_softmax_and_cross_entropy_loss: bool,
+    embedding_table: Vec<Vec<f32>>,
 }
 
 pub struct TrainWorkingMemory {
@@ -93,6 +95,7 @@ impl Network {
                 .collect(),
             loss_function: loss_function_name.into(),
             using_softmax_and_cross_entropy_loss,
+            embedding_table: get_u8_embedding_table(),
         }
     }
 
@@ -101,7 +104,7 @@ impl Network {
         working_memory: &mut TrainWorkingMemory,
         error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Vec<usize>>,
         outputs: &Vec<Tensor>,
     ) {
         for i in 0..inputs.len() {
@@ -119,7 +122,7 @@ impl Network {
     pub fn total_error(
         &mut self,
         working_memory: &mut PredictWorkingMemory,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Vec<usize>>,
         outputs: &Vec<Tensor>,
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
@@ -145,19 +148,17 @@ impl Network {
         error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
-        x: &Tensor,
+        x_tokens: &Vec<usize>,
         y: &Tensor,
     ) {
         let learning_rate: f32 = 0.5;
 
-        // TODO add constant bias
-        // Add a constant for bias
-        //x.push(1.0);
+        let x = add_embeddings(&self.embedding_table, x_tokens);
 
         for layer_index in 0..self.layers.len() {
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
             if layer_index == 0 {
-                previous_activation_tensor.assign(x);
+                previous_activation_tensor.assign(&x);
             } else {
                 let previous_layer_index = layer_index - 1;
                 previous_activation_tensor
@@ -180,7 +181,7 @@ impl Network {
 
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
             if is_first_layer {
-                previous_activation_tensor.assign(x);
+                previous_activation_tensor.assign(&x);
             } else {
                 let previous_layer_index = layer_index - 1;
                 previous_activation_tensor
@@ -250,7 +251,7 @@ impl Network {
     pub fn predict_many(
         &mut self,
         previous_activation_tensor: &mut Tensor,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Vec<usize>>,
         activation_tensors: &mut Vec<Tensor>,
     ) {
         let len = inputs.len();
@@ -266,13 +267,12 @@ impl Network {
     pub fn predict(
         &mut self,
         previous_activation_tensor: &mut Tensor,
-        input: &Tensor,
+        input_tokens: &Vec<usize>,
         activation_tensor: &mut Tensor,
     ) {
-        // Add a constant for bias
-        //x.push(1.0);
+        let input = add_embeddings(&self.embedding_table, input_tokens);
 
-        previous_activation_tensor.assign(input);
+        previous_activation_tensor.assign(&input);
         for layer_index in 0..self.layers.len() {
             let layer = &mut self.layers[layer_index];
             let op_result = layer.forward(previous_activation_tensor);

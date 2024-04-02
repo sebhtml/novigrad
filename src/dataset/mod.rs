@@ -10,7 +10,7 @@ pub enum Dataset {
 }
 
 pub struct DatasetDetails {
-    pub examples: Vec<(Tensor, Tensor)>,
+    pub examples: Vec<(Vec<usize>, Tensor)>,
     pub layers: Vec<LayerType>,
     pub loss_function_name: LossFunctionName,
     pub epochs: usize,
@@ -26,7 +26,7 @@ pub fn load_dataset(dataset: &Dataset) -> DatasetDetails {
     }
 }
 
-pub fn to_multi_class(next_token: u8, token_count: usize) -> Tensor {
+pub fn to_multi_class(next_token: usize, token_count: usize) -> Tensor {
     let mut values = vec![];
     values.resize(token_count, 0.0);
     values[next_token as usize] = 1.0;
@@ -53,13 +53,13 @@ pub fn get_u8_embedding_table() -> Vec<Vec<f32>> {
     embeddings_table
 }
 
-pub fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<u8>) -> Tensor {
+pub fn add_embeddings(embedding_table: &Vec<Vec<f32>>, input: &Vec<usize>) -> Tensor {
     let mut values = vec![];
     let mut row = 0;
     let rows = input.len();
     while row < rows {
         let index = input[row];
-        values.append(&mut embedding_table[index as usize].clone());
+        values.append(&mut embedding_table[index].clone());
         row += 1;
     }
     Tensor::new(input.len(), embedding_table[0].len(), values)

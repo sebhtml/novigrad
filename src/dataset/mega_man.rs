@@ -1,19 +1,23 @@
 use std::fs;
 
 use crate::{
-    add_embeddings, get_u8_embedding_table, loss::LossFunctionName, to_multi_class, Activation,
-    DatasetDetails, EmbeddingConfig, LayerType, LinearConfig, Tensor,
+    loss::LossFunctionName, to_multi_class, Activation, DatasetDetails, EmbeddingConfig, LayerType,
+    LinearConfig, Tensor,
 };
 
-fn load_examples() -> Vec<(Tensor, Tensor)> {
+fn load_examples() -> Vec<(Vec<usize>, Tensor)> {
     let token_count = 256;
     let context_size = 32;
-    let embedding_table = get_u8_embedding_table();
     let mut examples = Vec::new();
     let file_path = "Mega_Man.txt";
     let contents = fs::read_to_string(file_path).expect("contents");
     // TODO use bpe tokenizer.
-    let tokens = contents.as_bytes().to_owned();
+    let tokens: Vec<usize> = contents
+        .as_bytes()
+        .to_owned()
+        .into_iter()
+        .map(|token| token as usize)
+        .collect();
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
     let max_number_of_examples = 10;
@@ -25,12 +29,11 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
         println!("input_tokens {:?}", input_tokens);
         println!("next_token {}", next_token);
         */
-        let input_embeddings = add_embeddings(&embedding_table, &input_tokens);
         let output_multiclass = to_multi_class(next_token, token_count);
 
         examples.push((
             //
-            input_embeddings, //
+            input_tokens, //
             output_multiclass,
         ));
         i += 1;

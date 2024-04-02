@@ -1,10 +1,9 @@
 use crate::{
-    add_embeddings, get_u8_embedding_table, loss::LossFunctionName, Activation, DatasetDetails,
-    EmbeddingConfig, LayerType, LinearConfig, Tensor,
+    loss::LossFunctionName, Activation, DatasetDetails, EmbeddingConfig, LayerType, LinearConfig,
+    Tensor,
 };
 
-fn load_examples() -> Vec<(Tensor, Tensor)> {
-    let embedding_table = get_u8_embedding_table();
+fn load_examples() -> Vec<(Vec<usize>, Tensor)> {
     let mut examples = Vec::new();
 
     examples.push((
@@ -19,15 +18,9 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
         vec![0.0, 0.0, 0.0, 1.0],
     ));
 
-    // TODO instead of manually adding constant embeddings, they should be learned.
-    let examples: Vec<(Tensor, Tensor)> = examples
+    let examples = examples
         .into_iter()
-        .map(|example| {
-            (
-                add_embeddings(&embedding_table, &example.0),
-                Tensor::new(1, example.1.len(), example.1),
-            )
-        })
+        .map(|example| (example.0, Tensor::new(1, example.1.len(), example.1)))
         .collect();
 
     examples

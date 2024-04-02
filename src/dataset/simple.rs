@@ -1,6 +1,6 @@
 use crate::{
-    loss::LossFunctionName, ActivationType, DatasetDetails, EmbeddingConfig, LayerType,
-    LinearConfig, Tensor,
+    loss::LossFunctionName, ActivationType, DatasetDetails, EmbeddingConfig, LayerConfig,
+    LayerType, LinearConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -30,22 +30,22 @@ pub fn load_dataset() -> DatasetDetails {
     DatasetDetails {
         examples: load_examples(),
         layers: vec![
-            LayerType::Embedding(EmbeddingConfig {
+            LayerConfig::Embedding(EmbeddingConfig {
                 hidden_dimensions: 256,
             }),
-            LayerType::Linear(LinearConfig {
+            LayerConfig::Linear(LinearConfig {
                 input_rows: 6,
                 rows: 256,
                 cols: 256,
                 activation: ActivationType::Sigmoid(Default::default()),
             }),
-            LayerType::Linear(LinearConfig {
+            LayerConfig::Linear(LinearConfig {
                 input_rows: 6,
                 rows: 256,
                 cols: 256,
                 activation: ActivationType::Sigmoid(Default::default()),
             }),
-            LayerType::Linear(LinearConfig {
+            LayerConfig::Linear(LinearConfig {
                 input_rows: 6,
                 rows: 4,
                 cols: 256,

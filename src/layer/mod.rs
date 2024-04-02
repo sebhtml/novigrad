@@ -31,16 +31,21 @@ pub trait Layer {
     );
 }
 
-pub enum LayerType {
+pub enum LayerConfig {
     Embedding(EmbeddingConfig),
     Linear(LinearConfig),
 }
 
-impl Into<Box<dyn Layer>> for &LayerType {
+pub enum LayerType {
+    Embedding(Embedding),
+    Linear(Linear),
+}
+
+impl Into<Box<dyn Layer>> for &LayerConfig {
     fn into(self) -> Box<dyn Layer> {
         match self {
-            LayerType::Linear(config) => config.into(),
-            LayerType::Embedding(config) => config.into(),
+            LayerConfig::Embedding(config) => config.into(),
+            LayerConfig::Linear(config) => config.into(),
         }
     }
 }

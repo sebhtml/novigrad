@@ -1,7 +1,7 @@
 mod mega_man;
 mod simple;
 
-use crate::{loss::LossFunctionName, LayerType, Tensor};
+use crate::{loss::LossFunctionName, LayerConfig, LayerType, Tensor};
 
 pub enum Dataset {
     Simple,
@@ -10,7 +10,7 @@ pub enum Dataset {
 
 pub struct DatasetDetails {
     pub examples: Vec<(Tensor, Tensor)>,
-    pub layers: Vec<LayerType>,
+    pub layers: Vec<LayerConfig>,
     pub loss_function_name: LossFunctionName,
     pub epochs: usize,
     pub progress: usize,

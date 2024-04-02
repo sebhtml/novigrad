@@ -2,7 +2,7 @@ use std::fs;
 
 use crate::{
     add_embeddings, get_u8_embedding_table, loss::LossFunctionName, to_multi_class, Activation,
-    DatasetDetails, LayerConfig, Tensor,
+    DatasetDetails, LayerConfig, LayerType, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -43,16 +43,22 @@ pub fn load_dataset() -> DatasetDetails {
         examples: load_examples(),
         layers: vec![
             LayerConfig {
+                layer_type: LayerType::Linear,
+                input_rows: 32,
                 rows: 256,
                 cols: 256,
                 activation: Activation::Sigmoid,
             },
             LayerConfig {
+                layer_type: LayerType::Linear,
+                input_rows: 32,
                 rows: 256,
                 cols: 256,
                 activation: Activation::Sigmoid,
             },
             LayerConfig {
+                layer_type: LayerType::Linear,
+                input_rows: 32,
                 rows: 256,
                 cols: 256,
                 activation: Activation::Softmax,

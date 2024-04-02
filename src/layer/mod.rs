@@ -1,7 +1,7 @@
 mod linear;
 pub use linear::*;
 
-use crate::{DeltaWorkingMemory, Error, Tensor};
+use crate::{Activation, DeltaWorkingMemory, Error, Tensor};
 
 pub trait Layer {
     fn plan_change(
@@ -27,4 +27,27 @@ pub trait Layer {
         using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
     );
+}
+
+pub enum LayerType {
+    Linear,
+}
+
+pub struct LayerConfig {
+    pub layer_type: LayerType,
+    pub input_rows: usize,
+    pub rows: usize,
+    pub cols: usize,
+    pub activation: Activation,
+}
+
+impl Into<Box<dyn Layer>> for &LayerConfig {
+    fn into(self) -> Box<dyn Layer> {
+        Box::new(Linear::new(
+            self.input_rows,
+            self.rows,
+            self.cols,
+            self.activation.clone().into(),
+        ))
+    }
 }

@@ -316,117 +316,6 @@ impl TensorF32 {
         }
         Ok(())
     }
-
-    pub fn assign(&mut self, from: &TensorF32) {
-        self.reshape(from.rows, from.cols);
-
-        let len = from.values.len();
-        let mut index = 0;
-        while index < len {
-            self.values[index] = from.values[index];
-            index += 1;
-        }
-    }
-
-    pub fn row(&self, row: usize, result: &mut TensorF32) {
-        result.reshape(1, self.cols);
-        for col in 0..self.cols {
-            let value = self.get(row, col);
-            result.set(0, col, value);
-        }
-    }
-
-    pub fn transpose(&self, other: &mut TensorF32) {
-        other.reshape(self.cols, self.rows);
-        let rows = self.rows;
-        let cols = self.cols;
-        let mut row = 0;
-        while row < rows {
-            let mut col = 0;
-            while col < cols {
-                let value = self.get(row, col);
-                other.set(col, row, value);
-                col += 1;
-            }
-            row += 1;
-        }
-    }
-
-    pub fn add(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
-        self.operation::<F32Add>(right, result)
-    }
-
-    pub fn sub(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
-        self.operation::<F32Sub>(right, result)
-    }
-
-    pub fn element_wise_mul(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
-        self.operation::<F32Mul>(right, result)
-    }
-
-    pub fn div(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
-        self.operation::<F32Div>(right, result)
-    }
-
-    pub fn matmul(
-        lhs: &TensorF32,
-        rhs: &TensorF32,
-        result: &mut TensorF32,
-        options: u32,
-    ) -> Result<(), Error> {
-        let tranpose_lhs = (options & TRANSPOSE_LHS) > 0;
-        let transpose_rhs = (options & TRANSPOSE_RHS) > 0;
-        let transpose_result = (options & TRANSPOSE_RESULT) > 0;
-        if !tranpose_lhs && !transpose_rhs && !transpose_result {
-            Self::matmul_lhs_rhs_result(lhs, rhs, result)
-        } else if tranpose_lhs && !transpose_rhs && !transpose_result {
-            Self::matmul_lhs_t_rhs_result(lhs, rhs, result)
-        } else if !tranpose_lhs && transpose_rhs && !transpose_result {
-            // TODO X @ W^T is supposed to be very fast since lhs and rhs are both using
-            // sequential access. However on my Intel i5-7300U it's 2X slower.
-            // So W is transposed and matmul is done on that.
-            let mut rhs_t = TensorF32::default();
-            rhs.transpose(&mut rhs_t);
-            Self::matmul_lhs_rhs_result(lhs, &rhs_t, result)
-            //Self::matmul_lhs_rhs_t_result(lhs, rhs, result)
-        } else if tranpose_lhs && transpose_rhs && !transpose_result {
-            Self::matmul_lhs_t_rhs_t_result(lhs, rhs, result)
-        } else if tranpose_lhs && transpose_rhs && transpose_result {
-            Self::matmul_lhs_t_rhs_t_result_t(lhs, rhs, result)
-        } else if tranpose_lhs && !transpose_rhs && transpose_result {
-            // TODO find why matmul_lhs_t_rhs_result_t is slower than matmul_lhs_rhs_result.
-            let mut lhs_t = TensorF32::default();
-            let mut result_raw = TensorF32::default();
-            lhs.transpose(&mut lhs_t);
-            let op_result = Self::matmul_lhs_rhs_result(&lhs_t, rhs, &mut result_raw);
-            result_raw.transpose(result);
-            op_result
-            //Self::matmul_lhs_t_rhs_result_t(lhs, rhs, result)
-        } else {
-            Err(Error::UnsupportedOperation)
-        }
-    }
-
-    pub fn clip(&self, min: f32, max: f32, result: &mut TensorF32) {
-        result.reshape(self.rows, self.cols);
-        let len = self.values.len();
-        let mut index = 0;
-        while index < len {
-            let mut value = self.values[index];
-            value = value.max(min);
-            value = value.min(max);
-            result.values[index] = value;
-            index += 1;
-        }
-    }
-
-    pub fn scalar_add(&self, right: f32, result: &mut TensorF32) -> Result<(), Error> {
-        self.scalar_op::<F32Add>(right, result)
-    }
-
-    pub fn scalar_mul(&self, right: f32, result: &mut TensorF32) -> Result<(), Error> {
-        self.scalar_op::<F32Mul>(right, result)
-    }
 }
 
 impl TensorTrait<f32, TensorF32> for TensorF32 {
@@ -468,53 +357,115 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
         self.values[index] = value;
     }
 
-    fn row(&self, _row: usize, _result: &mut TensorF32) {
-        panic!("Not implemented");
+    fn assign(&mut self, from: &TensorF32) {
+        self.reshape(from.rows, from.cols);
+
+        let len = from.values.len();
+        let mut index = 0;
+        while index < len {
+            self.values[index] = from.values[index];
+            index += 1;
+        }
     }
 
-    fn assign(&mut self, _from: &TensorF32) {
-        panic!("Not implemented");
+    fn row(&self, row: usize, result: &mut TensorF32) {
+        result.reshape(1, self.cols);
+        for col in 0..self.cols {
+            let value = self.get(row, col);
+            result.set(0, col, value);
+        }
     }
 
-    fn transpose(&self, _other: &mut TensorF32) {
-        panic!("Not implemented");
+    fn transpose(&self, other: &mut TensorF32) {
+        other.reshape(self.cols, self.rows);
+        let rows = self.rows;
+        let cols = self.cols;
+        let mut row = 0;
+        while row < rows {
+            let mut col = 0;
+            while col < cols {
+                let value = self.get(row, col);
+                other.set(col, row, value);
+                col += 1;
+            }
+            row += 1;
+        }
     }
 
-    fn add(&self, _right: &TensorF32, _result: &mut TensorF32) -> Result<(), Error> {
-        panic!("Not implemented");
+    fn add(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+        self.operation::<F32Add>(right, result)
     }
 
-    fn sub(&self, _right: &TensorF32, _result: &mut TensorF32) -> Result<(), Error> {
-        panic!("Not implemented");
+    fn sub(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+        self.operation::<F32Sub>(right, result)
     }
 
-    fn element_wise_mul(&self, _right: &TensorF32, _result: &mut TensorF32) -> Result<(), Error> {
-        panic!("Not implemented");
+    fn element_wise_mul(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+        self.operation::<F32Mul>(right, result)
     }
 
-    fn div(&self, _right: &TensorF32, _result: &mut TensorF32) -> Result<(), Error> {
-        panic!("Not implemented");
+    fn div(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+        self.operation::<F32Div>(right, result)
     }
 
     fn matmul(
-        _lhs: &TensorF32,
-        _rhs: &TensorF32,
-        _result: &mut TensorF32,
-        _options: u32,
+        lhs: &TensorF32,
+        rhs: &TensorF32,
+        result: &mut TensorF32,
+        options: u32,
     ) -> Result<(), Error> {
-        panic!("Not implemented");
+        let tranpose_lhs = (options & TRANSPOSE_LHS) > 0;
+        let transpose_rhs = (options & TRANSPOSE_RHS) > 0;
+        let transpose_result = (options & TRANSPOSE_RESULT) > 0;
+        if !tranpose_lhs && !transpose_rhs && !transpose_result {
+            Self::matmul_lhs_rhs_result(lhs, rhs, result)
+        } else if tranpose_lhs && !transpose_rhs && !transpose_result {
+            Self::matmul_lhs_t_rhs_result(lhs, rhs, result)
+        } else if !tranpose_lhs && transpose_rhs && !transpose_result {
+            // TODO X @ W^T is supposed to be very fast since lhs and rhs are both using
+            // sequential access. However on my Intel i5-7300U it's 2X slower.
+            // So W is transposed and matmul is done on that.
+            let mut rhs_t = TensorF32::default();
+            rhs.transpose(&mut rhs_t);
+            Self::matmul_lhs_rhs_result(lhs, &rhs_t, result)
+            //Self::matmul_lhs_rhs_t_result(lhs, rhs, result)
+        } else if tranpose_lhs && transpose_rhs && !transpose_result {
+            Self::matmul_lhs_t_rhs_t_result(lhs, rhs, result)
+        } else if tranpose_lhs && transpose_rhs && transpose_result {
+            Self::matmul_lhs_t_rhs_t_result_t(lhs, rhs, result)
+        } else if tranpose_lhs && !transpose_rhs && transpose_result {
+            // TODO find why matmul_lhs_t_rhs_result_t is slower than matmul_lhs_rhs_result.
+            let mut lhs_t = TensorF32::default();
+            let mut result_raw = TensorF32::default();
+            lhs.transpose(&mut lhs_t);
+            let op_result = Self::matmul_lhs_rhs_result(&lhs_t, rhs, &mut result_raw);
+            result_raw.transpose(result);
+            op_result
+            //Self::matmul_lhs_t_rhs_result_t(lhs, rhs, result)
+        } else {
+            Err(Error::UnsupportedOperation)
+        }
     }
 
-    fn clip(&self, _min: f32, _max: f32, _result: &mut TensorF32) {
-        panic!("Not implemented");
+    fn clip(&self, min: f32, max: f32, result: &mut TensorF32) {
+        result.reshape(self.rows, self.cols);
+        let len = self.values.len();
+        let mut index = 0;
+        while index < len {
+            let mut value = self.values[index];
+            value = value.max(min);
+            value = value.min(max);
+            result.values[index] = value;
+            index += 1;
+        }
     }
 
-    fn scalar_add(&self, _right: f32, _result: &mut TensorF32) -> Result<(), Error> {
-        panic!("Not implemented");
+    fn scalar_add(&self, right: f32, result: &mut TensorF32) -> Result<(), Error> {
+        self.scalar_op::<F32Add>(right, result)
     }
 
-    fn scalar_mul(&self, _right: f32, _result: &mut TensorF32) -> Result<(), Error> {
-        panic!("Not implemented");
+    fn scalar_mul(&self, right: f32, result: &mut TensorF32) -> Result<(), Error> {
+        self.scalar_op::<F32Mul>(right, result)
     }
 }
 

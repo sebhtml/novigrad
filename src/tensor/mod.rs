@@ -42,6 +42,15 @@ impl Default for Tensor {
     }
 }
 
+impl<'a> Into<&'a Vec<f32>> for &'a Tensor {
+    fn into(self) -> &'a Vec<f32> {
+        match self {
+            Tensor::TensorF32(that) => that.values(),
+            _ => panic!("Not implemented"),
+        }
+    }
+}
+
 impl<'a> Into<&'a Vec<usize>> for &'a Tensor {
     fn into(self) -> &'a Vec<usize> {
         match self {

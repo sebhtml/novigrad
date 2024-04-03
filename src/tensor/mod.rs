@@ -146,20 +146,10 @@ impl TensorTrait<Tensor> for Tensor {
     }
 
     fn assign(&mut self, from: &Tensor) {
-        match (self.borrow_mut(), from) {
+        match (self, from) {
             (Tensor::TensorF32(that), Tensor::TensorF32(from)) => that.assign(from),
             (Tensor::TensorUSize(that), Tensor::TensorUSize(from)) => that.assign(from),
-            // TODO the type swap outside of here.
-            (Tensor::TensorF32(_), Tensor::TensorUSize(_)) => {
-                let new_self = Tensor::TensorUSize(Default::default());
-                *self = new_self;
-                self.assign(from);
-            }
-            (Tensor::TensorUSize(_), Tensor::TensorF32(_)) => {
-                let new_self = Tensor::TensorF32(Default::default());
-                *self = new_self;
-                self.assign(from);
-            }
+            _ => panic!("Not implemented"),
         }
     }
 

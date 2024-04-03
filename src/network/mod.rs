@@ -17,7 +17,7 @@ pub struct Network<'a> {
 pub struct TrainWorkingMemory {
     pub next_layer_delta: Tensor,
     pub layer_delta: Tensor,
-    pub previous_activation_tensor: Tensor,
+    pub previous_activation_tensor_f32: Tensor,
     pub last_activation_row: Tensor,
     pub loss: Tensor,
     pub tmp: Tensor,
@@ -28,7 +28,7 @@ impl Default for TrainWorkingMemory {
         Self {
             next_layer_delta: Default::default(),
             layer_delta: Default::default(),
-            previous_activation_tensor: Default::default(),
+            previous_activation_tensor_f32: Default::default(),
             last_activation_row: Default::default(),
             loss: Default::default(),
             tmp: Default::default(),
@@ -52,7 +52,7 @@ impl Default for DeltaWorkingMemory {
 
 pub struct PredictWorkingMemory {
     pub last_activation_row: Tensor,
-    pub previous_activation_tensor: Tensor,
+    pub previous_activation_tensor_f32: Tensor,
     pub activation_tensor: Tensor,
     pub activation_tensors: Vec<Tensor>,
 }
@@ -61,7 +61,7 @@ impl PredictWorkingMemory {
     pub fn new(examples_count: usize) -> Self {
         Self {
             last_activation_row: Default::default(),
-            previous_activation_tensor: Default::default(),
+            previous_activation_tensor_f32: Default::default(),
             activation_tensor: Default::default(),
             activation_tensors: vec![Tensor::default(); examples_count],
         }
@@ -127,11 +127,15 @@ impl<'a> Network<'a> {
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
         let activation_tensor = &mut working_memory.activation_tensor;
-        let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
+        let previous_activation_tensor_f32 = &mut working_memory.previous_activation_tensor_f32;
         let last_activation_row = &mut working_memory.last_activation_row;
 
         for i in 0..inputs.len() {
-            self.predict(previous_activation_tensor, &inputs[i], activation_tensor);
+            self.predict(
+                previous_activation_tensor_f32,
+                &inputs[i],
+                activation_tensor,
+            );
             let target = &outputs[i];
             let last_row = activation_tensor.rows() - 1;
             activation_tensor.row(last_row, last_activation_row);
@@ -154,14 +158,17 @@ impl<'a> Network<'a> {
         let learning_rate: f32 = 0.5;
 
         for layer_index in 0..self.layers.len() {
-            let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-            if layer_index == 0 {
-                previous_activation_tensor.assign(&x);
-            } else {
-                let previous_layer_index = layer_index - 1;
-                previous_activation_tensor
-                    .assign(self.layers[previous_layer_index].get_activation_tensor());
-            }
+            let previous_activation_tensor = match layer_index {
+                0 => x,
+                _ => {
+                    let previous_activation_tensor =
+                        self.layers[layer_index - 1].get_activation_tensor();
+                    let previous_activation_tensor_f32 =
+                        &mut working_memory.previous_activation_tensor_f32;
+                    previous_activation_tensor_f32.assign(previous_activation_tensor);
+                    previous_activation_tensor_f32
+                }
+            };
 
             let layer = &mut self.layers[layer_index];
             let op_result = layer.forward(previous_activation_tensor);
@@ -174,17 +181,19 @@ impl<'a> Network<'a> {
 
         // Back-propagation
         for layer_index in (0..layers_count).into_iter().rev() {
-            let is_first_layer = layer_index == 0;
             let is_last_layer = layer_index == self.layers.len() - 1;
 
-            let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-            if is_first_layer {
-                previous_activation_tensor.assign(&x);
-            } else {
-                let previous_layer_index = layer_index - 1;
-                previous_activation_tensor
-                    .assign(self.layers[previous_layer_index].get_activation_tensor());
-            }
+            let previous_activation_tensor = match layer_index {
+                0 => x,
+                _ => {
+                    let previous_activation_tensor =
+                        self.layers[layer_index - 1].get_activation_tensor();
+                    let previous_activation_tensor_f32 =
+                        &mut working_memory.previous_activation_tensor_f32;
+                    previous_activation_tensor_f32.assign(previous_activation_tensor);
+                    previous_activation_tensor_f32
+                }
+            };
 
             if is_last_layer {
                 // For the output layer, the next layer delta is the loss.
@@ -264,17 +273,24 @@ impl<'a> Network<'a> {
 
     pub fn predict(
         &mut self,
-        previous_activation_tensor: &mut Tensor,
+        previous_activation_tensor_f32: &mut Tensor,
         input: &Tensor,
         activation_tensor: &mut Tensor,
     ) {
-        previous_activation_tensor.assign(&input);
         for layer_index in 0..self.layers.len() {
+            let previous_activation_tensor = match layer_index {
+                0 => input,
+                _ => {
+                    let previous_activation_tensor =
+                        self.layers[layer_index - 1].get_activation_tensor();
+                    previous_activation_tensor_f32.assign(previous_activation_tensor);
+                    &previous_activation_tensor_f32
+                }
+            };
             let layer = &mut self.layers[layer_index];
             let op_result = layer.forward(previous_activation_tensor);
             activation_tensor.assign(layer.get_activation_tensor());
             op_result.expect("Ok");
-            previous_activation_tensor.assign(activation_tensor);
         }
     }
 }

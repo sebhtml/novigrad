@@ -9,12 +9,7 @@ use std::{
 pub struct TensorF32 {
     rows: usize,
     cols: usize,
-    // TODO find a better way to do that. Possible solutions:
-    // - use generic Tensor<usize> or Tensor<f32>.
-    // - use algebraic enum type
-    // - keep this solution.
     values: Vec<f32>,
-    int_values: Vec<usize>,
 }
 
 impl Default for TensorF32 {
@@ -23,28 +18,13 @@ impl Default for TensorF32 {
             rows: Default::default(),
             cols: Default::default(),
             values: Default::default(),
-            int_values: Default::default(),
         }
     }
 }
 
 impl TensorF32 {
     pub fn new(rows: usize, cols: usize, values: Vec<f32>) -> Self {
-        Self {
-            rows,
-            cols,
-            values,
-            int_values: Default::default(),
-        }
-    }
-
-    pub fn new_with_int(rows: usize, cols: usize, int_values: Vec<usize>) -> Self {
-        Self {
-            rows,
-            cols,
-            values: Default::default(),
-            int_values,
-        }
+        Self { rows, cols, values }
     }
 
     fn operation<Operation>(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error>
@@ -340,20 +320,10 @@ impl TensorF32 {
     pub fn assign(&mut self, from: &TensorF32) {
         self.reshape(from.rows, from.cols);
 
-        // Copy f32 values
         let len = from.values.len();
         let mut index = 0;
         while index < len {
             self.values[index] = from.values[index];
-            index += 1;
-        }
-
-        // Copy usize values
-        let len = from.int_values.len();
-        self.int_values.resize(len, Default::default());
-        let mut index = 0;
-        while index < len {
-            self.int_values[index] = from.int_values[index];
             index += 1;
         }
     }
@@ -469,7 +439,7 @@ impl TensorTrait for TensorF32 {
     }
 
     fn int_values<'a>(&'a self) -> &'a Vec<usize> {
-        &self.int_values
+        panic!("Not implemented");
     }
 
     fn cols(&self) -> usize {
@@ -485,7 +455,7 @@ impl TensorTrait for TensorF32 {
         self.cols = new_cols;
         let values = self.rows * self.cols;
         self.values.clear();
-        self.values.resize(values, 0.0)
+        self.values.resize(values, Default::default())
     }
 
     fn index(&self, row: usize, col: usize) -> usize {
@@ -553,12 +523,6 @@ impl TensorTrait for TensorF32 {
 
     fn scalar_mul(&self, _right: f32, _result: &mut crate::Tensor) -> Result<(), Error> {
         panic!("Not implemented");
-    }
-}
-
-impl<'a> Into<&'a Vec<usize>> for &'a TensorF32 {
-    fn into(self) -> &'a Vec<usize> {
-        &self.int_values
     }
 }
 

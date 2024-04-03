@@ -1,5 +1,9 @@
 mod dot_product;
-use std::{borrow::BorrowMut, fmt::Debug, mem::swap};
+use std::{
+    borrow::BorrowMut,
+    fmt::{Debug, Display},
+    mem::swap,
+};
 
 pub use dot_product::*;
 mod tensor_f32;
@@ -60,6 +64,15 @@ impl<'a> Into<&'a Vec<usize>> for &'a Tensor {
     }
 }
 
+impl Display for Tensor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Tensor::TensorF32(that) => Display::fmt(&that, f),
+            Tensor::TensorUSize(_) => panic!("Not implemented"),
+        }
+    }
+}
+
 pub trait TensorTrait<T, Rhs> {
     fn rows(&self) -> usize;
     fn cols(&self) -> usize;
@@ -73,6 +86,7 @@ pub trait TensorTrait<T, Rhs> {
     fn assign(&mut self, from: &Rhs);
     fn transpose(&self, other: &mut Rhs);
     fn add(&self, right: &Rhs, result: &mut Rhs) -> Result<(), Error>;
+    fn add_to_row(&mut self, row: usize, rhs: &Rhs) -> Result<(), Error>;
     fn sub(&self, right: &Rhs, result: &mut Rhs) -> Result<(), Error>;
     fn element_wise_mul(&self, right: &Rhs, result: &mut Rhs) -> Result<(), Error>;
     fn div(&self, right: &Rhs, result: &mut Rhs) -> Result<(), Error>;
@@ -223,6 +237,13 @@ impl TensorTrait<f32, Tensor> for Tensor {
     fn scalar_mul(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {
         match (self, result) {
             (Tensor::TensorF32(that), Tensor::TensorF32(result)) => that.scalar_mul(right, result),
+            _ => panic!("Not implemented"),
+        }
+    }
+
+    fn add_to_row(&mut self, row: usize, rhs: &Tensor) -> Result<(), Error> {
+        match (self, rhs) {
+            (Tensor::TensorF32(that), Tensor::TensorF32(rhs)) => that.add_to_row(row, rhs),
             _ => panic!("Not implemented"),
         }
     }

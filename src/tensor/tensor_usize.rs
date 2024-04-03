@@ -119,4 +119,8 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
     fn scalar_mul(&self, _right: usize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
+
+    fn add_to_row(&mut self, row: usize, rhs: &TensorUSize) -> Result<(), crate::Error> {
+        panic!("Not implemented");
+    }
 }

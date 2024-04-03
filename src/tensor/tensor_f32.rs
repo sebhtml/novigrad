@@ -467,6 +467,22 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
     fn scalar_mul(&self, right: f32, result: &mut TensorF32) -> Result<(), Error> {
         self.scalar_op::<F32Mul>(right, result)
     }
+
+    fn add_to_row(&mut self, row: usize, rhs: &TensorF32) -> Result<(), Error> {
+        if rhs.cols != self.cols {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+
+        let mut col = 0;
+        let cols = self.cols;
+        while col < cols {
+            let lhs = self.get(row, col);
+            let rhs = rhs.get(0, col);
+            self.set(row, col, lhs + rhs);
+            col += 1;
+        }
+        Ok(())
+    }
 }
 
 impl Display for TensorF32 {

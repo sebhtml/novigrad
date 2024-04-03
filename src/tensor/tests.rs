@@ -484,6 +484,38 @@ fn matrix_addition_result() {
 }
 
 #[test]
+fn add_to_row() {
+    let mut lhs = Tensor::new(
+        3,
+        2,
+        vec![
+            0.0, 0.0, //
+            0.0, 0.0, //
+            0.0, 0.0, //
+        ],
+    );
+    let rhs: Tensor = Tensor::new(
+        1,
+        2,
+        vec![
+            11.0, 12.0, //
+        ],
+    );
+    let expected_result = Tensor::new(
+        3,
+        2,
+        vec![
+            0.0, 0.0, //
+            11.0, 12.0, //
+            0.0, 0.0, //
+        ],
+    );
+
+    _ = lhs.add_to_row(1, &rhs);
+    assert_eq!(lhs, expected_result);
+}
+
+#[test]
 fn element_wise_mul_result() {
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the element-wise multiplication is done

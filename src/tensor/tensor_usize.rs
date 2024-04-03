@@ -23,7 +23,7 @@ impl TensorUSize {
     }
 }
 
-impl TensorTrait<TensorUSize> for TensorUSize {
+impl TensorTrait<usize, TensorUSize> for TensorUSize {
     fn rows(&self) -> usize {
         panic!("Not implemented");
     }
@@ -60,11 +60,11 @@ impl TensorTrait<TensorUSize> for TensorUSize {
         &self.values
     }
 
-    fn get(&self, _row: usize, _col: usize) -> f32 {
+    fn get(&self, _row: usize, _col: usize) -> usize {
         panic!("Not implemented");
     }
 
-    fn set(&mut self, _row: usize, _col: usize, _value: f32) {
+    fn set(&mut self, _row: usize, _col: usize, _value: usize) {
         panic!("Not implemented");
     }
 
@@ -112,15 +112,15 @@ impl TensorTrait<TensorUSize> for TensorUSize {
         panic!("Not implemented");
     }
 
-    fn clip(&self, _min: f32, _max: f32, _result: &mut TensorUSize) {
+    fn clip(&self, _min: usize, _max: usize, _result: &mut TensorUSize) {
         panic!("Not implemented");
     }
 
-    fn scalar_add(&self, _right: f32, _result: &mut TensorUSize) -> Result<(), crate::Error> {
+    fn scalar_add(&self, _right: usize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 
-    fn scalar_mul(&self, _right: f32, _result: &mut TensorUSize) -> Result<(), crate::Error> {
+    fn scalar_mul(&self, _right: usize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 }

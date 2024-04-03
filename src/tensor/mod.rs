@@ -51,7 +51,7 @@ impl<'a> Into<&'a Vec<usize>> for &'a Tensor {
     }
 }
 
-pub trait TensorTrait<Rhs> {
+pub trait TensorTrait<T, Rhs> {
     fn rows(&self) -> usize;
     fn cols(&self) -> usize;
     fn row(&self, row: usize, result: &mut Rhs);
@@ -60,8 +60,8 @@ pub trait TensorTrait<Rhs> {
     fn reshape(&mut self, new_rows: usize, new_cols: usize);
     fn values<'a>(&'a self) -> &'a Vec<f32>;
     fn int_values<'a>(&'a self) -> &'a Vec<usize>;
-    fn get(&self, row: usize, col: usize) -> f32;
-    fn set(&mut self, row: usize, col: usize, value: f32);
+    fn get(&self, row: usize, col: usize) -> T;
+    fn set(&mut self, row: usize, col: usize, value: T);
     fn assign(&mut self, from: &Rhs);
     fn transpose(&self, other: &mut Rhs);
     fn add(&self, right: &Rhs, result: &mut Rhs) -> Result<(), Error>;
@@ -69,12 +69,12 @@ pub trait TensorTrait<Rhs> {
     fn element_wise_mul(&self, right: &Rhs, result: &mut Rhs) -> Result<(), Error>;
     fn div(&self, right: &Rhs, result: &mut Rhs) -> Result<(), Error>;
     fn matmul(lhs: &Rhs, rhs: &Rhs, result: &mut Rhs, options: u32) -> Result<(), Error>;
-    fn clip(&self, min: f32, max: f32, result: &mut Rhs);
-    fn scalar_add(&self, right: f32, result: &mut Rhs) -> Result<(), Error>;
-    fn scalar_mul(&self, right: f32, result: &mut Rhs) -> Result<(), Error>;
+    fn clip(&self, min: T, max: T, result: &mut Rhs);
+    fn scalar_add(&self, right: T, result: &mut Rhs) -> Result<(), Error>;
+    fn scalar_mul(&self, right: T, result: &mut Rhs) -> Result<(), Error>;
 }
 
-impl TensorTrait<Tensor> for Tensor {
+impl TensorTrait<f32, Tensor> for Tensor {
     fn rows(&self) -> usize {
         match self {
             Tensor::TensorF32(that) => that.rows(),

@@ -429,7 +429,7 @@ impl TensorF32 {
     }
 }
 
-impl TensorTrait<TensorF32> for TensorF32 {
+impl TensorTrait<f32, TensorF32> for TensorF32 {
     fn rows(&self) -> usize {
         self.rows
     }

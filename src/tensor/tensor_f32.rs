@@ -429,7 +429,7 @@ impl TensorF32 {
     }
 }
 
-impl TensorTrait for TensorF32 {
+impl TensorTrait<TensorF32> for TensorF32 {
     fn rows(&self) -> usize {
         self.rows
     }
@@ -472,56 +472,52 @@ impl TensorTrait for TensorF32 {
         self.values[index] = value;
     }
 
-    fn row(&self, _row: usize, _result: &mut crate::Tensor) {
+    fn row(&self, _row: usize, _result: &mut TensorF32) {
         panic!("Not implemented");
     }
 
-    fn assign(&mut self, _from: &crate::Tensor) {
+    fn assign(&mut self, _from: &TensorF32) {
         panic!("Not implemented");
     }
 
-    fn transpose(&self, _other: &mut crate::Tensor) {
+    fn transpose(&self, _other: &mut TensorF32) {
         panic!("Not implemented");
     }
 
-    fn add(&self, _right: &crate::Tensor, _result: &mut crate::Tensor) -> Result<(), Error> {
+    fn add(&self, _right: &TensorF32, _result: &mut TensorF32) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
-    fn sub(&self, _right: &crate::Tensor, _result: &mut crate::Tensor) -> Result<(), Error> {
+    fn sub(&self, _right: &TensorF32, _result: &mut TensorF32) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
-    fn element_wise_mul(
-        &self,
-        _right: &crate::Tensor,
-        _result: &mut crate::Tensor,
-    ) -> Result<(), Error> {
+    fn element_wise_mul(&self, _right: &TensorF32, _result: &mut TensorF32) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
-    fn div(&self, _right: &crate::Tensor, _result: &mut crate::Tensor) -> Result<(), Error> {
+    fn div(&self, _right: &TensorF32, _result: &mut TensorF32) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
     fn matmul(
-        _lhs: &crate::Tensor,
-        _rhs: &crate::Tensor,
-        _result: &mut crate::Tensor,
+        _lhs: &TensorF32,
+        _rhs: &TensorF32,
+        _result: &mut TensorF32,
         _options: u32,
     ) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
-    fn clip(&self, _min: f32, _max: f32, _result: &mut crate::Tensor) {
+    fn clip(&self, _min: f32, _max: f32, _result: &mut TensorF32) {
         panic!("Not implemented");
     }
 
-    fn scalar_add(&self, _right: f32, _result: &mut crate::Tensor) -> Result<(), Error> {
+    fn scalar_add(&self, _right: f32, _result: &mut TensorF32) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
-    fn scalar_mul(&self, _right: f32, _result: &mut crate::Tensor) -> Result<(), Error> {
+    fn scalar_mul(&self, _right: f32, _result: &mut TensorF32) -> Result<(), Error> {
         panic!("Not implemented");
     }
 }

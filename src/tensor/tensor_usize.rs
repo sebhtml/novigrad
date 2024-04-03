@@ -21,20 +21,9 @@ impl TensorUSize {
     pub fn new(rows: usize, cols: usize, values: Vec<usize>) -> Self {
         Self { rows, cols, values }
     }
-
-    pub fn assign(&mut self, from: &TensorUSize) {
-        self.reshape(from.rows, from.cols);
-
-        let len = from.values.len();
-        let mut index = 0;
-        while index < len {
-            self.values[index] = from.values[index];
-            index += 1;
-        }
-    }
 }
 
-impl TensorTrait for TensorUSize {
+impl TensorTrait<TensorUSize> for TensorUSize {
     fn rows(&self) -> usize {
         panic!("Not implemented");
     }
@@ -43,7 +32,7 @@ impl TensorTrait for TensorUSize {
         panic!("Not implemented");
     }
 
-    fn row(&self, _row: usize, _result: &mut crate::Tensor) {
+    fn row(&self, _row: usize, _result: &mut TensorUSize) {
         panic!("Not implemented");
     }
 
@@ -79,52 +68,59 @@ impl TensorTrait for TensorUSize {
         panic!("Not implemented");
     }
 
-    fn assign(&mut self, _from: &crate::Tensor) {
+    fn assign(&mut self, from: &TensorUSize) {
+        self.reshape(from.rows, from.cols);
+
+        let len = from.values.len();
+        let mut index = 0;
+        while index < len {
+            self.values[index] = from.values[index];
+            index += 1;
+        }
+    }
+
+    fn transpose(&self, _other: &mut TensorUSize) {
         panic!("Not implemented");
     }
 
-    fn transpose(&self, _other: &mut crate::Tensor) {
+    fn add(&self, _right: &TensorUSize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 
-    fn add(&self, _right: &crate::Tensor, _result: &mut crate::Tensor) -> Result<(), crate::Error> {
-        panic!("Not implemented");
-    }
-
-    fn sub(&self, _right: &crate::Tensor, _result: &mut crate::Tensor) -> Result<(), crate::Error> {
+    fn sub(&self, _right: &TensorUSize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 
     fn element_wise_mul(
         &self,
-        _right: &crate::Tensor,
-        _result: &mut crate::Tensor,
+        _right: &TensorUSize,
+        _result: &mut TensorUSize,
     ) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 
-    fn div(&self, _right: &crate::Tensor, _result: &mut crate::Tensor) -> Result<(), crate::Error> {
+    fn div(&self, _right: &TensorUSize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 
     fn matmul(
-        _lhs: &crate::Tensor,
-        _rhs: &crate::Tensor,
-        _result: &mut crate::Tensor,
+        _lhs: &TensorUSize,
+        _rhs: &TensorUSize,
+        _result: &mut TensorUSize,
         _options: u32,
     ) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 
-    fn clip(&self, _min: f32, _max: f32, _result: &mut crate::Tensor) {
+    fn clip(&self, _min: f32, _max: f32, _result: &mut TensorUSize) {
         panic!("Not implemented");
     }
 
-    fn scalar_add(&self, _right: f32, _result: &mut crate::Tensor) -> Result<(), crate::Error> {
+    fn scalar_add(&self, _right: f32, _result: &mut TensorUSize) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 
-    fn scalar_mul(&self, _right: f32, _result: &mut crate::Tensor) -> Result<(), crate::Error> {
+    fn scalar_mul(&self, _right: f32, _result: &mut TensorUSize) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 }

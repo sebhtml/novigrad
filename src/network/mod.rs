@@ -119,6 +119,36 @@ impl<'a> Network<'a> {
         }
     }
 
+    fn get_last_layer_delta(
+        &self,
+        layer_activation_tensor: &Tensor,
+        last_activation_row: &mut Tensor,
+        tmp: &mut Tensor,
+        loss: &mut Tensor,
+        y: &Tensor,
+        next_layer_delta: &mut Tensor,
+    ) {
+        let last_row = layer_activation_tensor.rows() - 1;
+        layer_activation_tensor.row(last_row, last_activation_row);
+        let op_result = self
+            .loss_function
+            .derive(tmp, y, &last_activation_row, loss);
+        op_result.expect("Ok");
+
+        next_layer_delta.reshape(
+            layer_activation_tensor.rows(),
+            layer_activation_tensor.cols(),
+        );
+        let mut col = 0;
+        let cols = loss.cols();
+
+        while col < cols {
+            let value = loss.get(0, col);
+            next_layer_delta.set(last_row, col, value);
+            col += 1;
+        }
+    }
+
     pub fn total_error(
         &mut self,
         working_memory: &mut PredictWorkingMemory,
@@ -197,29 +227,18 @@ impl<'a> Network<'a> {
 
             if is_last_layer {
                 // For the output layer, the next layer delta is the loss.
-                let layer_activation_tensor = self.layers[layer_index].get_activation_tensor();
                 let last_activation_row = &mut working_memory.last_activation_row;
                 let tmp = &mut working_memory.tmp;
                 let loss = &mut working_memory.loss;
-                let last_row = layer_activation_tensor.rows() - 1;
-                layer_activation_tensor.row(last_row, last_activation_row);
-                let op_result = self
-                    .loss_function
-                    .derive(tmp, y, &last_activation_row, loss);
-                op_result.expect("Ok");
-
-                next_layer_delta.reshape(
-                    layer_activation_tensor.rows(),
-                    layer_activation_tensor.cols(),
+                let layer_activation_tensor = self.layers[layer_index].get_activation_tensor();
+                self.get_last_layer_delta(
+                    layer_activation_tensor,
+                    last_activation_row,
+                    tmp,
+                    loss,
+                    y,
+                    next_layer_delta,
                 );
-                let mut col = 0;
-                let cols = loss.cols();
-
-                while col < cols {
-                    let value = loss.get(0, col);
-                    next_layer_delta.set(last_row, col, value);
-                    col += 1;
-                }
             }
 
             {

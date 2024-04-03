@@ -1,5 +1,5 @@
 use crate::{
-    DatasetDetails, DeltaWorkingMemory, Error, Network, PredictWorkingMemory, Tensor,
+    DatasetDetails, DeltaWorkingMemory, Error, Network, PredictWorkingMemory, Tensor, TensorTrait,
     TrainWorkingMemory,
 };
 

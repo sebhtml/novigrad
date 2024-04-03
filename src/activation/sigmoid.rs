@@ -1,5 +1,5 @@
-use crate::Error;
 use crate::{ActivationFunction, Tensor};
+use crate::{Error, TensorTrait};
 use std::f32::consts::E;
 
 #[derive(Clone)]

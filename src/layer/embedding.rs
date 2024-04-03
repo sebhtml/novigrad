@@ -1,6 +1,6 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{DeltaWorkingMemory, Error, Layer, LayerType, Tensor};
+use crate::{DeltaWorkingMemory, Error, Layer, LayerType, Tensor, TensorTrait};
 
 pub struct Embedding {
     embedding_table: Vec<Vec<f32>>,

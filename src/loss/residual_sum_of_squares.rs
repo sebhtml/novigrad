@@ -1,4 +1,4 @@
-use crate::{Error, Tensor};
+use crate::{Error, Tensor, TensorTrait};
 
 use super::LossFunction;
 

@@ -1,5 +1,5 @@
 use super::LossFunction;
-use crate::{Error, Tensor};
+use crate::{Error, Tensor, TensorTrait};
 
 #[derive(Clone)]
 pub struct CrossEntropyLoss {}

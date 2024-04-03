@@ -5,7 +5,7 @@ use std::mem::swap;
 
 use crate::{
     loss::{LossFunction, LossFunctionType},
-    ActivationType, Error, Layer, LayerConfig, LayerType, Tensor,
+    ActivationType, Error, Layer, LayerConfig, LayerType, Tensor, TensorTrait,
 };
 
 pub struct Network<'a> {

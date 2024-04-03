@@ -2,7 +2,7 @@ use rand::Rng;
 
 use crate::{
     tensor::{Error, Tensor, TRANSPOSE_LHS, TRANSPOSE_RHS},
-    TRANSPOSE_RESULT,
+    TensorTrait, TRANSPOSE_RESULT,
 };
 
 #[test]

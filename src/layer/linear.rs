@@ -4,7 +4,7 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
     ActivationFunction, ActivationType, DeltaWorkingMemory, Error, Layer, LayerType, Tensor,
-    TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
+    TensorTrait, TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
 };
 
 pub struct Linear {

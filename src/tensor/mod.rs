@@ -45,7 +45,7 @@ impl Default for Tensor {
 impl<'a> Into<&'a Vec<usize>> for &'a Tensor {
     fn into(self) -> &'a Vec<usize> {
         match self {
-            Tensor::TensorUSize(that) => that.int_values(),
+            Tensor::TensorUSize(that) => that.values(),
             _ => panic!("Not implemented"),
         }
     }
@@ -58,8 +58,7 @@ pub trait TensorTrait<T, Rhs> {
     fn index(&self, row: usize, col: usize) -> usize;
     fn shape(&self) -> (usize, usize);
     fn reshape(&mut self, new_rows: usize, new_cols: usize);
-    fn values<'a>(&'a self) -> &'a Vec<f32>;
-    fn int_values<'a>(&'a self) -> &'a Vec<usize>;
+    fn values<'a>(&'a self) -> &'a Vec<T>;
     fn get(&self, row: usize, col: usize) -> T;
     fn set(&mut self, row: usize, col: usize, value: T);
     fn assign(&mut self, from: &Rhs);
@@ -120,13 +119,6 @@ impl TensorTrait<f32, Tensor> for Tensor {
     fn values<'a>(&'a self) -> &'a Vec<f32> {
         match self {
             Tensor::TensorF32(that) => that.values(),
-            _ => panic!("Not implemented"),
-        }
-    }
-
-    fn int_values<'a>(&'a self) -> &'a Vec<usize> {
-        match self {
-            Tensor::TensorUSize(that) => that.int_values(),
             _ => panic!("Not implemented"),
         }
     }

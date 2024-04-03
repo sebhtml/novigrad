@@ -438,10 +438,6 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
         &self.values
     }
 
-    fn int_values<'a>(&'a self) -> &'a Vec<usize> {
-        panic!("Not implemented");
-    }
-
     fn cols(&self) -> usize {
         self.cols
     }

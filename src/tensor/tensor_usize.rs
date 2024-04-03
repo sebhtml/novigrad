@@ -52,11 +52,7 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
         self.values.resize(values, Default::default())
     }
 
-    fn values<'a>(&'a self) -> &'a Vec<f32> {
-        panic!("Not implemented");
-    }
-
-    fn int_values<'a>(&'a self) -> &'a Vec<usize> {
+    fn values<'a>(&'a self) -> &'a Vec<usize> {
         &self.values
     }
 

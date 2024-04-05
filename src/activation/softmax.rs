@@ -13,7 +13,11 @@ impl Default for Softmax {
 
 impl ActivationFunction for Softmax {
     fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        result.reset(product_matrix.rows(), product_matrix.cols());
+        result.reset(
+            product_matrix.rows(),
+            product_matrix.cols(),
+            Default::default(),
+        );
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
         let mut row = 0;
@@ -62,7 +66,11 @@ impl ActivationFunction for Softmax {
         activation_matrix: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        result.reset(activation_matrix.rows(), activation_matrix.cols());
+        result.reset(
+            activation_matrix.rows(),
+            activation_matrix.cols(),
+            Default::default(),
+        );
         let rows = activation_matrix.rows();
         let cols = activation_matrix.cols();
         let mut row = 0;

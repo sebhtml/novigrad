@@ -151,7 +151,7 @@ fn reshape() {
             1.0, //
         ],
     );
-    tensor.reset(2, 1);
+    tensor.reset(2, 1, Default::default());
     let expected = Tensor::new(
         2,
         1,

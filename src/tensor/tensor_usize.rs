@@ -44,12 +44,12 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
         panic!("Not implemented");
     }
 
-    fn reset(&mut self, new_rows: usize, new_cols: usize) {
+    fn reset(&mut self, new_rows: usize, new_cols: usize, value: usize) {
         self.rows = new_rows;
         self.cols = new_cols;
         let values = self.rows * self.cols;
         self.values.clear();
-        self.values.resize(values, Default::default())
+        self.values.resize(values, value)
     }
 
     fn values<'a>(&'a self) -> &'a Vec<usize> {
@@ -65,7 +65,7 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
     }
 
     fn assign(&mut self, from: &TensorUSize) {
-        self.reset(from.rows, from.cols);
+        self.reset(from.rows, from.cols, Default::default());
 
         let len = from.values.len();
         let mut index = 0;
@@ -120,7 +120,7 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
         panic!("Not implemented");
     }
 
-    fn add_to_row(&mut self, row: usize, rhs: &TensorUSize) -> Result<(), crate::Error> {
+    fn add_to_row(&mut self, _row: usize, _rhs: &TensorUSize) -> Result<(), crate::Error> {
         panic!("Not implemented");
     }
 }

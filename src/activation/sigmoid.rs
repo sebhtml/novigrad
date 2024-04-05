@@ -13,7 +13,11 @@ impl Default for Sigmoid {
 
 impl ActivationFunction for Sigmoid {
     fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        result.reset(product_matrix.rows(), product_matrix.cols());
+        result.reset(
+            product_matrix.rows(),
+            product_matrix.cols(),
+            Default::default(),
+        );
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
         let mut row = 0;
@@ -36,7 +40,11 @@ impl ActivationFunction for Sigmoid {
         activation_matrix: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        result.reset(activation_matrix.rows(), activation_matrix.cols());
+        result.reset(
+            activation_matrix.rows(),
+            activation_matrix.cols(),
+            Default::default(),
+        );
         let rows = activation_matrix.rows();
         let cols = activation_matrix.cols();
         let mut row = 0;

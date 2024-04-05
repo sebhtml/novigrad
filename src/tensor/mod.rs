@@ -79,7 +79,7 @@ pub trait TensorTrait<T, Rhs> {
     fn row(&self, row: usize, result: &mut Rhs);
     fn index(&self, row: usize, col: usize) -> usize;
     fn shape(&self) -> (usize, usize);
-    fn reset(&mut self, new_rows: usize, new_cols: usize);
+    fn reset(&mut self, new_rows: usize, new_cols: usize, value: T);
     fn values<'a>(&'a self) -> &'a Vec<T>;
     fn get(&self, row: usize, col: usize) -> T;
     fn set(&mut self, row: usize, col: usize, value: T);
@@ -132,9 +132,9 @@ impl TensorTrait<f32, Tensor> for Tensor {
         }
     }
 
-    fn reset(&mut self, new_rows: usize, new_cols: usize) {
+    fn reset(&mut self, new_rows: usize, new_cols: usize, value: f32) {
         match self {
-            Tensor::TensorF32(that) => that.reset(new_rows, new_cols),
+            Tensor::TensorF32(that) => that.reset(new_rows, new_cols, value),
             _ => panic!("Not implemented"),
         }
     }

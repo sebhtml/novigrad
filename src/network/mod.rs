@@ -138,6 +138,7 @@ impl<'a> Network<'a> {
         next_layer_delta.reset(
             layer_activation_tensor.rows(),
             layer_activation_tensor.cols(),
+            Default::default(),
         );
         let mut col = 0;
         let cols = loss.cols();

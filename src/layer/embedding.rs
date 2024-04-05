@@ -28,8 +28,11 @@ impl Layer for Embedding {
         layer_delta: &Tensor,
     ) {
         //println!("layer_delta {}", layer_delta);
-        self.embedding_table_delta
-            .reset(self.embedding_table.rows(), self.embedding_table.cols());
+        self.embedding_table_delta.reset(
+            self.embedding_table.rows(),
+            self.embedding_table.cols(),
+            Default::default(),
+        );
         let tokens: &Vec<usize> = previous_activation.into();
         for (index, token) in tokens.iter().enumerate() {
             let mut token_delta = Tensor::default();

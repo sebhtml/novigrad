@@ -34,7 +34,7 @@ impl Linear {
         }
         let weights = Tensor::new(rows, cols, weights);
         let mut biases = Tensor::default();
-        biases.reshape(input_rows, rows);
+        biases.reset(input_rows, rows);
         Linear {
             weights,
             biases,

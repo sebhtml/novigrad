@@ -17,7 +17,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- rename reshape to reset
 - add method reshape
 - add layer Reshape
 - learned Embedding

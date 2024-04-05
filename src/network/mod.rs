@@ -135,7 +135,7 @@ impl<'a> Network<'a> {
             .derive(tmp, y, &last_activation_row, loss);
         op_result.expect("Ok");
 
-        next_layer_delta.reshape(
+        next_layer_delta.reset(
             layer_activation_tensor.rows(),
             layer_activation_tensor.cols(),
         );

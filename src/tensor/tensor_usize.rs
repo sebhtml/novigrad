@@ -44,7 +44,7 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
         panic!("Not implemented");
     }
 
-    fn reshape(&mut self, new_rows: usize, new_cols: usize) {
+    fn reset(&mut self, new_rows: usize, new_cols: usize) {
         self.rows = new_rows;
         self.cols = new_cols;
         let values = self.rows * self.cols;
@@ -65,7 +65,7 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
     }
 
     fn assign(&mut self, from: &TensorUSize) {
-        self.reshape(from.rows, from.cols);
+        self.reset(from.rows, from.cols);
 
         let len = from.values.len();
         let mut index = 0;

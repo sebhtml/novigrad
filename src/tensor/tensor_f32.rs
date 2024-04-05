@@ -36,7 +36,7 @@ impl TensorF32 {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reshape(left.rows, left.cols);
+        result.reset(left.rows, left.cols);
 
         let result_ptr = result.values.as_mut_ptr();
         let left_ptr = left.values.as_ptr();
@@ -71,7 +71,7 @@ impl TensorF32 {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reshape(lhs.rows, rhs.cols);
+        result.reset(lhs.rows, rhs.cols);
 
         let result_ptr = result.values.as_mut_ptr();
         let left_ptr = lhs.values.as_ptr();
@@ -115,7 +115,7 @@ impl TensorF32 {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reshape(lhs_rows, rhs.cols);
+        result.reset(lhs_rows, rhs.cols);
 
         let result_ptr = result.values.as_mut_ptr();
         let lhs_ptr = lhs.values.as_ptr();
@@ -158,7 +158,7 @@ impl TensorF32 {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reshape(rhs.cols, lhs_cols);
+        result.reset(rhs.cols, lhs_cols);
 
         let lhs_ptr = lhs.values.as_ptr();
         let right_ptr = rhs.values.as_ptr();
@@ -203,7 +203,7 @@ impl TensorF32 {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reshape(lhs_cols, rhs_rows);
+        result.reset(lhs_cols, rhs_rows);
 
         let mut lhs_col = 0;
         while lhs_col != lhs_cols {
@@ -241,7 +241,7 @@ impl TensorF32 {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reshape(rhs_rows, lhs_cols);
+        result.reset(rhs_rows, lhs_cols);
 
         let mut rhs_row = 0;
         while rhs_row != rhs_rows {
@@ -283,7 +283,7 @@ impl TensorF32 {
         let lhs_slice = lhs.values.as_slice();
         let rhs_slice = rhs.values.as_slice();
 
-        result.reshape(lhs_rows, rhs_rows);
+        result.reset(lhs_rows, rhs_rows);
         let result_slice = result.values.as_mut_slice();
 
         let mut lhs_row = 0;
@@ -308,7 +308,7 @@ impl TensorF32 {
     where
         Operation: F32Operation,
     {
-        result.reshape(self.rows, self.cols);
+        result.reset(self.rows, self.cols);
         for i in 0..self.values.len() {
             let left = self.values[i];
             let value = Operation::op(left, right);
@@ -335,7 +335,7 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
         (self.rows, self.cols)
     }
 
-    fn reshape(&mut self, new_rows: usize, new_cols: usize) {
+    fn reset(&mut self, new_rows: usize, new_cols: usize) {
         self.rows = new_rows;
         self.cols = new_cols;
         let values = self.rows * self.cols;
@@ -358,7 +358,7 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
     }
 
     fn assign(&mut self, from: &TensorF32) {
-        self.reshape(from.rows, from.cols);
+        self.reset(from.rows, from.cols);
 
         let len = from.values.len();
         let mut index = 0;
@@ -369,7 +369,7 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
     }
 
     fn row(&self, row: usize, result: &mut TensorF32) {
-        result.reshape(1, self.cols);
+        result.reset(1, self.cols);
         for col in 0..self.cols {
             let value = self.get(row, col);
             result.set(0, col, value);
@@ -377,7 +377,7 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
     }
 
     fn transpose(&self, other: &mut TensorF32) {
-        other.reshape(self.cols, self.rows);
+        other.reset(self.cols, self.rows);
         let rows = self.rows;
         let cols = self.cols;
         let mut row = 0;
@@ -448,7 +448,7 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
     }
 
     fn clip(&self, min: f32, max: f32, result: &mut TensorF32) {
-        result.reshape(self.rows, self.cols);
+        result.reset(self.rows, self.cols);
         let len = self.values.len();
         let mut index = 0;
         while index < len {

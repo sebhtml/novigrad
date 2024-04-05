@@ -483,6 +483,17 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
         }
         Ok(())
     }
+
+    fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {
+        if (new_rows * new_cols) != self.values.len() {
+            return Err(Error::UnsupportedOperation);
+        }
+
+        self.rows = new_rows;
+        self.cols = new_cols;
+
+        Ok(())
+    }
 }
 
 impl Display for TensorF32 {

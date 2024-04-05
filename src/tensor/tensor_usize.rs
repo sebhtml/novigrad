@@ -1,4 +1,4 @@
-use crate::TensorTrait;
+use crate::{Error, TensorTrait};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TensorUSize {
@@ -79,11 +79,11 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
         panic!("Not implemented");
     }
 
-    fn add(&self, _right: &TensorUSize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
+    fn add(&self, _right: &TensorUSize, _result: &mut TensorUSize) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
-    fn sub(&self, _right: &TensorUSize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
+    fn sub(&self, _right: &TensorUSize, _result: &mut TensorUSize) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
@@ -91,11 +91,11 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
         &self,
         _right: &TensorUSize,
         _result: &mut TensorUSize,
-    ) -> Result<(), crate::Error> {
+    ) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
-    fn div(&self, _right: &TensorUSize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
+    fn div(&self, _right: &TensorUSize, _result: &mut TensorUSize) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
@@ -104,7 +104,7 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
         _rhs: &TensorUSize,
         _result: &mut TensorUSize,
         _options: u32,
-    ) -> Result<(), crate::Error> {
+    ) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
@@ -112,15 +112,19 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
         panic!("Not implemented");
     }
 
-    fn scalar_add(&self, _right: usize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
+    fn scalar_add(&self, _right: usize, _result: &mut TensorUSize) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
-    fn scalar_mul(&self, _right: usize, _result: &mut TensorUSize) -> Result<(), crate::Error> {
+    fn scalar_mul(&self, _right: usize, _result: &mut TensorUSize) -> Result<(), Error> {
         panic!("Not implemented");
     }
 
-    fn add_to_row(&mut self, _row: usize, _rhs: &TensorUSize) -> Result<(), crate::Error> {
+    fn add_to_row(&mut self, _row: usize, _rhs: &TensorUSize) -> Result<(), Error> {
+        panic!("Not implemented");
+    }
+
+    fn reshape(&mut self, _new_rows: usize, _new_cols: usize) -> Result<(), Error> {
         panic!("Not implemented");
     }
 }

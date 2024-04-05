@@ -53,6 +53,47 @@ fn multiplication_shape_compatibility() {
 }
 
 #[test]
+fn reshape_result() {
+    let mut lhs = Tensor::new(
+        2,
+        4,
+        vec![
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 7.0, 8.0, //
+        ],
+    );
+
+    let expected = Tensor::new(
+        1,
+        8,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+            5.0, 6.0, //
+            7.0, 8.0, //
+        ],
+    );
+
+    lhs.reshape(1, 8).expect("Ok");
+    assert_eq!(lhs, expected);
+}
+
+#[test]
+fn reshape_error() {
+    let mut lhs = Tensor::new(
+        2,
+        4,
+        vec![
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 7.0, 8.0, //
+        ],
+    );
+
+    let op_result = lhs.reshape(1, 11);
+    assert_eq!(op_result, Err(Error::UnsupportedOperation));
+}
+
+#[test]
 fn get() {
     let tensor = Tensor::new(
         2,
@@ -139,9 +180,9 @@ fn assign() {
 }
 
 #[test]
-fn reshape() {
+fn reset() {
     // Given a tensor
-    // When it is reshaped to a bigger shape
+    // When it is reset to a bigger shape
     // Then all values are set to 0.0
 
     let mut tensor = Tensor::new(

@@ -17,6 +17,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
+- use one-hot encoding in inputs
 - learned Embedding
 - centralize panic! calls
 - move activation function outside of Linear

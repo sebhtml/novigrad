@@ -10,6 +10,8 @@ impl Default for CrossEntropyLoss {
     }
 }
 
+const EPSILON: f32 = 1e-8;
+
 impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     fn evaluate(&self, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
@@ -25,7 +27,7 @@ impl LossFunction for CrossEntropyLoss {
         let mut sum = 0.0;
         while col < cols {
             let p_i = p.get(0, col);
-            let q_i = q.get(0, col);
+            let q_i = q.get(0, col) + EPSILON;
             sum += p_i * f32::ln(q_i);
             col += 1;
         }

@@ -94,6 +94,9 @@ pub fn train_network_on_dataset(
                 initial_total_error = total_error;
             }
             last_total_error = total_error;
+            if last_total_error == 0.0 {
+                break;
+            }
         }
         network.train(
             &mut train_working_memory,

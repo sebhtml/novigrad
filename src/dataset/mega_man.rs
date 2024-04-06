@@ -2,7 +2,7 @@ use std::fs;
 
 use crate::{
     loss::LossFunctionType, to_multi_class, ActivationType, DatasetDetails, EmbeddingConfig,
-    LayerConfig, LayerType, LinearConfig, Tensor,
+    LayerConfig, LayerType, LinearConfig, ReshapeConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -25,10 +25,7 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
         let next_token_index = i + context_size;
         let input_tokens = tokens[i..next_token_index].to_owned();
         let next_token = tokens[next_token_index];
-        /*
-        println!("input_tokens {:?}", input_tokens);
-        println!("next_token {}", next_token);
-        */
+
         let output_multiclass = to_multi_class(next_token, token_count);
 
         examples.push((
@@ -48,26 +45,20 @@ pub fn load_dataset() -> DatasetDetails {
             LayerConfig::Embedding(EmbeddingConfig {
                 hidden_dimensions: 256,
             }),
-            LayerConfig::Linear(LinearConfig {
+            LayerConfig::Reshape(ReshapeConfig {
                 input_rows: 32,
-                rows: 256,
-                cols: 256,
-                activation: ActivationType::Sigmoid(Default::default()),
+                input_cols: 256,
+                output_rows: 1,
+                output_cols: 32 * 256,
             }),
             LayerConfig::Linear(LinearConfig {
-                input_rows: 32,
+                input_rows: 1,
                 rows: 256,
-                cols: 256,
-                activation: ActivationType::Sigmoid(Default::default()),
-            }),
-            LayerConfig::Linear(LinearConfig {
-                input_rows: 32,
-                rows: 256,
-                cols: 256,
+                cols: 32 * 256,
                 activation: ActivationType::Softmax(Default::default()),
             }),
         ],
-        epochs: 1000,
+        epochs: 300,
         progress: 100,
         loss_function_name: LossFunctionType::CrossEntropyLoss(Default::default()),
         initial_total_error_min: 50.0,

@@ -119,35 +119,20 @@ impl<'a> Network<'a> {
         }
     }
 
+    // TODO remove unused arguments.
     fn get_last_layer_delta(
         &self,
         layer_activation_tensor: &Tensor,
-        last_activation_row: &mut Tensor,
+        _last_activation_row: &mut Tensor,
         tmp: &mut Tensor,
-        loss: &mut Tensor,
+        _loss: &mut Tensor,
         y: &Tensor,
         next_layer_delta: &mut Tensor,
     ) {
-        let last_row = layer_activation_tensor.rows() - 1;
-        layer_activation_tensor.row(last_row, last_activation_row);
-        let op_result = self
-            .loss_function
-            .derive(tmp, y, &last_activation_row, loss);
+        let op_result =
+            self.loss_function
+                .derive(tmp, y, &layer_activation_tensor, next_layer_delta);
         op_result.expect("Ok");
-
-        next_layer_delta.reset(
-            layer_activation_tensor.rows(),
-            layer_activation_tensor.cols(),
-            Default::default(),
-        );
-        let mut col = 0;
-        let cols = loss.cols();
-
-        while col < cols {
-            let value = loss.get(0, col);
-            next_layer_delta.set(last_row, col, value);
-            col += 1;
-        }
     }
 
     pub fn total_error(
@@ -159,7 +144,6 @@ impl<'a> Network<'a> {
         let mut total_error = 0.0;
         let activation_tensor = &mut working_memory.activation_tensor;
         let previous_activation_tensor_f32 = &mut working_memory.previous_activation_tensor_f32;
-        let last_activation_row = &mut working_memory.last_activation_row;
 
         for i in 0..inputs.len() {
             self.predict(
@@ -168,9 +152,7 @@ impl<'a> Network<'a> {
                 activation_tensor,
             );
             let target = &outputs[i];
-            let last_row = activation_tensor.rows() - 1;
-            activation_tensor.row(last_row, last_activation_row);
-            let example_error = self.loss_function.evaluate(target, &last_activation_row)?;
+            let example_error = self.loss_function.evaluate(target, &activation_tensor)?;
             total_error += example_error;
         }
 
@@ -309,8 +291,8 @@ impl<'a> Network<'a> {
             };
             let layer = &mut self.layers[layer_index];
             let op_result = layer.forward(previous_activation_tensor);
-            activation_tensor.assign(layer.get_activation_tensor());
             op_result.expect("Ok");
+            activation_tensor.assign(layer.get_activation_tensor());
         }
     }
 }

@@ -27,26 +27,7 @@ impl Layer for Embedding {
         previous_activation: &Tensor,
         layer_delta: &Tensor,
     ) {
-        //println!("layer_delta {}", layer_delta);
-        self.embedding_table_delta.reset(
-            self.embedding_table.rows(),
-            self.embedding_table.cols(),
-            Default::default(),
-        );
-        let tokens: &Vec<usize> = previous_activation.into();
-        for (index, token) in tokens.iter().enumerate() {
-            let mut token_delta = Tensor::default();
-            layer_delta.row(index, &mut token_delta);
-            let mut token_gradient = Tensor::default();
-            let op_result = token_delta.scalar_mul(-learning_rate, &mut token_gradient);
-            op_result.expect("Ok");
-            let op_result = self
-                .embedding_table_delta
-                .add_to_row(*token, &token_gradient);
-            op_result.expect("Ok");
-        }
-        //println!("embedding_table_delta {}", self.embedding_table_delta);
-        self.has_pending_change = true;
+        // TODO
     }
 
     fn commit_change(&mut self) -> Result<(), Error> {
@@ -72,9 +53,12 @@ impl Layer for Embedding {
     }
 
     fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
-        let x = add_embeddings(&self.embedding_table, input);
-        self.activation_tensor.assign(&x);
-        Ok(())
+        Tensor::matmul(
+            input,
+            &self.embedding_table,
+            &mut self.activation_tensor,
+            Default::default(),
+        )
     }
 
     fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
@@ -133,21 +117,4 @@ fn get_u8_embedding_table() -> Tensor {
         token += 1;
     }
     Tensor::new(width, width, embeddings_table)
-}
-
-// TODO use &mut output argument for result
-fn add_embeddings(embedding_table: &Tensor, input: &Tensor) -> Tensor {
-    let mut values = vec![];
-    let mut row = 0;
-    let input: &Vec<usize> = input.into();
-    let rows = input.len();
-    let mut row_embeddings = Tensor::default();
-    while row < rows {
-        let index = input[row];
-        embedding_table.row(index, &mut row_embeddings);
-        let row_embeddings: &Vec<f32> = (&row_embeddings).into();
-        values.append(&mut row_embeddings.clone());
-        row += 1;
-    }
-    Tensor::new(input.len(), embedding_table.cols(), values)
 }

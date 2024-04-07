@@ -1,6 +1,6 @@
 use crate::{
-    loss::LossFunctionType, ActivationType, DatasetDetails, EmbeddingConfig, LayerConfig,
-    LayerType, LinearConfig, ReshapeConfig, Tensor,
+    into_one_hot_encoded_rows, loss::LossFunctionType, ActivationType, DatasetDetails,
+    EmbeddingConfig, LayerConfig, LayerType, LinearConfig, ReshapeConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -18,9 +18,16 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
         vec![0.0, 0.0, 0.0, 1.0],
     ));
 
+    let num_classes = 256;
+    let mut one_hot_encoded_tokens = Tensor::default();
     let examples = examples
         .into_iter()
-        .map(|example| (example.0.into(), Tensor::new(1, example.1.len(), example.1)))
+        .map(|example| {
+            into_one_hot_encoded_rows(&example.0, num_classes, &mut one_hot_encoded_tokens);
+            let input = one_hot_encoded_tokens.clone();
+            let output = Tensor::new(1, example.1.len(), example.1);
+            (input, output)
+        })
         .collect();
 
     examples

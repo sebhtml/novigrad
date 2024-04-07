@@ -1,12 +1,13 @@
 use std::fs;
 
+use crate::into_one_hot_encoded_rows;
 use crate::{
     loss::LossFunctionType, to_multi_class, ActivationType, DatasetDetails, EmbeddingConfig,
-    LayerConfig, LayerType, LinearConfig, ReshapeConfig, Tensor,
+    LayerConfig, LinearConfig, ReshapeConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
-    let token_count = 256;
+    let num_classes = 256;
     let context_size = 32;
     let mut examples = Vec::new();
     let file_path = "Mega_Man.txt";
@@ -21,16 +22,17 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
     let max_number_of_examples = 10;
+    let mut one_hot_encoded_tokens = Tensor::default();
     while i + context_size < tokens.len() && i < max_number_of_examples {
         let next_token_index = i + context_size;
-        let input_tokens = tokens[i..next_token_index].to_owned();
+        let input_tokens = &tokens[i..next_token_index];
+        into_one_hot_encoded_rows(input_tokens, num_classes, &mut one_hot_encoded_tokens);
         let next_token = tokens[next_token_index];
-
-        let output_multiclass = to_multi_class(next_token, token_count);
+        let output_multiclass = to_multi_class(next_token, num_classes);
 
         examples.push((
             //
-            input_tokens.into(), //
+            one_hot_encoded_tokens.clone(), //
             output_multiclass,
         ));
         i += 1;

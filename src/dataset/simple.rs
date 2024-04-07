@@ -9,24 +9,27 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
     examples.push((
         //
         vec![1, 2, 3, 4, 5, 6], //
-        vec![1.0, 0.0, 0.0, 0.0],
+        vec![0],
     ));
 
     examples.push((
         //
         vec![7, 8, 9, 10, 11, 12], //
-        vec![0.0, 0.0, 0.0, 1.0],
+        vec![3],
     ));
 
     let num_classes = 256;
-    let mut one_hot_encoded_tokens = Tensor::default();
+    let mut one_hot_encoded_input = Tensor::default();
+    let mut one_hot_encoded_output = Tensor::default();
     let examples = examples
         .into_iter()
         .map(|example| {
-            into_one_hot_encoded_rows(&example.0, num_classes, &mut one_hot_encoded_tokens);
-            let input = one_hot_encoded_tokens.clone();
-            let output = Tensor::new(1, example.1.len(), example.1);
-            (input, output)
+            into_one_hot_encoded_rows(&example.0, num_classes, &mut one_hot_encoded_input);
+            into_one_hot_encoded_rows(&example.1, num_classes, &mut one_hot_encoded_output);
+            (
+                one_hot_encoded_input.clone(),
+                one_hot_encoded_output.clone(),
+            )
         })
         .collect();
 
@@ -60,7 +63,7 @@ pub fn load_dataset() -> DatasetDetails {
             }),
             LayerConfig::Linear(LinearConfig {
                 input_rows: 1,
-                rows: 4,
+                rows: 256,
                 cols: 256,
                 activation: ActivationType::Softmax(Default::default()),
             }),

@@ -2,8 +2,8 @@ use std::fs;
 
 use crate::into_one_hot_encoded_rows;
 use crate::{
-    loss::LossFunctionType, to_multi_class, ActivationType, DatasetDetails, EmbeddingConfig,
-    LayerConfig, LinearConfig, ReshapeConfig, Tensor,
+    loss::LossFunctionType, ActivationType, DatasetDetails, EmbeddingConfig, LayerConfig,
+    LinearConfig, ReshapeConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -23,17 +23,18 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
     let mut i = 0;
     let max_number_of_examples = 10;
     let mut one_hot_encoded_tokens = Tensor::default();
+    let mut output_multiclass = Tensor::default();
     while i + context_size < tokens.len() && i < max_number_of_examples {
         let next_token_index = i + context_size;
         let input_tokens = &tokens[i..next_token_index];
         into_one_hot_encoded_rows(input_tokens, num_classes, &mut one_hot_encoded_tokens);
-        let next_token = tokens[next_token_index];
-        let output_multiclass = to_multi_class(next_token, num_classes);
+        let next_token = &tokens[next_token_index..next_token_index + 1];
+        into_one_hot_encoded_rows(next_token, num_classes, &mut output_multiclass);
 
         examples.push((
             //
             one_hot_encoded_tokens.clone(), //
-            output_multiclass,
+            output_multiclass.clone(),
         ));
         i += 1;
     }

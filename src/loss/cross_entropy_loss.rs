@@ -15,6 +15,7 @@ const EPSILON: f32 = 1e-8;
 impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     fn evaluate(&self, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
+        debug_assert_eq!(actual.shape(), expected.shape());
         let p = expected;
         let q = actual;
         if p.shape() != q.shape() {

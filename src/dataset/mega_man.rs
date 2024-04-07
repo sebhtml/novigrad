@@ -46,18 +46,19 @@ pub fn load_dataset() -> DatasetDetails {
         examples: load_examples(),
         layers: vec![
             LayerConfig::Embedding(EmbeddingConfig {
-                hidden_dimensions: 256,
+                num_embeddings: 256,
+                embedding_dim: 384,
             }),
             LayerConfig::Reshape(ReshapeConfig {
                 input_rows: 32,
-                input_cols: 256,
+                input_cols: 384,
                 output_rows: 1,
-                output_cols: 32 * 256,
+                output_cols: 32 * 384,
             }),
             LayerConfig::Linear(LinearConfig {
                 input_rows: 1,
                 rows: 256,
-                cols: 32 * 256,
+                cols: 32 * 384,
                 activation: ActivationType::Softmax(Default::default()),
             }),
         ],

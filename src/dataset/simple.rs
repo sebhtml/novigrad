@@ -18,7 +18,7 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
         vec![3],
     ));
 
-    let num_classes = 256;
+    let num_classes = 16;
     let mut one_hot_encoded_input = Tensor::default();
     let mut one_hot_encoded_output = Tensor::default();
     let examples = examples
@@ -41,37 +41,38 @@ pub fn load_dataset() -> DatasetDetails {
         examples: load_examples(),
         layers: vec![
             LayerConfig::Embedding(EmbeddingConfig {
-                hidden_dimensions: 256,
+                num_embeddings: 16,
+                embedding_dim: 32,
             }),
             LayerConfig::Linear(LinearConfig {
                 input_rows: 6,
-                rows: 256,
-                cols: 256,
+                rows: 16,
+                cols: 32,
                 activation: ActivationType::Sigmoid(Default::default()),
             }),
             LayerConfig::Reshape(ReshapeConfig {
                 input_rows: 6,
-                input_cols: 256,
+                input_cols: 16,
                 output_rows: 1,
-                output_cols: 6 * 256,
+                output_cols: 6 * 16,
             }),
             LayerConfig::Linear(LinearConfig {
                 input_rows: 1,
-                rows: 256,
-                cols: 6 * 256,
+                rows: 32,
+                cols: 6 * 16,
                 activation: ActivationType::Sigmoid(Default::default()),
             }),
             LayerConfig::Linear(LinearConfig {
                 input_rows: 1,
-                rows: 256,
-                cols: 256,
+                rows: 16,
+                cols: 32,
                 activation: ActivationType::Softmax(Default::default()),
             }),
         ],
         epochs: 1000,
         progress: 100,
         loss_function_name: LossFunctionType::CrossEntropyLoss(Default::default()),
-        initial_total_error_min: 2.0,
-        final_total_error_max: 0.00025,
+        initial_total_error_min: 4.0,
+        final_total_error_max: 0.0004,
     }
 }

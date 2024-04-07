@@ -152,7 +152,10 @@ impl<'a> Network<'a> {
                 activation_tensor,
             );
             let target = &outputs[i];
-            let example_error = self.loss_function.evaluate(target, &activation_tensor)?;
+            let example_error = self
+                .loss_function
+                .evaluate(target, &activation_tensor)
+                .expect("Ok");
             total_error += example_error;
         }
 

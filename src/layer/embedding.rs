@@ -10,9 +10,9 @@ pub struct Embedding {
 }
 
 impl Embedding {
-    pub fn new(_hidden_dimensions: usize) -> Self {
+    pub fn new(num_embeddings: usize, embedding_dim: usize) -> Self {
         Self {
-            embedding_table: get_u8_embedding_table(),
+            embedding_table: get_embedding_table(num_embeddings, embedding_dim),
             embedding_table_delta: Default::default(),
             has_pending_change: Default::default(),
             activation_tensor: Default::default(),
@@ -53,6 +53,7 @@ impl Layer for Embedding {
     }
 
     fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
+        debug_assert_eq!(input.cols(), self.embedding_table.rows());
         Tensor::matmul(
             input,
             &self.embedding_table,
@@ -88,33 +89,32 @@ impl Layer for Embedding {
 }
 
 pub struct EmbeddingConfig {
-    pub hidden_dimensions: usize,
+    pub num_embeddings: usize,
+    pub embedding_dim: usize,
 }
 
 impl Into<Embedding> for &EmbeddingConfig {
     fn into(self) -> Embedding {
-        Embedding::new(self.hidden_dimensions)
+        Embedding::new(self.num_embeddings, self.embedding_dim)
     }
 }
 
-fn get_u8_embedding_table() -> Tensor {
+fn get_embedding_table(num_embeddings: usize, embedding_dim: usize) -> Tensor {
     let mut rng = thread_rng();
     let mut embeddings_table: Vec<f32> = Vec::new();
     let left = 0.0;
     let right = 1.0;
-    let number_of_different_tokens = 256;
-    let width = 256;
     let uniform = Uniform::new(left, right);
 
     let mut token = 0;
-    while token < number_of_different_tokens {
+    while token < num_embeddings {
         let mut token_embeddings: Vec<f32> = Vec::new();
-        for _ in 0..width {
+        for _ in 0..embedding_dim {
             let value = rng.sample(uniform);
             token_embeddings.push(value);
         }
         embeddings_table.append(&mut token_embeddings);
         token += 1;
     }
-    Tensor::new(width, width, embeddings_table)
+    Tensor::new(num_embeddings, embedding_dim, embeddings_table)
 }

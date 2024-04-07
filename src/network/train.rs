@@ -89,7 +89,8 @@ pub fn train_network_on_dataset(
                 &outputs,
                 last_total_error,
                 epoch,
-            )?;
+            )
+            .expect("Ok");
             if epoch == 0 {
                 initial_total_error = total_error;
             }

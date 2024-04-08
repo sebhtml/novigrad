@@ -149,8 +149,6 @@ impl Layer for Linear {
         using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
     ) {
-        let layer_f_derivative = &mut working_memory.layer_f_derivative;
-        let layer_activation_function = &self.activation_function;
         let output_diff = &mut working_memory.output_diff;
 
         match next_layer {
@@ -165,13 +163,14 @@ impl Layer for Linear {
         }
 
         // Compute activation function derivative.
-        let activation_tensor = &self.activation_tensor;
         let is_last_layer = next_layer.is_none();
         if is_last_layer && using_softmax_and_cross_entropy_loss {
-            activation_tensor
-                .scalar_add(1.0, layer_f_derivative)
-                .expect("Ok");
+            // Softmax and Cross Entropy Loss are best friends.
+            layer_delta.assign(&output_diff);
         } else {
+            let layer_f_derivative = &mut working_memory.layer_f_derivative;
+            let layer_activation_function = &self.activation_function;
+            let activation_tensor = &self.activation_tensor;
             let matrix_product = &self.matrix_product;
             let op_result = layer_activation_function.derive(
                 matrix_product,
@@ -179,10 +178,9 @@ impl Layer for Linear {
                 layer_f_derivative,
             );
             op_result.expect("Ok");
+            let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
+            op_result.expect("Ok");
         }
-
-        let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
-        op_result.expect("Ok");
     }
 
     fn plan_change(

@@ -1,5 +1,6 @@
 use crate::{Error, TensorTrait};
 
+// TODO remove TensorUSize
 #[derive(Clone, Debug, PartialEq)]
 pub struct TensorUSize {
     rows: usize,
@@ -33,6 +34,10 @@ impl TensorTrait<usize, TensorUSize> for TensorUSize {
     }
 
     fn row(&self, _row: usize, _result: &mut TensorUSize) {
+        panic!("Not implemented");
+    }
+
+    fn col(&self, _col: usize, _result: &mut TensorUSize) {
         panic!("Not implemented");
     }
 

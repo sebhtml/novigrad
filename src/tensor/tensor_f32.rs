@@ -376,6 +376,14 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
         }
     }
 
+    fn col(&self, col: usize, result: &mut TensorF32) {
+        result.reset(self.rows, 1, Default::default());
+        for row in 0..self.rows {
+            let value = self.get(row, col);
+            result.set(row, 0, value);
+        }
+    }
+
     fn transpose(&self, other: &mut TensorF32) {
         other.reset(self.cols, self.rows, Default::default());
         let rows = self.rows;

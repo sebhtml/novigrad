@@ -724,6 +724,24 @@ fn row() {
 }
 
 #[test]
+fn col() {
+    let lhs = Tensor::new(
+        3,
+        2,
+        vec![
+            1.0, 2.0, //
+            3.0, 4.0, //
+            5.0, 6.0, //
+        ],
+    );
+    let expected_result = Tensor::new(3, 1, vec![2.0, 4.0, 6.0]);
+
+    let mut result = Tensor::default();
+    _ = lhs.col(1, &mut result);
+    assert_eq!(result, expected_result);
+}
+
+#[test]
 fn big_matrix_multiplication() {
     let rows = 1024;
     let cols = 1024;

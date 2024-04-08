@@ -17,17 +17,18 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- add tape to decouple compute from storage
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
-- implement one-hot encoded tensor with sparsity
-- centralize panic! calls
-- implement tiled matrix multiplication
-- Dropout
+- implement Dropout
 - move learning rate in dataset details
 - shuffle examples in each epoch
 - implement transformer
+
 - bpe tokenizer
 - add gelu
+- add tape to decouple compute from storage
+- implement one-hot encoded tensor with sparsity
+- centralize panic! calls
+- implement tiled matrix multiplication
 
 # Links
 

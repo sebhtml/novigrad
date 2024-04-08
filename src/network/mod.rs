@@ -17,6 +17,7 @@ pub struct Network<'a> {
 pub struct TrainWorkingMemory {
     pub layer_outputs: Vec<Tensor>,
     pub next_layer_delta: Tensor,
+    pub back_propagated_delta: Tensor,
     pub layer_delta: Tensor,
     pub previous_activation_tensor: Tensor,
     pub last_activation_row: Tensor,
@@ -29,6 +30,7 @@ impl TrainWorkingMemory {
         Self {
             layer_outputs: vec![Default::default(); layers],
             next_layer_delta: Default::default(),
+            back_propagated_delta: Default::default(),
             layer_delta: Default::default(),
             previous_activation_tensor: Default::default(),
             last_activation_row: Default::default(),
@@ -228,12 +230,26 @@ impl<'a> Network<'a> {
                 let tmp = &mut working_memory.tmp;
                 let layer_input = previous_activation_tensor;
                 let layer_output = &layer_outputs[layer_index];
+                let back_propagated_delta = &mut working_memory.back_propagated_delta;
+
+                let is_last_layer = next_layer.is_none();
+                match next_layer {
+                    None => {
+                        // use the output of the loss function¸
+                        back_propagated_delta.assign(next_layer_delta);
+                    }
+                    Some(next_layer) => {
+                        // Hidden layer
+                        next_layer.backward(next_layer_delta, back_propagated_delta);
+                    }
+                }
+
                 layer.get_layer_delta(
                     error_working_memory,
                     layer_input,
                     layer_output,
-                    next_layer,
-                    next_layer_delta,
+                    back_propagated_delta,
+                    is_last_layer,
                     tmp,
                 );
 

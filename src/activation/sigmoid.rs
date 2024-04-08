@@ -1,4 +1,4 @@
-use crate::{ActivationFunction, Layer, Tensor};
+use crate::{ActivationFunction, DeltaWorkingMemory, Layer, Tensor};
 use crate::{Error, TensorTrait};
 use std::f32::consts::E;
 
@@ -103,31 +103,18 @@ impl Layer for Sigmoid {
 
     fn get_layer_delta(
         &self,
-        working_memory: &mut crate::DeltaWorkingMemory,
+        working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,
-        next_layer: Option<&crate::LayerType>,
-        next_layer_delta: &Tensor,
+        back_propagated_delta: &Tensor,
+        _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
-        let output_diff = &mut working_memory.output_diff;
-
-        match next_layer {
-            None => {
-                // use the output of the loss function.
-                output_diff.assign(next_layer_delta);
-            }
-            Some(next_layer) => {
-                // Hidden layer
-                next_layer.backward(next_layer_delta, output_diff);
-            }
-        }
-
         // Compute activation function derivative.
         let layer_f_derivative = &mut working_memory.layer_f_derivative;
         let op_result = Self::derive_f(layer_input, layer_output, layer_f_derivative);
         op_result.expect("Ok");
-        let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
+        let op_result = layer_f_derivative.element_wise_mul(back_propagated_delta, layer_delta);
         op_result.expect("Ok");
     }
 }

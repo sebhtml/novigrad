@@ -131,20 +131,11 @@ impl Layer for Linear {
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,
         _layer_output: &Tensor,
-        next_layer: Option<&LayerType>,
-        next_layer_delta: &Tensor,
+        back_propagated_delta: &Tensor,
+        _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
-        match next_layer {
-            None => {
-                // use the output of the loss function.
-                layer_delta.assign(next_layer_delta);
-            }
-            Some(next_layer) => {
-                // Hidden layer
-                next_layer.backward(next_layer_delta, layer_delta);
-            }
-        }
+        layer_delta.assign(back_propagated_delta)
     }
 
     fn plan_change(

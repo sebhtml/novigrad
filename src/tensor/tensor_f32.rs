@@ -434,26 +434,13 @@ impl TensorTrait<f32, TensorF32> for TensorF32 {
         } else if tranpose_lhs && !transpose_rhs && !transpose_result {
             Self::matmul_lhs_t_rhs_result(lhs, rhs, result)
         } else if !tranpose_lhs && transpose_rhs && !transpose_result {
-            // TODO X @ W^T is supposed to be very fast since lhs and rhs are both using
-            // sequential access. However on my Intel i5-7300U it's 2X slower.
-            // So W is transposed and matmul is done on that.
-            let mut rhs_t = TensorF32::default();
-            rhs.transpose(&mut rhs_t);
-            Self::matmul_lhs_rhs_result(lhs, &rhs_t, result)
-            //Self::matmul_lhs_rhs_t_result(lhs, rhs, result)
+            Self::matmul_lhs_rhs_t_result(lhs, rhs, result)
         } else if tranpose_lhs && transpose_rhs && !transpose_result {
             Self::matmul_lhs_t_rhs_t_result(lhs, rhs, result)
         } else if tranpose_lhs && transpose_rhs && transpose_result {
             Self::matmul_lhs_t_rhs_t_result_t(lhs, rhs, result)
         } else if tranpose_lhs && !transpose_rhs && transpose_result {
-            // TODO find why matmul_lhs_t_rhs_result_t is slower than matmul_lhs_rhs_result.
-            let mut lhs_t = TensorF32::default();
-            let mut result_raw = TensorF32::default();
-            lhs.transpose(&mut lhs_t);
-            let op_result = Self::matmul_lhs_rhs_result(&lhs_t, rhs, &mut result_raw);
-            result_raw.transpose(result);
-            op_result
-            //Self::matmul_lhs_t_rhs_result_t(lhs, rhs, result)
+            Self::matmul_lhs_t_rhs_result_t(lhs, rhs, result)
         } else {
             Err(Error::UnsupportedOperation)
         }

@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::into_one_hot_encoded_rows;
+use crate::{into_one_hot_encoded_rows, SoftmaxConfig};
 use crate::{
     loss::LossFunctionType, DatasetDetails, EmbeddingConfig, LayerConfig, LinearConfig,
     ReshapeConfig, Tensor,
@@ -60,7 +60,9 @@ pub fn load_dataset() -> DatasetDetails {
                 rows: 256,
                 cols: 32 * 384,
             }),
-            LayerConfig::Softmax(Default::default()),
+            LayerConfig::Softmax(SoftmaxConfig {
+                using_softmax_and_cross_entropy_loss: true,
+            }),
         ],
         epochs: 300,
         progress: 100,

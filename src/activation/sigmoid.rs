@@ -114,7 +114,6 @@ impl Layer for Sigmoid {
         working_memory: &mut crate::DeltaWorkingMemory,
         next_layer: Option<&crate::LayerType>,
         next_layer_delta: &Tensor,
-        using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
     ) {
         let output_diff = &mut working_memory.output_diff;
@@ -130,18 +129,13 @@ impl Layer for Sigmoid {
             }
         }
         // Compute activation function derivative.
-        let is_last_layer = next_layer.is_none();
-        if is_last_layer && using_softmax_and_cross_entropy_loss {
-            // Softmax and Cross Entropy Loss are best friends.
-            layer_delta.assign(&output_diff);
-        } else {
-            let layer_f_derivative = &mut working_memory.layer_f_derivative;
-            let activation_tensor = &self.activation_tensor;
-            let matrix_product = &self.matrix_product;
-            let op_result = Self::derive_f(matrix_product, activation_tensor, layer_f_derivative);
-            op_result.expect("Ok");
-            let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
-            op_result.expect("Ok");
-        }
+
+        let layer_f_derivative = &mut working_memory.layer_f_derivative;
+        let activation_tensor = &self.activation_tensor;
+        let matrix_product = &self.matrix_product;
+        let op_result = Self::derive_f(matrix_product, activation_tensor, layer_f_derivative);
+        op_result.expect("Ok");
+        let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
+        op_result.expect("Ok");
     }
 }

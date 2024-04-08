@@ -2,18 +2,25 @@ use crate::{ActivationFunction, Layer, Tensor};
 use crate::{Error, TensorTrait};
 use std::f32::consts::E;
 
-#[derive(Clone, Default)]
-pub struct SoftmaxConfig {}
+#[derive(Clone)]
+pub struct SoftmaxConfig {
+    pub using_softmax_and_cross_entropy_loss: bool,
+}
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Softmax {
+    using_softmax_and_cross_entropy_loss: bool,
     matrix_product: Tensor,
     activation_tensor: Tensor,
 }
 
 impl Into<Softmax> for &SoftmaxConfig {
     fn into(self) -> Softmax {
-        Default::default()
+        Softmax {
+            using_softmax_and_cross_entropy_loss: self.using_softmax_and_cross_entropy_loss,
+            matrix_product: Default::default(),
+            activation_tensor: Default::default(),
+        }
     }
 }
 
@@ -140,7 +147,6 @@ impl Layer for Softmax {
         working_memory: &mut crate::DeltaWorkingMemory,
         next_layer: Option<&crate::LayerType>,
         next_layer_delta: &Tensor,
-        using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
     ) {
         let output_diff = &mut working_memory.output_diff;
@@ -157,7 +163,7 @@ impl Layer for Softmax {
         }
         // Compute activation function derivative.
         let is_last_layer = next_layer.is_none();
-        if is_last_layer && using_softmax_and_cross_entropy_loss {
+        if is_last_layer && self.using_softmax_and_cross_entropy_loss {
             // Softmax and Cross Entropy Loss are best friends.
             layer_delta.assign(&output_diff);
         } else {

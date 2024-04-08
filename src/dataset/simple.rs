@@ -1,6 +1,6 @@
 use crate::{
     into_one_hot_encoded_rows, loss::LossFunctionType, DatasetDetails, EmbeddingConfig,
-    LayerConfig, LinearConfig, ReshapeConfig, Tensor,
+    LayerConfig, LinearConfig, ReshapeConfig, SoftmaxConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -67,7 +67,9 @@ pub fn load_dataset() -> DatasetDetails {
                 rows: 16,
                 cols: 32,
             }),
-            LayerConfig::Softmax(Default::default()),
+            LayerConfig::Softmax(SoftmaxConfig {
+                using_softmax_and_cross_entropy_loss: true,
+            }),
         ],
         epochs: 1000,
         progress: 100,

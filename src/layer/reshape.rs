@@ -59,7 +59,6 @@ impl Layer for Reshape {
         _working_memory: &mut crate::DeltaWorkingMemory,
         next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
-        _using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
     ) {
         match next_layer {

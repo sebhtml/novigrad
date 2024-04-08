@@ -24,14 +24,12 @@ pub trait Layer {
     // TODO backward should return Error
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor);
 
-    // TODO remove _using_softmax_and_cross_entropy_loss from trait
     // TODO get_layer_delta should return Error
     fn get_layer_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
         next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
-        using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
     );
 }
@@ -135,45 +133,24 @@ impl Layer for LayerType {
         working_memory: &mut DeltaWorkingMemory,
         next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
-        using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
     ) {
         match self {
-            LayerType::Embedding(that) => that.get_layer_delta(
-                working_memory,
-                next_layer,
-                next_layer_delta,
-                using_softmax_and_cross_entropy_loss,
-                layer_delta,
-            ),
-            LayerType::Linear(that) => that.get_layer_delta(
-                working_memory,
-                next_layer,
-                next_layer_delta,
-                using_softmax_and_cross_entropy_loss,
-                layer_delta,
-            ),
-            LayerType::Reshape(that) => that.get_layer_delta(
-                working_memory,
-                next_layer,
-                next_layer_delta,
-                using_softmax_and_cross_entropy_loss,
-                layer_delta,
-            ),
-            LayerType::Sigmoid(that) => that.get_layer_delta(
-                working_memory,
-                next_layer,
-                next_layer_delta,
-                using_softmax_and_cross_entropy_loss,
-                layer_delta,
-            ),
-            LayerType::Softmax(that) => that.get_layer_delta(
-                working_memory,
-                next_layer,
-                next_layer_delta,
-                using_softmax_and_cross_entropy_loss,
-                layer_delta,
-            ),
+            LayerType::Embedding(that) => {
+                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
+            }
+            LayerType::Linear(that) => {
+                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
+            }
+            LayerType::Reshape(that) => {
+                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
+            }
+            LayerType::Sigmoid(that) => {
+                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
+            }
+            LayerType::Softmax(that) => {
+                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
+            }
         }
     }
 }

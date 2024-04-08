@@ -66,7 +66,7 @@ impl Layer for Embedding {
         Tensor::matmul(input, &self.embedding_table, output, Default::default())
     }
 
-    fn backward(&self, _layer_delta: &Tensor, _output_diff: &mut Tensor) {
+    fn backward(&self, _layer_delta: &Tensor, _previous_layer_delta: &mut Tensor) {
         panic!("Embedding can not go backward !");
     }
 

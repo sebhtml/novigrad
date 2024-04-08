@@ -113,13 +113,13 @@ impl Layer for Linear {
         Ok(())
     }
 
-    fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
+    fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
         let layer_weights = &self.weights;
 
         let op_result = Tensor::matmul(
             layer_weights,
             layer_delta,
-            output_diff,
+            previous_layer_delta,
             TRANSPOSE_LHS | TRANSPOSE_RHS | TRANSPOSE_RESULT,
         );
 

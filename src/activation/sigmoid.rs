@@ -97,8 +97,8 @@ impl Layer for Sigmoid {
         Self::activate_f(input, output)
     }
 
-    fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
-        output_diff.assign(layer_delta)
+    fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
+        previous_layer_delta.assign(layer_delta)
     }
 
     fn get_layer_delta(

@@ -20,7 +20,7 @@ pub trait Layer {
     fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error>;
 
     // TODO backward should return Error
-    fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor);
+    fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor);
 
     // TODO get_layer_delta should return Error
     fn get_layer_delta(
@@ -108,13 +108,13 @@ impl Layer for LayerType {
         }
     }
 
-    fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
+    fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
         match self {
-            LayerType::Embedding(that) => that.backward(layer_delta, output_diff),
-            LayerType::Linear(that) => that.backward(layer_delta, output_diff),
-            LayerType::Reshape(that) => that.backward(layer_delta, output_diff),
-            LayerType::Sigmoid(that) => that.backward(layer_delta, output_diff),
-            LayerType::Softmax(that) => that.backward(layer_delta, output_diff),
+            LayerType::Embedding(that) => that.backward(layer_delta, previous_layer_delta),
+            LayerType::Linear(that) => that.backward(layer_delta, previous_layer_delta),
+            LayerType::Reshape(that) => that.backward(layer_delta, previous_layer_delta),
+            LayerType::Sigmoid(that) => that.backward(layer_delta, previous_layer_delta),
+            LayerType::Softmax(that) => that.backward(layer_delta, previous_layer_delta),
         }
     }
 

@@ -74,9 +74,11 @@ impl Display for Tensor {
 }
 
 pub trait TensorTrait<T, Rhs> {
+    fn is_finite(&self) -> bool;
     fn rows(&self) -> usize;
     fn cols(&self) -> usize;
     fn row(&self, row: usize, result: &mut Rhs);
+    fn col(&self, col: usize, result: &mut Rhs);
     fn index(&self, row: usize, col: usize) -> usize;
     fn shape(&self) -> (usize, usize);
     fn reset(&mut self, new_rows: usize, new_cols: usize, value: T);
@@ -98,6 +100,13 @@ pub trait TensorTrait<T, Rhs> {
 }
 
 impl TensorTrait<f32, Tensor> for Tensor {
+    fn is_finite(&self) -> bool {
+        match self {
+            Tensor::TensorF32(that) => that.is_finite(),
+            _ => panic!("Not implemented"),
+        }
+    }
+
     fn rows(&self) -> usize {
         match self {
             Tensor::TensorF32(that) => that.rows(),
@@ -115,6 +124,13 @@ impl TensorTrait<f32, Tensor> for Tensor {
     fn row(&self, row: usize, result: &mut Tensor) {
         match (self, result) {
             (Tensor::TensorF32(that), Tensor::TensorF32(result)) => that.row(row, result),
+            _ => panic!("Not implemented"),
+        }
+    }
+
+    fn col(&self, col: usize, result: &mut Tensor) {
+        match (self, result) {
+            (Tensor::TensorF32(that), Tensor::TensorF32(result)) => that.col(col, result),
             _ => panic!("Not implemented"),
         }
     }

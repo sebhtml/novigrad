@@ -319,6 +319,10 @@ impl TensorF32 {
 }
 
 impl TensorTrait<f32, TensorF32> for TensorF32 {
+    fn is_finite(&self) -> bool {
+        !self.values.iter().any(|value| !value.is_finite())
+    }
+
     fn rows(&self) -> usize {
         self.rows
     }

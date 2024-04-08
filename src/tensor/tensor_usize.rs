@@ -25,6 +25,9 @@ impl TensorUSize {
 }
 
 impl TensorTrait<usize, TensorUSize> for TensorUSize {
+    fn is_finite(&self) -> bool {
+        panic!("Not implemented");
+    }
     fn rows(&self) -> usize {
         panic!("Not implemented");
     }

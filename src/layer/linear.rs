@@ -10,7 +10,6 @@ use crate::{
 pub struct Linear {
     weights: Tensor,
     biases: Tensor,
-    matrix_product: Tensor,
     weights_delta: Tensor,
     biases_delta: Tensor,
     has_pending_change: bool,
@@ -36,7 +35,6 @@ impl Linear {
         Linear {
             weights,
             biases,
-            matrix_product: Default::default(),
             weights_delta: Default::default(),
             biases_delta: Default::default(),
             has_pending_change: false,
@@ -76,7 +74,7 @@ impl Layer for Linear {
         Ok(())
     }
 
-    fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
+    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         // Use the same convention that is used in tensorflow:
         // y = x @ W^T+b
         // Weights is on the right.
@@ -96,9 +94,8 @@ impl Layer for Linear {
             }
         }
 
-        let matrix_product = &mut self.matrix_product;
         let biases = &self.biases;
-        let op_result = x_times_w_t.add(biases, matrix_product);
+        let op_result = x_times_w_t.add(biases, output);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -114,10 +111,6 @@ impl Layer for Linear {
 
         op_result.expect("Ok");
         Ok(())
-    }
-
-    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
-        &self.matrix_product
     }
 
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
@@ -136,6 +129,8 @@ impl Layer for Linear {
     fn get_layer_delta(
         &self,
         _working_memory: &mut DeltaWorkingMemory,
+        _layer_input: &Tensor,
+        _layer_output: &Tensor,
         next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
         layer_delta: &mut Tensor,

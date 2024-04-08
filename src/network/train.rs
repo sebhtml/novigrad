@@ -68,7 +68,7 @@ pub fn train_network_on_dataset(
     let layers = &dataset_details.layers;
     let loss_function_name = &dataset_details.loss_function_name;
 
-    let mut train_working_memory = TrainWorkingMemory::default();
+    let mut train_working_memory = TrainWorkingMemory::new(layers.len());
     let mut error_working_memory = DeltaWorkingMemory::default();
     let mut predict_working_memory = PredictWorkingMemory::new(examples.len());
 

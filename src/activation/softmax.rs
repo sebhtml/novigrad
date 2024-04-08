@@ -10,16 +10,12 @@ pub struct SoftmaxConfig {
 #[derive(Clone)]
 pub struct Softmax {
     using_softmax_and_cross_entropy_loss: bool,
-    matrix_product: Tensor,
-    activation_tensor: Tensor,
 }
 
 impl Into<Softmax> for &SoftmaxConfig {
     fn into(self) -> Softmax {
         Softmax {
             using_softmax_and_cross_entropy_loss: self.using_softmax_and_cross_entropy_loss,
-            matrix_product: Default::default(),
-            activation_tensor: Default::default(),
         }
     }
 }
@@ -129,13 +125,8 @@ impl Layer for Softmax {
         Ok(())
     }
 
-    fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
-        self.matrix_product.assign(input);
-        Self::activate_f(input, &mut self.activation_tensor)
-    }
-
-    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
-        &self.activation_tensor
+    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+        Self::activate_f(input, output)
     }
 
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
@@ -145,6 +136,8 @@ impl Layer for Softmax {
     fn get_layer_delta(
         &self,
         working_memory: &mut crate::DeltaWorkingMemory,
+        layer_input: &Tensor,
+        layer_output: &Tensor,
         next_layer: Option<&crate::LayerType>,
         next_layer_delta: &Tensor,
         layer_delta: &mut Tensor,
@@ -168,9 +161,7 @@ impl Layer for Softmax {
             layer_delta.assign(&output_diff);
         } else {
             let layer_f_derivative = &mut working_memory.layer_f_derivative;
-            let activation_tensor = &self.activation_tensor;
-            let matrix_product = &self.matrix_product;
-            let op_result = Self::derive_f(matrix_product, activation_tensor, layer_f_derivative);
+            let op_result = Self::derive_f(layer_input, layer_output, layer_f_derivative);
             op_result.expect("Ok");
             let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
             op_result.expect("Ok");

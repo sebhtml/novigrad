@@ -5,7 +5,6 @@ pub struct Reshape {
     input_cols: usize,
     output_rows: usize,
     output_cols: usize,
-    forward_tensor: Tensor,
 }
 
 impl Reshape {
@@ -20,7 +19,6 @@ impl Reshape {
             input_cols,
             output_rows,
             output_cols,
-            forward_tensor: Default::default(),
         }
     }
 }
@@ -38,16 +36,11 @@ impl Layer for Reshape {
         Ok(())
     }
 
-    fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
+    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
-        self.forward_tensor.assign(input);
-        self.forward_tensor
-            .reshape(self.output_rows, self.output_cols)
-    }
-
-    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
-        &self.forward_tensor
+        output.assign(input);
+        output.reshape(self.output_rows, self.output_cols)
     }
 
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
@@ -57,6 +50,8 @@ impl Layer for Reshape {
     fn get_layer_delta(
         &self,
         _working_memory: &mut crate::DeltaWorkingMemory,
+        _layer_input: &Tensor,
+        _layer_output: &Tensor,
         next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
         layer_delta: &mut Tensor,

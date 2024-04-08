@@ -17,9 +17,7 @@ pub trait Layer {
 
     fn commit_change(&mut self) -> Result<(), Error>;
 
-    fn forward(&mut self, input: &Tensor) -> Result<(), Error>;
-
-    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor;
+    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error>;
 
     // TODO backward should return Error
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor);
@@ -28,6 +26,8 @@ pub trait Layer {
     fn get_layer_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
+        layer_input: &Tensor,
+        layer_output: &Tensor,
         next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
         layer_delta: &mut Tensor,
@@ -98,23 +98,13 @@ impl Layer for LayerType {
         }
     }
 
-    fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
+    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         match self {
-            LayerType::Embedding(that) => that.forward(input),
-            LayerType::Linear(that) => that.forward(input),
-            LayerType::Reshape(that) => that.forward(input),
-            LayerType::Sigmoid(that) => that.forward(input),
-            LayerType::Softmax(that) => that.forward(input),
-        }
-    }
-
-    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
-        match self {
-            LayerType::Embedding(that) => that.get_activation_tensor(),
-            LayerType::Linear(that) => that.get_activation_tensor(),
-            LayerType::Reshape(that) => that.get_activation_tensor(),
-            LayerType::Sigmoid(that) => that.get_activation_tensor(),
-            LayerType::Softmax(that) => that.get_activation_tensor(),
+            LayerType::Embedding(that) => that.forward(input, output),
+            LayerType::Linear(that) => that.forward(input, output),
+            LayerType::Reshape(that) => that.forward(input, output),
+            LayerType::Sigmoid(that) => that.forward(input, output),
+            LayerType::Softmax(that) => that.forward(input, output),
         }
     }
 
@@ -131,26 +121,53 @@ impl Layer for LayerType {
     fn get_layer_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
+        layer_input: &Tensor,
+        layer_output: &Tensor,
         next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
         layer_delta: &mut Tensor,
     ) {
         match self {
-            LayerType::Embedding(that) => {
-                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
-            }
-            LayerType::Linear(that) => {
-                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
-            }
-            LayerType::Reshape(that) => {
-                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
-            }
-            LayerType::Sigmoid(that) => {
-                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
-            }
-            LayerType::Softmax(that) => {
-                that.get_layer_delta(working_memory, next_layer, next_layer_delta, layer_delta)
-            }
+            LayerType::Embedding(that) => that.get_layer_delta(
+                working_memory,
+                layer_input,
+                layer_output,
+                next_layer,
+                next_layer_delta,
+                layer_delta,
+            ),
+            LayerType::Linear(that) => that.get_layer_delta(
+                working_memory,
+                layer_input,
+                layer_output,
+                next_layer,
+                next_layer_delta,
+                layer_delta,
+            ),
+            LayerType::Reshape(that) => that.get_layer_delta(
+                working_memory,
+                layer_input,
+                layer_output,
+                next_layer,
+                next_layer_delta,
+                layer_delta,
+            ),
+            LayerType::Sigmoid(that) => that.get_layer_delta(
+                working_memory,
+                layer_input,
+                layer_output,
+                next_layer,
+                next_layer_delta,
+                layer_delta,
+            ),
+            LayerType::Softmax(that) => that.get_layer_delta(
+                working_memory,
+                layer_input,
+                layer_output,
+                next_layer,
+                next_layer_delta,
+                layer_delta,
+            ),
         }
     }
 }

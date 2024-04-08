@@ -9,7 +9,6 @@ pub struct Embedding {
     embedding_table: Tensor,
     embedding_table_delta: Tensor,
     has_pending_change: bool,
-    activation_tensor: Tensor,
 }
 
 impl Embedding {
@@ -18,7 +17,6 @@ impl Embedding {
             embedding_table: get_embedding_table(num_embeddings, embedding_dim),
             embedding_table_delta: Default::default(),
             has_pending_change: Default::default(),
-            activation_tensor: Default::default(),
         }
     }
 }
@@ -63,18 +61,9 @@ impl Layer for Embedding {
         Ok(())
     }
 
-    fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
+    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         debug_assert_eq!(input.cols(), self.embedding_table.rows());
-        Tensor::matmul(
-            input,
-            &self.embedding_table,
-            &mut self.activation_tensor,
-            Default::default(),
-        )
-    }
-
-    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
-        &self.activation_tensor
+        Tensor::matmul(input, &self.embedding_table, output, Default::default())
     }
 
     fn backward(&self, _layer_delta: &Tensor, _output_diff: &mut Tensor) {
@@ -84,6 +73,8 @@ impl Layer for Embedding {
     fn get_layer_delta(
         &self,
         _working_memory: &mut DeltaWorkingMemory,
+        _layer_input: &Tensor,
+        _layer_output: &Tensor,
         next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
         layer_delta: &mut Tensor,

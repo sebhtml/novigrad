@@ -6,10 +6,7 @@ use std::f32::consts::E;
 pub struct SigmoidConfig {}
 
 #[derive(Clone, Default)]
-pub struct Sigmoid {
-    matrix_product: Tensor,
-    activation_tensor: Tensor,
-}
+pub struct Sigmoid {}
 
 impl Into<Sigmoid> for &SigmoidConfig {
     fn into(self) -> Sigmoid {
@@ -96,13 +93,8 @@ impl Layer for Sigmoid {
         Ok(())
     }
 
-    fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
-        self.matrix_product.assign(input);
-        Self::activate_f(input, &mut self.activation_tensor)
-    }
-
-    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
-        &self.activation_tensor
+    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+        Self::activate_f(input, output)
     }
 
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
@@ -112,6 +104,8 @@ impl Layer for Sigmoid {
     fn get_layer_delta(
         &self,
         working_memory: &mut crate::DeltaWorkingMemory,
+        layer_input: &Tensor,
+        layer_output: &Tensor,
         next_layer: Option<&crate::LayerType>,
         next_layer_delta: &Tensor,
         layer_delta: &mut Tensor,
@@ -128,12 +122,10 @@ impl Layer for Sigmoid {
                 next_layer.backward(next_layer_delta, output_diff);
             }
         }
-        // Compute activation function derivative.
 
+        // Compute activation function derivative.
         let layer_f_derivative = &mut working_memory.layer_f_derivative;
-        let activation_tensor = &self.activation_tensor;
-        let matrix_product = &self.matrix_product;
-        let op_result = Self::derive_f(matrix_product, activation_tensor, layer_f_derivative);
+        let op_result = Self::derive_f(layer_input, layer_output, layer_f_derivative);
         op_result.expect("Ok");
         let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
         op_result.expect("Ok");

@@ -217,6 +217,7 @@ impl<'a> Network<'a> {
                 let tmp = &mut working_memory.tmp;
                 let loss = &mut working_memory.loss;
                 let layer_activation_tensor = self.layers[layer_index].get_activation_tensor();
+
                 self.get_last_layer_delta(
                     layer_activation_tensor,
                     last_activation_row,
@@ -236,13 +237,16 @@ impl<'a> Network<'a> {
                 };
 
                 let layer = &self.layers[layer_index];
+                let tmp = &mut working_memory.tmp;
                 layer.get_layer_delta(
                     error_working_memory,
                     next_layer,
                     next_layer_delta,
                     self.using_softmax_and_cross_entropy_loss,
-                    layer_delta,
+                    tmp,
                 );
+
+                tmp.clip(-1.0, 1.0, layer_delta)
             }
 
             {

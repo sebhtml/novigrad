@@ -3,16 +3,14 @@ use std::mem::swap;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    ActivationFunction, ActivationType, DeltaWorkingMemory, Error, Layer, LayerType, Tensor,
-    TensorTrait, TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
+    DeltaWorkingMemory, Error, Layer, LayerType, Tensor, TensorTrait, TRANSPOSE_LHS,
+    TRANSPOSE_RESULT, TRANSPOSE_RHS,
 };
 
 pub struct Linear {
     weights: Tensor,
     biases: Tensor,
-    activation_function: ActivationType,
     matrix_product: Tensor,
-    activation_tensor: Tensor,
     weights_delta: Tensor,
     biases_delta: Tensor,
     has_pending_change: bool,
@@ -21,7 +19,7 @@ pub struct Linear {
 }
 
 impl Linear {
-    pub fn new(input_rows: usize, rows: usize, cols: usize, activation: ActivationType) -> Self {
+    pub fn new(input_rows: usize, rows: usize, cols: usize) -> Self {
         let mut rng = thread_rng();
         let mut weights = Vec::new();
         let right = (6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt();
@@ -38,9 +36,7 @@ impl Linear {
         Linear {
             weights,
             biases,
-            activation_function: activation,
             matrix_product: Default::default(),
-            activation_tensor: Default::default(),
             weights_delta: Default::default(),
             biases_delta: Default::default(),
             has_pending_change: false,
@@ -117,15 +113,11 @@ impl Layer for Linear {
         }
 
         op_result.expect("Ok");
-        let activation_function = &self.activation_function;
-        let activation_tensor = &mut self.activation_tensor;
-        let op_result = activation_function.activate(&matrix_product, activation_tensor);
-        op_result.expect("Ok");
         Ok(())
     }
 
     fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
-        &self.activation_tensor
+        &self.matrix_product
     }
 
     fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
@@ -143,43 +135,21 @@ impl Layer for Linear {
 
     fn get_layer_delta(
         &self,
-        working_memory: &mut DeltaWorkingMemory,
+        _working_memory: &mut DeltaWorkingMemory,
         next_layer: Option<&LayerType>,
         next_layer_delta: &Tensor,
-        using_softmax_and_cross_entropy_loss: bool,
+        _using_softmax_and_cross_entropy_loss: bool,
         layer_delta: &mut Tensor,
     ) {
-        let output_diff = &mut working_memory.output_diff;
-
         match next_layer {
             None => {
                 // use the output of the loss function.
-                output_diff.assign(next_layer_delta);
+                layer_delta.assign(next_layer_delta);
             }
             Some(next_layer) => {
                 // Hidden layer
-                next_layer.backward(next_layer_delta, output_diff);
+                next_layer.backward(next_layer_delta, layer_delta);
             }
-        }
-
-        // Compute activation function derivative.
-        let is_last_layer = next_layer.is_none();
-        if is_last_layer && using_softmax_and_cross_entropy_loss {
-            // Softmax and Cross Entropy Loss are best friends.
-            layer_delta.assign(&output_diff);
-        } else {
-            let layer_f_derivative = &mut working_memory.layer_f_derivative;
-            let layer_activation_function = &self.activation_function;
-            let activation_tensor = &self.activation_tensor;
-            let matrix_product = &self.matrix_product;
-            let op_result = layer_activation_function.derive(
-                matrix_product,
-                activation_tensor,
-                layer_f_derivative,
-            );
-            op_result.expect("Ok");
-            let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
-            op_result.expect("Ok");
         }
     }
 
@@ -211,19 +181,14 @@ impl Layer for Linear {
 }
 
 pub struct LinearConfig {
+    // TODO rename input_rows to bias_rows
     pub input_rows: usize,
     pub rows: usize,
     pub cols: usize,
-    pub activation: ActivationType,
 }
 
 impl Into<Linear> for &LinearConfig {
     fn into(self) -> Linear {
-        Linear::new(
-            self.input_rows,
-            self.rows,
-            self.cols,
-            self.activation.clone(),
-        )
+        Linear::new(self.input_rows, self.rows, self.cols)
     }
 }

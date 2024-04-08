@@ -1,6 +1,6 @@
 use crate::{
-    into_one_hot_encoded_rows, loss::LossFunctionType, ActivationType, DatasetDetails,
-    EmbeddingConfig, LayerConfig, LayerType, LinearConfig, ReshapeConfig, Tensor,
+    into_one_hot_encoded_rows, loss::LossFunctionType, DatasetDetails, EmbeddingConfig,
+    LayerConfig, LinearConfig, ReshapeConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -48,8 +48,8 @@ pub fn load_dataset() -> DatasetDetails {
                 input_rows: 6,
                 rows: 16,
                 cols: 32,
-                activation: ActivationType::Sigmoid(Default::default()),
             }),
+            LayerConfig::Sigmoid(Default::default()),
             LayerConfig::Reshape(ReshapeConfig {
                 input_rows: 6,
                 input_cols: 16,
@@ -60,14 +60,14 @@ pub fn load_dataset() -> DatasetDetails {
                 input_rows: 1,
                 rows: 32,
                 cols: 6 * 16,
-                activation: ActivationType::Sigmoid(Default::default()),
             }),
+            LayerConfig::Sigmoid(Default::default()),
             LayerConfig::Linear(LinearConfig {
                 input_rows: 1,
                 rows: 16,
                 cols: 32,
-                activation: ActivationType::Softmax(Default::default()),
             }),
+            LayerConfig::Softmax(Default::default()),
         ],
         epochs: 1000,
         progress: 100,

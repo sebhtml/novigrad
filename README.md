@@ -17,11 +17,10 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- move activation function outside of Linear
-- implement one-hot encoded tensor with sparsity
+- remove TensorUSize
 - add tape to decouple compute from storage
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
-- remove TensorUSize
+- implement one-hot encoded tensor with sparsity
 - centralize panic! calls
 - implement tiled matrix multiplication
 - Dropout

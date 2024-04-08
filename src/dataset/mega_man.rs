@@ -2,8 +2,8 @@ use std::fs;
 
 use crate::into_one_hot_encoded_rows;
 use crate::{
-    loss::LossFunctionType, ActivationType, DatasetDetails, EmbeddingConfig, LayerConfig,
-    LinearConfig, ReshapeConfig, Tensor,
+    loss::LossFunctionType, DatasetDetails, EmbeddingConfig, LayerConfig, LinearConfig,
+    ReshapeConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -59,8 +59,8 @@ pub fn load_dataset() -> DatasetDetails {
                 input_rows: 1,
                 rows: 256,
                 cols: 32 * 384,
-                activation: ActivationType::Softmax(Default::default()),
             }),
+            LayerConfig::Softmax(Default::default()),
         ],
         epochs: 300,
         progress: 100,

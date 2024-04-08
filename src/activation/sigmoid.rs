@@ -1,18 +1,24 @@
-use crate::{ActivationFunction, Tensor};
+use crate::{ActivationFunction, Layer, Tensor};
 use crate::{Error, TensorTrait};
 use std::f32::consts::E;
 
-#[derive(Clone)]
-pub struct Sigmoid {}
+#[derive(Clone, Default)]
+pub struct SigmoidConfig {}
 
-impl Default for Sigmoid {
-    fn default() -> Self {
-        Self {}
+#[derive(Clone, Default)]
+pub struct Sigmoid {
+    matrix_product: Tensor,
+    activation_tensor: Tensor,
+}
+
+impl Into<Sigmoid> for &SigmoidConfig {
+    fn into(self) -> Sigmoid {
+        Default::default()
     }
 }
 
-impl ActivationFunction for Sigmoid {
-    fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+impl Sigmoid {
+    fn activate_f(product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         result.reset(
             product_matrix.rows(),
             product_matrix.cols(),
@@ -34,8 +40,7 @@ impl ActivationFunction for Sigmoid {
         Ok(())
     }
 
-    fn derive(
-        &self,
+    fn derive_f(
         _product_matrix: &Tensor,
         activation_matrix: &Tensor,
         result: &mut Tensor,
@@ -59,5 +64,84 @@ impl ActivationFunction for Sigmoid {
             row += 1;
         }
         Ok(())
+    }
+}
+
+impl ActivationFunction for Sigmoid {
+    fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        Self::activate_f(product_matrix, result)
+    }
+
+    fn derive(
+        &self,
+        product_matrix: &Tensor,
+        activation_matrix: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        Self::derive_f(product_matrix, activation_matrix, result)
+    }
+}
+
+// TODO refactor this since it is a copy-and-paste of Softmax impl.
+impl Layer for Sigmoid {
+    fn plan_change(
+        &mut self,
+        _learning_rate: f32,
+        _previous_activation: &Tensor,
+        _layer_delta: &Tensor,
+    ) {
+    }
+
+    fn commit_change(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    fn forward(&mut self, input: &Tensor) -> Result<(), Error> {
+        self.matrix_product.assign(input);
+        Self::activate_f(input, &mut self.activation_tensor)
+    }
+
+    fn get_activation_tensor<'a>(&'a self) -> &'a Tensor {
+        &self.activation_tensor
+    }
+
+    fn backward(&self, layer_delta: &Tensor, output_diff: &mut Tensor) {
+        output_diff.assign(layer_delta)
+    }
+
+    fn get_layer_delta(
+        &self,
+        working_memory: &mut crate::DeltaWorkingMemory,
+        next_layer: Option<&crate::LayerType>,
+        next_layer_delta: &Tensor,
+        using_softmax_and_cross_entropy_loss: bool,
+        layer_delta: &mut Tensor,
+    ) {
+        let output_diff = &mut working_memory.output_diff;
+
+        match next_layer {
+            None => {
+                // use the output of the loss function.
+                output_diff.assign(next_layer_delta);
+            }
+            Some(next_layer) => {
+                // Hidden layer
+                next_layer.backward(next_layer_delta, output_diff);
+            }
+        }
+        // Compute activation function derivative.
+        let is_last_layer = next_layer.is_none();
+        if is_last_layer && using_softmax_and_cross_entropy_loss {
+            // Softmax and Cross Entropy Loss are best friends.
+            layer_delta.assign(&output_diff);
+        } else {
+            let layer_f_derivative = &mut working_memory.layer_f_derivative;
+            let activation_tensor = &self.activation_tensor;
+            let matrix_product = &self.matrix_product;
+            let op_result = Self::derive_f(matrix_product, activation_tensor, layer_f_derivative);
+            op_result.expect("Ok");
+            let op_result = layer_f_derivative.element_wise_mul(output_diff, layer_delta);
+            op_result.expect("Ok");
+        }
     }
 }

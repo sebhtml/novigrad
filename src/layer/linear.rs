@@ -3,7 +3,7 @@ use std::mem::swap;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    DeltaWorkingMemory, Error, Layer, Tensor, TensorTrait, TRANSPOSE_LHS, TRANSPOSE_RESULT,
+    DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT,
     TRANSPOSE_RHS,
 };
 

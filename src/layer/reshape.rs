@@ -1,4 +1,4 @@
-use crate::{DeltaWorkingMemory, Error, Layer, Tensor, TensorTrait};
+use crate::{DeltaWorkingMemory, Error, Layer, Tensor};
 
 pub struct Reshape {
     input_rows: usize,

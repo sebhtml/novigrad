@@ -1,5 +1,5 @@
 use crate::Error;
-use crate::{ActivationFunction, DeltaWorkingMemory, Layer, Tensor};
+use crate::{ActivationFunction, DeltaWorkingMemory, DifferentiableModuleTrait, Tensor};
 use std::f32::consts::E;
 
 #[derive(Clone, Default)]
@@ -79,7 +79,7 @@ impl ActivationFunction for Sigmoid {
     }
 }
 
-impl Layer for Sigmoid {
+impl DifferentiableModuleTrait for Sigmoid {
     fn compute_gradient(&mut self, _layer_input: &Tensor, _layer_output_delta: &Tensor) {}
 
     fn commit_change(&mut self, _learning_rate: f32) -> Result<(), Error> {

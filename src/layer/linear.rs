@@ -1,8 +1,8 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    DeltaWorkingMemory, DifferentiableTensor, Error, Layer, Tensor, TRANSPOSE_LHS,
-    TRANSPOSE_RESULT, TRANSPOSE_RHS,
+    DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor,
+    TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
 };
 
 pub struct Linear {
@@ -34,7 +34,7 @@ impl Linear {
     }
 }
 
-impl Layer for Linear {
+impl DifferentiableModuleTrait for Linear {
     fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
         self.weights.commit_change(learning_rate);
         self.biases.commit_change(learning_rate);

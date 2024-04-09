@@ -5,11 +5,11 @@ use std::mem::swap;
 
 use crate::{
     loss::{LossFunction, LossFunctionType},
-    Error, Layer, LayerConfig, LayerType, Tensor,
+    DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleTrait, Error, Tensor,
 };
 
 pub struct Network<'a> {
-    layers: Vec<LayerType>,
+    layers: Vec<DifferentiableModule>,
     loss_function: &'a LossFunctionType,
 }
 
@@ -68,7 +68,10 @@ impl PredictWorkingMemory {
 }
 
 impl<'a> Network<'a> {
-    pub fn new(layer_configs: &Vec<LayerConfig>, loss_function: &'a LossFunctionType) -> Self {
+    pub fn new(
+        layer_configs: &Vec<DifferentiableModuleConfig>,
+        loss_function: &'a LossFunctionType,
+    ) -> Self {
         Self {
             layers: layer_configs
                 .into_iter()

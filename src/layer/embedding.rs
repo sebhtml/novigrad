@@ -1,5 +1,6 @@
 use crate::{
-    DeltaWorkingMemory, DifferentiableTensor, Error, Layer, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT,
+    DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor,
+    TRANSPOSE_LHS, TRANSPOSE_RESULT,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -15,7 +16,7 @@ impl Embedding {
     }
 }
 
-impl Layer for Embedding {
+impl DifferentiableModuleTrait for Embedding {
     fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
         let op_result = Tensor::matmul(
             layer_output_delta,

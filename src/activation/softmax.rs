@@ -1,5 +1,5 @@
 use crate::Error;
-use crate::{ActivationFunction, Layer, Tensor};
+use crate::{ActivationFunction, DifferentiableModuleTrait, Tensor};
 use std::f32::consts::E;
 
 #[derive(Clone)]
@@ -112,7 +112,7 @@ impl ActivationFunction for Softmax {
     }
 }
 
-impl Layer for Softmax {
+impl DifferentiableModuleTrait for Softmax {
     fn compute_gradient(&mut self, _layer_input: &Tensor, _layer_output_delta: &Tensor) {}
 
     fn commit_change(&mut self, _learning_rate: f32) -> Result<(), Error> {

@@ -1,6 +1,6 @@
 use crate::{
-    into_one_hot_encoded_rows, loss::LossFunctionType, DatasetDetails, EmbeddingConfig,
-    LayerConfig, LinearConfig, ReshapeConfig, SoftmaxConfig, Tensor,
+    into_one_hot_encoded_rows, loss::LossFunctionType, DatasetDetails, DifferentiableModuleConfig,
+    EmbeddingConfig, LinearConfig, ReshapeConfig, SoftmaxConfig, Tensor,
 };
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
@@ -40,34 +40,34 @@ pub fn load_dataset() -> DatasetDetails {
     DatasetDetails {
         examples: load_examples(),
         layers: vec![
-            LayerConfig::Embedding(EmbeddingConfig {
+            DifferentiableModuleConfig::Embedding(EmbeddingConfig {
                 num_embeddings: 16,
                 embedding_dim: 32,
             }),
-            LayerConfig::Linear(LinearConfig {
+            DifferentiableModuleConfig::Linear(LinearConfig {
                 input_rows: 6,
                 rows: 16,
                 cols: 32,
             }),
-            LayerConfig::Sigmoid(Default::default()),
-            LayerConfig::Reshape(ReshapeConfig {
+            DifferentiableModuleConfig::Sigmoid(Default::default()),
+            DifferentiableModuleConfig::Reshape(ReshapeConfig {
                 input_rows: 6,
                 input_cols: 16,
                 output_rows: 1,
                 output_cols: 6 * 16,
             }),
-            LayerConfig::Linear(LinearConfig {
+            DifferentiableModuleConfig::Linear(LinearConfig {
                 input_rows: 1,
                 rows: 32,
                 cols: 6 * 16,
             }),
-            LayerConfig::Sigmoid(Default::default()),
-            LayerConfig::Linear(LinearConfig {
+            DifferentiableModuleConfig::Sigmoid(Default::default()),
+            DifferentiableModuleConfig::Linear(LinearConfig {
                 input_rows: 1,
                 rows: 16,
                 cols: 32,
             }),
-            LayerConfig::Softmax(SoftmaxConfig {
+            DifferentiableModuleConfig::Softmax(SoftmaxConfig {
                 using_softmax_and_cross_entropy_loss: true,
             }),
         ],

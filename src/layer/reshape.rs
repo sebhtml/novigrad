@@ -1,4 +1,4 @@
-use crate::{DeltaWorkingMemory, Error, Layer, Tensor};
+use crate::{DeltaWorkingMemory, DifferentiableModuleTrait, Error, Tensor};
 
 pub struct Reshape {
     input_rows: usize,
@@ -23,7 +23,7 @@ impl Reshape {
     }
 }
 
-impl Layer for Reshape {
+impl DifferentiableModuleTrait for Reshape {
     fn compute_gradient(&mut self, _layer_input: &Tensor, _layer_output_delta: &Tensor) {}
 
     fn commit_change(&mut self, _learning_rate: f32) -> Result<(), Error> {

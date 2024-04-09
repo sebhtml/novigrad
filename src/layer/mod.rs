@@ -7,7 +7,7 @@ pub use reshape::*;
 
 use crate::{DeltaWorkingMemory, Error, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor};
 
-pub trait Layer {
+pub trait DifferentiableModuleTrait {
     fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor);
 
     fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error>;
@@ -29,7 +29,7 @@ pub trait Layer {
     );
 }
 
-pub enum LayerConfig {
+pub enum DifferentiableModuleConfig {
     Embedding(EmbeddingConfig),
     Linear(LinearConfig),
     Reshape(ReshapeConfig),
@@ -37,7 +37,7 @@ pub enum LayerConfig {
     Softmax(SoftmaxConfig),
 }
 
-pub enum LayerType {
+pub enum DifferentiableModule {
     Embedding(Embedding),
     Linear(Linear),
     Reshape(Reshape),
@@ -45,56 +45,78 @@ pub enum LayerType {
     Softmax(Softmax),
 }
 
-impl Into<LayerType> for &LayerConfig {
-    fn into(self) -> LayerType {
+impl Into<DifferentiableModule> for &DifferentiableModuleConfig {
+    fn into(self) -> DifferentiableModule {
         match self {
-            LayerConfig::Embedding(config) => LayerType::Embedding(config.into()),
-            LayerConfig::Linear(config) => LayerType::Linear(config.into()),
-            LayerConfig::Reshape(config) => LayerType::Reshape(config.into()),
-            LayerConfig::Sigmoid(config) => LayerType::Sigmoid(config.into()),
-            LayerConfig::Softmax(config) => LayerType::Softmax(config.into()),
+            DifferentiableModuleConfig::Embedding(config) => {
+                DifferentiableModule::Embedding(config.into())
+            }
+            DifferentiableModuleConfig::Linear(config) => {
+                DifferentiableModule::Linear(config.into())
+            }
+            DifferentiableModuleConfig::Reshape(config) => {
+                DifferentiableModule::Reshape(config.into())
+            }
+            DifferentiableModuleConfig::Sigmoid(config) => {
+                DifferentiableModule::Sigmoid(config.into())
+            }
+            DifferentiableModuleConfig::Softmax(config) => {
+                DifferentiableModule::Softmax(config.into())
+            }
         }
     }
 }
 
-impl Layer for LayerType {
+impl DifferentiableModuleTrait for DifferentiableModule {
     fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
         match self {
-            LayerType::Embedding(that) => that.compute_gradient(layer_input, layer_output_delta),
-            LayerType::Linear(that) => that.compute_gradient(layer_input, layer_output_delta),
-            LayerType::Reshape(that) => that.compute_gradient(layer_input, layer_output_delta),
-            LayerType::Sigmoid(that) => that.compute_gradient(layer_input, layer_output_delta),
-            LayerType::Softmax(that) => that.compute_gradient(layer_input, layer_output_delta),
+            DifferentiableModule::Embedding(that) => {
+                that.compute_gradient(layer_input, layer_output_delta)
+            }
+            DifferentiableModule::Linear(that) => {
+                that.compute_gradient(layer_input, layer_output_delta)
+            }
+            DifferentiableModule::Reshape(that) => {
+                that.compute_gradient(layer_input, layer_output_delta)
+            }
+            DifferentiableModule::Sigmoid(that) => {
+                that.compute_gradient(layer_input, layer_output_delta)
+            }
+            DifferentiableModule::Softmax(that) => {
+                that.compute_gradient(layer_input, layer_output_delta)
+            }
         }
     }
 
     fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
         match self {
-            LayerType::Embedding(that) => that.commit_change(learning_rate),
-            LayerType::Linear(that) => that.commit_change(learning_rate),
-            LayerType::Reshape(that) => that.commit_change(learning_rate),
-            LayerType::Sigmoid(that) => that.commit_change(learning_rate),
-            LayerType::Softmax(that) => that.commit_change(learning_rate),
+            DifferentiableModule::Embedding(that) => that.commit_change(learning_rate),
+            DifferentiableModule::Linear(that) => that.commit_change(learning_rate),
+            DifferentiableModule::Reshape(that) => that.commit_change(learning_rate),
+            DifferentiableModule::Sigmoid(that) => that.commit_change(learning_rate),
+            DifferentiableModule::Softmax(that) => that.commit_change(learning_rate),
         }
     }
 
     fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         match self {
-            LayerType::Embedding(that) => that.forward(input, output),
-            LayerType::Linear(that) => that.forward(input, output),
-            LayerType::Reshape(that) => that.forward(input, output),
-            LayerType::Sigmoid(that) => that.forward(input, output),
-            LayerType::Softmax(that) => that.forward(input, output),
+            DifferentiableModule::Embedding(that) => that.forward(input, output),
+            DifferentiableModule::Linear(that) => that.forward(input, output),
+            DifferentiableModule::Reshape(that) => that.forward(input, output),
+            DifferentiableModule::Sigmoid(that) => that.forward(input, output),
+            DifferentiableModule::Softmax(that) => that.forward(input, output),
         }
     }
 
     fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
         match self {
-            LayerType::Embedding(that) => that.backward(layer_delta, previous_layer_delta),
-            LayerType::Linear(that) => that.backward(layer_delta, previous_layer_delta),
-            LayerType::Reshape(that) => that.backward(layer_delta, previous_layer_delta),
-            LayerType::Sigmoid(that) => that.backward(layer_delta, previous_layer_delta),
-            LayerType::Softmax(that) => that.backward(layer_delta, previous_layer_delta),
+            DifferentiableModule::Embedding(that) => {
+                that.backward(layer_delta, previous_layer_delta)
+            }
+            DifferentiableModule::Linear(that) => that.backward(layer_delta, previous_layer_delta),
+            DifferentiableModule::Reshape(that) => that.backward(layer_delta, previous_layer_delta),
+            DifferentiableModule::Sigmoid(that) => that.backward(layer_delta, previous_layer_delta),
+            DifferentiableModule::Softmax(that) => that.backward(layer_delta, previous_layer_delta),
         }
     }
 
@@ -108,7 +130,7 @@ impl Layer for LayerType {
         layer_delta: &mut Tensor,
     ) {
         match self {
-            LayerType::Embedding(that) => that.get_layer_delta(
+            DifferentiableModule::Embedding(that) => that.get_layer_delta(
                 working_memory,
                 layer_input,
                 layer_output,
@@ -116,7 +138,7 @@ impl Layer for LayerType {
                 is_last_layer,
                 layer_delta,
             ),
-            LayerType::Linear(that) => that.get_layer_delta(
+            DifferentiableModule::Linear(that) => that.get_layer_delta(
                 working_memory,
                 layer_input,
                 layer_output,
@@ -124,7 +146,7 @@ impl Layer for LayerType {
                 is_last_layer,
                 layer_delta,
             ),
-            LayerType::Reshape(that) => that.get_layer_delta(
+            DifferentiableModule::Reshape(that) => that.get_layer_delta(
                 working_memory,
                 layer_input,
                 layer_output,
@@ -132,7 +154,7 @@ impl Layer for LayerType {
                 is_last_layer,
                 layer_delta,
             ),
-            LayerType::Sigmoid(that) => that.get_layer_delta(
+            DifferentiableModule::Sigmoid(that) => that.get_layer_delta(
                 working_memory,
                 layer_input,
                 layer_output,
@@ -140,7 +162,7 @@ impl Layer for LayerType {
                 is_last_layer,
                 layer_delta,
             ),
-            LayerType::Softmax(that) => that.get_layer_delta(
+            DifferentiableModule::Softmax(that) => that.get_layer_delta(
                 working_memory,
                 layer_input,
                 layer_output,

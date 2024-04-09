@@ -13,6 +13,7 @@ pub struct Linear {
     weights_delta: Tensor,
     biases_delta: Tensor,
     has_pending_change: bool,
+    tmp: Tensor,
     addition: Tensor,
 }
 
@@ -37,6 +38,7 @@ impl Linear {
             weights_delta: Default::default(),
             biases_delta: Default::default(),
             has_pending_change: false,
+            tmp: Default::default(),
             addition: Default::default(),
         }
     }
@@ -49,10 +51,10 @@ impl Layer for Linear {
         }
 
         {
-            let mut tmp = Tensor::default();
+            let tmp = &mut self.tmp;
             let addition = &mut self.addition;
             let weights_delta = &self.weights_delta;
-            let op_result = weights_delta.scalar_mul(-learning_rate, &mut tmp);
+            let op_result = weights_delta.scalar_mul(-learning_rate, tmp);
             op_result.expect("Ok");
             let weights = &self.weights;
             let op_result = weights.add(&tmp, addition);
@@ -62,10 +64,10 @@ impl Layer for Linear {
         }
 
         {
-            let mut tmp = Tensor::default();
+            let tmp = &mut self.tmp;
             let addition = &mut self.addition;
             let biases_delta = &self.biases_delta;
-            let op_result = biases_delta.scalar_mul(-learning_rate, &mut tmp);
+            let op_result = biases_delta.scalar_mul(-learning_rate, tmp);
             op_result.expect("Ok");
             let biases = &self.biases;
             let op_result = biases.add(&tmp, addition);
@@ -85,8 +87,8 @@ impl Layer for Linear {
         // W is transposed.
         // X is not transposed.
         let weights = &self.weights;
-        let mut x_times_w_t = Tensor::default();
-        let op_result = Tensor::matmul(input, weights, &mut x_times_w_t, TRANSPOSE_RHS);
+        let tmp = &mut self.tmp;
+        let op_result = Tensor::matmul(input, weights, tmp, TRANSPOSE_RHS);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -99,16 +101,12 @@ impl Layer for Linear {
         }
 
         let biases = &self.biases;
-        let op_result = x_times_w_t.add(biases, output);
+        let op_result = tmp.add(biases, output);
         match op_result {
             Ok(_) => (),
             Err(_) => {
                 println!("Incompatible shapes in matrix multiplication");
-                println!(
-                    "Between A {:?} and B {:?}",
-                    x_times_w_t.shape(),
-                    biases.shape(),
-                );
+                println!("Between A {:?} and B {:?}", tmp.shape(), biases.shape(),);
                 debug_assert!(false);
             }
         }

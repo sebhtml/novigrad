@@ -8,6 +8,8 @@ pub struct Embedding {
     embedding_table: Tensor,
     embedding_table_delta: Tensor,
     has_pending_change: bool,
+    tmp: Tensor,
+    addition: Tensor,
 }
 
 impl Embedding {
@@ -16,6 +18,8 @@ impl Embedding {
             embedding_table: get_embedding_table(num_embeddings, embedding_dim),
             embedding_table_delta: Default::default(),
             has_pending_change: Default::default(),
+            tmp: Default::default(),
+            addition: Default::default(),
         }
     }
 }
@@ -37,20 +41,20 @@ impl Layer for Embedding {
             return Ok(());
         }
 
-        let mut addition = Tensor::default();
-        let mut tmp = Tensor::default();
+        let tmp = &mut self.tmp;
+        let addition = &mut self.addition;
 
         {
             let embedding_table_delta = &self.embedding_table_delta;
             let embedding_table = &self.embedding_table;
-            let op_result = embedding_table_delta.scalar_mul(-learning_rate, &mut tmp);
+            let op_result = embedding_table_delta.scalar_mul(-learning_rate, tmp);
             op_result.expect("Ok");
-            let op_result = embedding_table.add(&tmp, &mut addition);
+            let op_result = embedding_table.add(&tmp, addition);
             op_result.expect("Ok");
         }
 
         let embedding_table = &mut self.embedding_table;
-        swap(embedding_table, &mut addition);
+        swap(embedding_table, addition);
 
         self.has_pending_change = false;
         Ok(())

@@ -20,8 +20,8 @@ impl Into<Softmax> for &SoftmaxConfig {
     }
 }
 
-impl Softmax {
-    fn activate_f(product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+impl ActivationFunction for Softmax {
+    fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         result.reset(
             product_matrix.rows(),
             product_matrix.cols(),
@@ -69,7 +69,8 @@ impl Softmax {
         Ok(())
     }
 
-    fn derive_f(
+    fn derive(
+        &self,
         _product_matrix: &Tensor,
         activation_matrix: &Tensor,
         result: &mut Tensor,
@@ -97,21 +98,6 @@ impl Softmax {
     }
 }
 
-impl ActivationFunction for Softmax {
-    fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        Self::activate_f(product_matrix, result)
-    }
-
-    fn derive(
-        &self,
-        product_matrix: &Tensor,
-        activation_matrix: &Tensor,
-        result: &mut Tensor,
-    ) -> Result<(), Error> {
-        Self::derive_f(product_matrix, activation_matrix, result)
-    }
-}
-
 impl DifferentiableModuleTrait for Softmax {
     fn compute_gradient(&mut self, _layer_input: &Tensor, _layer_output_delta: &Tensor) {}
 
@@ -120,7 +106,7 @@ impl DifferentiableModuleTrait for Softmax {
     }
 
     fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
-        Self::activate_f(input, output)
+        self.activate(input, output)
     }
 
     fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
@@ -142,7 +128,7 @@ impl DifferentiableModuleTrait for Softmax {
             layer_delta.assign(&back_propagated_delta);
         } else {
             let layer_f_derivative = &mut working_memory.layer_f_derivative;
-            let op_result = Self::derive_f(layer_input, layer_output, layer_f_derivative);
+            let op_result = self.derive(layer_input, layer_output, layer_f_derivative);
             op_result.expect("Ok");
             let op_result = layer_f_derivative.element_wise_mul(back_propagated_delta, layer_delta);
             op_result.expect("Ok");

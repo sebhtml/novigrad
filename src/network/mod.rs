@@ -11,7 +11,6 @@ use crate::{
 pub struct Network<'a> {
     layers: Vec<LayerType>,
     loss_function: &'a LossFunctionType,
-    using_softmax_and_cross_entropy_loss: bool,
 }
 
 pub struct TrainWorkingMemory {
@@ -41,22 +40,19 @@ impl TrainWorkingMemory {
 }
 
 pub struct DeltaWorkingMemory {
-    pub output_diff: Tensor,
     pub layer_f_derivative: Tensor,
 }
 
 impl Default for DeltaWorkingMemory {
     fn default() -> Self {
         Self {
-            output_diff: Default::default(),
             layer_f_derivative: Default::default(),
         }
     }
 }
 
 pub struct PredictWorkingMemory {
-    pub last_activation_row: Tensor,
-    pub previous_activation_tensor_f32: Tensor,
+    pub previous_activation_tensor: Tensor,
     pub activation_tensor: Tensor,
     pub activation_tensors: Vec<Tensor>,
 }
@@ -64,8 +60,7 @@ pub struct PredictWorkingMemory {
 impl PredictWorkingMemory {
     pub fn new(examples_count: usize) -> Self {
         Self {
-            last_activation_row: Default::default(),
-            previous_activation_tensor_f32: Default::default(),
+            previous_activation_tensor: Default::default(),
             activation_tensor: Default::default(),
             activation_tensors: vec![Tensor::default(); examples_count],
         }
@@ -74,29 +69,12 @@ impl PredictWorkingMemory {
 
 impl<'a> Network<'a> {
     pub fn new(layer_configs: &Vec<LayerConfig>, loss_function: &'a LossFunctionType) -> Self {
-        let mut using_softmax_and_cross_entropy_loss = false;
-        match loss_function {
-            LossFunctionType::CrossEntropyLoss(_) => match layer_configs.last() {
-                Some(config) => match config {
-                    LayerConfig::Softmax(_) => {
-                        using_softmax_and_cross_entropy_loss = true;
-                    }
-                    _ => {
-                        assert!(false, "CrossEntropyLoss only works with Softmax");
-                    }
-                },
-                _ => (),
-            },
-            _ => (),
-        }
-
         Self {
             layers: layer_configs
                 .into_iter()
                 .map(|layer_config| layer_config.into())
                 .collect(),
             loss_function,
-            using_softmax_and_cross_entropy_loss,
         }
     }
 
@@ -144,7 +122,7 @@ impl<'a> Network<'a> {
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
         let activation_tensor = &mut working_memory.activation_tensor;
-        let previous_activation_tensor_f32 = &mut working_memory.previous_activation_tensor_f32;
+        let previous_activation_tensor_f32 = &mut working_memory.previous_activation_tensor;
 
         for i in 0..inputs.len() {
             self.predict(

@@ -9,7 +9,9 @@ mod layer;
 use layer::*;
 mod dataset;
 use dataset::*;
+mod autograd;
 mod loss;
+use autograd::*;
 
 fn main() {
     //let dataset = Dataset::Simple;

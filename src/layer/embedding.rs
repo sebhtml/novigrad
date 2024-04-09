@@ -1,23 +1,16 @@
-use crate::{DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT};
-use core::mem::swap;
+use crate::{
+    DeltaWorkingMemory, DifferentiableTensor, Error, Layer, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT,
+};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
-    embedding_table: Tensor,
-    embedding_table_gradient: Tensor,
-    has_pending_change: bool,
-    tmp: Tensor,
-    addition: Tensor,
+    embedding_table: DifferentiableTensor,
 }
 
 impl Embedding {
     pub fn new(num_embeddings: usize, embedding_dim: usize) -> Self {
         Self {
-            embedding_table: get_embedding_table(num_embeddings, embedding_dim),
-            embedding_table_gradient: Default::default(),
-            has_pending_change: Default::default(),
-            tmp: Default::default(),
-            addition: Default::default(),
+            embedding_table: get_embedding_table(num_embeddings, embedding_dim).into(),
         }
     }
 }
@@ -27,40 +20,26 @@ impl Layer for Embedding {
         let op_result = Tensor::matmul(
             layer_output_delta,
             layer_input,
-            &mut self.embedding_table_gradient,
+            &mut self.embedding_table.gradient,
             TRANSPOSE_LHS | TRANSPOSE_RESULT,
         );
         op_result.expect("Ok");
-        self.has_pending_change = true;
+        self.embedding_table.has_gradient = true;
     }
 
     fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
-        if !self.has_pending_change {
-            return Ok(());
-        }
-
-        let tmp = &mut self.tmp;
-        let addition = &mut self.addition;
-
-        {
-            let embedding_table_gradient = &self.embedding_table_gradient;
-            let embedding_table = &self.embedding_table;
-            let op_result = embedding_table_gradient.scalar_mul(-learning_rate, tmp);
-            op_result.expect("Ok");
-            let op_result = embedding_table.add(&tmp, addition);
-            op_result.expect("Ok");
-        }
-
-        let embedding_table = &mut self.embedding_table;
-        swap(embedding_table, addition);
-
-        self.has_pending_change = false;
+        self.embedding_table.commit_change(learning_rate);
         Ok(())
     }
 
     fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
-        debug_assert_eq!(input.cols(), self.embedding_table.rows());
-        Tensor::matmul(input, &self.embedding_table, output, Default::default())
+        debug_assert_eq!(input.cols(), self.embedding_table.tensor.rows());
+        Tensor::matmul(
+            input,
+            &self.embedding_table.tensor,
+            output,
+            Default::default(),
+        )
     }
 
     fn backward(&self, _layer_delta: &Tensor, _previous_layer_delta: &mut Tensor) {

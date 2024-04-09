@@ -1,19 +1,14 @@
-use std::mem::swap;
-
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
+    DeltaWorkingMemory, DifferentiableTensor, Error, Layer, Tensor, TRANSPOSE_LHS,
+    TRANSPOSE_RESULT, TRANSPOSE_RHS,
 };
 
 pub struct Linear {
-    weights: Tensor,
-    weights_gradient: Tensor,
-    biases: Tensor,
-    biases_gradient: Tensor,
-    has_pending_change: bool,
+    weights: DifferentiableTensor,
+    biases: DifferentiableTensor,
     tmp: Tensor,
-    addition: Tensor,
 }
 
 impl Linear {
@@ -32,50 +27,17 @@ impl Linear {
         let mut biases = Tensor::default();
         biases.reset(input_rows, rows, Default::default());
         Linear {
-            weights,
-            weights_gradient: Default::default(),
-            biases,
-            biases_gradient: Default::default(),
-            has_pending_change: false,
+            weights: weights.into(),
+            biases: biases.into(),
             tmp: Default::default(),
-            addition: Default::default(),
         }
     }
 }
 
 impl Layer for Linear {
     fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
-        if !self.has_pending_change {
-            return Ok(());
-        }
-
-        {
-            let tmp = &mut self.tmp;
-            let addition = &mut self.addition;
-            let weights_gradient = &self.weights_gradient;
-            let op_result = weights_gradient.scalar_mul(-learning_rate, tmp);
-            op_result.expect("Ok");
-            let weights = &self.weights;
-            let op_result = weights.add(&tmp, addition);
-            op_result.expect("Ok");
-            let weights = &mut self.weights;
-            swap(weights, addition);
-        }
-
-        {
-            let tmp = &mut self.tmp;
-            let addition = &mut self.addition;
-            let biases_gradient = &self.biases_gradient;
-            let op_result = biases_gradient.scalar_mul(-learning_rate, tmp);
-            op_result.expect("Ok");
-            let biases = &self.biases;
-            let op_result = biases.add(&tmp, addition);
-            op_result.expect("Ok");
-            let biases = &mut self.biases;
-            swap(biases, addition);
-        }
-
-        self.has_pending_change = false;
+        self.weights.commit_change(learning_rate);
+        self.biases.commit_change(learning_rate);
         Ok(())
     }
 
@@ -83,9 +45,9 @@ impl Layer for Linear {
         // Use the same convention that is used in tensorflow:
         // y = x @ W^T+b
         // Weights is on the right.
-        // W is transposed.
         // X is not transposed.
-        let weights = &self.weights;
+        // W is transposed.
+        let weights = &self.weights.tensor;
         let tmp = &mut self.tmp;
         let op_result = Tensor::matmul(input, weights, tmp, TRANSPOSE_RHS);
         match op_result {
@@ -99,7 +61,7 @@ impl Layer for Linear {
             }
         }
 
-        let biases = &self.biases;
+        let biases = &self.biases.tensor;
         let op_result = tmp.add(biases, output);
         match op_result {
             Ok(_) => (),
@@ -114,13 +76,13 @@ impl Layer for Linear {
         Ok(())
     }
 
-    fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
-        let layer_weights = &self.weights;
+    fn backward(&self, layer_output_delta: &Tensor, previous_layer_output_delta: &mut Tensor) {
+        let weights = &self.weights.tensor;
 
         let op_result = Tensor::matmul(
-            layer_weights,
-            layer_delta,
-            previous_layer_delta,
+            weights,
+            layer_output_delta,
+            previous_layer_output_delta,
             TRANSPOSE_LHS | TRANSPOSE_RHS | TRANSPOSE_RESULT,
         );
 
@@ -140,19 +102,17 @@ impl Layer for Linear {
     }
 
     fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
-        let weights_gradient = &mut self.weights_gradient;
         let op_result = Tensor::matmul(
             layer_input,
             layer_output_delta,
-            weights_gradient,
+            &mut self.weights.gradient,
             TRANSPOSE_LHS | TRANSPOSE_RESULT,
         );
         op_result.expect("Ok");
+        self.weights.has_gradient = true;
 
-        let biases_gradient = &mut self.biases_gradient;
-        biases_gradient.assign(layer_output_delta);
-
-        self.has_pending_change = true;
+        self.biases.gradient.assign(layer_output_delta);
+        self.biases.has_gradient = true;
     }
 }
 

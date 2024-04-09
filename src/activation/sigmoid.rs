@@ -80,7 +80,7 @@ impl DifferentiableModuleTrait for Sigmoid {
         previous_layer_delta.assign(layer_delta)
     }
 
-    fn get_layer_delta(
+    fn get_layer_output_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,

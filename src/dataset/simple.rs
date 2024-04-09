@@ -45,9 +45,9 @@ pub fn load_dataset() -> DatasetDetails {
                 embedding_dim: 32,
             }),
             DifferentiableModuleConfig::Linear(LinearConfig {
-                input_rows: 6,
-                rows: 16,
-                cols: 32,
+                weights_rows: 16,
+                weights_cols: 32,
+                bias_rows: 6,
             }),
             DifferentiableModuleConfig::Sigmoid(Default::default()),
             DifferentiableModuleConfig::Reshape(ReshapeConfig {
@@ -57,15 +57,15 @@ pub fn load_dataset() -> DatasetDetails {
                 output_cols: 6 * 16,
             }),
             DifferentiableModuleConfig::Linear(LinearConfig {
-                input_rows: 1,
-                rows: 32,
-                cols: 6 * 16,
+                weights_rows: 32,
+                weights_cols: 6 * 16,
+                bias_rows: 1,
             }),
             DifferentiableModuleConfig::Sigmoid(Default::default()),
             DifferentiableModuleConfig::Linear(LinearConfig {
-                input_rows: 1,
-                rows: 16,
-                cols: 32,
+                weights_rows: 16,
+                weights_cols: 32,
+                bias_rows: 1,
             }),
             DifferentiableModuleConfig::Softmax(SoftmaxConfig {
                 using_softmax_and_cross_entropy_loss: true,

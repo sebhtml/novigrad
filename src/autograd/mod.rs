@@ -49,20 +49,20 @@ pub trait DifferentiableModuleTrait {
 
     fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error>;
 
-    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error>;
+    fn forward(&mut self, layer_input: &Tensor, layer_output: &mut Tensor) -> Result<(), Error>;
 
     // TODO backward should return Error
-    fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor);
+    fn backward(&self, layer_output_delta: &Tensor, previous_layer_output_delta: &mut Tensor);
 
     // TODO get_layer_delta should return Error
-    fn get_layer_delta(
+    fn get_layer_output_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,
-        back_propagated_delta: &Tensor,
+        back_propagated_layer_output_delta: &Tensor,
         is_last_layer: bool,
-        layer_delta: &mut Tensor,
+        layer_output_delta: &mut Tensor,
     );
 }
 
@@ -157,7 +157,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         }
     }
 
-    fn get_layer_delta(
+    fn get_layer_output_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,
@@ -167,7 +167,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         layer_delta: &mut Tensor,
     ) {
         match self {
-            DifferentiableModule::Embedding(that) => that.get_layer_delta(
+            DifferentiableModule::Embedding(that) => that.get_layer_output_delta(
                 working_memory,
                 layer_input,
                 layer_output,
@@ -175,7 +175,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 is_last_layer,
                 layer_delta,
             ),
-            DifferentiableModule::Linear(that) => that.get_layer_delta(
+            DifferentiableModule::Linear(that) => that.get_layer_output_delta(
                 working_memory,
                 layer_input,
                 layer_output,
@@ -183,7 +183,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 is_last_layer,
                 layer_delta,
             ),
-            DifferentiableModule::Reshape(that) => that.get_layer_delta(
+            DifferentiableModule::Reshape(that) => that.get_layer_output_delta(
                 working_memory,
                 layer_input,
                 layer_output,
@@ -191,7 +191,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 is_last_layer,
                 layer_delta,
             ),
-            DifferentiableModule::Sigmoid(that) => that.get_layer_delta(
+            DifferentiableModule::Sigmoid(that) => that.get_layer_output_delta(
                 working_memory,
                 layer_input,
                 layer_output,
@@ -199,7 +199,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 is_last_layer,
                 layer_delta,
             ),
-            DifferentiableModule::Softmax(that) => that.get_layer_delta(
+            DifferentiableModule::Softmax(that) => that.get_layer_output_delta(
                 working_memory,
                 layer_input,
                 layer_output,

@@ -47,7 +47,7 @@ impl DifferentiableModuleTrait for Embedding {
         panic!("Embedding can not go backward !");
     }
 
-    fn get_layer_delta(
+    fn get_layer_output_delta(
         &self,
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,

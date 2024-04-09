@@ -56,9 +56,9 @@ pub fn load_dataset() -> DatasetDetails {
                 output_cols: 32 * 384,
             }),
             DifferentiableModuleConfig::Linear(LinearConfig {
-                input_rows: 1,
-                rows: 256,
-                cols: 32 * 384,
+                weights_rows: 256,
+                weights_cols: 32 * 384,
+                bias_rows: 1,
             }),
             DifferentiableModuleConfig::Softmax(SoftmaxConfig {
                 using_softmax_and_cross_entropy_loss: true,

@@ -41,7 +41,7 @@ impl DifferentiableModuleTrait for Reshape {
         output_diff.assign(layer_delta);
     }
 
-    fn get_layer_delta(
+    fn get_layer_output_delta(
         &self,
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,

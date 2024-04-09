@@ -19,8 +19,6 @@ pub struct TrainWorkingMemory {
     pub back_propagated_delta: Tensor,
     pub layer_delta: Tensor,
     pub previous_activation_tensor: Tensor,
-    pub last_activation_row: Tensor,
-    pub loss: Tensor,
     pub tmp: Tensor,
 }
 
@@ -32,8 +30,6 @@ impl TrainWorkingMemory {
             back_propagated_delta: Default::default(),
             layer_delta: Default::default(),
             previous_activation_tensor: Default::default(),
-            last_activation_row: Default::default(),
-            loss: Default::default(),
             tmp: Default::default(),
         }
     }
@@ -101,22 +97,6 @@ impl<'a> Network<'a> {
         }
     }
 
-    // TODO remove unused arguments.
-    fn get_last_layer_delta(
-        &self,
-        layer_activation_tensor: &Tensor,
-        _last_activation_row: &mut Tensor,
-        tmp: &mut Tensor,
-        _loss: &mut Tensor,
-        y: &Tensor,
-        next_layer_delta: &mut Tensor,
-    ) {
-        let op_result =
-            self.loss_function
-                .derive(tmp, y, &layer_activation_tensor, next_layer_delta);
-        op_result.expect("Ok");
-    }
-
     pub fn total_error(
         &mut self,
         working_memory: &mut PredictWorkingMemory,
@@ -125,14 +105,10 @@ impl<'a> Network<'a> {
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
         let activation_tensor = &mut working_memory.activation_tensor;
-        let previous_activation_tensor_f32 = &mut working_memory.previous_activation_tensor;
+        let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
 
         for i in 0..inputs.len() {
-            self.predict(
-                previous_activation_tensor_f32,
-                &inputs[i],
-                activation_tensor,
-            );
+            self.predict(previous_activation_tensor, &inputs[i], activation_tensor);
             let target = &outputs[i];
             let example_error = self
                 .loss_function
@@ -184,19 +160,13 @@ impl<'a> Network<'a> {
 
             if is_last_layer {
                 // For the output layer, the next layer delta is the loss.
-                let last_activation_row = &mut working_memory.last_activation_row;
                 let tmp = &mut working_memory.tmp;
-                let loss = &mut working_memory.loss;
                 let layer_activation_tensor = &layer_outputs[layer_index];
 
-                self.get_last_layer_delta(
-                    layer_activation_tensor,
-                    last_activation_row,
-                    tmp,
-                    loss,
-                    y,
-                    next_layer_delta,
-                );
+                let op_result =
+                    self.loss_function
+                        .derive(tmp, y, &layer_activation_tensor, next_layer_delta);
+                op_result.expect("Ok");
             }
 
             {
@@ -225,7 +195,7 @@ impl<'a> Network<'a> {
                     }
                 }
 
-                layer.get_layer_delta(
+                layer.get_layer_output_delta(
                     error_working_memory,
                     layer_input,
                     layer_output,

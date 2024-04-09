@@ -113,7 +113,7 @@ impl DifferentiableModuleTrait for Softmax {
         previous_layer_delta.assign(layer_delta)
     }
 
-    fn get_layer_delta(
+    fn get_layer_output_delta(
         &self,
         working_memory: &mut crate::DeltaWorkingMemory,
         layer_input: &Tensor,

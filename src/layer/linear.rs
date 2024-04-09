@@ -12,20 +12,23 @@ pub struct Linear {
 }
 
 impl Linear {
-    pub fn new(input_rows: usize, rows: usize, cols: usize) -> Self {
-        let mut rng = thread_rng();
-        let mut weights = Vec::new();
-        let right = (6.0 as f32).sqrt() / (cols as f32 + rows as f32).sqrt();
-        let left = -right;
+    pub fn new(weights_rows: usize, weights_cols: usize, bias_rows: usize) -> Self {
         // Xavier Initialization, or Glorot Initialization,
+        let mut rng = thread_rng();
+        let right = (6.0 as f32).sqrt() / (weights_cols as f32 + weights_rows as f32).sqrt();
+        let left = -right;
         let uniform = Uniform::new(left, right);
-        weights.resize(rows * cols, 0.0);
+
+        let mut weights = Vec::new();
+        weights.resize(weights_rows * weights_cols, 0.0);
         for index in 0..weights.len() {
             weights[index] = rng.sample(uniform);
         }
-        let weights = Tensor::new(rows, cols, weights);
+        let weights = Tensor::new(weights_rows, weights_cols, weights);
+
         let mut biases = Tensor::default();
-        biases.reset(input_rows, rows, Default::default());
+        biases.reset(bias_rows, weights_rows, Default::default());
+
         Linear {
             weights: weights.into(),
             biases: biases.into(),
@@ -89,7 +92,7 @@ impl DifferentiableModuleTrait for Linear {
         op_result.expect("Ok");
     }
 
-    fn get_layer_delta(
+    fn get_layer_output_delta(
         &self,
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,
@@ -117,14 +120,13 @@ impl DifferentiableModuleTrait for Linear {
 }
 
 pub struct LinearConfig {
-    // TODO rename input_rows to bias_rows
-    pub input_rows: usize,
-    pub rows: usize,
-    pub cols: usize,
+    pub weights_rows: usize,
+    pub weights_cols: usize,
+    pub bias_rows: usize,
 }
 
 impl Into<Linear> for &LinearConfig {
     fn into(self) -> Linear {
-        Linear::new(self.input_rows, self.rows, self.cols)
+        Linear::new(self.weights_rows, self.weights_cols, self.bias_rows)
     }
 }

@@ -17,6 +17,8 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
+- remove _f functions
+- remove ConfigTrait
 - one matmul to rule them all
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
 - implement Dropout

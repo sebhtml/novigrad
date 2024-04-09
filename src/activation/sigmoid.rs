@@ -81,15 +81,9 @@ impl ActivationFunction for Sigmoid {
 
 // TODO refactor this since it is a copy-and-paste of Softmax impl.
 impl Layer for Sigmoid {
-    fn plan_change(
-        &mut self,
-        _learning_rate: f32,
-        _previous_activation: &Tensor,
-        _layer_delta: &Tensor,
-    ) {
-    }
+    fn plan_change(&mut self, _previous_activation: &Tensor, _layer_delta: &Tensor) {}
 
-    fn commit_change(&mut self) -> Result<(), Error> {
+    fn commit_change(&mut self, _learning_rate: f32) -> Result<(), Error> {
         Ok(())
     }
 

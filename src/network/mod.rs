@@ -258,7 +258,7 @@ impl<'a> Network<'a> {
 
             {
                 let layer = &mut self.layers[layer_index];
-                layer.plan_change(learning_rate, previous_activation_tensor, layer_delta);
+                layer.plan_change(previous_activation_tensor, layer_delta);
             }
 
             swap(next_layer_delta, layer_delta);
@@ -266,7 +266,7 @@ impl<'a> Network<'a> {
 
         // Apply changes
         for layer in 0..self.layers.len() {
-            let op_result = self.layers[layer].commit_change();
+            let op_result = self.layers[layer].commit_change(learning_rate);
             op_result.expect("Ok");
         }
     }

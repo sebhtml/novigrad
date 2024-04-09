@@ -113,15 +113,9 @@ impl ActivationFunction for Softmax {
 }
 
 impl Layer for Softmax {
-    fn plan_change(
-        &mut self,
-        _learning_rate: f32,
-        _previous_activation: &Tensor,
-        _layer_delta: &Tensor,
-    ) {
-    }
+    fn plan_change(&mut self, _previous_activation: &Tensor, _layer_delta: &Tensor) {}
 
-    fn commit_change(&mut self) -> Result<(), Error> {
+    fn commit_change(&mut self, _learning_rate: f32) -> Result<(), Error> {
         Ok(())
     }
 

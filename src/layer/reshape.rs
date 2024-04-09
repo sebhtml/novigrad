@@ -1,4 +1,4 @@
-use crate::{DeltaWorkingMemory, Error, Layer, LayerType, Tensor, TensorTrait};
+use crate::{DeltaWorkingMemory, Error, Layer, Tensor, TensorTrait};
 
 pub struct Reshape {
     input_rows: usize,
@@ -24,15 +24,9 @@ impl Reshape {
 }
 
 impl Layer for Reshape {
-    fn plan_change(
-        &mut self,
-        _learning_rate: f32,
-        _previous_activation: &Tensor,
-        _layer_delta: &Tensor,
-    ) {
-    }
+    fn plan_change(&mut self, _previous_activation: &Tensor, _layer_delta: &Tensor) {}
 
-    fn commit_change(&mut self) -> Result<(), Error> {
+    fn commit_change(&mut self, _learning_rate: f32) -> Result<(), Error> {
         Ok(())
     }
 

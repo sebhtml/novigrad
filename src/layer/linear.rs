@@ -3,8 +3,8 @@ use std::mem::swap;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    DeltaWorkingMemory, Error, Layer, LayerType, Tensor, TensorTrait, TRANSPOSE_LHS,
-    TRANSPOSE_RESULT, TRANSPOSE_RHS,
+    DeltaWorkingMemory, Error, Layer, Tensor, TensorTrait, TRANSPOSE_LHS, TRANSPOSE_RESULT,
+    TRANSPOSE_RHS,
 };
 
 pub struct Linear {
@@ -13,7 +13,6 @@ pub struct Linear {
     weights_delta: Tensor,
     biases_delta: Tensor,
     has_pending_change: bool,
-    previous_a_time_output_delta: Tensor,
     addition: Tensor,
 }
 
@@ -38,33 +37,38 @@ impl Linear {
             weights_delta: Default::default(),
             biases_delta: Default::default(),
             has_pending_change: false,
-            previous_a_time_output_delta: Default::default(),
             addition: Default::default(),
         }
     }
 }
 
 impl Layer for Linear {
-    fn commit_change(&mut self) -> Result<(), Error> {
+    fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
         if !self.has_pending_change {
             return Ok(());
         }
 
         {
+            let mut tmp = Tensor::default();
             let addition = &mut self.addition;
             let weights_delta = &self.weights_delta;
+            let op_result = weights_delta.scalar_mul(-learning_rate, &mut tmp);
+            op_result.expect("Ok");
             let weights = &self.weights;
-            let op_result = weights.sub(weights_delta, addition);
+            let op_result = weights.add(&tmp, addition);
             op_result.expect("Ok");
             let weights = &mut self.weights;
             swap(weights, addition);
         }
 
         {
+            let mut tmp = Tensor::default();
             let addition = &mut self.addition;
             let biases_delta = &self.biases_delta;
+            let op_result = biases_delta.scalar_mul(-learning_rate, &mut tmp);
+            op_result.expect("Ok");
             let biases = &self.biases;
-            let op_result = biases.sub(biases_delta, addition);
+            let op_result = biases.add(&tmp, addition);
             op_result.expect("Ok");
             let biases = &mut self.biases;
             swap(biases, addition);
@@ -138,28 +142,18 @@ impl Layer for Linear {
         layer_delta.assign(back_propagated_delta)
     }
 
-    fn plan_change(
-        &mut self,
-        learning_rate: f32,
-        previous_activation: &Tensor,
-        layer_delta: &Tensor,
-    ) {
-        let previous_a_time_output_delta = &mut self.previous_a_time_output_delta;
+    fn plan_change(&mut self, previous_activation: &Tensor, layer_delta: &Tensor) {
+        let weights_delta = &mut self.weights_delta;
         let op_result = Tensor::matmul(
             previous_activation,
             layer_delta,
-            previous_a_time_output_delta,
+            weights_delta,
             TRANSPOSE_LHS | TRANSPOSE_RESULT,
         );
         op_result.expect("Ok");
 
-        let weights_delta = &mut self.weights_delta;
-        let op_result = previous_a_time_output_delta.scalar_mul(learning_rate, weights_delta);
-        op_result.expect("Ok");
-
         let biases_delta = &mut self.biases_delta;
-        let op_result = layer_delta.scalar_mul(-learning_rate, biases_delta);
-        op_result.expect("Ok");
+        biases_delta.assign(layer_delta);
 
         self.has_pending_change = true;
     }

@@ -8,14 +8,9 @@ pub use reshape::*;
 use crate::{DeltaWorkingMemory, Error, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor};
 
 pub trait Layer {
-    fn plan_change(
-        &mut self,
-        learning_rate: f32,
-        previous_activation: &Tensor,
-        layer_delta: &Tensor,
-    );
+    fn plan_change(&mut self, previous_activation: &Tensor, layer_delta: &Tensor);
 
-    fn commit_change(&mut self) -> Result<(), Error>;
+    fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error>;
 
     fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error>;
 
@@ -63,38 +58,23 @@ impl Into<LayerType> for &LayerConfig {
 }
 
 impl Layer for LayerType {
-    fn plan_change(
-        &mut self,
-        learning_rate: f32,
-        previous_activation: &Tensor,
-        layer_delta: &Tensor,
-    ) {
+    fn plan_change(&mut self, previous_activation: &Tensor, layer_delta: &Tensor) {
         match self {
-            LayerType::Embedding(that) => {
-                that.plan_change(learning_rate, previous_activation, layer_delta)
-            }
-            LayerType::Linear(that) => {
-                that.plan_change(learning_rate, previous_activation, layer_delta)
-            }
-            LayerType::Reshape(that) => {
-                that.plan_change(learning_rate, previous_activation, layer_delta)
-            }
-            LayerType::Sigmoid(that) => {
-                that.plan_change(learning_rate, previous_activation, layer_delta)
-            }
-            LayerType::Softmax(that) => {
-                that.plan_change(learning_rate, previous_activation, layer_delta)
-            }
+            LayerType::Embedding(that) => that.plan_change(previous_activation, layer_delta),
+            LayerType::Linear(that) => that.plan_change(previous_activation, layer_delta),
+            LayerType::Reshape(that) => that.plan_change(previous_activation, layer_delta),
+            LayerType::Sigmoid(that) => that.plan_change(previous_activation, layer_delta),
+            LayerType::Softmax(that) => that.plan_change(previous_activation, layer_delta),
         }
     }
 
-    fn commit_change(&mut self) -> Result<(), Error> {
+    fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
         match self {
-            LayerType::Embedding(that) => that.commit_change(),
-            LayerType::Linear(that) => that.commit_change(),
-            LayerType::Reshape(that) => that.commit_change(),
-            LayerType::Sigmoid(that) => that.commit_change(),
-            LayerType::Softmax(that) => that.commit_change(),
+            LayerType::Embedding(that) => that.commit_change(learning_rate),
+            LayerType::Linear(that) => that.commit_change(learning_rate),
+            LayerType::Reshape(that) => that.commit_change(learning_rate),
+            LayerType::Sigmoid(that) => that.commit_change(learning_rate),
+            LayerType::Softmax(that) => that.commit_change(learning_rate),
         }
     }
 

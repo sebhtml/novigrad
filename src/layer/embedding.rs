@@ -1,6 +1,5 @@
 use crate::{
-    DeltaWorkingMemory, Error, Layer, LayerType, Tensor, TensorTrait, TRANSPOSE_LHS,
-    TRANSPOSE_RESULT,
+    DeltaWorkingMemory, Error, Layer, Tensor, TensorTrait, TRANSPOSE_LHS, TRANSPOSE_RESULT,
 };
 use core::mem::swap;
 use rand::{distributions::Uniform, thread_rng, Rng};
@@ -22,35 +21,31 @@ impl Embedding {
 }
 
 impl Layer for Embedding {
-    fn plan_change(
-        &mut self,
-        learning_rate: f32,
-        previous_activation: &Tensor,
-        layer_delta: &Tensor,
-    ) {
-        let mut tmp = Tensor::default();
+    fn plan_change(&mut self, previous_activation: &Tensor, layer_delta: &Tensor) {
         let op_result = Tensor::matmul(
             layer_delta,
             previous_activation,
-            &mut tmp,
+            &mut self.embedding_table_delta,
             TRANSPOSE_LHS | TRANSPOSE_RESULT,
         );
-        op_result.expect("Ok");
-        let op_result = tmp.scalar_mul(-learning_rate, &mut self.embedding_table_delta);
         op_result.expect("Ok");
         self.has_pending_change = true;
     }
 
-    fn commit_change(&mut self) -> Result<(), Error> {
+    fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
         if !self.has_pending_change {
             return Ok(());
         }
 
         let mut addition = Tensor::default();
+        let mut tmp = Tensor::default();
+
         {
             let embedding_table_delta = &self.embedding_table_delta;
             let embedding_table = &self.embedding_table;
-            let op_result = embedding_table.add(embedding_table_delta, &mut addition);
+            let op_result = embedding_table_delta.scalar_mul(-learning_rate, &mut tmp);
+            op_result.expect("Ok");
+            let op_result = embedding_table.add(&tmp, &mut addition);
             op_result.expect("Ok");
         }
 

@@ -8,7 +8,7 @@ pub use reshape::*;
 use crate::{DeltaWorkingMemory, Error, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor};
 
 pub trait Layer {
-    fn plan_change(&mut self, previous_activation: &Tensor, layer_delta: &Tensor);
+    fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor);
 
     fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error>;
 
@@ -58,13 +58,13 @@ impl Into<LayerType> for &LayerConfig {
 }
 
 impl Layer for LayerType {
-    fn plan_change(&mut self, previous_activation: &Tensor, layer_delta: &Tensor) {
+    fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
         match self {
-            LayerType::Embedding(that) => that.plan_change(previous_activation, layer_delta),
-            LayerType::Linear(that) => that.plan_change(previous_activation, layer_delta),
-            LayerType::Reshape(that) => that.plan_change(previous_activation, layer_delta),
-            LayerType::Sigmoid(that) => that.plan_change(previous_activation, layer_delta),
-            LayerType::Softmax(that) => that.plan_change(previous_activation, layer_delta),
+            LayerType::Embedding(that) => that.compute_gradient(layer_input, layer_output_delta),
+            LayerType::Linear(that) => that.compute_gradient(layer_input, layer_output_delta),
+            LayerType::Reshape(that) => that.compute_gradient(layer_input, layer_output_delta),
+            LayerType::Sigmoid(that) => that.compute_gradient(layer_input, layer_output_delta),
+            LayerType::Softmax(that) => that.compute_gradient(layer_input, layer_output_delta),
         }
     }
 

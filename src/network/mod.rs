@@ -236,7 +236,7 @@ impl<'a> Network<'a> {
 
             {
                 let layer = &mut self.layers[layer_index];
-                layer.plan_change(previous_activation_tensor, layer_delta);
+                layer.compute_gradient(previous_activation_tensor, layer_delta);
             }
 
             swap(next_layer_delta, layer_delta);

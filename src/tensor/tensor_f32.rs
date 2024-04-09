@@ -414,7 +414,12 @@ impl Tensor {
         self.operation::<F32Div>(right, result)
     }
 
-    pub fn matmul(lhs: &Tensor, rhs: &Tensor, result: &mut Tensor, options: u32) -> Result<(), Error> {
+    pub fn matmul(
+        lhs: &Tensor,
+        rhs: &Tensor,
+        result: &mut Tensor,
+        options: u32,
+    ) -> Result<(), Error> {
         let tranpose_lhs = (options & TRANSPOSE_LHS) > 0;
         let transpose_rhs = (options & TRANSPOSE_RHS) > 0;
         let transpose_result = (options & TRANSPOSE_RESULT) > 0;

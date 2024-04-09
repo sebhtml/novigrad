@@ -24,7 +24,7 @@ impl Reshape {
 }
 
 impl Layer for Reshape {
-    fn plan_change(&mut self, _previous_activation: &Tensor, _layer_delta: &Tensor) {}
+    fn compute_gradient(&mut self, _layer_input: &Tensor, _layer_output_delta: &Tensor) {}
 
     fn commit_change(&mut self, _learning_rate: f32) -> Result<(), Error> {
         Ok(())

@@ -1,5 +1,5 @@
-use crate::{ActivationFunction, DeltaWorkingMemory, Layer, Tensor};
 use crate::Error;
+use crate::{ActivationFunction, DeltaWorkingMemory, Layer, Tensor};
 use std::f32::consts::E;
 
 #[derive(Clone, Default)]
@@ -79,9 +79,8 @@ impl ActivationFunction for Sigmoid {
     }
 }
 
-// TODO refactor this since it is a copy-and-paste of Softmax impl.
 impl Layer for Sigmoid {
-    fn plan_change(&mut self, _previous_activation: &Tensor, _layer_delta: &Tensor) {}
+    fn compute_gradient(&mut self, _layer_input: &Tensor, _layer_output_delta: &Tensor) {}
 
     fn commit_change(&mut self, _learning_rate: f32) -> Result<(), Error> {
         Ok(())

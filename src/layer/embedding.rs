@@ -1,12 +1,10 @@
-use crate::{
-    DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT,
-};
+use crate::{DeltaWorkingMemory, Error, Layer, Tensor, TRANSPOSE_LHS, TRANSPOSE_RESULT};
 use core::mem::swap;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
     embedding_table: Tensor,
-    embedding_table_delta: Tensor,
+    embedding_table_gradient: Tensor,
     has_pending_change: bool,
     tmp: Tensor,
     addition: Tensor,
@@ -16,7 +14,7 @@ impl Embedding {
     pub fn new(num_embeddings: usize, embedding_dim: usize) -> Self {
         Self {
             embedding_table: get_embedding_table(num_embeddings, embedding_dim),
-            embedding_table_delta: Default::default(),
+            embedding_table_gradient: Default::default(),
             has_pending_change: Default::default(),
             tmp: Default::default(),
             addition: Default::default(),
@@ -25,11 +23,11 @@ impl Embedding {
 }
 
 impl Layer for Embedding {
-    fn plan_change(&mut self, previous_activation: &Tensor, layer_delta: &Tensor) {
+    fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
         let op_result = Tensor::matmul(
-            layer_delta,
-            previous_activation,
-            &mut self.embedding_table_delta,
+            layer_output_delta,
+            layer_input,
+            &mut self.embedding_table_gradient,
             TRANSPOSE_LHS | TRANSPOSE_RESULT,
         );
         op_result.expect("Ok");
@@ -45,9 +43,9 @@ impl Layer for Embedding {
         let addition = &mut self.addition;
 
         {
-            let embedding_table_delta = &self.embedding_table_delta;
+            let embedding_table_gradient = &self.embedding_table_gradient;
             let embedding_table = &self.embedding_table;
-            let op_result = embedding_table_delta.scalar_mul(-learning_rate, tmp);
+            let op_result = embedding_table_gradient.scalar_mul(-learning_rate, tmp);
             op_result.expect("Ok");
             let op_result = embedding_table.add(&tmp, addition);
             op_result.expect("Ok");

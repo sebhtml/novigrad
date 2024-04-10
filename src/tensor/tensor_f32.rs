@@ -1,7 +1,9 @@
 use crate::dot_product;
 use crate::Error;
+use cblas::*;
 use std::{
     fmt::Display,
+    mem::swap,
     ops::{Add, Div, Mul, Sub},
 };
 
@@ -55,44 +57,6 @@ impl Tensor {
                 debug_assert!(value.is_finite());
                 *result_cell = value;
                 index += 1;
-            }
-        }
-
-        Ok(())
-    }
-
-    /// lhs not transposed, rhs not transposed, result not transposed.
-    fn matmul_lhs_rhs_result(lhs: &Tensor, rhs: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        if lhs.cols != rhs.rows {
-            return Err(Error::IncompatibleTensorShapes);
-        }
-
-        result.reset(lhs.rows, rhs.cols, Default::default());
-
-        let result_ptr = result.values.as_mut_ptr();
-        let left_ptr = lhs.values.as_ptr();
-        let right_ptr = rhs.values.as_ptr();
-
-        let left_rows = lhs.rows;
-        let left_cols = lhs.cols;
-        let right_cols = rhs.cols;
-
-        unsafe {
-            let mut row = 0;
-            while row != left_rows {
-                let mut inner = 0;
-                while inner != left_cols {
-                    let mut col = 0;
-                    while col != right_cols {
-                        let left_cell = left_ptr.add(row * left_cols + inner);
-                        let right_cell = right_ptr.add(inner * right_cols + col);
-                        let result_cell = result_ptr.add(row * right_cols + col);
-                        *result_cell += *left_cell * *right_cell;
-                        col += 1;
-                    }
-                    inner += 1;
-                }
-                row += 1;
             }
         }
 
@@ -382,6 +346,7 @@ impl Tensor {
         }
     }
 
+    // TODO implement also in-place transpose
     pub fn transpose(&self, other: &mut Tensor) {
         other.reset(self.cols, self.rows, Default::default());
         let rows = self.rows;
@@ -414,6 +379,7 @@ impl Tensor {
         self.operation::<F32Div>(right, result)
     }
 
+    // TODO use 3 arguments instead of 1 for options.
     pub fn matmul(
         lhs: &Tensor,
         rhs: &Tensor,
@@ -424,7 +390,7 @@ impl Tensor {
         let transpose_rhs = (options & TRANSPOSE_RHS) > 0;
         let transpose_result = (options & TRANSPOSE_RESULT) > 0;
         if !tranpose_lhs && !transpose_rhs && !transpose_result {
-            Self::matmul_lhs_rhs_result(lhs, rhs, result)
+            Self::sgemm(tranpose_lhs, transpose_rhs, 1.0, lhs, rhs, 1.0, result)
         } else if tranpose_lhs && !transpose_rhs && !transpose_result {
             Self::matmul_lhs_t_rhs_result(lhs, rhs, result)
         } else if !tranpose_lhs && transpose_rhs && !transpose_result {
@@ -438,6 +404,39 @@ impl Tensor {
         } else {
             Err(Error::UnsupportedOperation)
         }
+    }
+
+    /// a has a shape (m, k)
+    /// b has a shape (k, n)
+    /// c has a shape (m, n)
+    pub fn sgemm(
+        _transa: bool,
+        _transb: bool,
+        alpha: f32,
+        a: &Tensor,
+        b: &Tensor,
+        beta: f32,
+        c: &mut Tensor,
+    ) -> Result<(), Error> {
+        if a.cols != b.rows {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+        let layout = Layout::RowMajor;
+        let transa = Transpose::None;
+        let transb = Transpose::None;
+        let m = a.rows as i32;
+        let n = b.cols as i32;
+        let k = a.cols as i32;
+        let a: &[f32] = &a.values;
+        let b: &[f32] = &b.values;
+        c.reset(m as usize, n as usize, Default::default());
+        let c: &mut [f32] = &mut c.values;
+        unsafe {
+            sgemm(
+                layout, transa, transb, m, n, k, alpha, a, k, b, n, beta, c, n,
+            );
+        }
+        Ok(())
     }
 
     pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {

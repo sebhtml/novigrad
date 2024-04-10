@@ -285,10 +285,6 @@ impl Tensor {
         self.rows
     }
 
-    pub fn values<'a>(&'a self) -> &'a Vec<f32> {
-        &self.values
-    }
-
     pub fn cols(&self) -> usize {
         self.cols
     }
@@ -330,22 +326,6 @@ impl Tensor {
         }
     }
 
-    pub fn row(&self, row: usize, result: &mut Tensor) {
-        result.reset(1, self.cols, Default::default());
-        for col in 0..self.cols {
-            let value = self.get(row, col);
-            result.set(0, col, value);
-        }
-    }
-
-    pub fn col(&self, col: usize, result: &mut Tensor) {
-        result.reset(self.rows, 1, Default::default());
-        for row in 0..self.rows {
-            let value = self.get(row, col);
-            result.set(row, 0, value);
-        }
-    }
-
     // TODO implement also in-place transpose
     pub fn transpose(&self, other: &mut Tensor) {
         other.reset(self.cols, self.rows, Default::default());
@@ -373,10 +353,6 @@ impl Tensor {
 
     pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         self.operation::<F32Mul>(right, result)
-    }
-
-    pub fn div(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        self.operation::<F32Div>(right, result)
     }
 
     // TODO use 3 arguments instead of 1 for options.
@@ -452,28 +428,8 @@ impl Tensor {
         }
     }
 
-    pub fn scalar_add(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {
-        self.scalar_op::<F32Add>(right, result)
-    }
-
     pub fn scalar_mul(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {
         self.scalar_op::<F32Mul>(right, result)
-    }
-
-    pub fn add_to_row(&mut self, row: usize, rhs: &Tensor) -> Result<(), Error> {
-        if rhs.cols != self.cols {
-            return Err(Error::IncompatibleTensorShapes);
-        }
-
-        let mut col = 0;
-        let cols = self.cols;
-        while col < cols {
-            let lhs = self.get(row, col);
-            let rhs = rhs.get(0, col);
-            self.set(row, col, lhs + rhs);
-            col += 1;
-        }
-        Ok(())
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {
@@ -536,13 +492,5 @@ struct F32Mul {}
 impl F32Operation for F32Mul {
     fn op(left: f32, right: f32) -> f32 {
         <f32 as Mul>::mul(left, right)
-    }
-}
-
-struct F32Div {}
-
-impl F32Operation for F32Div {
-    fn op(left: f32, right: f32) -> f32 {
-        <f32 as Div>::div(left, right)
     }
 }

@@ -525,38 +525,6 @@ fn matrix_addition_result() {
 }
 
 #[test]
-fn add_to_row() {
-    let mut lhs = Tensor::new(
-        3,
-        2,
-        vec![
-            0.0, 0.0, //
-            0.0, 0.0, //
-            0.0, 0.0, //
-        ],
-    );
-    let rhs: Tensor = Tensor::new(
-        1,
-        2,
-        vec![
-            11.0, 12.0, //
-        ],
-    );
-    let expected_result = Tensor::new(
-        3,
-        2,
-        vec![
-            0.0, 0.0, //
-            11.0, 12.0, //
-            0.0, 0.0, //
-        ],
-    );
-
-    _ = lhs.add_to_row(1, &rhs);
-    assert_eq!(lhs, expected_result);
-}
-
-#[test]
 fn element_wise_mul_result() {
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the element-wise multiplication is done
@@ -599,79 +567,6 @@ fn element_wise_mul_result() {
 }
 
 #[test]
-fn div_result() {
-    // Given a left-hand side matrix and and a right-hand side matrix
-    // When the division is done
-    // Then the resulting matrix has the correct values
-
-    let lhs = Tensor::new(
-        3,
-        2,
-        vec![
-            10.0, 20.0, //
-            30.0, 40.0, //
-            50.0, 60.0, //
-        ],
-    );
-    let rhs: Tensor = Tensor::new(
-        3,
-        2,
-        vec![
-            2.0, 2.0, //
-            2.0, 2.0, //
-            2.0, 2.0, //
-        ],
-    );
-    let expected_result = Tensor::new(
-        3,
-        2,
-        vec![
-            5.0, 10.0, //
-            15.0, 20.0, //
-            25.0, 30.0, //
-        ],
-    );
-
-    let mut result = Tensor::default();
-    lhs.div(&rhs, &mut result).expect("Ok");
-    assert_eq!(result, expected_result);
-}
-
-#[test]
-fn scalar_add() {
-    // Given a left-hand side matrix and and a right-hand side scalar
-    // When a scalar addition is done
-    // Then the resulting matrix has the correct values
-
-    let lhs = Tensor::new(
-        3,
-        2,
-        vec![
-            1.0, 2.0, //
-            3.0, 4.0, //
-            5.0, 6.0, //
-        ],
-    );
-    let rhs = -2.0;
-    let expected_result = Tensor::new(
-        3,
-        2,
-        vec![
-            1.0 + -2.0,
-            2.0 + -2.0, //
-            3.0 + -2.0,
-            4.0 + -2.0, //
-            5.0 + -2.0,
-            6.0 + -2.0, //
-        ],
-    );
-
-    let mut result = Tensor::default();
-    _ = lhs.scalar_add(rhs, &mut result);
-    assert_eq!(result, expected_result);
-}
-
-#[test]
 fn scalar_mul() {
     // Given a left-hand side matrix and and a right-hand scalar
     // When scalar multiplication is done
@@ -702,42 +597,6 @@ fn scalar_mul() {
 
     let mut result = Tensor::default();
     _ = lhs.scalar_mul(rhs, &mut result);
-    assert_eq!(result, expected_result);
-}
-
-#[test]
-fn row() {
-    let lhs = Tensor::new(
-        3,
-        2,
-        vec![
-            1.0, 2.0, //
-            3.0, 4.0, //
-            5.0, 6.0, //
-        ],
-    );
-    let expected_result = Tensor::new(1, 2, vec![3.0, 4.0]);
-
-    let mut result = Tensor::default();
-    _ = lhs.row(1, &mut result);
-    assert_eq!(result, expected_result);
-}
-
-#[test]
-fn col() {
-    let lhs = Tensor::new(
-        3,
-        2,
-        vec![
-            1.0, 2.0, //
-            3.0, 4.0, //
-            5.0, 6.0, //
-        ],
-    );
-    let expected_result = Tensor::new(3, 1, vec![2.0, 4.0, 6.0]);
-
-    let mut result = Tensor::default();
-    _ = lhs.col(1, &mut result);
     assert_eq!(result, expected_result);
 }
 

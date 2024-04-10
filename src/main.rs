@@ -9,9 +9,9 @@ mod layer;
 use layer::*;
 mod dataset;
 use dataset::*;
-mod autograd;
+mod gradient;
 mod loss;
-use autograd::*;
+use gradient::*;
 mod gemm;
 
 extern crate blas_src;

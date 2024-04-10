@@ -1,3 +1,14 @@
+# Project goals
+
+- Implement from scratch in Rust the [GPT-1](https://en.wikipedia.org/wiki/GPT-1) architecture (117 million parameters).
+
+# Hardware used
+
+- Lenovo Legion 7
+- [AMD Ryzen 7 7840HS](https://www.amd.com/en/products/apu/amd-ryzen-7-7840hs)
+- AMD Radeon 780M Graphics
+- [NVIDIA GeForce RTX 4060 Laptop GPU](https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4060-4060ti/)
+
 # Run the program
 
 ```bash
@@ -17,7 +28,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 
 # Roadmap
 
-- remove TRANSPOSE_RESULT
 - one matmul to rule them all -> gemm
 - use cublas https://docs.rs/cublas/latest/cublas/struct.API.html#method.gemm
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)

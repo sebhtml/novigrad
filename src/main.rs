@@ -12,6 +12,9 @@ use dataset::*;
 mod autograd;
 mod loss;
 use autograd::*;
+mod gemm;
+
+extern crate blas_src;
 
 fn main() {
     //let dataset = Dataset::Simple;

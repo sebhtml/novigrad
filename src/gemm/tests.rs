@@ -1,6 +1,6 @@
 /// This is the example from https://docs.rs/cblas/latest/cblas/.
 #[test]
-fn sgemm_column_major() {
+fn cblas_sgemm_column_major() {
     use cblas::*;
 
     let (m, n, k) = (2, 4, 3);
@@ -57,7 +57,7 @@ fn sgemm_column_major() {
 }
 
 #[test]
-fn sgemm_row_major() {
+fn cblas_sgemm_row_major() {
     use cblas::*;
 
     let (m, n, k) = (2, 4, 3);
@@ -108,7 +108,7 @@ fn sgemm_row_major() {
 }
 
 #[test]
-fn sgemm_row_major_a_transpose() {
+fn cblas_sgemm_row_major_a_transpose() {
     use cblas::*;
 
     let (m, n, k) = (2, 4, 3);
@@ -161,7 +161,7 @@ fn sgemm_row_major_a_transpose() {
 }
 
 #[test]
-fn sgemm_with_column_major_layout_and_row_major_operands() {
+fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
     // From https://stackoverflow.com/questions/56043539/cublassgemm-row-major-multiplication
     use cblas::*;
 

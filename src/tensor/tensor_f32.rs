@@ -386,33 +386,47 @@ impl Tensor {
     /// b has a shape (k, n)
     /// c has a shape (m, n)
     pub fn sgemm(
-        _transa: bool,
-        _transb: bool,
+        transa: bool,
+        transb: bool,
         alpha: f32,
         a: &Tensor,
         b: &Tensor,
         beta: f32,
         c: &mut Tensor,
     ) -> Result<(), Error> {
-        if a.cols != b.rows {
-            return Err(Error::IncompatibleTensorShapes);
+        if !transa && !transb {
+            if a.cols != b.rows {
+                return Err(Error::IncompatibleTensorShapes);
+            }
+            let m = a.rows as i32;
+            let n = b.cols as i32;
+            let k = a.cols as i32;
+            let a: &[f32] = &a.values;
+            let b: &[f32] = &b.values;
+            c.reset(m as usize, n as usize, Default::default());
+            let c: &mut [f32] = &mut c.values;
+            unsafe {
+                sgemm(
+                    Layout::ColumnMajor,
+                    Transpose::None,
+                    Transpose::None,
+                    n,
+                    m,
+                    k,
+                    alpha,
+                    b,
+                    n,
+                    a,
+                    k,
+                    beta,
+                    c,
+                    n,
+                );
+            }
+            Ok(())
+        } else {
+            return Err(Error::UnsupportedOperation);
         }
-        let layout = Layout::RowMajor;
-        let transa = Transpose::None;
-        let transb = Transpose::None;
-        let m = a.rows as i32;
-        let n = b.cols as i32;
-        let k = a.cols as i32;
-        let a: &[f32] = &a.values;
-        let b: &[f32] = &b.values;
-        c.reset(m as usize, n as usize, Default::default());
-        let c: &mut [f32] = &mut c.values;
-        unsafe {
-            sgemm(
-                layout, transa, transb, m, n, k, alpha, a, k, b, n, beta, c, n,
-            );
-        }
-        Ok(())
     }
 
     pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {

@@ -179,7 +179,7 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
-            c.reset(m as usize, n as usize, Default::default());
+            c.reset(a.rows, b.cols, 0.0);
             unsafe {
                 sgemm(
                     Layout::ColumnMajor,
@@ -204,7 +204,7 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
-            c.reset(m as usize, n as usize, Default::default());
+            c.reset(a.cols, b.cols, 0.0);
             unsafe {
                 sgemm(
                     Layout::ColumnMajor,
@@ -229,7 +229,7 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.rows, a.cols);
-            c.reset(m as usize, n as usize, Default::default());
+            c.reset(a.rows, b.rows, 0.0);
             unsafe {
                 sgemm(
                     Layout::ColumnMajor,
@@ -254,7 +254,7 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
-            c.reset(m as usize, n as usize, Default::default());
+            c.reset(a.cols, b.rows, 0.0);
             unsafe {
                 sgemm(
                     Layout::ColumnMajor,

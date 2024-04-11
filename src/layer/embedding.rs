@@ -21,6 +21,7 @@ impl DifferentiableModuleTrait for Embedding {
             1.0,
             layer_output_delta,
             layer_input,
+            0.0,
             &mut self.embedding_table.gradient,
             true,
         );
@@ -41,6 +42,7 @@ impl DifferentiableModuleTrait for Embedding {
             1.0,
             input,
             &self.embedding_table.tensor,
+            0.0,
             output,
             false,
         )

@@ -157,10 +157,10 @@ impl Tensor {
         alpha: f32,
         a: &Tensor,
         b: &Tensor,
+        beta: f32,
         c: &mut Tensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
-        let beta = 0.0;
         if !transa && !transb && !transpose_result {
             if a.cols != b.rows {
                 return Err(Error::IncompatibleTensorShapes);
@@ -263,12 +263,12 @@ impl Tensor {
             Ok(())
         } else if transa && transb && transpose_result {
             let mut tmp = Tensor::default();
-            Self::gemm(transa, transb, alpha, a, b, &mut tmp, false)?;
+            Self::gemm(transa, transb, alpha, a, b, beta, &mut tmp, false)?;
             tmp.transpose(c);
             Ok(())
         } else if transa && !transb && transpose_result {
             let mut tmp = Tensor::default();
-            Self::gemm(transa, transb, alpha, a, b, &mut tmp, false)?;
+            Self::gemm(transa, transb, alpha, a, b, beta, &mut tmp, false)?;
             tmp.transpose(c);
             Ok(())
         } else {

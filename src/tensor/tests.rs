@@ -45,7 +45,7 @@ fn multiplication_shape_compatibility() {
     );
 
     let mut result = Tensor::default();
-    let error = Tensor::gemm(false, false, 1.0, &lhs, &rhs, &mut result, false);
+    let error = Tensor::gemm(false, false, 1.0, &lhs, &rhs, 0.0, &mut result, false);
     assert_eq!(error, Err(Error::IncompatibleTensorShapes))
 }
 
@@ -241,7 +241,7 @@ fn matrix_multiplication_result() {
     );
 
     let mut result = Tensor::default();
-    _ = Tensor::gemm(false, false, 1.0, &lhs, &rhs, &mut result, false);
+    _ = Tensor::gemm(false, false, 1.0, &lhs, &rhs, 0.0, &mut result, false);
     assert_eq!(result, expected_result);
 }
 
@@ -287,7 +287,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     );
 
     let mut result = Tensor::default();
-    _ = Tensor::gemm(true, false, 1.0, &lhs, &rhs, &mut result, false);
+    _ = Tensor::gemm(true, false, 1.0, &lhs, &rhs, 0.0, &mut result, false);
     assert_eq!(result, expected_result);
 }
 
@@ -333,7 +333,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     );
 
     let mut result = Tensor::default();
-    Tensor::gemm(false, true, 1.0, &lhs, &rhs, &mut result, false).expect("Ok");
+    Tensor::gemm(false, true, 1.0, &lhs, &rhs, 0.0, &mut result, false).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -377,7 +377,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     );
 
     let mut result = Tensor::default();
-    Tensor::gemm(true, true, 1.0, &lhs, &rhs, &mut result, false).expect("Ok");
+    Tensor::gemm(true, true, 1.0, &lhs, &rhs, 0.0, &mut result, false).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -424,7 +424,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     expected_result2.transpose(&mut expected_result);
 
     let mut result = Tensor::default();
-    Tensor::gemm(true, true, 1.0, &lhs, &rhs, &mut result, true).expect("Ok");
+    Tensor::gemm(true, true, 1.0, &lhs, &rhs, 0.0, &mut result, true).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -469,7 +469,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     expected_result2.transpose(&mut expected_result);
 
     let mut result = Tensor::default();
-    Tensor::gemm(true, false, 1.0, &lhs, &rhs, &mut result, true).expect("Ok");
+    Tensor::gemm(true, false, 1.0, &lhs, &rhs, 0.0, &mut result, true).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -603,7 +603,7 @@ fn big_matrix_multiplication() {
     let m = Tensor::new(rows, cols, values);
 
     let mut result = Tensor::default();
-    _ = Tensor::gemm(false, false, 1.0, &m, &m, &mut result, false);
+    _ = Tensor::gemm(false, false, 1.0, &m, &m, 0.0, &mut result, false);
 }
 
 #[test]

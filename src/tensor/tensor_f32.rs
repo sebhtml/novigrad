@@ -151,6 +151,19 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
+    ///
+    /// C := alpha * op(A) * op(B) + beta * C,
+    ///
+    /// where  op(X) is one of
+    ///    op(X) = X   or   op(X) = X^T,
+    ///
+    /// alpha and beta are scalars.
+    /// A, B and C are matrices.
+    ///
+    /// op(A) is an m by k matrix
+    /// op(B) is a k by n matrix
+    /// C is an m by n matrix.
+    ///
     pub fn gemm(
         transa: bool,
         transb: bool,

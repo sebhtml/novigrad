@@ -1,7 +1,4 @@
-use crate::{
-    DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor,
-    TRANSPOSE_LHS, TRANSPOSE_RESULT,
-};
+use crate::{DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
@@ -19,10 +16,12 @@ impl Embedding {
 impl DifferentiableModuleTrait for Embedding {
     fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
         let op_result = Tensor::matmul(
+            true,
+            false,
+            true,
             layer_output_delta,
             layer_input,
             &mut self.embedding_table.gradient,
-            TRANSPOSE_LHS | TRANSPOSE_RESULT,
         );
         op_result.expect("Ok");
         self.embedding_table.has_gradient = true;
@@ -36,10 +35,12 @@ impl DifferentiableModuleTrait for Embedding {
     fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         debug_assert_eq!(input.cols(), self.embedding_table.tensor.rows());
         Tensor::matmul(
+            false,
+            false,
+            false,
             input,
             &self.embedding_table.tensor,
             output,
-            Default::default(),
         )
     }
 

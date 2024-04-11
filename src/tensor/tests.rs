@@ -1,9 +1,6 @@
 use rand::Rng;
 
-use crate::{
-    tensor::{Error, Tensor, TRANSPOSE_LHS, TRANSPOSE_RHS},
-    TRANSPOSE_RESULT,
-};
+use crate::tensor::{Error, Tensor};
 
 #[test]
 fn new() {
@@ -48,7 +45,7 @@ fn multiplication_shape_compatibility() {
     );
 
     let mut result = Tensor::default();
-    let error = Tensor::matmul(&lhs, &rhs, &mut result, Default::default());
+    let error = Tensor::matmul(false, false, false, &lhs, &rhs, &mut result);
     assert_eq!(error, Err(Error::IncompatibleTensorShapes))
 }
 
@@ -244,7 +241,7 @@ fn matrix_multiplication_result() {
     );
 
     let mut result = Tensor::default();
-    _ = Tensor::matmul(&lhs, &rhs, &mut result, Default::default());
+    _ = Tensor::matmul(false, false, false, &lhs, &rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -290,7 +287,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     );
 
     let mut result = Tensor::default();
-    _ = Tensor::matmul(&lhs, &rhs, &mut result, TRANSPOSE_LHS);
+    _ = Tensor::matmul(true, false, false, &lhs, &rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -336,7 +333,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     );
 
     let mut result = Tensor::default();
-    Tensor::matmul(&lhs, &rhs, &mut result, TRANSPOSE_RHS).expect("Ok");
+    Tensor::matmul(false, true, false, &lhs, &rhs, &mut result).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -380,7 +377,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     );
 
     let mut result = Tensor::default();
-    Tensor::matmul(&lhs, &rhs, &mut result, TRANSPOSE_LHS | TRANSPOSE_RHS).expect("Ok");
+    Tensor::matmul(true, true, false, &lhs, &rhs, &mut result).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -427,13 +424,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     expected_result2.transpose(&mut expected_result);
 
     let mut result = Tensor::default();
-    Tensor::matmul(
-        &lhs,
-        &rhs,
-        &mut result,
-        TRANSPOSE_LHS | TRANSPOSE_RHS | TRANSPOSE_RESULT,
-    )
-    .expect("Ok");
+    Tensor::matmul(true, true, true, &lhs, &rhs, &mut result).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -478,7 +469,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     expected_result2.transpose(&mut expected_result);
 
     let mut result = Tensor::default();
-    Tensor::matmul(&lhs, &rhs, &mut result, TRANSPOSE_LHS | TRANSPOSE_RESULT).expect("Ok");
+    Tensor::matmul(true, false, true, &lhs, &rhs, &mut result).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -612,7 +603,7 @@ fn big_matrix_multiplication() {
     let m = Tensor::new(rows, cols, values);
 
     let mut result = Tensor::default();
-    _ = Tensor::matmul(&m, &m, &mut result, Default::default());
+    _ = Tensor::matmul(false, false, false, &m, &m, &mut result);
 }
 
 #[test]

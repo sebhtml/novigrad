@@ -1,9 +1,6 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{
-    DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor,
-    TRANSPOSE_LHS, TRANSPOSE_RESULT, TRANSPOSE_RHS,
-};
+use crate::{DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor};
 
 pub struct Linear {
     weights: DifferentiableTensor,
@@ -52,7 +49,7 @@ impl DifferentiableModuleTrait for Linear {
         // W is transposed.
         let weights = &self.weights.tensor;
         let tmp = &mut self.tmp;
-        let op_result = Tensor::matmul(input, weights, tmp, TRANSPOSE_RHS);
+        let op_result = Tensor::matmul(false, true, false, input, weights, tmp);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -83,10 +80,12 @@ impl DifferentiableModuleTrait for Linear {
         let weights = &self.weights.tensor;
 
         let op_result = Tensor::matmul(
+            true,
+            true,
+            true,
             weights,
             layer_output_delta,
             previous_layer_output_delta,
-            TRANSPOSE_LHS | TRANSPOSE_RHS | TRANSPOSE_RESULT,
         );
 
         op_result.expect("Ok");
@@ -106,10 +105,12 @@ impl DifferentiableModuleTrait for Linear {
 
     fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
         let op_result = Tensor::matmul(
+            true,
+            false,
+            true,
             layer_input,
             layer_output_delta,
             &mut self.weights.gradient,
-            TRANSPOSE_LHS | TRANSPOSE_RESULT,
         );
         op_result.expect("Ok");
         self.weights.has_gradient = true;

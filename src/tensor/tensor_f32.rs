@@ -355,28 +355,26 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
-    // TODO use 3 arguments instead of 1 for options.
     pub fn matmul(
-        lhs: &Tensor,
-        rhs: &Tensor,
-        result: &mut Tensor,
-        options: u32,
+        transa: bool,
+        transb: bool,
+        transpose_result: bool,
+        a: &Tensor,
+        b: &Tensor,
+        c: &mut Tensor,
     ) -> Result<(), Error> {
-        let tranpose_lhs = (options & TRANSPOSE_LHS) > 0;
-        let transpose_rhs = (options & TRANSPOSE_RHS) > 0;
-        let transpose_result = (options & TRANSPOSE_RESULT) > 0;
-        if !tranpose_lhs && !transpose_rhs && !transpose_result {
-            Self::sgemm(tranpose_lhs, transpose_rhs, 1.0, lhs, rhs, 1.0, result)
-        } else if tranpose_lhs && !transpose_rhs && !transpose_result {
-            Self::matmul_lhs_t_rhs_result(lhs, rhs, result)
-        } else if !tranpose_lhs && transpose_rhs && !transpose_result {
-            Self::matmul_lhs_rhs_t_result(lhs, rhs, result)
-        } else if tranpose_lhs && transpose_rhs && !transpose_result {
-            Self::matmul_lhs_t_rhs_t_result(lhs, rhs, result)
-        } else if tranpose_lhs && transpose_rhs && transpose_result {
-            Self::matmul_lhs_t_rhs_t_result_t(lhs, rhs, result)
-        } else if tranpose_lhs && !transpose_rhs && transpose_result {
-            Self::matmul_lhs_t_rhs_result_t(lhs, rhs, result)
+        if !transa && !transb && !transpose_result {
+            Self::sgemm(transa, transb, 1.0, a, b, 1.0, c)
+        } else if transa && !transb && !transpose_result {
+            Self::matmul_lhs_t_rhs_result(a, b, c)
+        } else if !transa && transb && !transpose_result {
+            Self::matmul_lhs_rhs_t_result(a, b, c)
+        } else if transa && transb && !transpose_result {
+            Self::matmul_lhs_t_rhs_t_result(a, b, c)
+        } else if transa && transb && transpose_result {
+            Self::matmul_lhs_t_rhs_t_result_t(a, b, c)
+        } else if transa && !transb && transpose_result {
+            Self::matmul_lhs_t_rhs_result_t(a, b, c)
         } else {
             Err(Error::UnsupportedOperation)
         }
@@ -476,10 +474,6 @@ impl Display for Tensor {
         Ok(())
     }
 }
-
-pub const TRANSPOSE_LHS: u32 = 1 << 0;
-pub const TRANSPOSE_RHS: u32 = 1 << 1;
-pub const TRANSPOSE_RESULT: u32 = 1 << 2;
 
 pub trait F32Operation {
     fn op(left: f32, right: f32) -> f32;

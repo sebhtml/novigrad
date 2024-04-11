@@ -15,7 +15,7 @@ impl Embedding {
 
 impl DifferentiableModuleTrait for Embedding {
     fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
-        let op_result = Tensor::matmul(
+        let op_result = Tensor::gemm(
             true,
             false,
             true,
@@ -34,7 +34,7 @@ impl DifferentiableModuleTrait for Embedding {
 
     fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         debug_assert_eq!(input.cols(), self.embedding_table.tensor.rows());
-        Tensor::matmul(
+        Tensor::gemm(
             false,
             false,
             false,

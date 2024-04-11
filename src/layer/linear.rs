@@ -49,7 +49,9 @@ impl DifferentiableModuleTrait for Linear {
         // W is transposed.
         let weights = &self.weights.tensor;
         let tmp = &mut self.tmp;
-        let op_result = Tensor::matmul(false, true, false, input, weights, tmp);
+
+        // TODO use GEMM to do C = A*W^T + C  with weights and biases all together.
+        let op_result = Tensor::gemm(false, true, false, input, weights, tmp);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -79,7 +81,7 @@ impl DifferentiableModuleTrait for Linear {
     fn backward(&self, layer_output_delta: &Tensor, previous_layer_output_delta: &mut Tensor) {
         let weights = &self.weights.tensor;
 
-        let op_result = Tensor::matmul(
+        let op_result = Tensor::gemm(
             true,
             true,
             true,
@@ -104,7 +106,7 @@ impl DifferentiableModuleTrait for Linear {
     }
 
     fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
-        let op_result = Tensor::matmul(
+        let op_result = Tensor::gemm(
             true,
             false,
             true,

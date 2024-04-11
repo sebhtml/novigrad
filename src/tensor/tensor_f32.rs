@@ -355,7 +355,7 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
-    pub fn matmul(
+    pub fn gemm(
         transa: bool,
         transb: bool,
         transpose_result: bool,
@@ -363,8 +363,33 @@ impl Tensor {
         b: &Tensor,
         c: &mut Tensor,
     ) -> Result<(), Error> {
+        let alpha = 1.0;
+        let beta = 0.0;
         if !transa && !transb && !transpose_result {
-            Self::sgemm(transa, transb, 1.0, a, b, 1.0, c)
+            if a.cols != b.rows {
+                return Err(Error::IncompatibleTensorShapes);
+            }
+            let (m, n, k) = (a.rows, b.cols, a.cols);
+            c.reset(m as usize, n as usize, Default::default());
+            unsafe {
+                sgemm(
+                    Layout::ColumnMajor,
+                    Transpose::None,
+                    Transpose::None,
+                    n as i32,
+                    m as i32,
+                    k as i32,
+                    alpha,
+                    &b.values,
+                    n as i32,
+                    &a.values,
+                    k as i32,
+                    beta,
+                    &mut c.values,
+                    n as i32,
+                );
+            }
+            Ok(())
         } else if transa && !transb && !transpose_result {
             Self::matmul_lhs_t_rhs_result(a, b, c)
         } else if !transa && transb && !transpose_result {
@@ -377,53 +402,6 @@ impl Tensor {
             Self::matmul_lhs_t_rhs_result_t(a, b, c)
         } else {
             Err(Error::UnsupportedOperation)
-        }
-    }
-
-    /// a has a shape (m, k)
-    /// b has a shape (k, n)
-    /// c has a shape (m, n)
-    pub fn sgemm(
-        transa: bool,
-        transb: bool,
-        alpha: f32,
-        a: &Tensor,
-        b: &Tensor,
-        beta: f32,
-        c: &mut Tensor,
-    ) -> Result<(), Error> {
-        if !transa && !transb {
-            if a.cols != b.rows {
-                return Err(Error::IncompatibleTensorShapes);
-            }
-            let m = a.rows as i32;
-            let n = b.cols as i32;
-            let k = a.cols as i32;
-            let a: &[f32] = &a.values;
-            let b: &[f32] = &b.values;
-            c.reset(m as usize, n as usize, Default::default());
-            let c: &mut [f32] = &mut c.values;
-            unsafe {
-                sgemm(
-                    Layout::ColumnMajor,
-                    Transpose::None,
-                    Transpose::None,
-                    n,
-                    m,
-                    k,
-                    alpha,
-                    b,
-                    n,
-                    a,
-                    k,
-                    beta,
-                    c,
-                    n,
-                );
-            }
-            Ok(())
-        } else {
-            return Err(Error::UnsupportedOperation);
         }
     }
 

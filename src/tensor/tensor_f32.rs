@@ -63,49 +63,6 @@ impl Tensor {
         Ok(())
     }
 
-    /// lhs transposed, rhs not transposed, result not transposed.
-    fn matmul_lhs_t_rhs_result(
-        lhs: &Tensor,
-        rhs: &Tensor,
-        result: &mut Tensor,
-    ) -> Result<(), Error> {
-        let lhs_rows = lhs.cols;
-        let lhs_cols = lhs.rows;
-        if lhs_cols != rhs.rows {
-            return Err(Error::IncompatibleTensorShapes);
-        }
-
-        result.reset(lhs_rows, rhs.cols, Default::default());
-
-        let result_ptr = result.values.as_mut_ptr();
-        let lhs_ptr = lhs.values.as_ptr();
-        let right_ptr = rhs.values.as_ptr();
-
-        let right_cols = rhs.cols;
-
-        unsafe {
-            let mut row = 0;
-            while row != lhs_rows {
-                let mut inner = 0;
-                while inner != lhs_cols {
-                    let mut col = 0;
-                    while col != right_cols {
-                        //let lhs_value = lhs.get(inner, row);
-                        let lhs_value = *lhs_ptr.add(inner * lhs_rows + row);
-                        let right_cell = right_ptr.add(inner * right_cols + col);
-                        let result_cell = result_ptr.add(row * right_cols + col);
-                        *result_cell += lhs_value * *right_cell;
-                        col += 1;
-                    }
-                    inner += 1;
-                }
-                row += 1;
-            }
-        }
-
-        Ok(())
-    }
-
     /// lhs transposed, rhs not transposed, result transposed.
     fn matmul_lhs_t_rhs_result_t(
         lhs: &Tensor,
@@ -351,7 +308,30 @@ impl Tensor {
             }
             Ok(())
         } else if transa && !transb && !transpose_result {
-            Self::matmul_lhs_t_rhs_result(a, b, c)
+            if a.rows != b.rows {
+                return Err(Error::IncompatibleTensorShapes);
+            }
+            let (m, n, k) = (a.cols, b.cols, a.rows);
+            c.reset(m as usize, n as usize, Default::default());
+            unsafe {
+                sgemm(
+                    Layout::ColumnMajor,
+                    Transpose::None,
+                    Transpose::Ordinary,
+                    n as i32,
+                    m as i32,
+                    k as i32,
+                    alpha,
+                    &b.values,
+                    n as i32,
+                    &a.values,
+                    a.cols as i32,
+                    beta,
+                    &mut c.values,
+                    n as i32,
+                );
+            }
+            Ok(())
         } else if !transa && transb && !transpose_result {
             if a.cols != b.cols {
                 return Err(Error::IncompatibleTensorShapes);

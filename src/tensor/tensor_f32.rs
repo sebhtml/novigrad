@@ -105,44 +105,6 @@ impl Tensor {
         Ok(())
     }
 
-    /// lhs transposed, rhs transposed, result not transposed.
-    fn matmul_lhs_t_rhs_t_result(
-        lhs: &Tensor,
-        rhs: &Tensor,
-        result: &mut Tensor,
-    ) -> Result<(), Error> {
-        let lhs_rows = lhs.rows;
-        let lhs_cols = lhs.cols;
-        let rhs_rows = rhs.rows;
-        let rhs_cols = rhs.cols;
-
-        if lhs_rows != rhs_cols {
-            return Err(Error::IncompatibleTensorShapes);
-        }
-
-        result.reset(lhs_cols, rhs_rows, Default::default());
-
-        let mut lhs_col = 0;
-        while lhs_col != lhs_cols {
-            let mut rhs_row = 0;
-            while rhs_row != rhs_rows {
-                let mut inner = 0;
-                while inner != lhs_rows {
-                    let lhs_value = lhs.get(inner, lhs_col);
-                    let rhs_value = rhs.get(rhs_row, inner);
-                    let old = result.get(lhs_col, rhs_row);
-                    let result_value = old + lhs_value * rhs_value;
-                    result.set(lhs_col, rhs_row, result_value);
-                    inner += 1;
-                }
-                rhs_row += 1;
-            }
-            lhs_col += 1;
-        }
-
-        Ok(())
-    }
-
     /// lhs transposed, rhs transposed, result transposed.
     fn matmul_lhs_t_rhs_t_result_t(
         lhs: &Tensor,
@@ -358,7 +320,30 @@ impl Tensor {
             }
             Ok(())
         } else if transa && transb && !transpose_result {
-            Self::matmul_lhs_t_rhs_t_result(a, b, c)
+            if a.rows != b.cols {
+                return Err(Error::IncompatibleTensorShapes);
+            }
+            let (m, n, k) = (a.cols, b.rows, a.rows);
+            c.reset(m as usize, n as usize, Default::default());
+            unsafe {
+                sgemm(
+                    Layout::ColumnMajor,
+                    Transpose::Ordinary,
+                    Transpose::Ordinary,
+                    n as i32,
+                    m as i32,
+                    k as i32,
+                    alpha,
+                    &b.values,
+                    b.cols as i32,
+                    &a.values,
+                    a.cols as i32,
+                    beta,
+                    &mut c.values,
+                    n as i32,
+                );
+            }
+            Ok(())
         } else if transa && transb && transpose_result {
             Self::matmul_lhs_t_rhs_t_result_t(a, b, c)
         } else if transa && !transb && transpose_result {

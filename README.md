@@ -4,10 +4,28 @@
 
 # Hardware used
 
-- Lenovo Legion 7
+- Lenovo Legion 7 Laptop
 - [AMD Ryzen 7 7840HS](https://www.amd.com/en/products/apu/amd-ryzen-7-7840hs)
 - AMD Radeon 780M Graphics
 - [NVIDIA GeForce RTX 4060 Laptop GPU](https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4060-4060ti/)
+
+# Roadmap
+
+- move Tensor::reset calls on c outside of Tensor::gemm
+- add Blas with CBlas and CuBlas implementations
+- check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
+- try to use sgemm correctly when the result is transposed in order to avoid transpose_in_place
+
+- add capability for having N blocks side-by-side in a layer (required for multi-head attention)
+- implement Dropout
+- move learning rate in dataset details
+- shuffle examples in each epoch
+- implement transformer
+
+- bpe tokenizer
+- add gelu
+- add tape to decouple compute from storage
+- centralize panic! calls
 
 # Run the program
 
@@ -25,23 +43,6 @@ cargo test --release
 
 Mega_man.txt comes from Wikipedia .
 Text is available under the Creative Commons Attribution-ShareAlike License 4.0
-
-# Roadmap
-
-- avoid Tensor::reset calls on c in Tensor::gemm
-- try to use sgemm correctly when the result is transposed in order to avoid transpose_in_place
-- add capability for having N blocks side-by-side in a layer (required for multi-head attention)
-- implement Dropout
-- move learning rate in dataset details
-- shuffle examples in each epoch
-- implement transformer
-
-- bpe tokenizer
-- add gelu
-- add tape to decouple compute from storage
-- implement one-hot encoded tensor with sparsity
-- centralize panic! calls
-- implement tiled matrix multiplication
 
 # General Links
 

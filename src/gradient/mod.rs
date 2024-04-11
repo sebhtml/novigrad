@@ -29,6 +29,7 @@ impl DifferentiableTensor {
         }
         let tmp = &mut self.tmp;
         let addition = &mut self.addition;
+        // TODO use gemm C = tensor * identity + -learning_rate * gradient
         let op_result = self.gradient.scalar_mul(-learning_rate, tmp);
         op_result.expect("Ok");
         let op_result = self.tensor.add(&tmp, addition);

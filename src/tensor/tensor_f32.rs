@@ -292,6 +292,7 @@ impl Tensor {
     }
 
     pub fn scalar_mul(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {
+        // TODO use gemm with identity matrix and alpha = -learning_rate
         self.scalar_op::<F32Mul>(right, result)
     }
 

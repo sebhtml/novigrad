@@ -63,86 +63,6 @@ impl Tensor {
         Ok(())
     }
 
-    /// lhs transposed, rhs not transposed, result transposed.
-    fn matmul_lhs_t_rhs_result_t(
-        lhs: &Tensor,
-        rhs: &Tensor,
-        result: &mut Tensor,
-    ) -> Result<(), Error> {
-        let lhs_rows = lhs.rows;
-        let lhs_cols = lhs.cols;
-        if lhs_rows != rhs.rows {
-            return Err(Error::IncompatibleTensorShapes);
-        }
-
-        result.reset(rhs.cols, lhs_cols, Default::default());
-
-        let lhs_ptr = lhs.values.as_ptr();
-        let right_ptr = rhs.values.as_ptr();
-        let result_ptr = result.values.as_mut_ptr();
-
-        let right_cols = rhs.cols;
-
-        unsafe {
-            let mut lhs_col = 0;
-            while lhs_col != lhs_cols {
-                let mut inner = 0;
-                while inner != lhs_rows {
-                    let mut rhs_col = 0;
-                    while rhs_col != right_cols {
-                        let lhs_value = *lhs_ptr.add(inner * lhs_cols + lhs_col);
-                        let right_cell = right_ptr.add(inner * right_cols + rhs_col);
-                        let result_cell = result_ptr.add(rhs_col * lhs_cols + lhs_col);
-                        *result_cell += lhs_value * *right_cell;
-                        rhs_col += 1;
-                    }
-                    inner += 1;
-                }
-                lhs_col += 1;
-            }
-        }
-
-        Ok(())
-    }
-
-    /// lhs transposed, rhs transposed, result transposed.
-    fn matmul_lhs_t_rhs_t_result_t(
-        lhs: &Tensor,
-        rhs: &Tensor,
-        result: &mut Tensor,
-    ) -> Result<(), Error> {
-        let lhs_rows = lhs.rows;
-        let lhs_cols = lhs.cols;
-        let rhs_rows = rhs.rows;
-        let rhs_cols = rhs.cols;
-
-        if lhs_rows != rhs_cols {
-            return Err(Error::IncompatibleTensorShapes);
-        }
-
-        result.reset(rhs_rows, lhs_cols, Default::default());
-
-        let mut rhs_row = 0;
-        while rhs_row != rhs_rows {
-            let mut inner = 0;
-            while inner != lhs_rows {
-                let mut lhs_col = 0;
-                while lhs_col != lhs_cols {
-                    let lhs_value = lhs.get(inner, lhs_col);
-                    let rhs_value = rhs.get(rhs_row, inner);
-                    let old = result.get(rhs_row, lhs_col);
-                    let result_value = old + lhs_value * rhs_value;
-                    result.set(rhs_row, lhs_col, result_value);
-                    lhs_col += 1;
-                }
-                inner += 1;
-            }
-            rhs_row += 1;
-        }
-
-        Ok(())
-    }
-
     fn scalar_op<Operation>(&self, right: f32, result: &mut Tensor) -> Result<(), Error>
     where
         Operation: F32Operation,
@@ -205,7 +125,6 @@ impl Tensor {
         }
     }
 
-    // TODO implement also in-place transpose
     pub fn transpose(&self, other: &mut Tensor) {
         other.reset(self.cols, self.rows, Default::default());
         let rows = self.rows;
@@ -345,9 +264,15 @@ impl Tensor {
             }
             Ok(())
         } else if transa && transb && transpose_result {
-            Self::matmul_lhs_t_rhs_t_result_t(a, b, c)
+            let mut tmp = Tensor::default();
+            Self::gemm(transa, transb, false, a, b, &mut tmp)?;
+            tmp.transpose(c);
+            Ok(())
         } else if transa && !transb && transpose_result {
-            Self::matmul_lhs_t_rhs_result_t(a, b, c)
+            let mut tmp = Tensor::default();
+            Self::gemm(transa, transb, false, a, b, &mut tmp)?;
+            tmp.transpose(c);
+            Ok(())
         } else {
             Err(Error::UnsupportedOperation)
         }

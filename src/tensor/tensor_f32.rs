@@ -1,10 +1,8 @@
-use crate::dot_product;
 use crate::Error;
 use cblas::*;
 use std::{
     fmt::Display,
-    mem::swap,
-    ops::{Add, Div, Mul, Sub},
+    ops::{Add, Mul, Sub},
 };
 
 #[derive(Clone, Debug, PartialEq)]

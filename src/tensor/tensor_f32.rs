@@ -224,46 +224,6 @@ impl Tensor {
         Ok(())
     }
 
-    /// lhs transposed, rhs transposed, result not transposed.
-    /// lhs, rhs, and result are all cache-friendly for the operation.
-    fn matmul_lhs_rhs_t_result(
-        lhs: &Tensor,
-        rhs: &Tensor,
-        result: &mut Tensor,
-    ) -> Result<(), Error> {
-        let lhs_rows = lhs.rows;
-        let lhs_cols = lhs.cols;
-        let rhs_rows = rhs.rows;
-        let rhs_cols = rhs.cols;
-
-        if lhs_cols != rhs_cols {
-            return Err(Error::IncompatibleTensorShapes);
-        }
-
-        let lhs_slice = lhs.values.as_slice();
-        let rhs_slice = rhs.values.as_slice();
-
-        result.reset(lhs_rows, rhs_rows, Default::default());
-        let result_slice = result.values.as_mut_slice();
-
-        let mut lhs_row = 0;
-        while lhs_row < lhs_rows {
-            let lhs_row_index = lhs_row * lhs_cols;
-            let lhs_slice = &lhs_slice[lhs_row_index..(lhs_row_index + lhs_cols)];
-            let mut rhs_row = 0;
-            while rhs_row < rhs_rows {
-                let rhs_row_index = rhs_row * rhs_cols;
-                let rhs_slice = &rhs_slice[rhs_row_index..(rhs_row_index + lhs_cols)];
-                let result_value = &mut result_slice[lhs_row * rhs_rows + rhs_row];
-                *result_value = dot_product(lhs_slice, rhs_slice);
-                rhs_row += 1;
-            }
-            lhs_row += 1;
-        }
-
-        Ok(())
-    }
-
     fn scalar_op<Operation>(&self, right: f32, result: &mut Tensor) -> Result<(), Error>
     where
         Operation: F32Operation,
@@ -393,7 +353,30 @@ impl Tensor {
         } else if transa && !transb && !transpose_result {
             Self::matmul_lhs_t_rhs_result(a, b, c)
         } else if !transa && transb && !transpose_result {
-            Self::matmul_lhs_rhs_t_result(a, b, c)
+            if a.cols != b.cols {
+                return Err(Error::IncompatibleTensorShapes);
+            }
+            let (m, n, k) = (a.rows, b.rows, a.cols);
+            c.reset(m as usize, n as usize, Default::default());
+            unsafe {
+                sgemm(
+                    Layout::ColumnMajor,
+                    Transpose::Ordinary,
+                    Transpose::None,
+                    n as i32,
+                    m as i32,
+                    k as i32,
+                    alpha,
+                    &b.values,
+                    b.cols as i32,
+                    &a.values,
+                    k as i32,
+                    beta,
+                    &mut c.values,
+                    n as i32,
+                );
+            }
+            Ok(())
         } else if transa && transb && !transpose_result {
             Self::matmul_lhs_t_rhs_t_result(a, b, c)
         } else if transa && transb && transpose_result {

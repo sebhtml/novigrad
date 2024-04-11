@@ -18,10 +18,10 @@ impl DifferentiableModuleTrait for Embedding {
         let op_result = Tensor::gemm(
             true,
             false,
-            true,
             layer_output_delta,
             layer_input,
             &mut self.embedding_table.gradient,
+            true,
         );
         op_result.expect("Ok");
         self.embedding_table.has_gradient = true;
@@ -37,10 +37,10 @@ impl DifferentiableModuleTrait for Embedding {
         Tensor::gemm(
             false,
             false,
-            false,
             input,
             &self.embedding_table.tensor,
             output,
+            false,
         )
     }
 

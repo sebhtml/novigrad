@@ -51,7 +51,7 @@ impl DifferentiableModuleTrait for Linear {
         let tmp = &mut self.tmp;
 
         // TODO use GEMM to do C = A*W^T + C  with weights and biases all together.
-        let op_result = Tensor::gemm(false, true, false, input, weights, tmp);
+        let op_result = Tensor::gemm(false, true, input, weights, tmp, false);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -84,10 +84,10 @@ impl DifferentiableModuleTrait for Linear {
         let op_result = Tensor::gemm(
             true,
             true,
-            true,
             weights,
             layer_output_delta,
             previous_layer_output_delta,
+            true,
         );
 
         op_result.expect("Ok");
@@ -109,10 +109,10 @@ impl DifferentiableModuleTrait for Linear {
         let op_result = Tensor::gemm(
             true,
             false,
-            true,
             layer_input,
             layer_output_delta,
             &mut self.weights.gradient,
+            true,
         );
         op_result.expect("Ok");
         self.weights.has_gradient = true;

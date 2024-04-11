@@ -154,10 +154,10 @@ impl Tensor {
     pub fn gemm(
         transa: bool,
         transb: bool,
-        transpose_result: bool,
         a: &Tensor,
         b: &Tensor,
         c: &mut Tensor,
+        transpose_result: bool,
     ) -> Result<(), Error> {
         let alpha = 1.0;
         let beta = 0.0;
@@ -263,12 +263,12 @@ impl Tensor {
             Ok(())
         } else if transa && transb && transpose_result {
             let mut tmp = Tensor::default();
-            Self::gemm(transa, transb, false, a, b, &mut tmp)?;
+            Self::gemm(transa, transb, a, b, &mut tmp, false)?;
             tmp.transpose(c);
             Ok(())
         } else if transa && !transb && transpose_result {
             let mut tmp = Tensor::default();
-            Self::gemm(transa, transb, false, a, b, &mut tmp)?;
+            Self::gemm(transa, transb, a, b, &mut tmp, false)?;
             tmp.transpose(c);
             Ok(())
         } else {

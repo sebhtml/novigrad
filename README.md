@@ -13,7 +13,6 @@
 
 - add Blas with CBlas and CuBlas implementations
 - check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
-- try to use sgemm correctly when the result is transposed in order to avoid transpose_in_place
 
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
 - implement Dropout

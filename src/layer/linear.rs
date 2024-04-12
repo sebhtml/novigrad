@@ -93,7 +93,7 @@ impl DifferentiableModuleTrait for Linear {
         let a = layer_input;
         let b = layer_output_delta;
         let c = &mut self.weights.gradient;
-        c.reset(a.cols(), b.cols(), 0.0);
+        c.reset(b.cols(), a.cols(), 0.0);
         let op_result = Tensor::gemm(true, false, 1.0, a, b, 0.0, c, true);
         op_result.expect("Ok");
         self.weights.has_gradient = true;

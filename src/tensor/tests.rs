@@ -486,7 +486,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     expected_result2.transpose(&mut expected_result);
 
     let mut result = Tensor::default();
-    result.reset(lhs.cols(), rhs.cols(), 0.0);
+    result.reset(rhs.cols(), lhs.cols(), 0.0);
     Tensor::gemm(true, false, 1.0, &lhs, &rhs, 0.0, &mut result, true).expect("Ok");
     assert_eq!(result, expected_result);
 }

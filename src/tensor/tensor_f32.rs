@@ -74,10 +74,6 @@ impl Tensor {
         Ok(())
     }
 
-    pub fn is_finite(&self) -> bool {
-        !self.values.iter().any(|value| !value.is_finite())
-    }
-
     pub fn rows(&self) -> usize {
         self.rows
     }

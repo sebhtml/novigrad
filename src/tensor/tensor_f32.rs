@@ -267,10 +267,28 @@ impl Tensor {
             }
             Ok(())
         } else if transa && transb && transpose_result {
-            let mut tmp = Tensor::default();
-            tmp.assign(c);
-            Self::gemm(transa, transb, alpha, a, b, beta, &mut tmp, false)?;
-            tmp.transpose(c);
+            if a.rows != b.cols {
+                return Err(Error::IncompatibleTensorShapes);
+            }
+            let (m, n, k) = (a.cols, b.rows, a.rows);
+            unsafe {
+                sgemm(
+                    Layout::ColumnMajor,
+                    Transpose::None,
+                    Transpose::None,
+                    m as i32,
+                    n as i32,
+                    k as i32,
+                    alpha,
+                    &a.values,
+                    a.cols as i32,
+                    &b.values,
+                    b.cols as i32,
+                    beta,
+                    &mut c.values,
+                    m as i32,
+                );
+            }
             Ok(())
         } else if transa && !transb && transpose_result {
             let mut tmp = Tensor::default();

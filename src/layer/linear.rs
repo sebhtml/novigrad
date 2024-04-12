@@ -71,8 +71,8 @@ impl DifferentiableModuleTrait for Linear {
         let a = &self.weights.tensor;
         let b = layer_output_delta;
         let c = previous_layer_output_delta;
-        c.reset(a.cols(), b.rows(), 0.0);
-        let op_result = Tensor::gemm(true, true, 1.0, a, b, 1.0, c, true);
+        c.reset(b.rows(), a.cols(), 0.0);
+        let op_result = Tensor::gemm(true, true, 1.0, a, b, 0.0, c, true);
 
         op_result.expect("Ok");
     }
@@ -94,7 +94,7 @@ impl DifferentiableModuleTrait for Linear {
         let b = layer_output_delta;
         let c = &mut self.weights.gradient;
         c.reset(a.cols(), b.cols(), 0.0);
-        let op_result = Tensor::gemm(true, false, 1.0, a, b, 1.0, c, true);
+        let op_result = Tensor::gemm(true, false, 1.0, a, b, 0.0, c, true);
         op_result.expect("Ok");
         self.weights.has_gradient = true;
 

@@ -39,3 +39,4 @@ impl LossFunction for ResidualSumOfSquares {
         tmp.scalar_mul(-2.0, result)
     }
 }
+

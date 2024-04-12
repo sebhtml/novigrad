@@ -147,6 +147,8 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
+    ///  SGEMM  performs one of the matrix-matrix operations
+    /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
     ///
     /// C := alpha * op(A) * op(B) + beta * C,
     ///
@@ -160,7 +162,7 @@ impl Tensor {
     /// op(B) is a k by n matrix
     /// C is an m by n matrix.
     ///
-    pub fn gemm(
+    pub fn sgemm(
         transa: bool,
         transb: bool,
         alpha: f32,

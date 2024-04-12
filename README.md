@@ -11,6 +11,10 @@
 
 # Roadmap
 
+- rename Tensor::sgemm to matmul
+- implement sub with saxpy
+- don't use saxpy directly elsewhere
+- migrate cross-entropy loss to saxpy
 - migrate RMS to saxpy and scal.
 - migrate all remaining linear algebra Tensor methods to Blas
 - rename main.rs to lib.rs and use examples/

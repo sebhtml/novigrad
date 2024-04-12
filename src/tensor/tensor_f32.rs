@@ -179,7 +179,6 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
-            c.reset(a.rows, b.cols, 0.0);
             unsafe {
                 sgemm(
                     Layout::ColumnMajor,
@@ -204,7 +203,6 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
-            c.reset(a.cols, b.cols, 0.0);
             unsafe {
                 sgemm(
                     Layout::ColumnMajor,
@@ -229,7 +227,6 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.rows, a.cols);
-            c.reset(a.rows, b.rows, 0.0);
             unsafe {
                 sgemm(
                     Layout::ColumnMajor,
@@ -254,7 +251,6 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
-            c.reset(a.cols, b.rows, 0.0);
             unsafe {
                 sgemm(
                     Layout::ColumnMajor,
@@ -276,11 +272,13 @@ impl Tensor {
             Ok(())
         } else if transa && transb && transpose_result {
             let mut tmp = Tensor::default();
+            tmp.assign(c);
             Self::gemm(transa, transb, alpha, a, b, beta, &mut tmp, false)?;
             tmp.transpose(c);
             Ok(())
         } else if transa && !transb && transpose_result {
             let mut tmp = Tensor::default();
+            tmp.assign(c);
             Self::gemm(transa, transb, alpha, a, b, beta, &mut tmp, false)?;
             tmp.transpose(c);
             Ok(())

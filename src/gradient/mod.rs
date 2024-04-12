@@ -1,5 +1,3 @@
-use std::mem::swap;
-
 use crate::{
     DeltaWorkingMemory, Embedding, EmbeddingConfig, Error, Linear, LinearConfig, Reshape,
     ReshapeConfig, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor,
@@ -9,8 +7,6 @@ pub struct DifferentiableTensor {
     pub tensor: Tensor,
     pub gradient: Tensor,
     pub has_gradient: bool,
-    tmp: Tensor,
-    addition: Tensor,
 }
 
 impl DifferentiableTensor {
@@ -19,22 +15,15 @@ impl DifferentiableTensor {
             tensor,
             gradient: Default::default(),
             has_gradient: Default::default(),
-            tmp: Default::default(),
-            addition: Default::default(),
         }
     }
     pub fn commit_change(&mut self, learning_rate: f32) {
         if !self.has_gradient {
             return;
         }
-        let tmp = &mut self.tmp;
-        let addition = &mut self.addition;
-        // TODO use gemm in commit_change with  C = tensor * identity + -learning_rate * gradient
-        let op_result = self.gradient.scalar_mul(-learning_rate, tmp);
+
+        let op_result = Tensor::saxpy(-learning_rate, &self.gradient, &mut self.tensor);
         op_result.expect("Ok");
-        let op_result = self.tensor.add(&tmp, addition);
-        op_result.expect("Ok");
-        swap(&mut self.tensor, addition);
         self.has_gradient = false;
     }
 }

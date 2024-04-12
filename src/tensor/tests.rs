@@ -529,7 +529,8 @@ fn matrix_addition_result() {
     );
 
     let mut result = Tensor::default();
-    _ = lhs.add(&rhs, &mut result);
+    result.assign(&rhs);
+    _ = Tensor::saxpy(1.0, &lhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -637,7 +638,8 @@ fn big_matrix_addition() {
     let m = Tensor::new(rows, cols, values);
 
     let mut result = Tensor::default();
-    _ = m.add(&m, &mut result);
+    result.assign(&m);
+    _ = Tensor::saxpy(1.0, &m, &mut result);
 }
 
 #[test]

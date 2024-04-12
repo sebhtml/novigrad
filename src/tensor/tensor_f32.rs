@@ -2,7 +2,7 @@ use crate::Error;
 use cblas::*;
 use std::{
     fmt::Display,
-    ops::{Add, Mul, Sub},
+    ops::{Mul, Sub},
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -133,10 +133,6 @@ impl Tensor {
             }
             row += 1;
         }
-    }
-
-    pub fn add(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        self.operation::<F32Add>(right, result)
     }
 
     pub fn sub(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
@@ -321,6 +317,19 @@ impl Tensor {
         }
     }
 
+    pub fn saxpy(alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+        if x.values.len() != y.values.len() {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+        let n = x.values.len() as i32;
+        let x = &x.values;
+        let y = &mut y.values;
+        let incx = 1;
+        let incy = 1;
+        unsafe { saxpy(n, alpha, x, incx, y, incy) }
+        Ok(())
+    }
+
     pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {
         result.reset(self.rows, self.cols, Default::default());
         let len = self.values.len();
@@ -372,14 +381,6 @@ impl Display for Tensor {
 
 pub trait F32Operation {
     fn op(left: f32, right: f32) -> f32;
-}
-
-struct F32Add {}
-
-impl F32Operation for F32Add {
-    fn op(left: f32, right: f32) -> f32 {
-        <f32 as Add>::add(left, right)
-    }
 }
 
 struct F32Sub {}

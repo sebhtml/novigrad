@@ -11,8 +11,9 @@
 
 # Roadmap
 
-- use gemm in commit_change with  C = tensor * identity + -learning_rate * gradient
 - rename main.rs to lib.rs and use examples/
+- add a test that uses ResidualSumOfSquares
+- migrate RMS to saxpy and scal.
 - add Blas with CBlas and CuBlas implementations
 - check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
 

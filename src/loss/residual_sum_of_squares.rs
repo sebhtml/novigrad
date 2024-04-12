@@ -34,6 +34,7 @@ impl LossFunction for ResidualSumOfSquares {
         actual: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
+        // TODO migrate RMS to saxpy and scal.
         expected.sub(actual, tmp)?;
         tmp.scalar_mul(-2.0, result)
     }

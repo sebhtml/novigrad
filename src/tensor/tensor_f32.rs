@@ -24,6 +24,7 @@ impl Default for Tensor {
 
 impl Tensor {
     pub fn new(rows: usize, cols: usize, values: Vec<f32>) -> Self {
+        debug_assert_eq!(values.len(), rows * cols);
         Self { rows, cols, values }
     }
 

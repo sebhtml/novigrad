@@ -11,9 +11,9 @@
 
 # Roadmap
 
-- rename main.rs to lib.rs and use examples/
-- add a test that uses ResidualSumOfSquares
 - migrate RMS to saxpy and scal.
+- migrate all remaining linear algebra Tensor methods to Blas
+- rename main.rs to lib.rs and use examples/
 - add Blas with CBlas and CuBlas implementations
 - check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
 

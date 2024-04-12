@@ -2,6 +2,9 @@ use crate::{Error, Tensor};
 
 use super::LossFunction;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Clone)]
 pub struct ResidualSumOfSquares {}
 
@@ -14,6 +17,7 @@ impl Default for ResidualSumOfSquares {
 impl LossFunction for ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
     fn evaluate(&self, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
+        // TODO use Blas.
         let cols = expected.cols();
         let mut sum = 0.0;
         let last_row = actual.rows() - 1;
@@ -39,4 +43,3 @@ impl LossFunction for ResidualSumOfSquares {
         tmp.scalar_mul(-2.0, result)
     }
 }
-

@@ -5,7 +5,6 @@ use crate::{DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor,
 pub struct Linear {
     weights: DifferentiableTensor,
     biases: DifferentiableTensor,
-    tmp: Tensor,
 }
 
 impl Linear {
@@ -29,7 +28,6 @@ impl Linear {
         Linear {
             weights: weights.into(),
             biases: biases.into(),
-            tmp: Default::default(),
         }
     }
 }
@@ -49,10 +47,11 @@ impl DifferentiableModuleTrait for Linear {
         // W is transposed.
 
         // TODO use GEMM to do C = A*W^T + C  with weights and biases all together.
+        let biases = &self.biases.tensor;
         let a = input;
         let b = &self.weights.tensor;
-        let c = &mut self.tmp;
-        c.reset(a.rows(), b.rows(), 0.0);
+        let c = output;
+        c.assign(biases);
         let op_result = Tensor::gemm(false, true, 1.0, a, b, 1.0, c, false);
         match op_result {
             Ok(_) => (),
@@ -65,18 +64,6 @@ impl DifferentiableModuleTrait for Linear {
             }
         }
 
-        let biases = &self.biases.tensor;
-        let op_result = c.add(biases, output);
-        match op_result {
-            Ok(_) => (),
-            Err(_) => {
-                println!("Incompatible shapes in matrix multiplication");
-                println!("Between A {:?} and B {:?}", c.shape(), biases.shape(),);
-                debug_assert!(false);
-            }
-        }
-
-        op_result.expect("Ok");
         Ok(())
     }
 

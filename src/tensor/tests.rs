@@ -443,16 +443,18 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
 #[test]
 fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let lhs2 = Tensor::new(
-        3,
+        4,
         2,
         vec![
             1.0, 2.0, //
             3.0, 4.0, //
             5.0, 6.0, //
+            7.0, 8.0, //
         ],
     );
     let mut lhs = Tensor::default();
     lhs2.transpose(&mut lhs);
+
     let rhs = Tensor::new(
         2,
         3,
@@ -463,7 +465,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     );
 
     let expected_result2 = Tensor::new(
-        3,
+        4,
         3,
         vec![
             1.0 * 11.0 + 2.0 * 14.0,
@@ -475,6 +477,9 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
             5.0 * 11.0 + 6.0 * 14.0,
             5.0 * 12.0 + 6.0 * 15.0,
             5.0 * 13.0 + 6.0 * 16.0, //
+            7.0 * 11.0 + 8.0 * 14.0,
+            7.0 * 12.0 + 8.0 * 15.0,
+            7.0 * 13.0 + 8.0 * 16.0, //
         ],
     );
     let mut expected_result = Tensor::default();

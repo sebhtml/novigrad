@@ -59,19 +59,6 @@ impl Tensor {
         Ok(())
     }
 
-    fn scalar_op<Operation>(&self, right: f32, result: &mut Tensor) -> Result<(), Error>
-    where
-        Operation: F32Operation,
-    {
-        result.reset(self.rows, self.cols, Default::default());
-        for i in 0..self.values.len() {
-            let left = self.values[i];
-            let value = Operation::op(left, right);
-            result.values[i] = value;
-        }
-        Ok(())
-    }
-
     pub fn rows(&self) -> usize {
         self.rows
     }
@@ -127,7 +114,11 @@ impl Tensor {
         }
     }
 
-    // TODO use blas for element_wise_mul
+    pub fn values(&self) -> &Vec<f32> {
+        &self.values
+    }
+
+    // TODO use blas or something else for element_wise_mul
     pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         self.operation::<F32Mul>(right, result)
     }

@@ -46,7 +46,7 @@ impl DifferentiableModuleTrait for Linear {
         // X is not transposed.
         // W is transposed.
 
-        // TODO use GEMM to do C = A*W^T + C  with weights and biases all together.
+        // use GEMM to do C = A*W^T + C  with weights and biases all together.
         let biases = &self.biases.tensor;
         let a = input;
         let b = &self.weights.tensor;

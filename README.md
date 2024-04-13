@@ -13,6 +13,7 @@
 
 - rename main.rs to lib.rs and use examples/
 - add &self argument in trait BlasMethods
+- split dataset in examples and architecture
 - add Blas implementation for CuBlas
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
 

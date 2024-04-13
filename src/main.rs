@@ -12,7 +12,7 @@ use dataset::*;
 mod gradient;
 mod loss;
 use gradient::*;
-mod gemm;
+mod blas;
 
 extern crate blas_src;
 

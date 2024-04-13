@@ -1,5 +1,7 @@
-use crate::Error;
-use cblas::*;
+use crate::{
+    blas::{Blas, BlasMethods, Layout, Transpose},
+    Error,
+};
 use std::{fmt::Display, ops::Mul};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -132,7 +134,7 @@ impl Tensor {
         let incx = 1;
         let y = &y.values;
         let incy = 1;
-        unsafe { Ok(sdot(n, x, incx, y, incy)) }
+        Ok(Blas::sdot(n, x, incx, y, incy))
     }
     pub fn scopy(x: &Tensor, y: &mut Tensor) {
         let n = x.values.len() as i32;
@@ -140,7 +142,7 @@ impl Tensor {
         let incx = 1;
         let y = &mut y.values;
         let incy = 1;
-        unsafe { scopy(n, x, incx, y, incy) }
+        Blas::scopy(n, x, incx, y, incy)
     }
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
@@ -172,144 +174,142 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
-            unsafe {
-                sgemm(
-                    Layout::ColumnMajor,
-                    Transpose::None,
-                    Transpose::None,
-                    n as i32,
-                    m as i32,
-                    k as i32,
-                    alpha,
-                    &b.values,
-                    n as i32,
-                    &a.values,
-                    k as i32,
-                    beta,
-                    &mut c.values,
-                    n as i32,
-                );
-            }
+            Blas::sgemm(
+                Layout::ColumnMajor,
+                Transpose::None,
+                Transpose::None,
+                n as i32,
+                m as i32,
+                k as i32,
+                alpha,
+                &b.values,
+                n as i32,
+                &a.values,
+                k as i32,
+                beta,
+                &mut c.values,
+                n as i32,
+            );
             Ok(())
         } else if transa && !transb && !transpose_result {
             if a.rows != b.rows {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
-            unsafe {
-                sgemm(
-                    Layout::ColumnMajor,
-                    Transpose::None,
-                    Transpose::Ordinary,
-                    n as i32,
-                    m as i32,
-                    k as i32,
-                    alpha,
-                    &b.values,
-                    n as i32,
-                    &a.values,
-                    a.cols as i32,
-                    beta,
-                    &mut c.values,
-                    n as i32,
-                );
-            }
+
+            Blas::sgemm(
+                Layout::ColumnMajor,
+                Transpose::None,
+                Transpose::Ordinary,
+                n as i32,
+                m as i32,
+                k as i32,
+                alpha,
+                &b.values,
+                n as i32,
+                &a.values,
+                a.cols as i32,
+                beta,
+                &mut c.values,
+                n as i32,
+            );
+
             Ok(())
         } else if !transa && transb && !transpose_result {
             if a.cols != b.cols {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.rows, a.cols);
-            unsafe {
-                sgemm(
-                    Layout::ColumnMajor,
-                    Transpose::Ordinary,
-                    Transpose::None,
-                    n as i32,
-                    m as i32,
-                    k as i32,
-                    alpha,
-                    &b.values,
-                    b.cols as i32,
-                    &a.values,
-                    k as i32,
-                    beta,
-                    &mut c.values,
-                    n as i32,
-                );
-            }
+
+            Blas::sgemm(
+                Layout::ColumnMajor,
+                Transpose::Ordinary,
+                Transpose::None,
+                n as i32,
+                m as i32,
+                k as i32,
+                alpha,
+                &b.values,
+                b.cols as i32,
+                &a.values,
+                k as i32,
+                beta,
+                &mut c.values,
+                n as i32,
+            );
+
             Ok(())
         } else if transa && transb && !transpose_result {
             if a.rows != b.cols {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
-            unsafe {
-                sgemm(
-                    Layout::ColumnMajor,
-                    Transpose::Ordinary,
-                    Transpose::Ordinary,
-                    n as i32,
-                    m as i32,
-                    k as i32,
-                    alpha,
-                    &b.values,
-                    b.cols as i32,
-                    &a.values,
-                    a.cols as i32,
-                    beta,
-                    &mut c.values,
-                    n as i32,
-                );
-            }
+
+            Blas::sgemm(
+                Layout::ColumnMajor,
+                Transpose::Ordinary,
+                Transpose::Ordinary,
+                n as i32,
+                m as i32,
+                k as i32,
+                alpha,
+                &b.values,
+                b.cols as i32,
+                &a.values,
+                a.cols as i32,
+                beta,
+                &mut c.values,
+                n as i32,
+            );
+
             Ok(())
         } else if transa && transb && transpose_result {
             if a.rows != b.cols {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
-            unsafe {
-                sgemm(
-                    Layout::ColumnMajor,
-                    Transpose::None,
-                    Transpose::None,
-                    m as i32,
-                    n as i32,
-                    k as i32,
-                    alpha,
-                    &a.values,
-                    a.cols as i32,
-                    &b.values,
-                    b.cols as i32,
-                    beta,
-                    &mut c.values,
-                    m as i32,
-                );
-            }
+
+            Blas::sgemm(
+                Layout::ColumnMajor,
+                Transpose::None,
+                Transpose::None,
+                m as i32,
+                n as i32,
+                k as i32,
+                alpha,
+                &a.values,
+                a.cols as i32,
+                &b.values,
+                b.cols as i32,
+                beta,
+                &mut c.values,
+                m as i32,
+            );
+
             Ok(())
         } else if transa && !transb && transpose_result {
             if a.rows != b.rows {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
-            unsafe {
-                sgemm(
-                    Layout::ColumnMajor,
-                    Transpose::None,
-                    Transpose::Ordinary,
-                    m as i32,
-                    n as i32,
-                    k as i32,
-                    alpha,
-                    &a.values,
-                    a.cols as i32,
-                    &b.values,
-                    b.cols as i32,
-                    beta,
-                    &mut c.values,
-                    m as i32,
-                );
-            }
+
+            Blas::sgemm(
+                Layout::ColumnMajor,
+                Transpose::None,
+                Transpose::Ordinary,
+                m as i32,
+                n as i32,
+                k as i32,
+                alpha,
+                &a.values,
+                a.cols as i32,
+                &b.values,
+                b.cols as i32,
+                beta,
+                &mut c.values,
+                m as i32,
+            );
+
             Ok(())
         } else {
             Err(Error::UnsupportedOperation)
@@ -327,7 +327,7 @@ impl Tensor {
         let incx = 1;
         let y = &mut y.values;
         let incy = 1;
-        unsafe { saxpy(n, alpha, x, incx, y, incy) }
+        Blas::saxpy(n, alpha, x, incx, y, incy);
         Ok(())
     }
 
@@ -349,7 +349,7 @@ impl Tensor {
         let n = x.values.len() as i32;
         let x = &mut x.values;
         let incx = 1;
-        unsafe { sscal(n, alpha, x, incx) }
+        Blas::sscal(n, alpha, x, incx)
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {

@@ -11,12 +11,8 @@
 
 # Roadmap
 
-- add Blas with CBlas implementations
-- add Blas implementation for CuBlas
-- add Blas implementation for AMD GPUs.
 - rename main.rs to lib.rs and use examples/
-- check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
-
+- add Blas implementation for CuBlas
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
 - implement Dropout
 - move learning rate in dataset details
@@ -27,6 +23,8 @@
 - add gelu
 - add tape to decouple compute from storage
 - centralize panic! calls
+- check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
+- add Blas implementation for AMD GPUs.
 
 # Run the program
 

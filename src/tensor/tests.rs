@@ -606,7 +606,8 @@ fn scalar_mul() {
     );
 
     let mut result = Tensor::default();
-    _ = lhs.scalar_mul(rhs, &mut result);
+    result.assign(&lhs);
+    Tensor::sscal(rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 

@@ -1,6 +1,6 @@
 use crate::Error;
 use cblas::*;
-use std::{fmt::Display, ops::Mul, ptr::copy_nonoverlapping};
+use std::{fmt::Display, ops::Mul};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {
@@ -127,19 +127,18 @@ impl Tensor {
         }
     }
 
+    // TODO use blas for element_wise_mul
     pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         self.operation::<F32Mul>(right, result)
     }
 
     pub fn scopy(x: &Tensor, y: &mut Tensor) {
-        unsafe {
-            let n = x.values.len() as i32;
-            let x = &x.values;
-            let y = &mut y.values;
-            let incx = 1;
-            let incy = 1;
-            scopy(n, x, incx, y, incy)
-        }
+        let n = x.values.len() as i32;
+        let x = &x.values;
+        let y = &mut y.values;
+        let incx = 1;
+        let incy = 1;
+        unsafe { scopy(n, x, incx, y, incy) }
     }
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
@@ -315,6 +314,8 @@ impl Tensor {
         }
     }
 
+    // SAXPY constant times a vector plus a vector.
+    // y = alpha * x + y
     pub fn saxpy(alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         if x.values.len() != y.values.len() {
             return Err(Error::IncompatibleTensorShapes);
@@ -328,6 +329,7 @@ impl Tensor {
         Ok(())
     }
 
+    // TODO use blas to clip
     pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {
         result.reset(self.rows, self.cols, Default::default());
         let len = self.values.len();
@@ -341,9 +343,11 @@ impl Tensor {
         }
     }
 
-    pub fn scalar_mul(&self, right: f32, result: &mut Tensor) -> Result<(), Error> {
-        // TODO use gemm with identity matrix and alpha = -learning_rate
-        self.scalar_op::<F32Mul>(right, result)
+    pub fn sscal(alpha: f32, x: &mut Tensor) {
+        let n = x.values.len() as i32;
+        let x = &mut x.values;
+        let incx = 1;
+        unsafe { sscal(n, alpha, x, incx) }
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {

@@ -31,16 +31,10 @@ impl LossFunction for ResidualSumOfSquares {
         Ok(sum)
     }
 
-    fn derive(
-        &self,
-        tmp: &mut Tensor,
-        expected: &Tensor,
-        actual: &Tensor,
-        result: &mut Tensor,
-    ) -> Result<(), Error> {
-        tmp.assign(expected);
-        Tensor::saxpy(-1.0, actual, tmp)?;
-        // TODO migrate RMS to scal.
-        tmp.scalar_mul(-2.0, result)
+    fn derive(&self, expected: &Tensor, actual: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+        result.assign(expected);
+        Tensor::saxpy(-1.0, actual, result)?;
+        Tensor::sscal(-2.0, result);
+        Ok(())
     }
 }

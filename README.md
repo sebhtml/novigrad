@@ -6,15 +6,16 @@
 
 - Lenovo Legion 7 Laptop
 - [AMD Ryzen 7 7840HS](https://www.amd.com/en/products/apu/amd-ryzen-7-7840hs)
-- AMD Radeon 780M Graphics
+- [AMD Radeon 780M Graphics](https://www.techpowerup.com/gpu-specs/radeon-780m.c4020)
 - [NVIDIA GeForce RTX 4060 Laptop GPU](https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4060-4060ti/)
 
 # Roadmap
 
-- migrate RMS to saxpy and scal.
 - migrate all remaining linear algebra Tensor methods to Blas
+- add Blas with CBlas implementations
+- add Blas implementation for CuBlas
+- add Blas implementation for AMD GPUs.
 - rename main.rs to lib.rs and use examples/
-- add Blas with CBlas and CuBlas implementations
 - check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
 
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)

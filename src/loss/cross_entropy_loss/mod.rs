@@ -40,13 +40,7 @@ impl LossFunction for CrossEntropyLoss {
     /// then we don't need to derive the softmax activations.
     /// The derivative of the Loss in respect to logits (before activation) is
     /// output of the softmax function - expected output (one-hot encoded)
-    fn derive(
-        &self,
-        _tmp: &mut Tensor,
-        expected: &Tensor,
-        actual: &Tensor,
-        result: &mut Tensor,
-    ) -> Result<(), Error> {
+    fn derive(&self, expected: &Tensor, actual: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         result.assign(actual);
         Tensor::saxpy(-1.0, expected, result)
     }

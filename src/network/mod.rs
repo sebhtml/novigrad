@@ -160,12 +160,11 @@ impl<'a> Network<'a> {
 
             if is_last_layer {
                 // For the output layer, the next layer delta is the loss.
-                let tmp = &mut working_memory.tmp;
                 let layer_activation_tensor = &layer_outputs[layer_index];
 
                 let op_result =
                     self.loss_function
-                        .derive(tmp, y, &layer_activation_tensor, next_layer_delta);
+                        .derive(y, &layer_activation_tensor, next_layer_delta);
                 op_result.expect("Ok");
             }
 

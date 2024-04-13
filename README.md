@@ -12,8 +12,10 @@
 # Roadmap
 
 - rename main.rs to lib.rs and use examples/
+- add &self argument in trait BlasMethods
 - add Blas implementation for CuBlas
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
+
 - implement Dropout
 - move learning rate in dataset details
 - shuffle examples in each epoch

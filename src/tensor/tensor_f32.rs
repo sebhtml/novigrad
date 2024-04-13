@@ -1,6 +1,6 @@
 use crate::Error;
 use cblas::*;
-use std::{fmt::Display, ops::Mul};
+use std::{fmt::Display, ops::Mul, ptr::copy_nonoverlapping};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {
@@ -107,14 +107,8 @@ impl Tensor {
     }
 
     pub fn assign(&mut self, from: &Tensor) {
-        self.reset(from.rows, from.cols, Default::default());
-
-        let len = from.values.len();
-        let mut index = 0;
-        while index < len {
-            self.values[index] = from.values[index];
-            index += 1;
-        }
+        self.reset(from.rows, from.cols, 0.0);
+        Tensor::scopy(from, self);
     }
 
     pub fn transpose(&self, other: &mut Tensor) {
@@ -137,6 +131,16 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
+    pub fn scopy(x: &Tensor, y: &mut Tensor) {
+        unsafe {
+            let n = x.values.len() as i32;
+            let x = &x.values;
+            let y = &mut y.values;
+            let incx = 1;
+            let incy = 1;
+            scopy(n, x, incx, y, incy)
+        }
+    }
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
     ///

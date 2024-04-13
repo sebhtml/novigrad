@@ -47,6 +47,7 @@ impl LossFunction for CrossEntropyLoss {
         actual: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        actual.sub(expected, result)
+        result.assign(actual);
+        Tensor::saxpy(-1.0, expected, result)
     }
 }

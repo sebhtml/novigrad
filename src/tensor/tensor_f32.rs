@@ -1,9 +1,6 @@
 use crate::Error;
 use cblas::*;
-use std::{
-    fmt::Display,
-    ops::{Mul, Sub},
-};
+use std::{fmt::Display, ops::Mul};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {
@@ -134,10 +131,6 @@ impl Tensor {
             }
             row += 1;
         }
-    }
-
-    pub fn sub(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        self.operation::<F32Sub>(right, result)
     }
 
     pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
@@ -382,14 +375,6 @@ impl Display for Tensor {
 
 pub trait F32Operation {
     fn op(left: f32, right: f32) -> f32;
-}
-
-struct F32Sub {}
-
-impl F32Operation for F32Sub {
-    fn op(left: f32, right: f32) -> f32 {
-        <f32 as Sub>::sub(left, right)
-    }
 }
 
 struct F32Mul {}

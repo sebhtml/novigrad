@@ -23,6 +23,6 @@ fn evaluate() {
     let loss_function = ResidualSumOfSquares::default();
     assert_eq!(
         loss_function.evaluate(&expected_tensor, &actual_tensor),
-        Ok(72.0)
+        Ok((4.0 - 1.0 as f32).powf(2.0) * 8.0)
     );
 }

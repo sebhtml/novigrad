@@ -17,18 +17,13 @@ impl Default for ResidualSumOfSquares {
 impl LossFunction for ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
     fn evaluate(&self, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
-        // TODO use Blas.
-        let cols = expected.cols();
-        let mut sum = 0.0;
-        let last_row = actual.rows() - 1;
-        if actual.cols() != cols {
+        if expected.shape() != actual.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        for col in 0..cols {
-            let diff = expected.get(0, col) - actual.get(last_row, col);
-            sum += diff * diff;
-        }
-        Ok(sum)
+        let mut diffs = Tensor::default();
+        diffs.assign(expected);
+        Tensor::saxpy(-1.0, actual, &mut diffs)?;
+        Tensor::sdot(&diffs, &diffs)
     }
 
     fn derive(&self, expected: &Tensor, actual: &Tensor, result: &mut Tensor) -> Result<(), Error> {

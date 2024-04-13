@@ -11,7 +11,6 @@
 
 # Roadmap
 
-- migrate all remaining linear algebra Tensor methods to Blas
 - add Blas with CBlas implementations
 - add Blas implementation for CuBlas
 - add Blas implementation for AMD GPUs.

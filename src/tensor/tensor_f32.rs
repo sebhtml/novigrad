@@ -123,11 +123,22 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
+    pub fn sdot(x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+        if x.shape() != y.shape() {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+        let n = x.values.len() as i32;
+        let x = &x.values;
+        let incx = 1;
+        let y = &y.values;
+        let incy = 1;
+        unsafe { Ok(sdot(n, x, incx, y, incy)) }
+    }
     pub fn scopy(x: &Tensor, y: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &x.values;
-        let y = &mut y.values;
         let incx = 1;
+        let y = &mut y.values;
         let incy = 1;
         unsafe { scopy(n, x, incx, y, incy) }
     }
@@ -313,8 +324,8 @@ impl Tensor {
         }
         let n = x.values.len() as i32;
         let x = &x.values;
-        let y = &mut y.values;
         let incx = 1;
+        let y = &mut y.values;
         let incy = 1;
         unsafe { saxpy(n, alpha, x, incx, y, incy) }
         Ok(())

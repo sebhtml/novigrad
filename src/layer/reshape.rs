@@ -1,4 +1,6 @@
-use crate::{accelerator::Blas, DeltaWorkingMemory, DifferentiableModuleTrait, Error, Tensor};
+use crate::{
+    accelerator::Accelerator, DeltaWorkingMemory, DifferentiableModuleTrait, Error, Tensor,
+};
 
 pub struct Reshape {
     input_rows: usize,
@@ -26,30 +28,35 @@ impl Reshape {
 impl DifferentiableModuleTrait for Reshape {
     fn compute_gradient(
         &mut self,
-        blas: &Blas,
+        blas: &Accelerator,
         _layer_input: &Tensor,
         _layer_output_delta: &Tensor,
     ) {
     }
 
-    fn commit_change(&mut self, blas: &Blas, _learning_rate: f32) -> Result<(), Error> {
+    fn commit_change(&mut self, blas: &Accelerator, _learning_rate: f32) -> Result<(), Error> {
         Ok(())
     }
 
-    fn forward(&mut self, blas: &Blas, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+    fn forward(
+        &mut self,
+        blas: &Accelerator,
+        input: &Tensor,
+        output: &mut Tensor,
+    ) -> Result<(), Error> {
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
         output.assign(blas, input);
         output.reshape(self.output_rows, self.output_cols)
     }
 
-    fn backward(&self, blas: &Blas, layer_delta: &Tensor, output_diff: &mut Tensor) {
+    fn backward(&self, blas: &Accelerator, layer_delta: &Tensor, output_diff: &mut Tensor) {
         output_diff.assign(blas, layer_delta);
     }
 
     fn get_layer_output_delta(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,
         _layer_output: &Tensor,

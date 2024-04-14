@@ -1,14 +1,19 @@
-use crate::{accelerator::Blas, Error, Tensor};
+use crate::{accelerator::Accelerator, Error, Tensor};
 mod residual_sum_of_squares;
 pub use residual_sum_of_squares::*;
 mod cross_entropy_loss;
 pub use cross_entropy_loss::*;
 
 pub trait LossFunction {
-    fn evaluate(&self, blas: &Blas, expected: &Tensor, actual: &Tensor) -> Result<f32, Error>;
+    fn evaluate(
+        &self,
+        blas: &Accelerator,
+        expected: &Tensor,
+        actual: &Tensor,
+    ) -> Result<f32, Error>;
     fn derive(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,
@@ -21,7 +26,12 @@ pub enum LossFunctionType {
 }
 
 impl LossFunction for LossFunctionType {
-    fn evaluate(&self, blas: &Blas, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
+    fn evaluate(
+        &self,
+        blas: &Accelerator,
+        expected: &Tensor,
+        actual: &Tensor,
+    ) -> Result<f32, Error> {
         match self {
             LossFunctionType::ResidualSumOfSquares(that) => that.evaluate(blas, expected, actual),
             LossFunctionType::CrossEntropyLoss(that) => that.evaluate(blas, expected, actual),
@@ -30,7 +40,7 @@ impl LossFunction for LossFunctionType {
 
     fn derive(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,

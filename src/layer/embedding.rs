@@ -1,6 +1,6 @@
 use crate::{
-    accelerator::Blas, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error,
-    Tensor,
+    accelerator::Accelerator, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor,
+    Error, Tensor,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -17,7 +17,12 @@ impl Embedding {
 }
 
 impl DifferentiableModuleTrait for Embedding {
-    fn compute_gradient(&mut self, blas: &Blas, layer_input: &Tensor, layer_output_delta: &Tensor) {
+    fn compute_gradient(
+        &mut self,
+        blas: &Accelerator,
+        layer_input: &Tensor,
+        layer_output_delta: &Tensor,
+    ) {
         let a = layer_output_delta;
         let b = layer_input;
         let c = &mut self.embedding_table.gradient;
@@ -27,12 +32,17 @@ impl DifferentiableModuleTrait for Embedding {
         self.embedding_table.has_gradient = true;
     }
 
-    fn commit_change(&mut self, blas: &Blas, learning_rate: f32) -> Result<(), Error> {
+    fn commit_change(&mut self, blas: &Accelerator, learning_rate: f32) -> Result<(), Error> {
         self.embedding_table.commit_change(blas, learning_rate);
         Ok(())
     }
 
-    fn forward(&mut self, blas: &Blas, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+    fn forward(
+        &mut self,
+        blas: &Accelerator,
+        input: &Tensor,
+        output: &mut Tensor,
+    ) -> Result<(), Error> {
         debug_assert_eq!(input.cols(), self.embedding_table.tensor.rows());
         let a = input;
         let b = &self.embedding_table.tensor;
@@ -41,13 +51,18 @@ impl DifferentiableModuleTrait for Embedding {
         Tensor::sgemm(blas, false, false, 1.0, a, b, 0.0, c, false)
     }
 
-    fn backward(&self, blas: &Blas, _layer_delta: &Tensor, _previous_layer_delta: &mut Tensor) {
+    fn backward(
+        &self,
+        blas: &Accelerator,
+        _layer_delta: &Tensor,
+        _previous_layer_delta: &mut Tensor,
+    ) {
         panic!("Embedding can not go backward !");
     }
 
     fn get_layer_output_delta(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,
         _layer_output: &Tensor,

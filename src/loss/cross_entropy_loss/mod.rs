@@ -1,5 +1,5 @@
 use super::LossFunction;
-use crate::{accelerator::Blas, Error, Tensor};
+use crate::{accelerator::Accelerator, Error, Tensor};
 
 #[derive(Clone)]
 pub struct CrossEntropyLoss {}
@@ -14,7 +14,12 @@ const EPSILON: f32 = 1e-8;
 
 impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(&self, blas: &Blas, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
+    fn evaluate(
+        &self,
+        blas: &Accelerator,
+        expected: &Tensor,
+        actual: &Tensor,
+    ) -> Result<f32, Error> {
         debug_assert_eq!(actual.shape(), expected.shape());
         let p = expected;
         let q = actual;
@@ -42,7 +47,7 @@ impl LossFunction for CrossEntropyLoss {
     /// output of the softmax function - expected output (one-hot encoded)
     fn derive(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,

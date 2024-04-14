@@ -4,7 +4,7 @@ pub mod train;
 use std::mem::swap;
 
 use crate::{
-    accelerator::Blas,
+    accelerator::Accelerator,
     loss::{LossFunction, LossFunctionType},
     DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleTrait, Error, Tensor,
 };
@@ -12,7 +12,7 @@ use crate::{
 pub struct Network<'a> {
     layers: Vec<DifferentiableModule>,
     loss_function: &'a LossFunctionType,
-    blas: Blas,
+    blas: Accelerator,
 }
 
 pub struct TrainWorkingMemory {

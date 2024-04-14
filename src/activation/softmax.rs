@@ -1,4 +1,4 @@
-use crate::accelerator::Blas;
+use crate::accelerator::Accelerator;
 use crate::Error;
 use crate::{ActivationFunction, DifferentiableModuleTrait, Tensor};
 use std::f32::consts::E;
@@ -102,27 +102,37 @@ impl ActivationFunction for Softmax {
 impl DifferentiableModuleTrait for Softmax {
     fn compute_gradient(
         &mut self,
-        blas: &Blas,
+        blas: &Accelerator,
         _layer_input: &Tensor,
         _layer_output_delta: &Tensor,
     ) {
     }
 
-    fn commit_change(&mut self, blas: &Blas, _learning_rate: f32) -> Result<(), Error> {
+    fn commit_change(&mut self, blas: &Accelerator, _learning_rate: f32) -> Result<(), Error> {
         Ok(())
     }
 
-    fn forward(&mut self, blas: &Blas, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+    fn forward(
+        &mut self,
+        blas: &Accelerator,
+        input: &Tensor,
+        output: &mut Tensor,
+    ) -> Result<(), Error> {
         self.activate(input, output)
     }
 
-    fn backward(&self, blas: &Blas, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
+    fn backward(
+        &self,
+        blas: &Accelerator,
+        layer_delta: &Tensor,
+        previous_layer_delta: &mut Tensor,
+    ) {
         previous_layer_delta.assign(blas, layer_delta)
     }
 
     fn get_layer_output_delta(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         working_memory: &mut crate::DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,

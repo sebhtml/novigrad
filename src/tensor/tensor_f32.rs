@@ -1,5 +1,5 @@
 use crate::{
-    accelerator::{AcceleratorInterface, Blas, Layout, Transpose},
+    accelerator::{Accelerator, AcceleratorInterface, Layout, Transpose},
     Error,
 };
 use std::{fmt::Display, ops::Mul};
@@ -95,7 +95,7 @@ impl Tensor {
         self.values[index] = value;
     }
 
-    pub fn assign(&mut self, blas: &Blas, from: &Tensor) {
+    pub fn assign(&mut self, blas: &Accelerator, from: &Tensor) {
         self.reset(from.rows, from.cols, 0.0);
         Tensor::scopy(blas, from, self);
     }
@@ -125,7 +125,7 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
-    pub fn sdot(blas: &Blas, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    pub fn sdot(blas: &Accelerator, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -136,7 +136,7 @@ impl Tensor {
         let incy = 1;
         Ok(blas.sdot(n, x, incx, y, incy))
     }
-    pub fn scopy(blas: &Blas, x: &Tensor, y: &mut Tensor) {
+    pub fn scopy(blas: &Accelerator, x: &Tensor, y: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &x.values;
         let incx = 1;
@@ -160,7 +160,7 @@ impl Tensor {
     /// C is an m by n matrix.
     ///
     pub fn sgemm(
-        blas: &Blas,
+        blas: &Accelerator,
         transa: bool,
         transb: bool,
         alpha: f32,
@@ -319,7 +319,7 @@ impl Tensor {
 
     // SAXPY constant times a vector plus a vector.
     // y = alpha * x + y
-    pub fn saxpy(blas: &Blas, alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn saxpy(blas: &Accelerator, alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         if x.values.len() != y.values.len() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -346,7 +346,7 @@ impl Tensor {
         }
     }
 
-    pub fn sscal(blas: &Blas, alpha: f32, x: &mut Tensor) {
+    pub fn sscal(blas: &Accelerator, alpha: f32, x: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &mut x.values;
         let incx = 1;

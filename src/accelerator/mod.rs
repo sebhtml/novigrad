@@ -45,18 +45,18 @@ pub trait AcceleratorInterface {
     fn sscal(&self, n: i32, alpha: f32, x: &mut [f32], incx: i32);
 }
 
-pub enum Blas {
+pub enum Accelerator {
     CBlas(CBlas),
 }
 
-impl Default for Blas {
+impl Default for Accelerator {
     fn default() -> Self {
-        Blas::CBlas(Default::default())
+        Accelerator::CBlas(Default::default())
     }
 }
 
 // TODO add an argument &self to allow to choose between CBlas and CuBlas and the AMD one too.
-impl AcceleratorInterface for Blas {
+impl AcceleratorInterface for Accelerator {
     fn sgemm(
         &self,
         layout: Layout,
@@ -75,7 +75,7 @@ impl AcceleratorInterface for Blas {
         ldc: i32,
     ) {
         match self {
-            Blas::CBlas(blas) => blas.sgemm(
+            Accelerator::CBlas(blas) => blas.sgemm(
                 layout, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
             ),
         }
@@ -83,25 +83,25 @@ impl AcceleratorInterface for Blas {
 
     fn sdot(&self, n: i32, x: &[f32], incx: i32, y: &[f32], incy: i32) -> f32 {
         match self {
-            Blas::CBlas(blas) => blas.sdot(n, x, incx, y, incy),
+            Accelerator::CBlas(blas) => blas.sdot(n, x, incx, y, incy),
         }
     }
 
     fn scopy(&self, n: i32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
-            Blas::CBlas(blas) => blas.scopy(n, x, incx, y, incy),
+            Accelerator::CBlas(blas) => blas.scopy(n, x, incx, y, incy),
         }
     }
 
     fn saxpy(&self, n: i32, alpha: f32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
-            Blas::CBlas(blas) => blas.saxpy(n, alpha, x, incx, y, incy),
+            Accelerator::CBlas(blas) => blas.saxpy(n, alpha, x, incx, y, incy),
         }
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: &mut [f32], incx: i32) {
         match self {
-            Blas::CBlas(blas) => blas.sscal(n, alpha, x, incx),
+            Accelerator::CBlas(blas) => blas.sscal(n, alpha, x, incx),
         }
     }
 }

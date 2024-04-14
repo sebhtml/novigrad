@@ -1,4 +1,4 @@
-use crate::{accelerator::Blas, Error, Tensor};
+use crate::{accelerator::Accelerator, Error, Tensor};
 
 use super::LossFunction;
 
@@ -16,7 +16,12 @@ impl Default for ResidualSumOfSquares {
 
 impl LossFunction for ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
-    fn evaluate(&self, blas: &Blas, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
+    fn evaluate(
+        &self,
+        blas: &Accelerator,
+        expected: &Tensor,
+        actual: &Tensor,
+    ) -> Result<f32, Error> {
         if expected.shape() != actual.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -28,7 +33,7 @@ impl LossFunction for ResidualSumOfSquares {
 
     fn derive(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,

@@ -1,8 +1,8 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    accelerator::Blas, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error,
-    Tensor,
+    accelerator::Accelerator, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor,
+    Error, Tensor,
 };
 
 pub struct Linear {
@@ -36,13 +36,18 @@ impl Linear {
 }
 
 impl DifferentiableModuleTrait for Linear {
-    fn commit_change(&mut self, blas: &Blas, learning_rate: f32) -> Result<(), Error> {
+    fn commit_change(&mut self, blas: &Accelerator, learning_rate: f32) -> Result<(), Error> {
         self.weights.commit_change(blas, learning_rate);
         self.biases.commit_change(blas, learning_rate);
         Ok(())
     }
 
-    fn forward(&mut self, blas: &Blas, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+    fn forward(
+        &mut self,
+        blas: &Accelerator,
+        input: &Tensor,
+        output: &mut Tensor,
+    ) -> Result<(), Error> {
         // Use the same convention that is used in tensorflow:
         // y = x @ W^T+b
         // Weights is on the right.
@@ -72,7 +77,7 @@ impl DifferentiableModuleTrait for Linear {
 
     fn backward(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
     ) {
@@ -87,7 +92,7 @@ impl DifferentiableModuleTrait for Linear {
 
     fn get_layer_output_delta(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,
         _layer_output: &Tensor,
@@ -98,7 +103,12 @@ impl DifferentiableModuleTrait for Linear {
         layer_delta.assign(blas, back_propagated_delta)
     }
 
-    fn compute_gradient(&mut self, blas: &Blas, layer_input: &Tensor, layer_output_delta: &Tensor) {
+    fn compute_gradient(
+        &mut self,
+        blas: &Accelerator,
+        layer_input: &Tensor,
+        layer_output_delta: &Tensor,
+    ) {
         let a = layer_input;
         let b = layer_output_delta;
         let c = &mut self.weights.gradient;

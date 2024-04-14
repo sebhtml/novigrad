@@ -1,6 +1,6 @@
 use crate::{
-    accelerator::Blas, DeltaWorkingMemory, Embedding, EmbeddingConfig, Error, Linear, LinearConfig,
-    Reshape, ReshapeConfig, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor,
+    accelerator::Accelerator, DeltaWorkingMemory, Embedding, EmbeddingConfig, Error, Linear,
+    LinearConfig, Reshape, ReshapeConfig, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor,
 };
 
 pub struct DifferentiableTensor {
@@ -17,7 +17,7 @@ impl DifferentiableTensor {
             has_gradient: Default::default(),
         }
     }
-    pub fn commit_change(&mut self, blas: &Blas, learning_rate: f32) {
+    pub fn commit_change(&mut self, blas: &Accelerator, learning_rate: f32) {
         if !self.has_gradient {
             return;
         }
@@ -35,13 +35,18 @@ impl From<Tensor> for DifferentiableTensor {
 }
 
 pub trait DifferentiableModuleTrait {
-    fn compute_gradient(&mut self, blas: &Blas, layer_input: &Tensor, layer_output_delta: &Tensor);
+    fn compute_gradient(
+        &mut self,
+        blas: &Accelerator,
+        layer_input: &Tensor,
+        layer_output_delta: &Tensor,
+    );
 
-    fn commit_change(&mut self, blas: &Blas, learning_rate: f32) -> Result<(), Error>;
+    fn commit_change(&mut self, blas: &Accelerator, learning_rate: f32) -> Result<(), Error>;
 
     fn forward(
         &mut self,
-        blas: &Blas,
+        blas: &Accelerator,
         layer_input: &Tensor,
         layer_output: &mut Tensor,
     ) -> Result<(), Error>;
@@ -49,7 +54,7 @@ pub trait DifferentiableModuleTrait {
     // TODO backward should return Error
     fn backward(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
     );
@@ -57,7 +62,7 @@ pub trait DifferentiableModuleTrait {
     // TODO get_layer_delta should return Error
     fn get_layer_output_delta(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,
@@ -106,7 +111,12 @@ impl Into<DifferentiableModule> for &DifferentiableModuleConfig {
 }
 
 impl DifferentiableModuleTrait for DifferentiableModule {
-    fn compute_gradient(&mut self, blas: &Blas, layer_input: &Tensor, layer_output_delta: &Tensor) {
+    fn compute_gradient(
+        &mut self,
+        blas: &Accelerator,
+        layer_input: &Tensor,
+        layer_output_delta: &Tensor,
+    ) {
         match self {
             DifferentiableModule::Embedding(that) => {
                 that.compute_gradient(blas, layer_input, layer_output_delta)
@@ -126,7 +136,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         }
     }
 
-    fn commit_change(&mut self, blas: &Blas, learning_rate: f32) -> Result<(), Error> {
+    fn commit_change(&mut self, blas: &Accelerator, learning_rate: f32) -> Result<(), Error> {
         match self {
             DifferentiableModule::Embedding(that) => that.commit_change(blas, learning_rate),
             DifferentiableModule::Linear(that) => that.commit_change(blas, learning_rate),
@@ -136,7 +146,12 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         }
     }
 
-    fn forward(&mut self, blas: &Blas, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+    fn forward(
+        &mut self,
+        blas: &Accelerator,
+        input: &Tensor,
+        output: &mut Tensor,
+    ) -> Result<(), Error> {
         match self {
             DifferentiableModule::Embedding(that) => that.forward(blas, input, output),
             DifferentiableModule::Linear(that) => that.forward(blas, input, output),
@@ -146,7 +161,12 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         }
     }
 
-    fn backward(&self, blas: &Blas, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
+    fn backward(
+        &self,
+        blas: &Accelerator,
+        layer_delta: &Tensor,
+        previous_layer_delta: &mut Tensor,
+    ) {
         match self {
             DifferentiableModule::Embedding(that) => {
                 that.backward(blas, layer_delta, previous_layer_delta)
@@ -168,7 +188,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
 
     fn get_layer_output_delta(
         &self,
-        blas: &Blas,
+        blas: &Accelerator,
         working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,

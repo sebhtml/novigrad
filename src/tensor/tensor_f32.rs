@@ -95,9 +95,9 @@ impl Tensor {
         self.values[index] = value;
     }
 
-    pub fn assign(&mut self, blas: &Accelerator, from: &Tensor) {
+    pub fn assign(&mut self, accelerator: &Accelerator, from: &Tensor) {
         self.reset(from.rows, from.cols, 0.0);
-        Tensor::scopy(blas, from, self);
+        Tensor::scopy(accelerator, from, self);
     }
 
     pub fn transpose(&self, other: &mut Tensor) {
@@ -120,12 +120,12 @@ impl Tensor {
         &self.values
     }
 
-    // TODO use blas or something else for element_wise_mul
+    // TODO use accelerator for element_wise_mul
     pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         self.operation::<F32Mul>(right, result)
     }
 
-    pub fn sdot(blas: &Accelerator, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    pub fn sdot(accelerator: &Accelerator, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -134,33 +134,19 @@ impl Tensor {
         let incx = 1;
         let y = &y.values;
         let incy = 1;
-        Ok(blas.sdot(n, x, incx, y, incy))
+        Ok(accelerator.sdot(n, x, incx, y, incy))
     }
-    pub fn scopy(blas: &Accelerator, x: &Tensor, y: &mut Tensor) {
+    pub fn scopy(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &x.values;
         let incx = 1;
         let y = &mut y.values;
         let incy = 1;
-        blas.scopy(n, x, incx, y, incy)
+        accelerator.scopy(n, x, incx, y, incy)
     }
-    ///  SGEMM  performs one of the matrix-matrix operations
-    /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
-    ///
-    /// C := alpha * op(A) * op(B) + beta * C,
-    ///
-    /// where  op(X) is one of
-    ///    op(X) = X   or   op(X) = X^T,
-    ///
-    /// alpha and beta are scalars.
-    /// A, B and C are matrices.
-    ///
-    /// op(A) is an m by k matrix
-    /// op(B) is a k by n matrix
-    /// C is an m by n matrix.
-    ///
+
     pub fn sgemm(
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         transa: bool,
         transb: bool,
         alpha: f32,
@@ -175,7 +161,7 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
-            blas.sgemm(
+            accelerator.sgemm(
                 Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::None,
@@ -198,7 +184,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
-            blas.sgemm(
+            accelerator.sgemm(
                 Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::Ordinary,
@@ -222,7 +208,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.rows, b.rows, a.cols);
 
-            blas.sgemm(
+            accelerator.sgemm(
                 Layout::ColumnMajor,
                 Transpose::Ordinary,
                 Transpose::None,
@@ -246,7 +232,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
-            blas.sgemm(
+            accelerator.sgemm(
                 Layout::ColumnMajor,
                 Transpose::Ordinary,
                 Transpose::Ordinary,
@@ -270,7 +256,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
-            blas.sgemm(
+            accelerator.sgemm(
                 Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::None,
@@ -294,7 +280,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
-            blas.sgemm(
+            accelerator.sgemm(
                 Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::Ordinary,
@@ -319,7 +305,12 @@ impl Tensor {
 
     // SAXPY constant times a vector plus a vector.
     // y = alpha * x + y
-    pub fn saxpy(blas: &Accelerator, alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn saxpy(
+        accelerator: &Accelerator,
+        alpha: f32,
+        x: &Tensor,
+        y: &mut Tensor,
+    ) -> Result<(), Error> {
         if x.values.len() != y.values.len() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -328,11 +319,11 @@ impl Tensor {
         let incx = 1;
         let y = &mut y.values;
         let incy = 1;
-        blas.saxpy(n, alpha, x, incx, y, incy);
+        accelerator.saxpy(n, alpha, x, incx, y, incy);
         Ok(())
     }
 
-    // TODO use blas to clip
+    // TODO use accelerator to clip
     pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {
         result.reset(self.rows, self.cols, Default::default());
         let len = self.values.len();
@@ -346,11 +337,11 @@ impl Tensor {
         }
     }
 
-    pub fn sscal(blas: &Accelerator, alpha: f32, x: &mut Tensor) {
+    pub fn sscal(accelerator: &Accelerator, alpha: f32, x: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &mut x.values;
         let incx = 1;
-        blas.sscal(n, alpha, x, incx)
+        accelerator.sscal(n, alpha, x, incx)
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {

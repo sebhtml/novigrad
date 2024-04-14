@@ -19,7 +19,7 @@ impl Embedding {
 impl DifferentiableModuleTrait for Embedding {
     fn compute_gradient(
         &mut self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         layer_input: &Tensor,
         layer_output_delta: &Tensor,
     ) {
@@ -27,19 +27,24 @@ impl DifferentiableModuleTrait for Embedding {
         let b = layer_input;
         let c = &mut self.embedding_table.gradient;
         c.reset(b.cols(), a.cols(), 0.0);
-        let op_result = Tensor::sgemm(blas, true, false, 1.0, a, b, 0.0, c, true);
+        let op_result = Tensor::sgemm(accelerator, true, false, 1.0, a, b, 0.0, c, true);
         op_result.expect("Ok");
         self.embedding_table.has_gradient = true;
     }
 
-    fn commit_change(&mut self, blas: &Accelerator, learning_rate: f32) -> Result<(), Error> {
-        self.embedding_table.commit_change(blas, learning_rate);
+    fn commit_change(
+        &mut self,
+        accelerator: &Accelerator,
+        learning_rate: f32,
+    ) -> Result<(), Error> {
+        self.embedding_table
+            .commit_change(accelerator, learning_rate);
         Ok(())
     }
 
     fn forward(
         &mut self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         input: &Tensor,
         output: &mut Tensor,
     ) -> Result<(), Error> {
@@ -48,12 +53,12 @@ impl DifferentiableModuleTrait for Embedding {
         let b = &self.embedding_table.tensor;
         let c = output;
         c.reset(a.rows(), b.cols(), 0.0);
-        Tensor::sgemm(blas, false, false, 1.0, a, b, 0.0, c, false)
+        Tensor::sgemm(accelerator, false, false, 1.0, a, b, 0.0, c, false)
     }
 
     fn backward(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         _layer_delta: &Tensor,
         _previous_layer_delta: &mut Tensor,
     ) {
@@ -62,7 +67,7 @@ impl DifferentiableModuleTrait for Embedding {
 
     fn get_layer_output_delta(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,
         _layer_output: &Tensor,
@@ -70,7 +75,7 @@ impl DifferentiableModuleTrait for Embedding {
         _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
-        layer_delta.assign(blas, back_propagated_delta)
+        layer_delta.assign(accelerator, back_propagated_delta)
     }
 }
 

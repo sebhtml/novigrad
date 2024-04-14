@@ -46,9 +46,9 @@ fn multiplication_shape_compatibility() {
 
     let mut result = Tensor::default();
     result.reset(lhs.rows(), rhs.cols(), 0.0);
-    let blas = Default::default();
+    let accelerator = Default::default();
     let error = Tensor::sgemm(
-        &blas,
+        &accelerator,
         false,
         false,
         1.0,
@@ -183,8 +183,8 @@ fn assign() {
             17.0, 18.0, 19.0, //
         ],
     );
-    let blas = Default::default();
-    tensor.assign(&blas, &tensor2);
+    let accelerator = Default::default();
+    tensor.assign(&accelerator, &tensor2);
     assert_eq!(tensor, tensor2);
 }
 
@@ -254,9 +254,9 @@ fn matrix_multiplication_result() {
 
     let mut result = Tensor::default();
     result.reset(lhs.rows(), rhs.cols(), 0.0);
-    let blas = Default::default();
+    let accelerator = Default::default();
     _ = Tensor::sgemm(
-        &blas,
+        &accelerator,
         false,
         false,
         1.0,
@@ -312,8 +312,18 @@ fn transposed_lhs_matrix_multiplication_result() {
 
     let mut result = Tensor::default();
     result.reset(lhs.cols(), rhs.cols(), 0.0);
-    let blas = Default::default();
-    _ = Tensor::sgemm(&blas, true, false, 1.0, &lhs, &rhs, 0.0, &mut result, false);
+    let accelerator = Default::default();
+    _ = Tensor::sgemm(
+        &accelerator,
+        true,
+        false,
+        1.0,
+        &lhs,
+        &rhs,
+        0.0,
+        &mut result,
+        false,
+    );
     assert_eq!(result, expected_result);
 }
 
@@ -360,8 +370,19 @@ fn transposed_rhs_matrix_multiplication_result() {
 
     let mut result = Tensor::default();
     result.reset(lhs.rows(), rhs.rows(), 0.0);
-    let blas = Default::default();
-    Tensor::sgemm(&blas, false, true, 1.0, &lhs, &rhs, 0.0, &mut result, false).expect("Ok");
+    let accelerator = Default::default();
+    Tensor::sgemm(
+        &accelerator,
+        false,
+        true,
+        1.0,
+        &lhs,
+        &rhs,
+        0.0,
+        &mut result,
+        false,
+    )
+    .expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -406,8 +427,19 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
 
     let mut result = Tensor::default();
     result.reset(lhs.cols(), rhs.rows(), 0.0);
-    let blas = Default::default();
-    Tensor::sgemm(&blas, true, true, 1.0, &lhs, &rhs, 0.0, &mut result, false).expect("Ok");
+    let accelerator = Default::default();
+    Tensor::sgemm(
+        &accelerator,
+        true,
+        true,
+        1.0,
+        &lhs,
+        &rhs,
+        0.0,
+        &mut result,
+        false,
+    )
+    .expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -461,8 +493,19 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
 
     let mut result = Tensor::default();
     result.reset(rhs.rows(), lhs.cols(), 0.0);
-    let blas = Default::default();
-    Tensor::sgemm(&blas, true, true, 1.0, &lhs, &rhs, 0.0, &mut result, true).expect("Ok");
+    let accelerator = Default::default();
+    Tensor::sgemm(
+        &accelerator,
+        true,
+        true,
+        1.0,
+        &lhs,
+        &rhs,
+        0.0,
+        &mut result,
+        true,
+    )
+    .expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -513,8 +556,19 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
 
     let mut result = Tensor::default();
     result.reset(rhs.cols(), lhs.cols(), 0.0);
-    let blas = Default::default();
-    Tensor::sgemm(&blas, true, false, 1.0, &lhs, &rhs, 0.0, &mut result, true).expect("Ok");
+    let accelerator = Default::default();
+    Tensor::sgemm(
+        &accelerator,
+        true,
+        false,
+        1.0,
+        &lhs,
+        &rhs,
+        0.0,
+        &mut result,
+        true,
+    )
+    .expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -556,9 +610,9 @@ fn matrix_addition_result() {
     );
 
     let mut result = Tensor::default();
-    let blas = Default::default();
-    result.assign(&blas, &rhs);
-    _ = Tensor::saxpy(&blas, 1.0, &lhs, &mut result);
+    let accelerator = Default::default();
+    result.assign(&accelerator, &rhs);
+    _ = Tensor::saxpy(&accelerator, 1.0, &lhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -634,9 +688,9 @@ fn scalar_mul() {
     );
 
     let mut result = Tensor::default();
-    let blas = Default::default();
-    result.assign(&blas, &lhs);
-    Tensor::sscal(&blas, rhs, &mut result);
+    let accelerator = Default::default();
+    result.assign(&accelerator, &lhs);
+    Tensor::sscal(&accelerator, rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -653,8 +707,18 @@ fn big_matrix_multiplication() {
 
     let mut result = Tensor::default();
     result.reset(m.rows(), m.cols(), 0.0);
-    let blas = Default::default();
-    _ = Tensor::sgemm(&blas, false, false, 1.0, &m, &m, 0.0, &mut result, false);
+    let accelerator = Default::default();
+    _ = Tensor::sgemm(
+        &accelerator,
+        false,
+        false,
+        1.0,
+        &m,
+        &m,
+        0.0,
+        &mut result,
+        false,
+    );
 }
 
 #[test]
@@ -669,9 +733,9 @@ fn big_matrix_addition() {
     let m = Tensor::new(rows, cols, values);
 
     let mut result = Tensor::default();
-    let blas = Default::default();
-    result.assign(&blas, &m);
-    _ = Tensor::saxpy(&blas, 1.0, &m, &mut result);
+    let accelerator = Default::default();
+    result.assign(&accelerator, &m);
+    _ = Tensor::saxpy(&accelerator, 1.0, &m, &mut result);
 }
 
 #[test]

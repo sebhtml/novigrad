@@ -18,7 +18,7 @@ impl LossFunction for ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
     fn evaluate(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
     ) -> Result<f32, Error> {
@@ -26,21 +26,21 @@ impl LossFunction for ResidualSumOfSquares {
             return Err(Error::IncompatibleTensorShapes);
         }
         let mut diffs = Tensor::default();
-        diffs.assign(blas, expected);
-        Tensor::saxpy(blas, -1.0, actual, &mut diffs)?;
-        Tensor::sdot(blas, &diffs, &diffs)
+        diffs.assign(accelerator, expected);
+        Tensor::saxpy(accelerator, -1.0, actual, &mut diffs)?;
+        Tensor::sdot(accelerator, &diffs, &diffs)
     }
 
     fn derive(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        result.assign(blas, expected);
-        Tensor::saxpy(blas, -1.0, actual, result)?;
-        Tensor::sscal(blas, -2.0, result);
+        result.assign(accelerator, expected);
+        Tensor::saxpy(accelerator, -1.0, actual, result)?;
+        Tensor::sscal(accelerator, -2.0, result);
         Ok(())
     }
 }

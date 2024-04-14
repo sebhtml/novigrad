@@ -13,7 +13,21 @@ pub enum Transpose {
 }
 
 pub trait AcceleratorInterface {
-    /// SGEMM  performs one of the matrix-matrix operations
+    ///  SGEMM  performs one of the matrix-matrix operations
+    /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
+    ///
+    /// C := alpha * op(A) * op(B) + beta * C,
+    ///
+    /// where  op(X) is one of
+    ///    op(X) = X   or   op(X) = X^T,
+    ///
+    /// alpha and beta are scalars.
+    /// A, B and C are matrices.
+    ///
+    /// op(A) is an m by k matrix
+    /// op(B) is a k by n matrix
+    /// C is an m by n matrix.
+    ///
     fn sgemm(
         &self,
         layout: Layout,
@@ -75,7 +89,7 @@ impl AcceleratorInterface for Accelerator {
         ldc: i32,
     ) {
         match self {
-            Accelerator::CBlas(blas) => blas.sgemm(
+            Accelerator::CBlas(accelerator) => accelerator.sgemm(
                 layout, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
             ),
         }
@@ -83,25 +97,25 @@ impl AcceleratorInterface for Accelerator {
 
     fn sdot(&self, n: i32, x: &[f32], incx: i32, y: &[f32], incy: i32) -> f32 {
         match self {
-            Accelerator::CBlas(blas) => blas.sdot(n, x, incx, y, incy),
+            Accelerator::CBlas(accelerator) => accelerator.sdot(n, x, incx, y, incy),
         }
     }
 
     fn scopy(&self, n: i32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
-            Accelerator::CBlas(blas) => blas.scopy(n, x, incx, y, incy),
+            Accelerator::CBlas(accelerator) => accelerator.scopy(n, x, incx, y, incy),
         }
     }
 
     fn saxpy(&self, n: i32, alpha: f32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
-            Accelerator::CBlas(blas) => blas.saxpy(n, alpha, x, incx, y, incy),
+            Accelerator::CBlas(accelerator) => accelerator.saxpy(n, alpha, x, incx, y, incy),
         }
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: &mut [f32], incx: i32) {
         match self {
-            Accelerator::CBlas(blas) => blas.sscal(n, alpha, x, incx),
+            Accelerator::CBlas(accelerator) => accelerator.sscal(n, alpha, x, incx),
         }
     }
 }

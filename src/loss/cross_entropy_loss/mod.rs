@@ -16,7 +16,7 @@ impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     fn evaluate(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
     ) -> Result<f32, Error> {
@@ -47,12 +47,12 @@ impl LossFunction for CrossEntropyLoss {
     /// output of the softmax function - expected output (one-hot encoded)
     fn derive(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        result.assign(blas, actual);
-        Tensor::saxpy(blas, -1.0, expected, result)
+        result.assign(accelerator, actual);
+        Tensor::saxpy(accelerator, -1.0, expected, result)
     }
 }

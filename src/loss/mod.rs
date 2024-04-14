@@ -7,13 +7,13 @@ pub use cross_entropy_loss::*;
 pub trait LossFunction {
     fn evaluate(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
     ) -> Result<f32, Error>;
     fn derive(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,
@@ -28,28 +28,34 @@ pub enum LossFunctionType {
 impl LossFunction for LossFunctionType {
     fn evaluate(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
     ) -> Result<f32, Error> {
         match self {
-            LossFunctionType::ResidualSumOfSquares(that) => that.evaluate(blas, expected, actual),
-            LossFunctionType::CrossEntropyLoss(that) => that.evaluate(blas, expected, actual),
+            LossFunctionType::ResidualSumOfSquares(that) => {
+                that.evaluate(accelerator, expected, actual)
+            }
+            LossFunctionType::CrossEntropyLoss(that) => {
+                that.evaluate(accelerator, expected, actual)
+            }
         }
     }
 
     fn derive(
         &self,
-        blas: &Accelerator,
+        accelerator: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
         match self {
             LossFunctionType::ResidualSumOfSquares(that) => {
-                that.derive(blas, expected, actual, result)
+                that.derive(accelerator, expected, actual, result)
             }
-            LossFunctionType::CrossEntropyLoss(that) => that.derive(blas, expected, actual, result),
+            LossFunctionType::CrossEntropyLoss(that) => {
+                that.derive(accelerator, expected, actual, result)
+            }
         }
     }
 }

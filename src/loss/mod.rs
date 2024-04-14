@@ -1,12 +1,18 @@
-use crate::{Error, Tensor};
+use crate::{blas::Blas, Error, Tensor};
 mod residual_sum_of_squares;
 pub use residual_sum_of_squares::*;
 mod cross_entropy_loss;
 pub use cross_entropy_loss::*;
 
 pub trait LossFunction {
-    fn evaluate(&self, expected: &Tensor, actual: &Tensor) -> Result<f32, Error>;
-    fn derive(&self, expected: &Tensor, actual: &Tensor, result: &mut Tensor) -> Result<(), Error>;
+    fn evaluate(&self, blas: &Blas, expected: &Tensor, actual: &Tensor) -> Result<f32, Error>;
+    fn derive(
+        &self,
+        blas: &Blas,
+        expected: &Tensor,
+        actual: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error>;
 }
 
 pub enum LossFunctionType {
@@ -15,17 +21,25 @@ pub enum LossFunctionType {
 }
 
 impl LossFunction for LossFunctionType {
-    fn evaluate(&self, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
+    fn evaluate(&self, blas: &Blas, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
         match self {
-            LossFunctionType::ResidualSumOfSquares(that) => that.evaluate(expected, actual),
-            LossFunctionType::CrossEntropyLoss(that) => that.evaluate(expected, actual),
+            LossFunctionType::ResidualSumOfSquares(that) => that.evaluate(blas, expected, actual),
+            LossFunctionType::CrossEntropyLoss(that) => that.evaluate(blas, expected, actual),
         }
     }
 
-    fn derive(&self, expected: &Tensor, actual: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+    fn derive(
+        &self,
+        blas: &Blas,
+        expected: &Tensor,
+        actual: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
         match self {
-            LossFunctionType::ResidualSumOfSquares(that) => that.derive(expected, actual, result),
-            LossFunctionType::CrossEntropyLoss(that) => that.derive(expected, actual, result),
+            LossFunctionType::ResidualSumOfSquares(that) => {
+                that.derive(blas, expected, actual, result)
+            }
+            LossFunctionType::CrossEntropyLoss(that) => that.derive(blas, expected, actual, result),
         }
     }
 }

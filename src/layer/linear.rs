@@ -1,6 +1,8 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor};
+use crate::{
+    blas::Blas, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor,
+};
 
 pub struct Linear {
     weights: DifferentiableTensor,
@@ -33,13 +35,13 @@ impl Linear {
 }
 
 impl DifferentiableModuleTrait for Linear {
-    fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
-        self.weights.commit_change(learning_rate);
-        self.biases.commit_change(learning_rate);
+    fn commit_change(&mut self, blas: &Blas, learning_rate: f32) -> Result<(), Error> {
+        self.weights.commit_change(blas, learning_rate);
+        self.biases.commit_change(blas, learning_rate);
         Ok(())
     }
 
-    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+    fn forward(&mut self, blas: &Blas, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         // Use the same convention that is used in tensorflow:
         // y = x @ W^T+b
         // Weights is on the right.
@@ -51,8 +53,8 @@ impl DifferentiableModuleTrait for Linear {
         let a = input;
         let b = &self.weights.tensor;
         let c = output;
-        c.assign(biases);
-        let op_result = Tensor::sgemm(false, true, 1.0, a, b, 1.0, c, false);
+        c.assign(blas, biases);
+        let op_result = Tensor::sgemm(blas, false, true, 1.0, a, b, 1.0, c, false);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -67,18 +69,24 @@ impl DifferentiableModuleTrait for Linear {
         Ok(())
     }
 
-    fn backward(&self, layer_output_delta: &Tensor, previous_layer_output_delta: &mut Tensor) {
+    fn backward(
+        &self,
+        blas: &Blas,
+        layer_output_delta: &Tensor,
+        previous_layer_output_delta: &mut Tensor,
+    ) {
         let a = &self.weights.tensor;
         let b = layer_output_delta;
         let c = previous_layer_output_delta;
         c.reset(b.rows(), a.cols(), 0.0);
-        let op_result = Tensor::sgemm(true, true, 1.0, a, b, 0.0, c, true);
+        let op_result = Tensor::sgemm(blas, true, true, 1.0, a, b, 0.0, c, true);
 
         op_result.expect("Ok");
     }
 
     fn get_layer_output_delta(
         &self,
+        blas: &Blas,
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,
         _layer_output: &Tensor,
@@ -86,19 +94,19 @@ impl DifferentiableModuleTrait for Linear {
         _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
-        layer_delta.assign(back_propagated_delta)
+        layer_delta.assign(blas, back_propagated_delta)
     }
 
-    fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
+    fn compute_gradient(&mut self, blas: &Blas, layer_input: &Tensor, layer_output_delta: &Tensor) {
         let a = layer_input;
         let b = layer_output_delta;
         let c = &mut self.weights.gradient;
         c.reset(b.cols(), a.cols(), 0.0);
-        let op_result = Tensor::sgemm(true, false, 1.0, a, b, 0.0, c, true);
+        let op_result = Tensor::sgemm(blas, true, false, 1.0, a, b, 0.0, c, true);
         op_result.expect("Ok");
         self.weights.has_gradient = true;
 
-        self.biases.gradient.assign(layer_output_delta);
+        self.biases.gradient.assign(blas, layer_output_delta);
         self.biases.has_gradient = true;
     }
 }

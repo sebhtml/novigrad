@@ -1,8 +1,7 @@
-use crate::blas::{BlasMethods, CBlas, Layout, Transpose};
-
 /// This is the example from https://docs.rs/cblas/latest/cblas/.
 #[test]
 fn cblas_sgemm_column_major() {
+    use crate::blas::{BlasMethods, CBlas, Layout, Transpose};
     let (m, n, k) = (2, 4, 3);
     let a = vec![
         //
@@ -25,7 +24,7 @@ fn cblas_sgemm_column_major() {
         4.0, 2.0, //
     ];
 
-    CBlas::sgemm(
+    CBlas::default().sgemm(
         Layout::ColumnMajor,
         Transpose::None,
         Transpose::None,
@@ -56,6 +55,7 @@ fn cblas_sgemm_column_major() {
 
 #[test]
 fn cblas_sgemm_row_major() {
+    use crate::blas::{BlasMethods, CBlas, Layout, Transpose};
     let (m, n, k) = (2, 4, 3);
     let a = vec![
         //
@@ -74,7 +74,7 @@ fn cblas_sgemm_row_major() {
         7.0, 2.0, 7.0, 2.0, //
     ];
 
-    CBlas::sgemm(
+    CBlas::default().sgemm(
         Layout::RowMajor,
         Transpose::None,
         Transpose::None,
@@ -103,6 +103,7 @@ fn cblas_sgemm_row_major() {
 
 #[test]
 fn cblas_sgemm_row_major_a_transpose() {
+    use crate::blas::{BlasMethods, CBlas, Layout, Transpose};
     let (m, n, k) = (2, 4, 3);
     let lda = m;
     let a = vec![
@@ -123,7 +124,7 @@ fn cblas_sgemm_row_major_a_transpose() {
         7.0, 2.0, 7.0, 2.0, //
     ];
 
-    CBlas::sgemm(
+    CBlas::default().sgemm(
         Layout::RowMajor,
         Transpose::Ordinary,
         Transpose::None,
@@ -152,6 +153,7 @@ fn cblas_sgemm_row_major_a_transpose() {
 
 #[test]
 fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
+    use crate::blas::{BlasMethods, CBlas, Layout, Transpose};
     // From https://stackoverflow.com/questions/56043539/cublassgemm-row-major-multiplication
 
     let m = 2;
@@ -177,7 +179,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
         7.0, 2.0, 7.0, 2.0, //
     ];
 
-    CBlas::sgemm(
+    CBlas::default().sgemm(
         Layout::ColumnMajor,
         Transpose::None,
         Transpose::None,

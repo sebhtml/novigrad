@@ -1,4 +1,6 @@
-use crate::{DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor};
+use crate::{
+    blas::Blas, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor,
+};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
@@ -14,36 +16,37 @@ impl Embedding {
 }
 
 impl DifferentiableModuleTrait for Embedding {
-    fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
+    fn compute_gradient(&mut self, blas: &Blas, layer_input: &Tensor, layer_output_delta: &Tensor) {
         let a = layer_output_delta;
         let b = layer_input;
         let c = &mut self.embedding_table.gradient;
         c.reset(b.cols(), a.cols(), 0.0);
-        let op_result = Tensor::sgemm(true, false, 1.0, a, b, 0.0, c, true);
+        let op_result = Tensor::sgemm(blas, true, false, 1.0, a, b, 0.0, c, true);
         op_result.expect("Ok");
         self.embedding_table.has_gradient = true;
     }
 
-    fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
-        self.embedding_table.commit_change(learning_rate);
+    fn commit_change(&mut self, blas: &Blas, learning_rate: f32) -> Result<(), Error> {
+        self.embedding_table.commit_change(blas, learning_rate);
         Ok(())
     }
 
-    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+    fn forward(&mut self, blas: &Blas, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         debug_assert_eq!(input.cols(), self.embedding_table.tensor.rows());
         let a = input;
         let b = &self.embedding_table.tensor;
         let c = output;
         c.reset(a.rows(), b.cols(), 0.0);
-        Tensor::sgemm(false, false, 1.0, a, b, 0.0, c, false)
+        Tensor::sgemm(blas, false, false, 1.0, a, b, 0.0, c, false)
     }
 
-    fn backward(&self, _layer_delta: &Tensor, _previous_layer_delta: &mut Tensor) {
+    fn backward(&self, blas: &Blas, _layer_delta: &Tensor, _previous_layer_delta: &mut Tensor) {
         panic!("Embedding can not go backward !");
     }
 
     fn get_layer_output_delta(
         &self,
+        blas: &Blas,
         _working_memory: &mut DeltaWorkingMemory,
         _layer_input: &Tensor,
         _layer_output: &Tensor,
@@ -51,7 +54,7 @@ impl DifferentiableModuleTrait for Embedding {
         _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
-        layer_delta.assign(back_propagated_delta)
+        layer_delta.assign(blas, back_propagated_delta)
     }
 }
 

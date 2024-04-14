@@ -1,3 +1,4 @@
+use crate::blas::Blas;
 use crate::Error;
 use crate::{ActivationFunction, DifferentiableModuleTrait, Tensor};
 use std::f32::consts::E;
@@ -99,22 +100,29 @@ impl ActivationFunction for Softmax {
 }
 
 impl DifferentiableModuleTrait for Softmax {
-    fn compute_gradient(&mut self, _layer_input: &Tensor, _layer_output_delta: &Tensor) {}
+    fn compute_gradient(
+        &mut self,
+        blas: &Blas,
+        _layer_input: &Tensor,
+        _layer_output_delta: &Tensor,
+    ) {
+    }
 
-    fn commit_change(&mut self, _learning_rate: f32) -> Result<(), Error> {
+    fn commit_change(&mut self, blas: &Blas, _learning_rate: f32) -> Result<(), Error> {
         Ok(())
     }
 
-    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+    fn forward(&mut self, blas: &Blas, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         self.activate(input, output)
     }
 
-    fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
-        previous_layer_delta.assign(layer_delta)
+    fn backward(&self, blas: &Blas, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
+        previous_layer_delta.assign(blas, layer_delta)
     }
 
     fn get_layer_output_delta(
         &self,
+        blas: &Blas,
         working_memory: &mut crate::DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,
@@ -125,7 +133,7 @@ impl DifferentiableModuleTrait for Softmax {
         // Compute activation function derivative.
         if is_last_layer && self.using_softmax_and_cross_entropy_loss {
             // Softmax and Cross Entropy Loss are best friends.
-            layer_delta.assign(&back_propagated_delta);
+            layer_delta.assign(blas, &back_propagated_delta);
         } else {
             let layer_f_derivative = &mut working_memory.layer_f_derivative;
             let op_result = self.derive(layer_input, layer_output, layer_f_derivative);

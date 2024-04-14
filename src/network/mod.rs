@@ -4,6 +4,7 @@ pub mod train;
 use std::mem::swap;
 
 use crate::{
+    blas::Blas,
     loss::{LossFunction, LossFunctionType},
     DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleTrait, Error, Tensor,
 };
@@ -11,6 +12,7 @@ use crate::{
 pub struct Network<'a> {
     layers: Vec<DifferentiableModule>,
     loss_function: &'a LossFunctionType,
+    blas: Blas,
 }
 
 pub struct TrainWorkingMemory {
@@ -74,6 +76,7 @@ impl<'a> Network<'a> {
                 .map(|layer_config| layer_config.into())
                 .collect(),
             loss_function,
+            blas: Default::default(),
         }
     }
 
@@ -112,7 +115,7 @@ impl<'a> Network<'a> {
             let target = &outputs[i];
             let example_error = self
                 .loss_function
-                .evaluate(target, &activation_tensor)
+                .evaluate(&self.blas, target, &activation_tensor)
                 .expect("Ok");
             total_error += example_error;
         }
@@ -135,14 +138,14 @@ impl<'a> Network<'a> {
         for layer_index in 0..self.layers.len() {
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
             if layer_index == 0 {
-                previous_activation_tensor.assign(x);
+                previous_activation_tensor.assign(&self.blas, x);
             }
             let layer_output = &mut layer_outputs[layer_index];
 
             let layer = &mut self.layers[layer_index];
-            let op_result = layer.forward(previous_activation_tensor, layer_output);
+            let op_result = layer.forward(&self.blas, previous_activation_tensor, layer_output);
             op_result.expect("Ok");
-            previous_activation_tensor.assign(&layer_output);
+            previous_activation_tensor.assign(&self.blas, &layer_output);
         }
 
         let next_layer_delta = &mut working_memory.next_layer_delta;
@@ -162,9 +165,12 @@ impl<'a> Network<'a> {
                 // For the output layer, the next layer delta is the loss.
                 let layer_activation_tensor = &layer_outputs[layer_index];
 
-                let op_result =
-                    self.loss_function
-                        .derive(y, &layer_activation_tensor, next_layer_delta);
+                let op_result = self.loss_function.derive(
+                    &self.blas,
+                    y,
+                    &layer_activation_tensor,
+                    next_layer_delta,
+                );
                 op_result.expect("Ok");
             }
 
@@ -186,15 +192,16 @@ impl<'a> Network<'a> {
                 match next_layer {
                     None => {
                         // use the output of the loss function¸
-                        back_propagated_delta.assign(next_layer_delta);
+                        back_propagated_delta.assign(&self.blas, next_layer_delta);
                     }
                     Some(next_layer) => {
                         // Hidden layer
-                        next_layer.backward(next_layer_delta, back_propagated_delta);
+                        next_layer.backward(&self.blas, next_layer_delta, back_propagated_delta);
                     }
                 }
 
                 layer.get_layer_output_delta(
+                    &self.blas,
                     error_working_memory,
                     layer_input,
                     layer_output,
@@ -208,7 +215,7 @@ impl<'a> Network<'a> {
 
             {
                 let layer = &mut self.layers[layer_index];
-                layer.compute_gradient(previous_activation_tensor, layer_delta);
+                layer.compute_gradient(&self.blas, previous_activation_tensor, layer_delta);
             }
 
             swap(next_layer_delta, layer_delta);
@@ -216,7 +223,7 @@ impl<'a> Network<'a> {
 
         // Apply changes
         for layer in 0..self.layers.len() {
-            let op_result = self.layers[layer].commit_change(learning_rate);
+            let op_result = self.layers[layer].commit_change(&self.blas, learning_rate);
             op_result.expect("Ok");
         }
     }
@@ -243,12 +250,13 @@ impl<'a> Network<'a> {
         input: &Tensor,
         activation_tensor: &mut Tensor,
     ) {
-        previous_activation_tensor.assign(input);
+        previous_activation_tensor.assign(&self.blas, input);
         for layer_index in 0..self.layers.len() {
             let layer = &mut self.layers[layer_index];
-            let op_result = layer.forward(previous_activation_tensor, activation_tensor);
+            let op_result =
+                layer.forward(&self.blas, previous_activation_tensor, activation_tensor);
             op_result.expect("Ok");
-            previous_activation_tensor.assign(activation_tensor);
+            previous_activation_tensor.assign(&self.blas, activation_tensor);
         }
     }
 }

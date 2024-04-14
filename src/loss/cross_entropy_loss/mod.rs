@@ -1,5 +1,5 @@
 use super::LossFunction;
-use crate::{Error, Tensor};
+use crate::{blas::Blas, Error, Tensor};
 
 #[derive(Clone)]
 pub struct CrossEntropyLoss {}
@@ -14,7 +14,7 @@ const EPSILON: f32 = 1e-8;
 
 impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(&self, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
+    fn evaluate(&self, blas: &Blas, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
         debug_assert_eq!(actual.shape(), expected.shape());
         let p = expected;
         let q = actual;
@@ -40,8 +40,14 @@ impl LossFunction for CrossEntropyLoss {
     /// then we don't need to derive the softmax activations.
     /// The derivative of the Loss in respect to logits (before activation) is
     /// output of the softmax function - expected output (one-hot encoded)
-    fn derive(&self, expected: &Tensor, actual: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        result.assign(actual);
-        Tensor::saxpy(-1.0, expected, result)
+    fn derive(
+        &self,
+        blas: &Blas,
+        expected: &Tensor,
+        actual: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        result.assign(blas, actual);
+        Tensor::saxpy(blas, -1.0, expected, result)
     }
 }

@@ -95,9 +95,9 @@ impl Tensor {
         self.values[index] = value;
     }
 
-    pub fn assign(&mut self, from: &Tensor) {
+    pub fn assign(&mut self, blas: &Blas, from: &Tensor) {
         self.reset(from.rows, from.cols, 0.0);
-        Tensor::scopy(from, self);
+        Tensor::scopy(blas, from, self);
     }
 
     pub fn transpose(&self, other: &mut Tensor) {
@@ -125,7 +125,7 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
-    pub fn sdot(x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    pub fn sdot(blas: &Blas, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -134,15 +134,15 @@ impl Tensor {
         let incx = 1;
         let y = &y.values;
         let incy = 1;
-        Ok(Blas::sdot(n, x, incx, y, incy))
+        Ok(blas.sdot(n, x, incx, y, incy))
     }
-    pub fn scopy(x: &Tensor, y: &mut Tensor) {
+    pub fn scopy(blas: &Blas, x: &Tensor, y: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &x.values;
         let incx = 1;
         let y = &mut y.values;
         let incy = 1;
-        Blas::scopy(n, x, incx, y, incy)
+        blas.scopy(n, x, incx, y, incy)
     }
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
@@ -160,6 +160,7 @@ impl Tensor {
     /// C is an m by n matrix.
     ///
     pub fn sgemm(
+        blas: &Blas,
         transa: bool,
         transb: bool,
         alpha: f32,
@@ -174,7 +175,7 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
-            Blas::sgemm(
+            blas.sgemm(
                 Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::None,
@@ -197,7 +198,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
-            Blas::sgemm(
+            blas.sgemm(
                 Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::Ordinary,
@@ -221,7 +222,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.rows, b.rows, a.cols);
 
-            Blas::sgemm(
+            blas.sgemm(
                 Layout::ColumnMajor,
                 Transpose::Ordinary,
                 Transpose::None,
@@ -245,7 +246,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
-            Blas::sgemm(
+            blas.sgemm(
                 Layout::ColumnMajor,
                 Transpose::Ordinary,
                 Transpose::Ordinary,
@@ -269,7 +270,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
-            Blas::sgemm(
+            blas.sgemm(
                 Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::None,
@@ -293,7 +294,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
-            Blas::sgemm(
+            blas.sgemm(
                 Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::Ordinary,
@@ -318,7 +319,7 @@ impl Tensor {
 
     // SAXPY constant times a vector plus a vector.
     // y = alpha * x + y
-    pub fn saxpy(alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn saxpy(blas: &Blas, alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         if x.values.len() != y.values.len() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -327,7 +328,7 @@ impl Tensor {
         let incx = 1;
         let y = &mut y.values;
         let incy = 1;
-        Blas::saxpy(n, alpha, x, incx, y, incy);
+        blas.saxpy(n, alpha, x, incx, y, incy);
         Ok(())
     }
 
@@ -345,11 +346,11 @@ impl Tensor {
         }
     }
 
-    pub fn sscal(alpha: f32, x: &mut Tensor) {
+    pub fn sscal(blas: &Blas, alpha: f32, x: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &mut x.values;
         let incx = 1;
-        Blas::sscal(n, alpha, x, incx)
+        blas.sscal(n, alpha, x, incx)
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {

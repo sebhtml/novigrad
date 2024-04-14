@@ -1,6 +1,6 @@
 use crate::{
-    DeltaWorkingMemory, Embedding, EmbeddingConfig, Error, Linear, LinearConfig, Reshape,
-    ReshapeConfig, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor,
+    blas::Blas, DeltaWorkingMemory, Embedding, EmbeddingConfig, Error, Linear, LinearConfig,
+    Reshape, ReshapeConfig, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor,
 };
 
 pub struct DifferentiableTensor {
@@ -17,12 +17,12 @@ impl DifferentiableTensor {
             has_gradient: Default::default(),
         }
     }
-    pub fn commit_change(&mut self, learning_rate: f32) {
+    pub fn commit_change(&mut self, blas: &Blas, learning_rate: f32) {
         if !self.has_gradient {
             return;
         }
 
-        let op_result = Tensor::saxpy(-learning_rate, &self.gradient, &mut self.tensor);
+        let op_result = Tensor::saxpy(blas, -learning_rate, &self.gradient, &mut self.tensor);
         op_result.expect("Ok");
         self.has_gradient = false;
     }
@@ -35,18 +35,29 @@ impl From<Tensor> for DifferentiableTensor {
 }
 
 pub trait DifferentiableModuleTrait {
-    fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor);
+    fn compute_gradient(&mut self, blas: &Blas, layer_input: &Tensor, layer_output_delta: &Tensor);
 
-    fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error>;
+    fn commit_change(&mut self, blas: &Blas, learning_rate: f32) -> Result<(), Error>;
 
-    fn forward(&mut self, layer_input: &Tensor, layer_output: &mut Tensor) -> Result<(), Error>;
+    fn forward(
+        &mut self,
+        blas: &Blas,
+        layer_input: &Tensor,
+        layer_output: &mut Tensor,
+    ) -> Result<(), Error>;
 
     // TODO backward should return Error
-    fn backward(&self, layer_output_delta: &Tensor, previous_layer_output_delta: &mut Tensor);
+    fn backward(
+        &self,
+        blas: &Blas,
+        layer_output_delta: &Tensor,
+        previous_layer_output_delta: &mut Tensor,
+    );
 
     // TODO get_layer_delta should return Error
     fn get_layer_output_delta(
         &self,
+        blas: &Blas,
         working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,
@@ -95,60 +106,69 @@ impl Into<DifferentiableModule> for &DifferentiableModuleConfig {
 }
 
 impl DifferentiableModuleTrait for DifferentiableModule {
-    fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
+    fn compute_gradient(&mut self, blas: &Blas, layer_input: &Tensor, layer_output_delta: &Tensor) {
         match self {
             DifferentiableModule::Embedding(that) => {
-                that.compute_gradient(layer_input, layer_output_delta)
+                that.compute_gradient(blas, layer_input, layer_output_delta)
             }
             DifferentiableModule::Linear(that) => {
-                that.compute_gradient(layer_input, layer_output_delta)
+                that.compute_gradient(blas, layer_input, layer_output_delta)
             }
             DifferentiableModule::Reshape(that) => {
-                that.compute_gradient(layer_input, layer_output_delta)
+                that.compute_gradient(blas, layer_input, layer_output_delta)
             }
             DifferentiableModule::Sigmoid(that) => {
-                that.compute_gradient(layer_input, layer_output_delta)
+                that.compute_gradient(blas, layer_input, layer_output_delta)
             }
             DifferentiableModule::Softmax(that) => {
-                that.compute_gradient(layer_input, layer_output_delta)
+                that.compute_gradient(blas, layer_input, layer_output_delta)
             }
         }
     }
 
-    fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
+    fn commit_change(&mut self, blas: &Blas, learning_rate: f32) -> Result<(), Error> {
         match self {
-            DifferentiableModule::Embedding(that) => that.commit_change(learning_rate),
-            DifferentiableModule::Linear(that) => that.commit_change(learning_rate),
-            DifferentiableModule::Reshape(that) => that.commit_change(learning_rate),
-            DifferentiableModule::Sigmoid(that) => that.commit_change(learning_rate),
-            DifferentiableModule::Softmax(that) => that.commit_change(learning_rate),
+            DifferentiableModule::Embedding(that) => that.commit_change(blas, learning_rate),
+            DifferentiableModule::Linear(that) => that.commit_change(blas, learning_rate),
+            DifferentiableModule::Reshape(that) => that.commit_change(blas, learning_rate),
+            DifferentiableModule::Sigmoid(that) => that.commit_change(blas, learning_rate),
+            DifferentiableModule::Softmax(that) => that.commit_change(blas, learning_rate),
         }
     }
 
-    fn forward(&mut self, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
+    fn forward(&mut self, blas: &Blas, input: &Tensor, output: &mut Tensor) -> Result<(), Error> {
         match self {
-            DifferentiableModule::Embedding(that) => that.forward(input, output),
-            DifferentiableModule::Linear(that) => that.forward(input, output),
-            DifferentiableModule::Reshape(that) => that.forward(input, output),
-            DifferentiableModule::Sigmoid(that) => that.forward(input, output),
-            DifferentiableModule::Softmax(that) => that.forward(input, output),
+            DifferentiableModule::Embedding(that) => that.forward(blas, input, output),
+            DifferentiableModule::Linear(that) => that.forward(blas, input, output),
+            DifferentiableModule::Reshape(that) => that.forward(blas, input, output),
+            DifferentiableModule::Sigmoid(that) => that.forward(blas, input, output),
+            DifferentiableModule::Softmax(that) => that.forward(blas, input, output),
         }
     }
 
-    fn backward(&self, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
+    fn backward(&self, blas: &Blas, layer_delta: &Tensor, previous_layer_delta: &mut Tensor) {
         match self {
             DifferentiableModule::Embedding(that) => {
-                that.backward(layer_delta, previous_layer_delta)
+                that.backward(blas, layer_delta, previous_layer_delta)
             }
-            DifferentiableModule::Linear(that) => that.backward(layer_delta, previous_layer_delta),
-            DifferentiableModule::Reshape(that) => that.backward(layer_delta, previous_layer_delta),
-            DifferentiableModule::Sigmoid(that) => that.backward(layer_delta, previous_layer_delta),
-            DifferentiableModule::Softmax(that) => that.backward(layer_delta, previous_layer_delta),
+            DifferentiableModule::Linear(that) => {
+                that.backward(blas, layer_delta, previous_layer_delta)
+            }
+            DifferentiableModule::Reshape(that) => {
+                that.backward(blas, layer_delta, previous_layer_delta)
+            }
+            DifferentiableModule::Sigmoid(that) => {
+                that.backward(blas, layer_delta, previous_layer_delta)
+            }
+            DifferentiableModule::Softmax(that) => {
+                that.backward(blas, layer_delta, previous_layer_delta)
+            }
         }
     }
 
     fn get_layer_output_delta(
         &self,
+        blas: &Blas,
         working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,
@@ -158,6 +178,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
     ) {
         match self {
             DifferentiableModule::Embedding(that) => that.get_layer_output_delta(
+                blas,
                 working_memory,
                 layer_input,
                 layer_output,
@@ -166,6 +187,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 layer_delta,
             ),
             DifferentiableModule::Linear(that) => that.get_layer_output_delta(
+                blas,
                 working_memory,
                 layer_input,
                 layer_output,
@@ -174,6 +196,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 layer_delta,
             ),
             DifferentiableModule::Reshape(that) => that.get_layer_output_delta(
+                blas,
                 working_memory,
                 layer_input,
                 layer_output,
@@ -182,6 +205,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 layer_delta,
             ),
             DifferentiableModule::Sigmoid(that) => that.get_layer_output_delta(
+                blas,
                 working_memory,
                 layer_input,
                 layer_output,
@@ -190,6 +214,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 layer_delta,
             ),
             DifferentiableModule::Softmax(that) => that.get_layer_output_delta(
+                blas,
                 working_memory,
                 layer_input,
                 layer_output,

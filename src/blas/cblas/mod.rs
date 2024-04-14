@@ -6,6 +6,12 @@ mod tests;
 
 pub struct CBlas {}
 
+impl Default for CBlas {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
 impl Into<Layout> for super::Layout {
     fn into(self) -> cblas::Layout {
         match self {
@@ -27,6 +33,7 @@ impl Into<Transpose> for super::Transpose {
 
 impl BlasMethods for CBlas {
     fn sgemm(
+        &self,
         layout: super::Layout,
         transa: super::Transpose,
         transb: super::Transpose,
@@ -52,19 +59,19 @@ impl BlasMethods for CBlas {
         }
     }
 
-    fn sdot(n: i32, x: &[f32], incx: i32, y: &[f32], incy: i32) -> f32 {
+    fn sdot(&self, n: i32, x: &[f32], incx: i32, y: &[f32], incy: i32) -> f32 {
         unsafe { sdot(n, x, incx, y, incy) }
     }
 
-    fn scopy(n: i32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
+    fn scopy(&self, n: i32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         unsafe { scopy(n, x, incx, y, incy) }
     }
 
-    fn saxpy(n: i32, alpha: f32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
+    fn saxpy(&self, n: i32, alpha: f32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         unsafe { saxpy(n, alpha, x, incx, y, incy) }
     }
 
-    fn sscal(n: i32, alpha: f32, x: &mut [f32], incx: i32) {
+    fn sscal(&self, n: i32, alpha: f32, x: &mut [f32], incx: i32) {
         unsafe { sscal(n, alpha, x, incx) }
     }
 }

@@ -1,6 +1,6 @@
 use cblas::{saxpy, scopy, sdot, sgemm, sscal, Layout, Transpose};
 
-use super::BlasMethods;
+use super::AcceleratorInterface;
 
 mod tests;
 
@@ -31,7 +31,7 @@ impl Into<Transpose> for super::Transpose {
     }
 }
 
-impl BlasMethods for CBlas {
+impl AcceleratorInterface for CBlas {
     fn sgemm(
         &self,
         layout: super::Layout,

@@ -1,5 +1,5 @@
 use crate::{
-    accelerator::{Blas, BlasMethods, Layout, Transpose},
+    accelerator::{AcceleratorInterface, Blas, Layout, Transpose},
     Error,
 };
 use std::{fmt::Display, ops::Mul};

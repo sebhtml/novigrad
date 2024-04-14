@@ -12,7 +12,7 @@ pub enum Transpose {
     Conjugate,
 }
 
-pub trait BlasMethods {
+pub trait AcceleratorInterface {
     /// SGEMM  performs one of the matrix-matrix operations
     fn sgemm(
         &self,
@@ -56,7 +56,7 @@ impl Default for Blas {
 }
 
 // TODO add an argument &self to allow to choose between CBlas and CuBlas and the AMD one too.
-impl BlasMethods for Blas {
+impl AcceleratorInterface for Blas {
     fn sgemm(
         &self,
         layout: Layout,

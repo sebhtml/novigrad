@@ -2,7 +2,7 @@ use more_asserts::assert_gt;
 use more_asserts::assert_lt;
 
 use crate::load_dataset;
-use crate::train::train_network_on_dataset;
+use crate::train_network_on_dataset;
 use crate::Dataset;
 
 fn test_network_on_dataset(dataset: &Dataset) {

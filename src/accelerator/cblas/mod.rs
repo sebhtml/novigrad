@@ -1,6 +1,7 @@
 use cblas::{saxpy, scopy, sdot, sgemm, sscal, Layout, Transpose};
 
 use super::AcceleratorInterface;
+extern crate blas_src;
 
 mod tests;
 

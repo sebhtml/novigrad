@@ -1,7 +1,8 @@
 #[cfg(test)]
 pub mod tests;
-pub mod train;
+mod train;
 use std::mem::swap;
+pub use train::*;
 
 use crate::{
     accelerator::Accelerator,

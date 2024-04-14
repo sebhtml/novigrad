@@ -369,7 +369,7 @@ impl Tensor {
         }
     }
 
-    pub fn sscal(accelerator: &Accelerator, alpha: f32, x: &mut Tensor) {
+    pub fn scalar_mul(accelerator: &Accelerator, alpha: f32, x: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &mut x.values;
         let incx = 1;

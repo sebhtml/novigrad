@@ -40,7 +40,7 @@ impl LossFunction for ResidualSumOfSquares {
     ) -> Result<(), Error> {
         result.assign(accelerator, expected);
         Tensor::sub(accelerator, actual, result)?;
-        Tensor::sscal(accelerator, -2.0, result);
+        Tensor::scalar_mul(accelerator, -2.0, result);
         Ok(())
     }
 }

@@ -616,7 +616,7 @@ fn scalar_mul() {
     let mut result = Tensor::default();
     let accelerator = Default::default();
     result.assign(&accelerator, &lhs);
-    Tensor::sscal(&accelerator, rhs, &mut result);
+    Tensor::scalar_mul(&accelerator, rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 

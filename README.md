@@ -11,8 +11,6 @@
 
 # Roadmap
 
-- add element_wise_mul
-- add scalar_mul method
 - rename main.rs to lib.rs and use examples/
 - split dataset in examples and architecture
 - add Blas implementation for CuBlas

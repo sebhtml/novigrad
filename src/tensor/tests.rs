@@ -47,17 +47,7 @@ fn multiplication_shape_compatibility() {
     let mut result = Tensor::default();
     result.reset(lhs.rows(), rhs.cols(), 0.0);
     let accelerator = Default::default();
-    let error = Tensor::gemm(
-        &accelerator,
-        false,
-        false,
-        1.0,
-        &lhs,
-        &rhs,
-        0.0,
-        &mut result,
-        false,
-    );
+    let error = Tensor::matmul(&accelerator, false, false, &lhs, &rhs, &mut result, false);
     assert_eq!(error, Err(Error::IncompatibleTensorShapes))
 }
 
@@ -255,17 +245,7 @@ fn matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(lhs.rows(), rhs.cols(), 0.0);
     let accelerator = Default::default();
-    _ = Tensor::gemm(
-        &accelerator,
-        false,
-        false,
-        1.0,
-        &lhs,
-        &rhs,
-        0.0,
-        &mut result,
-        false,
-    );
+    _ = Tensor::matmul(&accelerator, false, false, &lhs, &rhs, &mut result, false);
     assert_eq!(result, expected_result);
 }
 
@@ -313,17 +293,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(lhs.cols(), rhs.cols(), 0.0);
     let accelerator = Default::default();
-    _ = Tensor::gemm(
-        &accelerator,
-        true,
-        false,
-        1.0,
-        &lhs,
-        &rhs,
-        0.0,
-        &mut result,
-        false,
-    );
+    _ = Tensor::matmul(&accelerator, true, false, &lhs, &rhs, &mut result, false);
     assert_eq!(result, expected_result);
 }
 
@@ -371,18 +341,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(lhs.rows(), rhs.rows(), 0.0);
     let accelerator = Default::default();
-    Tensor::gemm(
-        &accelerator,
-        false,
-        true,
-        1.0,
-        &lhs,
-        &rhs,
-        0.0,
-        &mut result,
-        false,
-    )
-    .expect("Ok");
+    Tensor::matmul(&accelerator, false, true, &lhs, &rhs, &mut result, false).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -428,18 +387,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(lhs.cols(), rhs.rows(), 0.0);
     let accelerator = Default::default();
-    Tensor::gemm(
-        &accelerator,
-        true,
-        true,
-        1.0,
-        &lhs,
-        &rhs,
-        0.0,
-        &mut result,
-        false,
-    )
-    .expect("Ok");
+    Tensor::matmul(&accelerator, true, true, &lhs, &rhs, &mut result, false).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -494,18 +442,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(rhs.rows(), lhs.cols(), 0.0);
     let accelerator = Default::default();
-    Tensor::gemm(
-        &accelerator,
-        true,
-        true,
-        1.0,
-        &lhs,
-        &rhs,
-        0.0,
-        &mut result,
-        true,
-    )
-    .expect("Ok");
+    Tensor::matmul(&accelerator, true, true, &lhs, &rhs, &mut result, true).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -557,18 +494,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(rhs.cols(), lhs.cols(), 0.0);
     let accelerator = Default::default();
-    Tensor::gemm(
-        &accelerator,
-        true,
-        false,
-        1.0,
-        &lhs,
-        &rhs,
-        0.0,
-        &mut result,
-        true,
-    )
-    .expect("Ok");
+    Tensor::matmul(&accelerator, true, false, &lhs, &rhs, &mut result, true).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -708,17 +634,7 @@ fn big_matrix_multiplication() {
     let mut result = Tensor::default();
     result.reset(m.rows(), m.cols(), 0.0);
     let accelerator = Default::default();
-    _ = Tensor::gemm(
-        &accelerator,
-        false,
-        false,
-        1.0,
-        &m,
-        &m,
-        0.0,
-        &mut result,
-        false,
-    );
+    _ = Tensor::matmul(&accelerator, false, false, &m, &m, &mut result, false);
 }
 
 #[test]

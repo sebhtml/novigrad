@@ -145,6 +145,30 @@ impl Tensor {
         accelerator.scopy(n, x, incx, y, incy)
     }
 
+    pub fn matmul(
+        accelerator: &Accelerator,
+        transa: bool,
+        transb: bool,
+        a: &Tensor,
+        b: &Tensor,
+        c: &mut Tensor,
+        transpose_result: bool,
+    ) -> Result<(), Error> {
+        let alpha = 1.0;
+        let beta = 0.0;
+        Tensor::gemm(
+            accelerator,
+            transa,
+            transb,
+            alpha,
+            a,
+            b,
+            beta,
+            c,
+            transpose_result,
+        )
+    }
+
     pub fn gemm(
         accelerator: &Accelerator,
         transa: bool,

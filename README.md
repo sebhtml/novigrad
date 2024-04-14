@@ -11,7 +11,6 @@
 
 # Roadmap
 
-- add matmul method
 - add add method
 - add sub method
 - add element_wise_mul

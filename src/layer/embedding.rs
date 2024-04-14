@@ -27,7 +27,7 @@ impl DifferentiableModuleTrait for Embedding {
         let b = layer_input;
         let c = &mut self.embedding_table.gradient;
         c.reset(b.cols(), a.cols(), 0.0);
-        let op_result = Tensor::gemm(accelerator, true, false, 1.0, a, b, 0.0, c, true);
+        let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
         op_result.expect("Ok");
         self.embedding_table.has_gradient = true;
     }
@@ -53,7 +53,7 @@ impl DifferentiableModuleTrait for Embedding {
         let b = &self.embedding_table.tensor;
         let c = output;
         c.reset(a.rows(), b.cols(), 0.0);
-        Tensor::gemm(accelerator, false, false, 1.0, a, b, 0.0, c, false)
+        Tensor::matmul(accelerator, false, false, a, b, c, false)
     }
 
     fn backward(

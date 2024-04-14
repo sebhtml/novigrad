@@ -28,7 +28,7 @@ impl LossFunction for ResidualSumOfSquares {
         let mut diffs = Tensor::default();
         diffs.assign(accelerator, expected);
         Tensor::sub(accelerator, actual, &mut diffs)?;
-        Tensor::sdot(accelerator, &diffs, &diffs)
+        Tensor::dot_product(accelerator, &diffs, &diffs)
     }
 
     fn derive(

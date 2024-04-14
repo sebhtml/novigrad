@@ -125,7 +125,7 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
-    pub fn sdot(accelerator: &Accelerator, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    pub fn dot_product(accelerator: &Accelerator, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }

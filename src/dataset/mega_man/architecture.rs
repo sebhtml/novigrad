@@ -20,7 +20,7 @@ pub fn architecture() -> Vec<DifferentiableModuleConfig> {
             bias_rows: 1,
         }),
         DifferentiableModuleConfig::Softmax(SoftmaxConfig {
-            using_softmax_and_cross_entropy_loss: true,
+            using_cross_entropy_loss: true,
         }),
     ]
 }

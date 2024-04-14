@@ -5,18 +5,18 @@ use std::f32::consts::E;
 
 #[derive(Clone)]
 pub struct SoftmaxConfig {
-    pub using_softmax_and_cross_entropy_loss: bool,
+    pub using_cross_entropy_loss: bool,
 }
 
 #[derive(Clone)]
 pub struct Softmax {
-    using_softmax_and_cross_entropy_loss: bool,
+    using_cross_entropy_loss: bool,
 }
 
 impl Into<Softmax> for &SoftmaxConfig {
     fn into(self) -> Softmax {
         Softmax {
-            using_softmax_and_cross_entropy_loss: self.using_softmax_and_cross_entropy_loss,
+            using_cross_entropy_loss: self.using_cross_entropy_loss,
         }
     }
 }
@@ -102,7 +102,7 @@ impl ActivationFunction for Softmax {
 impl DifferentiableModuleTrait for Softmax {
     fn compute_gradient(
         &mut self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         _layer_input: &Tensor,
         _layer_output_delta: &Tensor,
     ) {
@@ -110,7 +110,7 @@ impl DifferentiableModuleTrait for Softmax {
 
     fn commit_change(
         &mut self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         _learning_rate: f32,
     ) -> Result<(), Error> {
         Ok(())
@@ -118,7 +118,7 @@ impl DifferentiableModuleTrait for Softmax {
 
     fn forward(
         &mut self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         input: &Tensor,
         output: &mut Tensor,
     ) -> Result<(), Error> {
@@ -145,7 +145,7 @@ impl DifferentiableModuleTrait for Softmax {
         layer_delta: &mut Tensor,
     ) {
         // Compute activation function derivative.
-        if is_last_layer && self.using_softmax_and_cross_entropy_loss {
+        if is_last_layer && self.using_cross_entropy_loss {
             // Softmax and Cross Entropy Loss are best friends.
             layer_delta.assign(accelerator, &back_propagated_delta);
         } else {

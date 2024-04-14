@@ -97,7 +97,7 @@ impl Tensor {
 
     pub fn assign(&mut self, accelerator: &Accelerator, from: &Tensor) {
         self.reset(from.rows, from.cols, 0.0);
-        Tensor::scopy(accelerator, from, self);
+        Tensor::copy(accelerator, from, self);
     }
 
     pub fn transpose(&self, other: &mut Tensor) {
@@ -136,7 +136,7 @@ impl Tensor {
         let incy = 1;
         Ok(accelerator.sdot(n, x, incx, y, incy))
     }
-    pub fn scopy(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) {
+    fn copy(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &x.values;
         let incx = 1;

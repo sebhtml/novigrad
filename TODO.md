@@ -1,3 +1,6 @@
+- record module outputs in the tape
+- record module in the tape
+- in backprop, move the computation of gradients to gradient/
 - add Blas implementation for CuBlas
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
 

@@ -11,8 +11,6 @@
 
 # Roadmap
 
-- add add method
-- add sub method
 - add element_wise_mul
 - add scalar_mul method
 - rename main.rs to lib.rs and use examples/

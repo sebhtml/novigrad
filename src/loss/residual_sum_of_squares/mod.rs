@@ -27,7 +27,7 @@ impl LossFunction for ResidualSumOfSquares {
         }
         let mut diffs = Tensor::default();
         diffs.assign(accelerator, expected);
-        Tensor::saxpy(accelerator, -1.0, actual, &mut diffs)?;
+        Tensor::sub(accelerator, actual, &mut diffs)?;
         Tensor::sdot(accelerator, &diffs, &diffs)
     }
 
@@ -39,7 +39,7 @@ impl LossFunction for ResidualSumOfSquares {
         result: &mut Tensor,
     ) -> Result<(), Error> {
         result.assign(accelerator, expected);
-        Tensor::saxpy(accelerator, -1.0, actual, result)?;
+        Tensor::sub(accelerator, actual, result)?;
         Tensor::sscal(accelerator, -2.0, result);
         Ok(())
     }

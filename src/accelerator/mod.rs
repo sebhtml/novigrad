@@ -47,6 +47,7 @@ pub trait AcceleratorInterface {
     );
 
     /// SAXPY constant times a vector plus a vector.
+    /// y = alpha * x + y
     fn saxpy(&self, n: i32, alpha: f32, x: &[f32], incx: i32, y: &mut [f32], incy: i32);
 
     /// SDOT forms the dot product of two vectors.

@@ -53,6 +53,6 @@ impl LossFunction for CrossEntropyLoss {
         result: &mut Tensor,
     ) -> Result<(), Error> {
         result.assign(accelerator, actual);
-        Tensor::saxpy(accelerator, -1.0, expected, result)
+        Tensor::sub(accelerator, expected, result)
     }
 }

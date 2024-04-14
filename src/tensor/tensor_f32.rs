@@ -327,8 +327,16 @@ impl Tensor {
         }
     }
 
-    // SAXPY constant times a vector plus a vector.
-    // y = alpha * x + y
+    pub fn sub(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+        let alpha = -1.0;
+        Self::saxpy(accelerator, alpha, x, y)
+    }
+
+    pub fn add(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+        let alpha = 1.0;
+        Self::saxpy(accelerator, alpha, x, y)
+    }
+
     pub fn saxpy(
         accelerator: &Accelerator,
         alpha: f32,

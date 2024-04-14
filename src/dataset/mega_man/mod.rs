@@ -1,10 +1,9 @@
 use std::fs;
 
-use crate::{into_one_hot_encoded_rows, SoftmaxConfig};
-use crate::{
-    loss::LossFunctionType, DatasetDetails, DifferentiableModuleConfig, EmbeddingConfig,
-    LinearConfig, ReshapeConfig, Tensor,
-};
+mod architecture;
+use crate::into_one_hot_encoded_rows;
+use crate::{loss::LossFunctionType, DatasetDetails, Tensor};
+use architecture::*;
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {
     let num_classes = 256;
@@ -44,26 +43,7 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
 pub fn load_dataset() -> DatasetDetails {
     DatasetDetails {
         examples: load_examples(),
-        layers: vec![
-            DifferentiableModuleConfig::Embedding(EmbeddingConfig {
-                num_embeddings: 256,
-                embedding_dim: 384,
-            }),
-            DifferentiableModuleConfig::Reshape(ReshapeConfig {
-                input_rows: 32,
-                input_cols: 384,
-                output_rows: 1,
-                output_cols: 32 * 384,
-            }),
-            DifferentiableModuleConfig::Linear(LinearConfig {
-                weights_rows: 256,
-                weights_cols: 32 * 384,
-                bias_rows: 1,
-            }),
-            DifferentiableModuleConfig::Softmax(SoftmaxConfig {
-                using_softmax_and_cross_entropy_loss: true,
-            }),
-        ],
+        layers: architecture(),
         epochs: 300,
         progress: 100,
         loss_function_name: LossFunctionType::CrossEntropyLoss(Default::default()),

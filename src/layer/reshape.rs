@@ -1,4 +1,4 @@
-use crate::{blas::Blas, DeltaWorkingMemory, DifferentiableModuleTrait, Error, Tensor};
+use crate::{accelerator::Blas, DeltaWorkingMemory, DifferentiableModuleTrait, Error, Tensor};
 
 pub struct Reshape {
     input_rows: usize,

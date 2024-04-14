@@ -1,5 +1,6 @@
 use crate::{
-    blas::Blas, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error, Tensor,
+    accelerator::Blas, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor, Error,
+    Tensor,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};
 

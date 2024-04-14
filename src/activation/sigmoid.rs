@@ -1,4 +1,4 @@
-use crate::blas::Blas;
+use crate::accelerator::Blas;
 use crate::Error;
 use crate::{ActivationFunction, DeltaWorkingMemory, DifferentiableModuleTrait, Tensor};
 use std::f32::consts::E;

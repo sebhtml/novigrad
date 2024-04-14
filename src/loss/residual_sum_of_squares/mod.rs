@@ -1,4 +1,4 @@
-use crate::{blas::Blas, Error, Tensor};
+use crate::{accelerator::Blas, Error, Tensor};
 
 use super::LossFunction;
 

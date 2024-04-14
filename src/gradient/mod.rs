@@ -1,5 +1,5 @@
 use crate::{
-    blas::Blas, DeltaWorkingMemory, Embedding, EmbeddingConfig, Error, Linear, LinearConfig,
+    accelerator::Blas, DeltaWorkingMemory, Embedding, EmbeddingConfig, Error, Linear, LinearConfig,
     Reshape, ReshapeConfig, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor,
 };
 

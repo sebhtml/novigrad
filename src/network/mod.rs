@@ -4,7 +4,7 @@ pub mod train;
 use std::mem::swap;
 
 use crate::{
-    blas::Blas,
+    accelerator::Blas,
     loss::{LossFunction, LossFunctionType},
     DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleTrait, Error, Tensor,
 };

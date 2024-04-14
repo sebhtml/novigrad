@@ -47,7 +47,7 @@ fn multiplication_shape_compatibility() {
     let mut result = Tensor::default();
     result.reset(lhs.rows(), rhs.cols(), 0.0);
     let accelerator = Default::default();
-    let error = Tensor::sgemm(
+    let error = Tensor::gemm(
         &accelerator,
         false,
         false,
@@ -255,7 +255,7 @@ fn matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(lhs.rows(), rhs.cols(), 0.0);
     let accelerator = Default::default();
-    _ = Tensor::sgemm(
+    _ = Tensor::gemm(
         &accelerator,
         false,
         false,
@@ -313,7 +313,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(lhs.cols(), rhs.cols(), 0.0);
     let accelerator = Default::default();
-    _ = Tensor::sgemm(
+    _ = Tensor::gemm(
         &accelerator,
         true,
         false,
@@ -371,7 +371,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(lhs.rows(), rhs.rows(), 0.0);
     let accelerator = Default::default();
-    Tensor::sgemm(
+    Tensor::gemm(
         &accelerator,
         false,
         true,
@@ -428,7 +428,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(lhs.cols(), rhs.rows(), 0.0);
     let accelerator = Default::default();
-    Tensor::sgemm(
+    Tensor::gemm(
         &accelerator,
         true,
         true,
@@ -494,7 +494,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(rhs.rows(), lhs.cols(), 0.0);
     let accelerator = Default::default();
-    Tensor::sgemm(
+    Tensor::gemm(
         &accelerator,
         true,
         true,
@@ -557,7 +557,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let mut result = Tensor::default();
     result.reset(rhs.cols(), lhs.cols(), 0.0);
     let accelerator = Default::default();
-    Tensor::sgemm(
+    Tensor::gemm(
         &accelerator,
         true,
         false,
@@ -708,7 +708,7 @@ fn big_matrix_multiplication() {
     let mut result = Tensor::default();
     result.reset(m.rows(), m.cols(), 0.0);
     let accelerator = Default::default();
-    _ = Tensor::sgemm(
+    _ = Tensor::gemm(
         &accelerator,
         false,
         false,

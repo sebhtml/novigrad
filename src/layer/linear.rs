@@ -64,7 +64,7 @@ impl DifferentiableModuleTrait for Linear {
         let b = &self.weights.tensor;
         let c = output;
         c.assign(accelerator, biases);
-        let op_result = Tensor::sgemm(accelerator, false, true, 1.0, a, b, 1.0, c, false);
+        let op_result = Tensor::gemm(accelerator, false, true, 1.0, a, b, 1.0, c, false);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -89,7 +89,7 @@ impl DifferentiableModuleTrait for Linear {
         let b = layer_output_delta;
         let c = previous_layer_output_delta;
         c.reset(b.rows(), a.cols(), 0.0);
-        let op_result = Tensor::sgemm(accelerator, true, true, 1.0, a, b, 0.0, c, true);
+        let op_result = Tensor::gemm(accelerator, true, true, 1.0, a, b, 0.0, c, true);
 
         op_result.expect("Ok");
     }
@@ -117,7 +117,7 @@ impl DifferentiableModuleTrait for Linear {
         let b = layer_output_delta;
         let c = &mut self.weights.gradient;
         c.reset(b.cols(), a.cols(), 0.0);
-        let op_result = Tensor::sgemm(accelerator, true, false, 1.0, a, b, 0.0, c, true);
+        let op_result = Tensor::gemm(accelerator, true, false, 1.0, a, b, 0.0, c, true);
         op_result.expect("Ok");
         self.weights.has_gradient = true;
 

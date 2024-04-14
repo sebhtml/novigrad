@@ -145,7 +145,7 @@ impl Tensor {
         accelerator.scopy(n, x, incx, y, incy)
     }
 
-    pub fn sgemm(
+    pub fn gemm(
         accelerator: &Accelerator,
         transa: bool,
         transb: bool,

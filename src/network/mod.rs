@@ -1,19 +1,21 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::mem::swap;
+use std::{borrow::Borrow, cell::RefCell, mem::swap, rc::Rc};
 pub use train::*;
 
 use crate::{
     accelerator::Accelerator,
     loss::{LossFunction, LossFunctionType},
-    DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleTrait, Error, Tensor,
+    DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleTrait, Error,
+    FullDifferentiableModuleConfig, Tape, Tensor,
 };
 
 pub struct Network<'a> {
     layers: Vec<DifferentiableModule>,
     loss_function: &'a LossFunctionType,
     accelerator: Accelerator,
+    tape: Rc<RefCell<Tape>>,
 }
 
 pub struct TrainWorkingMemory {
@@ -71,13 +73,22 @@ impl<'a> Network<'a> {
         layer_configs: &Vec<DifferentiableModuleConfig>,
         loss_function: &'a LossFunctionType,
     ) -> Self {
+        let tape = Rc::new(RefCell::new(Default::default()));
         Self {
             layers: layer_configs
                 .into_iter()
-                .map(|layer_config| layer_config.into())
+                .map(|layer_config| {
+                    FullDifferentiableModuleConfig {
+                        tape: &tape,
+                        config: &layer_config,
+                    }
+                    .borrow()
+                    .into()
+                })
                 .collect(),
             loss_function,
             accelerator: Default::default(),
+            tape,
         }
     }
 

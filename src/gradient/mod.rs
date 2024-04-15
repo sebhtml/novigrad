@@ -1,7 +1,12 @@
+use std::{cell::RefCell, ops::Deref, rc::Rc};
+
 use crate::{
     accelerator::Accelerator, DeltaWorkingMemory, Embedding, EmbeddingConfig, Error, Linear,
     LinearConfig, Reshape, ReshapeConfig, Sigmoid, SigmoidConfig, Softmax, SoftmaxConfig, Tensor,
 };
+
+mod tape;
+pub use tape::*;
 
 pub struct DifferentiableTensor {
     pub tensor: Tensor,
@@ -86,7 +91,7 @@ pub enum DifferentiableModuleConfig {
     Softmax(SoftmaxConfig),
 }
 
-pub enum DifferentiableModule {
+pub enum DifferentiableModuleEnum {
     Embedding(Embedding),
     Linear(Linear),
     Reshape(Reshape),
@@ -94,24 +99,40 @@ pub enum DifferentiableModule {
     Softmax(Softmax),
 }
 
-impl Into<DifferentiableModule> for &DifferentiableModuleConfig {
+pub struct DifferentiableModule {
+    tape: Rc<RefCell<Tape>>,
+    variant: Rc<RefCell<DifferentiableModuleEnum>>,
+}
+
+pub struct FullDifferentiableModuleConfig<'a> {
+    pub tape: &'a Rc<RefCell<Tape>>,
+    pub config: &'a DifferentiableModuleConfig,
+}
+
+impl<'a> Into<DifferentiableModule> for &FullDifferentiableModuleConfig<'a> {
     fn into(self) -> DifferentiableModule {
-        match self {
+        let config = self.config;
+        let variant = match config {
             DifferentiableModuleConfig::Embedding(config) => {
-                DifferentiableModule::Embedding(config.into())
+                DifferentiableModuleEnum::Embedding(config.into())
             }
             DifferentiableModuleConfig::Linear(config) => {
-                DifferentiableModule::Linear(config.into())
+                DifferentiableModuleEnum::Linear(config.into())
             }
             DifferentiableModuleConfig::Reshape(config) => {
-                DifferentiableModule::Reshape(config.into())
+                DifferentiableModuleEnum::Reshape(config.into())
             }
             DifferentiableModuleConfig::Sigmoid(config) => {
-                DifferentiableModule::Sigmoid(config.into())
+                DifferentiableModuleEnum::Sigmoid(config.into())
             }
             DifferentiableModuleConfig::Softmax(config) => {
-                DifferentiableModule::Softmax(config.into())
+                DifferentiableModuleEnum::Softmax(config.into())
             }
+        };
+        let tape = self.tape;
+        DifferentiableModule {
+            tape: tape.clone(),
+            variant: Rc::new(RefCell::new(variant)),
         }
     }
 }
@@ -123,20 +144,21 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         layer_input: &Tensor,
         layer_output_delta: &Tensor,
     ) {
-        match self {
-            DifferentiableModule::Embedding(that) => {
+        let variant = &mut *self.variant.deref().borrow_mut();
+        match variant {
+            DifferentiableModuleEnum::Embedding(that) => {
                 that.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
-            DifferentiableModule::Linear(that) => {
+            DifferentiableModuleEnum::Linear(that) => {
                 that.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
-            DifferentiableModule::Reshape(that) => {
+            DifferentiableModuleEnum::Reshape(that) => {
                 that.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
-            DifferentiableModule::Sigmoid(that) => {
+            DifferentiableModuleEnum::Sigmoid(that) => {
                 that.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
-            DifferentiableModule::Softmax(that) => {
+            DifferentiableModuleEnum::Softmax(that) => {
                 that.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
         }
@@ -147,12 +169,23 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         accelerator: &Accelerator,
         learning_rate: f32,
     ) -> Result<(), Error> {
-        match self {
-            DifferentiableModule::Embedding(that) => that.commit_change(accelerator, learning_rate),
-            DifferentiableModule::Linear(that) => that.commit_change(accelerator, learning_rate),
-            DifferentiableModule::Reshape(that) => that.commit_change(accelerator, learning_rate),
-            DifferentiableModule::Sigmoid(that) => that.commit_change(accelerator, learning_rate),
-            DifferentiableModule::Softmax(that) => that.commit_change(accelerator, learning_rate),
+        let variant = &mut *self.variant.deref().borrow_mut();
+        match variant {
+            DifferentiableModuleEnum::Embedding(that) => {
+                that.commit_change(accelerator, learning_rate)
+            }
+            DifferentiableModuleEnum::Linear(that) => {
+                that.commit_change(accelerator, learning_rate)
+            }
+            DifferentiableModuleEnum::Reshape(that) => {
+                that.commit_change(accelerator, learning_rate)
+            }
+            DifferentiableModuleEnum::Sigmoid(that) => {
+                that.commit_change(accelerator, learning_rate)
+            }
+            DifferentiableModuleEnum::Softmax(that) => {
+                that.commit_change(accelerator, learning_rate)
+            }
         }
     }
 
@@ -162,12 +195,13 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         input: &Tensor,
         output: &mut Tensor,
     ) -> Result<(), Error> {
-        match self {
-            DifferentiableModule::Embedding(that) => that.forward(accelerator, input, output),
-            DifferentiableModule::Linear(that) => that.forward(accelerator, input, output),
-            DifferentiableModule::Reshape(that) => that.forward(accelerator, input, output),
-            DifferentiableModule::Sigmoid(that) => that.forward(accelerator, input, output),
-            DifferentiableModule::Softmax(that) => that.forward(accelerator, input, output),
+        let variant = &mut *self.variant.deref().borrow_mut();
+        match variant {
+            DifferentiableModuleEnum::Embedding(that) => that.forward(accelerator, input, output),
+            DifferentiableModuleEnum::Linear(that) => that.forward(accelerator, input, output),
+            DifferentiableModuleEnum::Reshape(that) => that.forward(accelerator, input, output),
+            DifferentiableModuleEnum::Sigmoid(that) => that.forward(accelerator, input, output),
+            DifferentiableModuleEnum::Softmax(that) => that.forward(accelerator, input, output),
         }
     }
 
@@ -177,20 +211,21 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         layer_delta: &Tensor,
         previous_layer_delta: &mut Tensor,
     ) {
-        match self {
-            DifferentiableModule::Embedding(that) => {
+        let variant = &mut *self.variant.deref().borrow_mut();
+        match variant {
+            DifferentiableModuleEnum::Embedding(that) => {
                 that.backward(accelerator, layer_delta, previous_layer_delta)
             }
-            DifferentiableModule::Linear(that) => {
+            DifferentiableModuleEnum::Linear(that) => {
                 that.backward(accelerator, layer_delta, previous_layer_delta)
             }
-            DifferentiableModule::Reshape(that) => {
+            DifferentiableModuleEnum::Reshape(that) => {
                 that.backward(accelerator, layer_delta, previous_layer_delta)
             }
-            DifferentiableModule::Sigmoid(that) => {
+            DifferentiableModuleEnum::Sigmoid(that) => {
                 that.backward(accelerator, layer_delta, previous_layer_delta)
             }
-            DifferentiableModule::Softmax(that) => {
+            DifferentiableModuleEnum::Softmax(that) => {
                 that.backward(accelerator, layer_delta, previous_layer_delta)
             }
         }
@@ -206,8 +241,9 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
-        match self {
-            DifferentiableModule::Embedding(that) => that.get_layer_output_delta(
+        let variant = &mut *self.variant.deref().borrow_mut();
+        match variant {
+            DifferentiableModuleEnum::Embedding(that) => that.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 layer_input,
@@ -216,7 +252,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 is_last_layer,
                 layer_delta,
             ),
-            DifferentiableModule::Linear(that) => that.get_layer_output_delta(
+            DifferentiableModuleEnum::Linear(that) => that.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 layer_input,
@@ -225,7 +261,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 is_last_layer,
                 layer_delta,
             ),
-            DifferentiableModule::Reshape(that) => that.get_layer_output_delta(
+            DifferentiableModuleEnum::Reshape(that) => that.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 layer_input,
@@ -234,7 +270,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 is_last_layer,
                 layer_delta,
             ),
-            DifferentiableModule::Sigmoid(that) => that.get_layer_output_delta(
+            DifferentiableModuleEnum::Sigmoid(that) => that.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 layer_input,
@@ -243,7 +279,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
                 is_last_layer,
                 layer_delta,
             ),
-            DifferentiableModule::Softmax(that) => that.get_layer_output_delta(
+            DifferentiableModuleEnum::Softmax(that) => that.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 layer_input,

@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::{borrow::Borrow, cell::RefCell, mem::swap, rc::Rc};
+use std::{borrow::Borrow, cell::RefCell, mem::swap, ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
@@ -19,7 +19,7 @@ pub struct Network<'a> {
 }
 
 pub struct TrainWorkingMemory {
-    pub layer_outputs: Vec<Tensor>,
+    pub layer_output: Tensor,
     pub next_layer_delta: Tensor,
     pub back_propagated_delta: Tensor,
     pub layer_delta: Tensor,
@@ -27,10 +27,10 @@ pub struct TrainWorkingMemory {
     pub tmp: Tensor,
 }
 
-impl TrainWorkingMemory {
-    pub fn new(layers: usize) -> Self {
+impl Default for TrainWorkingMemory {
+    fn default() -> Self {
         Self {
-            layer_outputs: vec![Default::default(); layers],
+            layer_output: Default::default(),
             next_layer_delta: Default::default(),
             back_propagated_delta: Default::default(),
             layer_delta: Default::default(),
@@ -144,15 +144,16 @@ impl<'a> Network<'a> {
         x: &Tensor,
         y: &Tensor,
     ) {
+        self.tape.deref().borrow_mut().clear();
         let learning_rate: f32 = 0.5;
-        let layer_outputs = &mut working_memory.layer_outputs;
 
         for layer_index in 0..self.layers.len() {
+            let layer_output = &mut working_memory.layer_output;
+
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
             if layer_index == 0 {
                 previous_activation_tensor.assign(&self.accelerator, x);
             }
-            let layer_output = &mut layer_outputs[layer_index];
 
             let layer = &mut self.layers[layer_index];
             let op_result =
@@ -167,21 +168,34 @@ impl<'a> Network<'a> {
 
         // Back-propagation
         for layer_index in (0..layers_count).into_iter().rev() {
+            let layer_output = &mut working_memory.layer_output;
+            {
+                let tape = self.tape.deref().borrow();
+                let tensor = tape.records[layer_index].output.deref();
+                layer_output.assign(self.accelerator.borrow(), tensor);
+            }
+
             let is_last_layer = layer_index == self.layers.len() - 1;
 
-            let previous_activation_tensor = match layer_index {
-                0 => x,
-                _ => &layer_outputs[layer_index - 1],
+            let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
+
+            match layer_index {
+                0 => {
+                    previous_activation_tensor.assign(self.accelerator.borrow(), x);
+                }
+                _ => {
+                    let tape = self.tape.deref().borrow();
+                    let tensor = tape.records[layer_index - 1].output.deref();
+                    previous_activation_tensor.assign(self.accelerator.borrow(), tensor);
+                }
             };
 
             if is_last_layer {
                 // For the output layer, the next layer delta is the loss.
-                let layer_activation_tensor = &layer_outputs[layer_index];
-
                 let op_result = self.loss_function.derive(
                     &self.accelerator,
                     y,
-                    &layer_activation_tensor,
+                    &layer_output,
                     next_layer_delta,
                 );
                 op_result.expect("Ok");
@@ -197,8 +211,7 @@ impl<'a> Network<'a> {
 
                 let layer = &self.layers[layer_index];
                 let tmp = &mut working_memory.tmp;
-                let layer_input = previous_activation_tensor;
-                let layer_output = &layer_outputs[layer_index];
+                let layer_input: &Tensor = previous_activation_tensor;
                 let back_propagated_delta = &mut working_memory.back_propagated_delta;
 
                 let is_last_layer = next_layer.is_none();

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
     accelerator::Accelerator, DeltaWorkingMemory, Embedding, EmbeddingConfig, Error, Linear,
@@ -202,7 +202,12 @@ impl DifferentiableModuleTrait for DifferentiableModule {
             DifferentiableModuleEnum::Reshape(that) => that.forward(accelerator, input, output),
             DifferentiableModuleEnum::Sigmoid(that) => that.forward(accelerator, input, output),
             DifferentiableModuleEnum::Softmax(that) => that.forward(accelerator, input, output),
-        }
+        }?;
+        self.tape
+            .deref()
+            .borrow_mut()
+            .push(self.variant.borrow(), Rc::new(output.clone()).borrow());
+        Ok(())
     }
 
     fn backward(

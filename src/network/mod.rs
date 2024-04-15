@@ -7,12 +7,12 @@ pub use train::*;
 use crate::{
     accelerator::Accelerator,
     loss::{LossFunction, LossFunctionType},
-    DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleTrait, Error,
-    FullDifferentiableModuleConfig, Tape, Tensor,
+    DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleEnum,
+    DifferentiableModuleTrait, Error, FullDifferentiableModuleConfig, Tape, Tensor,
 };
 
 pub struct Network<'a> {
-    layers: Vec<DifferentiableModule>,
+    forward_layers: Vec<DifferentiableModule>,
     loss_function: &'a LossFunctionType,
     accelerator: Accelerator,
     tape: Rc<RefCell<Tape>>,
@@ -75,7 +75,7 @@ impl<'a> Network<'a> {
     ) -> Self {
         let tape = Rc::new(RefCell::new(Default::default()));
         Self {
-            layers: layer_configs
+            forward_layers: layer_configs
                 .into_iter()
                 .map(|layer_config| {
                     FullDifferentiableModuleConfig {
@@ -147,7 +147,7 @@ impl<'a> Network<'a> {
         self.tape.deref().borrow_mut().clear();
         let learning_rate: f32 = 0.5;
 
-        for layer_index in 0..self.layers.len() {
+        for layer_index in 0..self.forward_layers.len() {
             let layer_output = &mut working_memory.layer_output;
 
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
@@ -155,7 +155,7 @@ impl<'a> Network<'a> {
                 previous_activation_tensor.assign(&self.accelerator, x);
             }
 
-            let layer = &mut self.layers[layer_index];
+            let layer = &mut self.forward_layers[layer_index];
             let op_result =
                 layer.forward(&self.accelerator, previous_activation_tensor, layer_output);
             op_result.expect("Ok");
@@ -164,7 +164,10 @@ impl<'a> Network<'a> {
 
         let next_layer_delta = &mut working_memory.next_layer_delta;
         let layer_delta = &mut working_memory.layer_delta;
-        let layers_count = self.layers.len();
+        let layers_count = {
+            let tape = self.tape.deref().borrow();
+            tape.records.len()
+        };
 
         // Back-propagation
         for layer_index in (0..layers_count).into_iter().rev() {
@@ -175,7 +178,7 @@ impl<'a> Network<'a> {
                 layer_output.assign(self.accelerator.borrow(), tensor);
             }
 
-            let is_last_layer = layer_index == self.layers.len() - 1;
+            let is_last_layer = layer_index == layers_count - 1;
 
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
 
@@ -202,14 +205,15 @@ impl<'a> Network<'a> {
             }
 
             {
-                let next_layer = if is_last_layer {
+                let next_layer: Option<Rc<RefCell<DifferentiableModuleEnum>>> = if is_last_layer {
                     None
                 } else {
                     let next_layer_index = layer_index + 1;
-                    Some(&self.layers[next_layer_index])
+                    let tape = self.tape.deref().borrow();
+                    let module = tape.records[next_layer_index].module.clone();
+                    Some(module)
                 };
 
-                let layer = &self.layers[layer_index];
                 let tmp = &mut working_memory.tmp;
                 let layer_input: &Tensor = previous_activation_tensor;
                 let back_propagated_delta = &mut working_memory.back_propagated_delta;
@@ -222,7 +226,8 @@ impl<'a> Network<'a> {
                     }
                     Some(next_layer) => {
                         // Hidden layer
-                        next_layer.backward(
+                        let next_layer = next_layer.deref();
+                        next_layer.borrow().backward(
                             &self.accelerator,
                             next_layer_delta,
                             back_propagated_delta,
@@ -230,6 +235,9 @@ impl<'a> Network<'a> {
                     }
                 }
 
+                let tape = self.tape.deref().borrow();
+                let layer: &DifferentiableModuleEnum =
+                    &tape.records[layer_index].module.deref().borrow();
                 layer.get_layer_output_delta(
                     &self.accelerator,
                     error_working_memory,
@@ -244,7 +252,9 @@ impl<'a> Network<'a> {
             }
 
             {
-                let layer = &mut self.layers[layer_index];
+                let tape = self.tape.deref().borrow();
+                let layer: &mut DifferentiableModuleEnum =
+                    &mut tape.records[layer_index].module.deref().borrow_mut();
                 layer.compute_gradient(&self.accelerator, previous_activation_tensor, layer_delta);
             }
 
@@ -252,8 +262,11 @@ impl<'a> Network<'a> {
         }
 
         // Apply changes
-        for layer in 0..self.layers.len() {
-            let op_result = self.layers[layer].commit_change(&self.accelerator, learning_rate);
+        for layer_index in 0..layers_count {
+            let tape = self.tape.deref().borrow();
+            let layer: &mut DifferentiableModuleEnum =
+                &mut tape.records[layer_index].module.deref().borrow_mut();
+            let op_result = layer.commit_change(&self.accelerator, learning_rate);
             op_result.expect("Ok");
         }
     }
@@ -281,8 +294,8 @@ impl<'a> Network<'a> {
         activation_tensor: &mut Tensor,
     ) {
         previous_activation_tensor.assign(&self.accelerator, input);
-        for layer_index in 0..self.layers.len() {
-            let layer = &mut self.layers[layer_index];
+        for layer_index in 0..self.forward_layers.len() {
+            let layer = &mut self.forward_layers[layer_index];
             let op_result = layer.forward(
                 &self.accelerator,
                 previous_activation_tensor,

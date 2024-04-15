@@ -1,4 +1,3 @@
-- use layer list from tape
 - use imperative form for architecture
 - in backprop, move the computation of gradients to gradient/
 - add Blas implementation for CuBlas

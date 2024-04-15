@@ -104,6 +104,74 @@ pub struct DifferentiableModule {
     variant: Rc<RefCell<DifferentiableModuleEnum>>,
 }
 
+impl DifferentiableModuleTrait for DifferentiableModule {
+    fn compute_gradient(
+        &mut self,
+        accelerator: &Accelerator,
+        layer_input: &Tensor,
+        layer_output_delta: &Tensor,
+    ) {
+        let variant = &mut *self.variant.deref().borrow_mut();
+        variant.compute_gradient(accelerator, layer_input, layer_output_delta)
+    }
+
+    fn commit_change(
+        &mut self,
+        accelerator: &Accelerator,
+        learning_rate: f32,
+    ) -> Result<(), Error> {
+        let variant = &mut *self.variant.deref().borrow_mut();
+        variant.commit_change(accelerator, learning_rate)
+    }
+
+    fn forward(
+        &mut self,
+        accelerator: &Accelerator,
+        layer_input: &Tensor,
+        layer_output: &mut Tensor,
+    ) -> Result<(), Error> {
+        let variant = &mut *self.variant.deref().borrow_mut();
+        variant.forward(accelerator, layer_input, layer_output)?;
+        self.tape.deref().borrow_mut().push(
+            self.variant.borrow(),
+            Rc::new(layer_output.clone()).borrow(),
+        );
+        Ok(())
+    }
+
+    fn backward(
+        &self,
+        accelerator: &Accelerator,
+        layer_output_delta: &Tensor,
+        previous_layer_output_delta: &mut Tensor,
+    ) {
+        let variant = &mut *self.variant.deref().borrow_mut();
+        variant.backward(accelerator, layer_output_delta, previous_layer_output_delta)
+    }
+
+    fn get_layer_output_delta(
+        &self,
+        accelerator: &Accelerator,
+        working_memory: &mut DeltaWorkingMemory,
+        layer_input: &Tensor,
+        layer_output: &Tensor,
+        back_propagated_layer_output_delta: &Tensor,
+        is_last_layer: bool,
+        layer_output_delta: &mut Tensor,
+    ) {
+        let variant = &mut *self.variant.deref().borrow_mut();
+        variant.get_layer_output_delta(
+            accelerator,
+            working_memory,
+            layer_input,
+            layer_output,
+            back_propagated_layer_output_delta,
+            is_last_layer,
+            layer_output_delta,
+        )
+    }
+}
+
 pub struct FullDifferentiableModuleConfig<'a> {
     pub tape: &'a Rc<RefCell<Tape>>,
     pub config: &'a DifferentiableModuleConfig,
@@ -137,15 +205,14 @@ impl<'a> Into<DifferentiableModule> for &FullDifferentiableModuleConfig<'a> {
     }
 }
 
-impl DifferentiableModuleTrait for DifferentiableModule {
+impl DifferentiableModuleTrait for DifferentiableModuleEnum {
     fn compute_gradient(
         &mut self,
         accelerator: &Accelerator,
         layer_input: &Tensor,
         layer_output_delta: &Tensor,
     ) {
-        let variant = &mut *self.variant.deref().borrow_mut();
-        match variant {
+        match self {
             DifferentiableModuleEnum::Embedding(that) => {
                 that.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
@@ -169,8 +236,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         accelerator: &Accelerator,
         learning_rate: f32,
     ) -> Result<(), Error> {
-        let variant = &mut *self.variant.deref().borrow_mut();
-        match variant {
+        match self {
             DifferentiableModuleEnum::Embedding(that) => {
                 that.commit_change(accelerator, learning_rate)
             }
@@ -195,19 +261,13 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         input: &Tensor,
         output: &mut Tensor,
     ) -> Result<(), Error> {
-        let variant = &mut *self.variant.deref().borrow_mut();
-        match variant {
+        match self {
             DifferentiableModuleEnum::Embedding(that) => that.forward(accelerator, input, output),
             DifferentiableModuleEnum::Linear(that) => that.forward(accelerator, input, output),
             DifferentiableModuleEnum::Reshape(that) => that.forward(accelerator, input, output),
             DifferentiableModuleEnum::Sigmoid(that) => that.forward(accelerator, input, output),
             DifferentiableModuleEnum::Softmax(that) => that.forward(accelerator, input, output),
-        }?;
-        self.tape
-            .deref()
-            .borrow_mut()
-            .push(self.variant.borrow(), Rc::new(output.clone()).borrow());
-        Ok(())
+        }
     }
 
     fn backward(
@@ -216,8 +276,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         layer_delta: &Tensor,
         previous_layer_delta: &mut Tensor,
     ) {
-        let variant = &mut *self.variant.deref().borrow_mut();
-        match variant {
+        match self {
             DifferentiableModuleEnum::Embedding(that) => {
                 that.backward(accelerator, layer_delta, previous_layer_delta)
             }
@@ -246,8 +305,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
-        let variant = &mut *self.variant.deref().borrow_mut();
-        match variant {
+        match self {
             DifferentiableModuleEnum::Embedding(that) => that.get_layer_output_delta(
                 accelerator,
                 working_memory,

@@ -123,7 +123,7 @@ impl<'a> Network<'a> {
         let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
 
         for i in 0..inputs.len() {
-            self.predict(previous_activation_tensor, &inputs[i], activation_tensor);
+            self.forward(previous_activation_tensor, &inputs[i], activation_tensor);
             let target = &outputs[i];
             let example_error = self
                 .loss_function
@@ -145,21 +145,11 @@ impl<'a> Network<'a> {
         y: &Tensor,
     ) {
         self.tape.deref().borrow_mut().clear();
-        let learning_rate: f32 = 0.5;
 
-        for layer_index in 0..self.forward_layers.len() {
+        {
             let layer_output = &mut working_memory.layer_output;
-
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-            if layer_index == 0 {
-                previous_activation_tensor.assign(&self.accelerator, x);
-            }
-
-            let layer = &mut self.forward_layers[layer_index];
-            let op_result =
-                layer.forward(&self.accelerator, previous_activation_tensor, layer_output);
-            op_result.expect("Ok");
-            previous_activation_tensor.assign(&self.accelerator, &layer_output);
+            self.forward(previous_activation_tensor, x, layer_output);
         }
 
         let next_layer_delta = &mut working_memory.next_layer_delta;
@@ -262,6 +252,7 @@ impl<'a> Network<'a> {
         }
 
         // Apply changes
+        let learning_rate: f32 = 0.5;
         for layer_index in 0..layers_count {
             let tape = self.tape.deref().borrow();
             let layer: &mut DifferentiableModuleEnum =
@@ -282,12 +273,12 @@ impl<'a> Network<'a> {
         while i < len {
             let input = &inputs[i];
             let activation_tensor = &mut activation_tensors[i];
-            self.predict(previous_activation_tensor, input, activation_tensor);
+            self.forward(previous_activation_tensor, input, activation_tensor);
             i += 1;
         }
     }
 
-    pub fn predict(
+    pub fn forward(
         &mut self,
         previous_activation_tensor: &mut Tensor,
         input: &Tensor,

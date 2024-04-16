@@ -2,6 +2,18 @@
 
 - Implement from scratch in Rust the [GPT-1](https://en.wikipedia.org/wiki/GPT-1) architecture (117 million parameters).
 
+# Novigrad
+
+Novigrad is a reverse mode automatic differentiation.
+It aims to be a minimalist neural network framework in Rust.
+
+# Other frameworks
+
+- [PyTorch](https://github.com/pytorch/pytorch)
+- (TensorFlow)[https://github.com/tensorflow/tensorflow]
+- [Burn](https://github.com/tracel-ai/burn/tree/main)
+- [Tinygrad](https://github.com/tinygrad/tinygrad)
+
 # Hardware used
 
 - Lenovo Legion 7 Laptop

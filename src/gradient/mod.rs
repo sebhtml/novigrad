@@ -1,9 +1,6 @@
 use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{
-    accelerator::Accelerator, DeltaWorkingMemory, EmbeddingConfig, Error, LinearConfig,
-    ReshapeConfig, SigmoidConfig, SoftmaxConfig, Tensor,
-};
+use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Tensor};
 
 mod tape;
 pub use tape::*;
@@ -83,14 +80,6 @@ pub trait DifferentiableModuleTrait {
         is_last_layer: bool,
         layer_output_delta: &mut Tensor,
     );
-}
-
-pub enum DifferentiableModuleConfig {
-    Embedding(EmbeddingConfig),
-    Linear(LinearConfig),
-    Reshape(ReshapeConfig),
-    Sigmoid(SigmoidConfig),
-    Softmax(SoftmaxConfig),
 }
 
 pub struct DifferentiableModule {
@@ -174,23 +163,7 @@ pub struct FullDifferentiableModuleConfig<'a> {
 impl<'a> Into<DifferentiableModule> for &FullDifferentiableModuleConfig<'a> {
     fn into(self) -> DifferentiableModule {
         let config = self.config;
-        let variant = match config {
-            DifferentiableModuleConfig::Embedding(config) => {
-                DifferentiableModuleEnum::Embedding(config.into())
-            }
-            DifferentiableModuleConfig::Linear(config) => {
-                DifferentiableModuleEnum::Linear(config.into())
-            }
-            DifferentiableModuleConfig::Reshape(config) => {
-                DifferentiableModuleEnum::Reshape(config.into())
-            }
-            DifferentiableModuleConfig::Sigmoid(config) => {
-                DifferentiableModuleEnum::Sigmoid(config.into())
-            }
-            DifferentiableModuleConfig::Softmax(config) => {
-                DifferentiableModuleEnum::Softmax(config.into())
-            }
-        };
+        let variant = config.into();
         let tape = self.tape;
         DifferentiableModule {
             tape: tape.clone(),

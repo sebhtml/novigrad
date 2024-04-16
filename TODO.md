@@ -1,4 +1,4 @@
-- add accelerator in module
+- add accelerator in module with Forward trait
 - use imperative form for architecture
 - in backprop, move the computation of gradients to gradient/
 - add Blas implementation for CuBlas

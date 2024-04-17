@@ -67,18 +67,15 @@ impl DifferentiableModule {
         variant.commit_change(self.accelerator.deref(), learning_rate)
     }
 
-    pub fn forward(
-        &mut self,
-        layer_input: &Tensor,
-        layer_output: &mut Tensor,
-    ) -> Result<(), Error> {
+    pub fn forward(&mut self, layer_input: &Tensor) -> Result<Tensor, Error> {
+        let mut layer_output = Tensor::default();
         let variant = &mut *self.variant.deref().borrow_mut();
-        variant.forward(self.accelerator.deref(), layer_input, layer_output)?;
+        variant.forward(self.accelerator.deref(), layer_input, &mut layer_output)?;
         self.tape.deref().borrow_mut().push(
             self.variant.borrow(),
             Rc::new(layer_output.clone()).borrow(),
         );
-        Ok(())
+        Ok(layer_output)
     }
 
     pub fn backward(&self, layer_output_delta: &Tensor, previous_layer_output_delta: &mut Tensor) {

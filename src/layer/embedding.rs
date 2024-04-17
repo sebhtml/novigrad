@@ -58,7 +58,7 @@ impl DifferentiableModuleTrait for Embedding {
 
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         _layer_delta: &Tensor,
         _previous_layer_delta: &mut Tensor,
     ) {

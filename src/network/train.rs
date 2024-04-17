@@ -105,7 +105,7 @@ pub fn train_network_on_dataset(
             epoch,
             &inputs,
             &outputs,
-        );
+        )?;
     }
     let final_total_error = print_total_error(
         &mut predict_working_memory,
@@ -118,7 +118,7 @@ pub fn train_network_on_dataset(
 
     let activation_tensors = &mut predict_working_memory.activation_tensors;
     let previous_activation_tensor_f32 = &mut predict_working_memory.previous_activation_tensor;
-    network.predict_many(previous_activation_tensor_f32, &inputs, activation_tensors);
+    network.predict_many(previous_activation_tensor_f32, &inputs, activation_tensors)?;
 
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();

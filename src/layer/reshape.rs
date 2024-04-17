@@ -28,7 +28,7 @@ impl Reshape {
 impl DifferentiableModuleTrait for Reshape {
     fn compute_gradient(
         &mut self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         _layer_input: &Tensor,
         _layer_output_delta: &Tensor,
     ) {
@@ -36,7 +36,7 @@ impl DifferentiableModuleTrait for Reshape {
 
     fn commit_change(
         &mut self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         _learning_rate: f32,
     ) -> Result<(), Error> {
         Ok(())

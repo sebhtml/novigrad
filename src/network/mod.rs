@@ -104,7 +104,7 @@ impl Network {
         epoch: usize,
         inputs: &Vec<Tensor>,
         outputs: &Vec<Tensor>,
-    ) {
+    ) -> Result<(), Error> {
         for i in 0..inputs.len() {
             self.train_back_propagation(
                 working_memory,
@@ -113,8 +113,9 @@ impl Network {
                 i,
                 &inputs[i],
                 &outputs[i],
-            );
+            )?;
         }
+        Ok(())
     }
 
     pub fn total_error(
@@ -128,7 +129,7 @@ impl Network {
         let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
 
         for i in 0..inputs.len() {
-            self.forward(previous_activation_tensor, &inputs[i], activation_tensor);
+            self.forward(previous_activation_tensor, &inputs[i], activation_tensor)?;
             let target = &outputs[i];
             let example_error = self
                 .loss_function
@@ -148,13 +149,13 @@ impl Network {
         _example_index: usize,
         x: &Tensor,
         y: &Tensor,
-    ) {
+    ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
         {
             let layer_output = &mut working_memory.layer_output;
             let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-            self.forward(previous_activation_tensor, x, layer_output);
+            self.forward(previous_activation_tensor, x, layer_output)?;
         }
 
         back_propagation(
@@ -168,6 +169,7 @@ impl Network {
         );
 
         self.optimizer.optimize(&self.tape, &self.accelerator);
+        Ok(())
     }
 
     pub fn predict_many(
@@ -175,15 +177,16 @@ impl Network {
         previous_activation_tensor: &mut Tensor,
         inputs: &Vec<Tensor>,
         activation_tensors: &mut Vec<Tensor>,
-    ) {
+    ) -> Result<(), Error> {
         let len = inputs.len();
         let mut i = 0;
         while i < len {
             let input = &inputs[i];
             let activation_tensor = &mut activation_tensors[i];
-            self.forward(previous_activation_tensor, input, activation_tensor);
+            self.forward(previous_activation_tensor, input, activation_tensor)?;
             i += 1;
         }
+        Ok(())
     }
 
     pub fn forward(
@@ -191,13 +194,16 @@ impl Network {
         previous_activation_tensor: &mut Tensor,
         input: &Tensor,
         activation_tensor: &mut Tensor,
-    ) {
+    ) -> Result<(), Error> {
         previous_activation_tensor.assign(&self.accelerator, input);
         for layer_index in 0..self.forward_layers.len() {
             let layer = &mut self.forward_layers[layer_index];
-            let op_result = layer.forward(previous_activation_tensor, activation_tensor);
-            op_result.expect("Ok");
-            previous_activation_tensor.assign(&self.accelerator, activation_tensor);
+            let op_result = layer.forward(previous_activation_tensor);
+            let output = op_result.expect("Ok");
+
+            previous_activation_tensor.assign(&self.accelerator, &output);
         }
+        activation_tensor.assign(&self.accelerator, &previous_activation_tensor);
+        Ok(())
     }
 }

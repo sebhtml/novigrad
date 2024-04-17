@@ -69,7 +69,7 @@ impl ActivationFunction for Sigmoid {
 impl DifferentiableModuleTrait for Sigmoid {
     fn compute_gradient(
         &mut self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         _layer_input: &Tensor,
         _layer_output_delta: &Tensor,
     ) {
@@ -77,7 +77,7 @@ impl DifferentiableModuleTrait for Sigmoid {
 
     fn commit_change(
         &mut self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         _learning_rate: f32,
     ) -> Result<(), Error> {
         Ok(())
@@ -85,7 +85,7 @@ impl DifferentiableModuleTrait for Sigmoid {
 
     fn forward(
         &mut self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         input: &Tensor,
         output: &mut Tensor,
     ) -> Result<(), Error> {
@@ -103,7 +103,7 @@ impl DifferentiableModuleTrait for Sigmoid {
 
     fn get_layer_output_delta(
         &self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,

@@ -16,7 +16,7 @@ impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     fn evaluate(
         &self,
-        accelerator: &Accelerator,
+        _accelerator: &Accelerator,
         expected: &Tensor,
         actual: &Tensor,
     ) -> Result<f32, Error> {

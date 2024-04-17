@@ -79,17 +79,6 @@ impl DifferentiableModuleTrait for Embedding {
     }
 }
 
-pub struct EmbeddingConfig {
-    pub num_embeddings: usize,
-    pub embedding_dim: usize,
-}
-
-impl Into<Embedding> for &EmbeddingConfig {
-    fn into(self) -> Embedding {
-        Embedding::new(self.num_embeddings, self.embedding_dim)
-    }
-}
-
 fn get_embedding_table(num_embeddings: usize, embedding_dim: usize) -> Tensor {
     let mut rng = thread_rng();
     let mut embeddings_table: Vec<f32> = Vec::new();

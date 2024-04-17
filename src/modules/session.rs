@@ -1,6 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{Accelerator, DifferentiableModule, DifferentiableModuleEnum, Linear, Softmax, Tape};
+use crate::{
+    Accelerator, DifferentiableModule, DifferentiableModuleEnum, Embedding, Linear, Softmax, Tape,
+};
 
 pub struct Session {
     accelerator: Rc<Accelerator>,
@@ -23,6 +25,16 @@ impl Session {
 
     pub fn tape(&self) -> Rc<RefCell<Tape>> {
         self.tape.clone()
+    }
+
+    pub fn embedding(&self, num_embeddings: usize, embedding_dim: usize) -> DifferentiableModule {
+        DifferentiableModule::new(
+            self.accelerator(),
+            self.tape(),
+            Rc::new(RefCell::new(DifferentiableModuleEnum::Embedding(
+                Embedding::new(num_embeddings, embedding_dim),
+            ))),
+        )
     }
 
     pub fn linear(

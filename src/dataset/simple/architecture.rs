@@ -1,5 +1,5 @@
 use crate::{
-    Accelerator, DifferentiableModule, DifferentiableModuleConfig, EmbeddingConfig, Error, Forward,
+    Accelerator, DifferentiableModule, DifferentiableModuleConfig, Error, Forward,
     FullDifferentiableModuleConfig, ReshapeConfig, Session, Tape, Tensor,
 };
 use std::borrow::Borrow;
@@ -23,18 +23,13 @@ impl Default for Architecture {
         let tape = session.tape();
         let configs = architecture();
         let mut iterator = configs.iter().peekable();
+        let embedding = session.embedding(16, 32);
         let linear_0 = session.linear(16, 32, 6);
         let linear_1 = session.linear(32, 6 * 16, 1);
         let linear_2 = session.linear(16, 32, 1);
         let softmax = session.softmax(true);
         Self {
-            embedding: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            embedding,
             linear_0,
             sigmoid_0: FullDifferentiableModuleConfig {
                 accelerator: &accelerator,
@@ -88,10 +83,6 @@ impl Forward for Architecture {
 
 pub fn architecture() -> Vec<DifferentiableModuleConfig> {
     vec![
-        DifferentiableModuleConfig::Embedding(EmbeddingConfig {
-            num_embeddings: 16,
-            embedding_dim: 32,
-        }),
         DifferentiableModuleConfig::Sigmoid(Default::default()),
         DifferentiableModuleConfig::Reshape(ReshapeConfig {
             input_rows: 6,

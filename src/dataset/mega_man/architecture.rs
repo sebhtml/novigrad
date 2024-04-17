@@ -1,7 +1,7 @@
 use std::{borrow::Borrow, cell::RefCell, rc::Rc};
 
 use crate::{
-    Accelerator, DifferentiableModule, DifferentiableModuleConfig, EmbeddingConfig, Error, Forward,
+    Accelerator, DifferentiableModule, DifferentiableModuleConfig, Error, Forward,
     FullDifferentiableModuleConfig, ReshapeConfig, Session, Tape, Tensor,
 };
 
@@ -19,16 +19,11 @@ impl Default for Architecture {
         let tape = session.tape();
         let configs = architecture();
         let mut iterator = configs.iter().peekable();
+        let embedding = session.embedding(256, 384);
         let linear = session.linear(256, 32 * 384, 1);
         let softmax = session.softmax(true);
         Self {
-            embedding: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            embedding,
             reshape: FullDifferentiableModuleConfig {
                 accelerator: &accelerator,
                 tape: &tape,
@@ -61,16 +56,10 @@ impl Forward for Architecture {
 }
 
 pub fn architecture() -> Vec<DifferentiableModuleConfig> {
-    vec![
-        DifferentiableModuleConfig::Embedding(EmbeddingConfig {
-            num_embeddings: 256,
-            embedding_dim: 384,
-        }),
-        DifferentiableModuleConfig::Reshape(ReshapeConfig {
-            input_rows: 32,
-            input_cols: 384,
-            output_rows: 1,
-            output_cols: 32 * 384,
-        }),
-    ]
+    vec![DifferentiableModuleConfig::Reshape(ReshapeConfig {
+        input_rows: 32,
+        input_cols: 384,
+        output_rows: 1,
+        output_cols: 32 * 384,
+    })]
 }

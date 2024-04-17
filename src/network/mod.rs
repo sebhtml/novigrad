@@ -1,19 +1,18 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
     accelerator::Accelerator,
     back_propagation,
     loss::{LossFunction, LossFunctionType},
-    DifferentiableModule, DifferentiableModuleConfig, Error, Forward,
-    FullDifferentiableModuleConfig, Optimizer, OptimizerTrait, Tape, Tensor,
+    Error, Forward, Optimizer, OptimizerTrait, Tape, Tensor,
 };
 
 pub struct Network {
-    forward_layers: Vec<DifferentiableModule>,
+    architecture: Box<dyn Forward>,
     loss_function: LossFunctionType,
     accelerator: Rc<Accelerator>,
     optimizer: Optimizer,
@@ -71,25 +70,11 @@ impl PredictWorkingMemory {
 }
 
 impl Network {
-    pub fn new(
-        layer_configs: &Vec<DifferentiableModuleConfig>,
-        loss_function: LossFunctionType,
-    ) -> Self {
-        let accelerator = Rc::new(Default::default());
-        let tape = Rc::new(RefCell::new(Default::default()));
+    pub fn new(architecture: Box<dyn Forward>, loss_function: LossFunctionType) -> Self {
+        let accelerator = architecture.accelerator();
+        let tape = architecture.tape();
         Self {
-            forward_layers: layer_configs
-                .into_iter()
-                .map(|layer_config| {
-                    FullDifferentiableModuleConfig {
-                        accelerator: &accelerator,
-                        tape: &tape,
-                        config: &layer_config,
-                    }
-                    .borrow()
-                    .into()
-                })
-                .collect(),
+            architecture,
             loss_function,
             accelerator,
             tape,
@@ -191,19 +176,12 @@ impl Network {
 
     pub fn forward(
         &mut self,
-        previous_activation_tensor: &mut Tensor,
+        _previous_activation_tensor: &mut Tensor,
         input: &Tensor,
         activation_tensor: &mut Tensor,
     ) -> Result<(), Error> {
-        previous_activation_tensor.assign(&self.accelerator, input);
-        for layer_index in 0..self.forward_layers.len() {
-            let layer = &mut self.forward_layers[layer_index];
-            let op_result = layer.forward(previous_activation_tensor);
-            let output = op_result.expect("Ok");
-
-            previous_activation_tensor.assign(&self.accelerator, &output);
-        }
-        activation_tensor.assign(&self.accelerator, &previous_activation_tensor);
+        let output = self.architecture.forward(input)?;
+        activation_tensor.assign(&self.accelerator, &output);
         Ok(())
     }
 }

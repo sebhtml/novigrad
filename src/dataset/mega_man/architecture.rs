@@ -21,8 +21,8 @@ impl Default for Architecture {
         let configs = architecture();
         let mut iterator = configs.iter().peekable();
         Self {
-            accelerator: Default::default(),
-            tape: Default::default(),
+            accelerator: accelerator.clone(),
+            tape: tape.clone(),
             embedding: FullDifferentiableModuleConfig {
                 accelerator: &accelerator,
                 tape: &tape,

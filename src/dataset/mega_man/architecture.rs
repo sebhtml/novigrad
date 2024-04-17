@@ -1,6 +1,77 @@
+use std::{borrow::Borrow, cell::RefCell, rc::Rc};
+
 use crate::{
-    DifferentiableModuleConfig, EmbeddingConfig, LinearConfig, ReshapeConfig, SoftmaxConfig,
+    Accelerator, DifferentiableModule, DifferentiableModuleConfig, EmbeddingConfig, Error, Forward,
+    FullDifferentiableModuleConfig, LinearConfig, ReshapeConfig, SoftmaxConfig, Tape, Tensor,
 };
+
+pub struct Architecture {
+    accelerator: Rc<Accelerator>,
+    tape: Rc<RefCell<Tape>>,
+    embedding: DifferentiableModule,
+    reshape: DifferentiableModule,
+    linear: DifferentiableModule,
+    softmax: DifferentiableModule,
+}
+
+impl Default for Architecture {
+    fn default() -> Self {
+        let accelerator = Rc::new(Accelerator::default());
+        let tape = Rc::new(RefCell::new(Tape::default()));
+        let configs = architecture();
+        let mut iterator = configs.iter().peekable();
+        Self {
+            accelerator: Default::default(),
+            tape: Default::default(),
+            embedding: FullDifferentiableModuleConfig {
+                accelerator: &accelerator,
+                tape: &tape,
+                config: iterator.next().unwrap(),
+            }
+            .borrow()
+            .into(),
+            reshape: FullDifferentiableModuleConfig {
+                accelerator: &accelerator,
+                tape: &tape,
+                config: iterator.next().unwrap(),
+            }
+            .borrow()
+            .into(),
+            linear: FullDifferentiableModuleConfig {
+                accelerator: &accelerator,
+                tape: &tape,
+                config: iterator.next().unwrap(),
+            }
+            .borrow()
+            .into(),
+            softmax: FullDifferentiableModuleConfig {
+                accelerator: &accelerator,
+                tape: &tape,
+                config: iterator.next().unwrap(),
+            }
+            .borrow()
+            .into(),
+        }
+    }
+}
+
+impl Forward for Architecture {
+    fn forward(&mut self, layer_input: &Tensor) -> Result<Tensor, Error> {
+        let embedding = self.embedding.forward(layer_input)?;
+        let reshape = self.reshape.forward(&embedding)?;
+        let linear = self.linear.forward(&reshape)?;
+        let softmax = self.softmax.forward(&linear)?;
+        Ok(softmax)
+    }
+
+    fn accelerator(&self) -> Rc<Accelerator> {
+        self.accelerator.clone()
+    }
+
+    fn tape(&self) -> Rc<RefCell<Tape>> {
+        self.tape.clone()
+    }
+}
 
 pub fn architecture() -> Vec<DifferentiableModuleConfig> {
     vec![

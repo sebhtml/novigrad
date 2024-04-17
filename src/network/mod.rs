@@ -8,8 +8,8 @@ use crate::{
     accelerator::Accelerator,
     back_propagation,
     loss::{LossFunction, LossFunctionType},
-    DifferentiableModule, DifferentiableModuleConfig, Error, FullDifferentiableModuleConfig,
-    Optimizer, OptimizerTrait, Tape, Tensor,
+    DifferentiableModule, DifferentiableModuleConfig, Error, Forward,
+    FullDifferentiableModuleConfig, Optimizer, OptimizerTrait, Tape, Tensor,
 };
 
 pub struct Network {

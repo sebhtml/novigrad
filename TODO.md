@@ -1,5 +1,4 @@
-- add accelerator in module with Forward trait
-- use imperative form for architecture
+- remove module config structs
 - add Blas implementation for CuBlas
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)
 

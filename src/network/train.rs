@@ -61,7 +61,7 @@ pub struct NetworkTestOutput {
 }
 
 pub fn train_network_on_dataset(
-    dataset_details: &DatasetDetails,
+    dataset_details: DatasetDetails,
 ) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
     let examples = &dataset_details.examples;

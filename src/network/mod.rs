@@ -8,14 +8,15 @@ use crate::{
     accelerator::Accelerator,
     back_propagation,
     loss::{LossFunction, LossFunctionType},
-    DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleEnum,
-    DifferentiableModuleTrait, Error, FullDifferentiableModuleConfig, Tape, Tensor,
+    DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleTrait, Error,
+    FullDifferentiableModuleConfig, Optimizer, OptimizerTrait, Tape, Tensor,
 };
 
 pub struct Network {
     forward_layers: Vec<DifferentiableModule>,
     loss_function: LossFunctionType,
     accelerator: Accelerator,
+    optimizer: Optimizer,
     tape: Rc<RefCell<Tape>>,
 }
 
@@ -90,6 +91,7 @@ impl Network {
             loss_function,
             accelerator: Default::default(),
             tape,
+            optimizer: Default::default(),
         }
     }
 
@@ -153,11 +155,6 @@ impl Network {
             self.forward(previous_activation_tensor, x, layer_output);
         }
 
-        let layers_count = {
-            let tape = self.tape.deref().borrow();
-            tape.records.len()
-        };
-
         back_propagation(
             x,
             y,
@@ -168,15 +165,7 @@ impl Network {
             &self.tape,
         );
 
-        // Apply changes
-        let learning_rate: f32 = 0.5;
-        for layer_index in 0..layers_count {
-            let tape = self.tape.deref().borrow();
-            let layer: &mut DifferentiableModuleEnum =
-                &mut tape.records[layer_index].module.deref().borrow_mut();
-            let op_result = layer.commit_change(&self.accelerator, learning_rate);
-            op_result.expect("Ok");
-        }
+        self.optimizer.optimize(&self.tape, &self.accelerator);
     }
 
     pub fn predict_many(

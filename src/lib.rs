@@ -14,3 +14,5 @@ mod loss;
 pub use loss::*;
 mod accelerator;
 pub use accelerator::*;
+mod optimizer;
+pub use optimizer::*;

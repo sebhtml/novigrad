@@ -73,21 +73,3 @@ impl DifferentiableModuleTrait for Reshape {
         op_result.expect("Ok");
     }
 }
-
-pub struct ReshapeConfig {
-    pub input_rows: usize,
-    pub input_cols: usize,
-    pub output_rows: usize,
-    pub output_cols: usize,
-}
-
-impl Into<Reshape> for &ReshapeConfig {
-    fn into(self) -> Reshape {
-        Reshape::new(
-            self.input_rows,
-            self.input_cols,
-            self.output_rows,
-            self.output_cols,
-        )
-    }
-}

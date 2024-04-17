@@ -1,6 +1,6 @@
 use crate::{
     Accelerator, DifferentiableModule, DifferentiableModuleConfig, Error, Forward,
-    FullDifferentiableModuleConfig, ReshapeConfig, Session, Tape, Tensor,
+    FullDifferentiableModuleConfig, Session, Tape, Tensor,
 };
 use std::borrow::Borrow;
 use std::{cell::RefCell, rc::Rc};
@@ -25,6 +25,7 @@ impl Default for Architecture {
         let mut iterator = configs.iter().peekable();
         let embedding = session.embedding(16, 32);
         let linear_0 = session.linear(16, 32, 6);
+        let reshape = session.reshape(6, 16, 1, 6 * 16);
         let linear_1 = session.linear(32, 6 * 16, 1);
         let linear_2 = session.linear(16, 32, 1);
         let softmax = session.softmax(true);
@@ -38,13 +39,7 @@ impl Default for Architecture {
             }
             .borrow()
             .into(),
-            reshape: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            reshape,
             linear_1,
             sigmoid_1: FullDifferentiableModuleConfig {
                 accelerator: &accelerator,
@@ -84,12 +79,6 @@ impl Forward for Architecture {
 pub fn architecture() -> Vec<DifferentiableModuleConfig> {
     vec![
         DifferentiableModuleConfig::Sigmoid(Default::default()),
-        DifferentiableModuleConfig::Reshape(ReshapeConfig {
-            input_rows: 6,
-            input_cols: 16,
-            output_rows: 1,
-            output_cols: 6 * 16,
-        }),
         DifferentiableModuleConfig::Sigmoid(Default::default()),
     ]
 }

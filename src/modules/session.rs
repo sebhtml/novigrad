@@ -1,7 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    Accelerator, DifferentiableModule, DifferentiableModuleEnum, Embedding, Linear, Softmax, Tape,
+    Accelerator, DifferentiableModule, DifferentiableModuleEnum, Embedding, Linear, Reshape,
+    Softmax, Tape,
 };
 
 pub struct Session {
@@ -33,6 +34,22 @@ impl Session {
             self.tape(),
             Rc::new(RefCell::new(DifferentiableModuleEnum::Embedding(
                 Embedding::new(num_embeddings, embedding_dim),
+            ))),
+        )
+    }
+
+    pub fn reshape(
+        &self,
+        input_rows: usize,
+        input_cols: usize,
+        output_rows: usize,
+        output_cols: usize,
+    ) -> DifferentiableModule {
+        DifferentiableModule::new(
+            self.accelerator(),
+            self.tape(),
+            Rc::new(RefCell::new(DifferentiableModuleEnum::Reshape(
+                Reshape::new(input_rows, input_cols, output_rows, output_cols),
             ))),
         )
     }

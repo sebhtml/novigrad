@@ -65,7 +65,7 @@ pub fn train_network_on_dataset(
 ) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
     let examples = &dataset_details.examples;
-    let layers = &dataset_details.layers;
+    let layers = &dataset_details.architecture;
     let loss_function_name = dataset_details.loss_function_name.clone();
 
     let mut train_working_memory = TrainWorkingMemory::default();

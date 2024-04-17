@@ -10,7 +10,7 @@ pub enum Dataset {
 
 pub struct DatasetDetails {
     pub examples: Vec<(Tensor, Tensor)>,
-    pub layers: Vec<DifferentiableModuleConfig>,
+    pub architecture: Vec<DifferentiableModuleConfig>,
     pub loss_function_name: LossFunctionType,
     pub epochs: usize,
     pub progress: usize,

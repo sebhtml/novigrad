@@ -39,7 +39,7 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
 pub fn load_dataset() -> DatasetDetails {
     DatasetDetails {
         examples: load_examples(),
-        layers: architecture(),
+        architecture: architecture(),
         epochs: 1000,
         progress: 100,
         loss_function_name: LossFunctionType::CrossEntropyLoss(Default::default()),

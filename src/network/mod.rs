@@ -11,9 +11,9 @@ use crate::{
     DifferentiableModuleTrait, Error, FullDifferentiableModuleConfig, Tape, Tensor,
 };
 
-pub struct Network<'a> {
+pub struct Network {
     forward_layers: Vec<DifferentiableModule>,
-    loss_function: &'a LossFunctionType,
+    loss_function: LossFunctionType,
     accelerator: Accelerator,
     tape: Rc<RefCell<Tape>>,
 }
@@ -68,10 +68,10 @@ impl PredictWorkingMemory {
     }
 }
 
-impl<'a> Network<'a> {
+impl Network {
     pub fn new(
         layer_configs: &Vec<DifferentiableModuleConfig>,
-        loss_function: &'a LossFunctionType,
+        loss_function: LossFunctionType,
     ) -> Self {
         let tape = Rc::new(RefCell::new(Default::default()));
         Self {
@@ -159,13 +159,50 @@ impl<'a> Network<'a> {
             tape.records.len()
         };
 
-        // Back-propagation
+        Self::backward(
+            x,
+            y,
+            working_memory,
+            error_working_memory,
+            &self.loss_function,
+            &self.accelerator,
+            &self.tape,
+        );
+
+        // Apply changes
+        let learning_rate: f32 = 0.5;
+        for layer_index in 0..layers_count {
+            let tape = self.tape.deref().borrow();
+            let layer: &mut DifferentiableModuleEnum =
+                &mut tape.records[layer_index].module.deref().borrow_mut();
+            let op_result = layer.commit_change(&self.accelerator, learning_rate);
+            op_result.expect("Ok");
+        }
+    }
+
+    /// Back-propagation
+    fn backward(
+        x: &Tensor,
+        y: &Tensor,
+        working_memory: &mut TrainWorkingMemory,
+        error_working_memory: &mut DeltaWorkingMemory,
+        loss_function: &LossFunctionType,
+        accelerator: &Accelerator,
+        tape: &Rc<RefCell<Tape>>,
+    ) {
+        let next_layer_delta = &mut working_memory.next_layer_delta;
+        let layer_delta = &mut working_memory.layer_delta;
+        let layers_count = {
+            let tape = tape.deref().borrow();
+            tape.records.len()
+        };
+
         for layer_index in (0..layers_count).into_iter().rev() {
             let layer_output = &mut working_memory.layer_output;
             {
-                let tape = self.tape.deref().borrow();
+                let tape = tape.deref().borrow();
                 let tensor = tape.records[layer_index].output.deref();
-                layer_output.assign(self.accelerator.borrow(), tensor);
+                layer_output.assign(accelerator.borrow(), tensor);
             }
 
             let is_last_layer = layer_index == layers_count - 1;
@@ -174,23 +211,19 @@ impl<'a> Network<'a> {
 
             match layer_index {
                 0 => {
-                    previous_activation_tensor.assign(self.accelerator.borrow(), x);
+                    previous_activation_tensor.assign(accelerator.borrow(), x);
                 }
                 _ => {
-                    let tape = self.tape.deref().borrow();
+                    let tape = tape.deref().borrow();
                     let tensor = tape.records[layer_index - 1].output.deref();
-                    previous_activation_tensor.assign(self.accelerator.borrow(), tensor);
+                    previous_activation_tensor.assign(accelerator.borrow(), tensor);
                 }
             };
 
             if is_last_layer {
                 // For the output layer, the next layer delta is the loss.
-                let op_result = self.loss_function.derive(
-                    &self.accelerator,
-                    y,
-                    &layer_output,
-                    next_layer_delta,
-                );
+                let op_result =
+                    loss_function.derive(&accelerator, y, &layer_output, next_layer_delta);
                 op_result.expect("Ok");
             }
 
@@ -199,7 +232,7 @@ impl<'a> Network<'a> {
                     None
                 } else {
                     let next_layer_index = layer_index + 1;
-                    let tape = self.tape.deref().borrow();
+                    let tape = tape.deref().borrow();
                     let module = tape.records[next_layer_index].module.clone();
                     Some(module)
                 };
@@ -212,24 +245,24 @@ impl<'a> Network<'a> {
                 match next_layer {
                     None => {
                         // use the output of the loss function¸
-                        back_propagated_delta.assign(&self.accelerator, next_layer_delta);
+                        back_propagated_delta.assign(accelerator, next_layer_delta);
                     }
                     Some(next_layer) => {
                         // Hidden layer
                         let next_layer = next_layer.deref();
                         next_layer.borrow().backward(
-                            &self.accelerator,
+                            accelerator,
                             next_layer_delta,
                             back_propagated_delta,
                         );
                     }
                 }
 
-                let tape = self.tape.deref().borrow();
+                let tape = tape.deref().borrow();
                 let layer: &DifferentiableModuleEnum =
                     &tape.records[layer_index].module.deref().borrow();
                 layer.get_layer_output_delta(
-                    &self.accelerator,
+                    accelerator,
                     error_working_memory,
                     layer_input,
                     layer_output,
@@ -242,23 +275,13 @@ impl<'a> Network<'a> {
             }
 
             {
-                let tape = self.tape.deref().borrow();
+                let tape = tape.deref().borrow();
                 let layer: &mut DifferentiableModuleEnum =
                     &mut tape.records[layer_index].module.deref().borrow_mut();
-                layer.compute_gradient(&self.accelerator, previous_activation_tensor, layer_delta);
+                layer.compute_gradient(accelerator, previous_activation_tensor, layer_delta);
             }
 
             swap(next_layer_delta, layer_delta);
-        }
-
-        // Apply changes
-        let learning_rate: f32 = 0.5;
-        for layer_index in 0..layers_count {
-            let tape = self.tape.deref().borrow();
-            let layer: &mut DifferentiableModuleEnum =
-                &mut tape.records[layer_index].module.deref().borrow_mut();
-            let op_result = layer.commit_change(&self.accelerator, learning_rate);
-            op_result.expect("Ok");
         }
     }
 

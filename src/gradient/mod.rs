@@ -84,6 +84,17 @@ impl Forward for DifferentiableModule {
 }
 
 impl DifferentiableModule {
+    pub fn new(
+        accelerator: Rc<Accelerator>,
+        tape: Rc<RefCell<Tape>>,
+        variant: Rc<RefCell<DifferentiableModuleEnum>>,
+    ) -> Self {
+        Self {
+            accelerator,
+            tape,
+            variant,
+        }
+    }
     pub fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
         let variant = &mut *self.variant.deref().borrow_mut();
         variant.compute_gradient(self.accelerator.deref(), layer_input, layer_output_delta)

@@ -1,13 +1,11 @@
 use crate::{
     Accelerator, DifferentiableModule, DifferentiableModuleConfig, EmbeddingConfig, Error, Forward,
-    FullDifferentiableModuleConfig, LinearConfig, ReshapeConfig, SoftmaxConfig, Tape, Tensor,
+    FullDifferentiableModuleConfig, LinearConfig, ReshapeConfig, Session, Tape, Tensor,
 };
 use std::borrow::Borrow;
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Architecture {
-    accelerator: Rc<Accelerator>,
-    tape: Rc<RefCell<Tape>>,
     embedding: DifferentiableModule,
     linear_0: DifferentiableModule,
     sigmoid_0: DifferentiableModule,
@@ -20,13 +18,13 @@ pub struct Architecture {
 
 impl Default for Architecture {
     fn default() -> Self {
-        let accelerator = Rc::new(Accelerator::default());
-        let tape = Rc::new(RefCell::new(Tape::default()));
+        let session = Session::default();
+        let accelerator = session.accelerator();
+        let tape = session.tape();
         let configs = architecture();
         let mut iterator = configs.iter().peekable();
+        let softmax = session.softmax(true);
         Self {
-            accelerator: accelerator.clone(),
-            tape: tape.clone(),
             embedding: FullDifferentiableModuleConfig {
                 accelerator: &accelerator,
                 tape: &tape,
@@ -76,13 +74,7 @@ impl Default for Architecture {
             }
             .borrow()
             .into(),
-            softmax: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            softmax,
         }
     }
 }
@@ -101,11 +93,11 @@ impl Forward for Architecture {
     }
 
     fn accelerator(&self) -> Rc<Accelerator> {
-        self.accelerator.clone()
+        self.embedding.accelerator()
     }
 
     fn tape(&self) -> Rc<RefCell<Tape>> {
-        self.tape.clone()
+        self.embedding.tape()
     }
 }
 
@@ -137,9 +129,6 @@ pub fn architecture() -> Vec<DifferentiableModuleConfig> {
             weights_rows: 16,
             weights_cols: 32,
             bias_rows: 1,
-        }),
-        DifferentiableModuleConfig::Softmax(SoftmaxConfig {
-            using_cross_entropy_loss: true,
         }),
     ]
 }

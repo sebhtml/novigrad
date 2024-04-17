@@ -4,19 +4,14 @@ use crate::{ActivationFunction, DifferentiableModuleTrait, Tensor};
 use std::f32::consts::E;
 
 #[derive(Clone)]
-pub struct SoftmaxConfig {
-    pub using_cross_entropy_loss: bool,
-}
-
-#[derive(Clone)]
 pub struct Softmax {
     using_cross_entropy_loss: bool,
 }
 
-impl Into<Softmax> for &SoftmaxConfig {
-    fn into(self) -> Softmax {
-        Softmax {
-            using_cross_entropy_loss: self.using_cross_entropy_loss,
+impl Softmax {
+    pub fn new(using_cross_entropy_loss: bool) -> Self {
+        Self {
+            using_cross_entropy_loss,
         }
     }
 }

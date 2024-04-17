@@ -1,4 +1,3 @@
-- in backprop, move the computation of gradients to gradient/
 - add accelerator in module with Forward trait
 - use imperative form for architecture
 - add Blas implementation for CuBlas

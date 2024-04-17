@@ -8,6 +8,8 @@ mod differentiable_tensor;
 pub use differentiable_tensor::*;
 mod differentiable_module_enum;
 pub use differentiable_module_enum::*;
+mod back_propagation;
+pub use back_propagation::*;
 
 pub trait DifferentiableModuleTrait {
     fn compute_gradient(

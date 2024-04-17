@@ -4,8 +4,8 @@
 
 # Novigrad
 
-Novigrad is a reverse mode automatic differentiation.
-It aims to be a minimalist neural network framework in Rust.
+Novigrad is a automatic differentiation engine with a backward (reverse) mode and a forward mode.
+It aims to be a minimalist neural network framework written in Rust.
 
 # Other frameworks
 

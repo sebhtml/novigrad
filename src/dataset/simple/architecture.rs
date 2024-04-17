@@ -1,8 +1,4 @@
-use crate::{
-    Accelerator, DifferentiableModule, DifferentiableModuleConfig, Error, Forward,
-    FullDifferentiableModuleConfig, Session, Tape, Tensor,
-};
-use std::borrow::Borrow;
+use crate::{Accelerator, DifferentiableModule, Error, Forward, Session, Tape, Tensor};
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Architecture {
@@ -19,35 +15,21 @@ pub struct Architecture {
 impl Default for Architecture {
     fn default() -> Self {
         let session = Session::default();
-        let accelerator = session.accelerator();
-        let tape = session.tape();
-        let configs = architecture();
-        let mut iterator = configs.iter().peekable();
         let embedding = session.embedding(16, 32);
         let linear_0 = session.linear(16, 32, 6);
+        let sigmoid_0 = session.sigmoid();
         let reshape = session.reshape(6, 16, 1, 6 * 16);
         let linear_1 = session.linear(32, 6 * 16, 1);
+        let sigmoid_1 = session.sigmoid();
         let linear_2 = session.linear(16, 32, 1);
         let softmax = session.softmax(true);
         Self {
             embedding,
             linear_0,
-            sigmoid_0: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            sigmoid_0,
             reshape,
             linear_1,
-            sigmoid_1: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            sigmoid_1,
             linear_2,
             softmax,
         }
@@ -74,11 +56,4 @@ impl Forward for Architecture {
     fn tape(&self) -> Rc<RefCell<Tape>> {
         self.embedding.tape()
     }
-}
-
-pub fn architecture() -> Vec<DifferentiableModuleConfig> {
-    vec![
-        DifferentiableModuleConfig::Sigmoid(Default::default()),
-        DifferentiableModuleConfig::Sigmoid(Default::default()),
-    ]
 }

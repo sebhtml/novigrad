@@ -135,23 +135,3 @@ impl DifferentiableModule {
         )
     }
 }
-
-pub struct FullDifferentiableModuleConfig<'a> {
-    pub accelerator: &'a Rc<Accelerator>,
-    pub tape: &'a Rc<RefCell<Tape>>,
-    pub config: &'a DifferentiableModuleConfig,
-}
-
-impl<'a> Into<DifferentiableModule> for &FullDifferentiableModuleConfig<'a> {
-    fn into(self) -> DifferentiableModule {
-        let config = self.config;
-        let variant = config.into();
-        let accelerator = self.accelerator;
-        let tape = self.tape;
-        DifferentiableModule {
-            accelerator: accelerator.clone(),
-            tape: tape.clone(),
-            variant: Rc::new(RefCell::new(variant)),
-        }
-    }
-}

@@ -1,6 +1,6 @@
 use crate::{
     Accelerator, DeltaWorkingMemory, DifferentiableModuleTrait, Embedding, Error, Linear, Reshape,
-    Sigmoid, SigmoidConfig, Softmax, Tensor,
+    Sigmoid, Softmax, Tensor,
 };
 
 pub enum DifferentiableModuleEnum {
@@ -157,20 +157,6 @@ impl DifferentiableModuleTrait for DifferentiableModuleEnum {
                 is_last_layer,
                 layer_delta,
             ),
-        }
-    }
-}
-
-pub enum DifferentiableModuleConfig {
-    Sigmoid(SigmoidConfig),
-}
-
-impl Into<DifferentiableModuleEnum> for &DifferentiableModuleConfig {
-    fn into(self) -> DifferentiableModuleEnum {
-        match self {
-            DifferentiableModuleConfig::Sigmoid(config) => {
-                DifferentiableModuleEnum::Sigmoid(config.into())
-            }
         }
     }
 }

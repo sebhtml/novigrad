@@ -4,16 +4,7 @@ use crate::{ActivationFunction, DeltaWorkingMemory, DifferentiableModuleTrait, T
 use std::f32::consts::E;
 
 #[derive(Clone, Default)]
-pub struct SigmoidConfig {}
-
-#[derive(Clone, Default)]
 pub struct Sigmoid {}
-
-impl Into<Sigmoid> for &SigmoidConfig {
-    fn into(self) -> Sigmoid {
-        Default::default()
-    }
-}
 
 impl ActivationFunction for Sigmoid {
     fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {

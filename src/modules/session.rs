@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     Accelerator, DifferentiableModule, DifferentiableModuleEnum, Embedding, Linear, Reshape,
-    Softmax, Tape,
+    Sigmoid, Softmax, Tape,
 };
 
 pub struct Session {
@@ -68,6 +68,16 @@ impl Session {
                 weights_cols,
                 bias_rows,
             )))),
+        )
+    }
+
+    pub fn sigmoid(&self) -> DifferentiableModule {
+        DifferentiableModule::new(
+            self.accelerator(),
+            self.tape(),
+            Rc::new(RefCell::new(DifferentiableModuleEnum::Sigmoid(
+                Sigmoid::default(),
+            ))),
         )
     }
 

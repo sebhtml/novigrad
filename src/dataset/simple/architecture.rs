@@ -1,6 +1,6 @@
 use crate::{
     Accelerator, DifferentiableModule, DifferentiableModuleConfig, EmbeddingConfig, Error, Forward,
-    FullDifferentiableModuleConfig, LinearConfig, ReshapeConfig, Session, Tape, Tensor,
+    FullDifferentiableModuleConfig, ReshapeConfig, Session, Tape, Tensor,
 };
 use std::borrow::Borrow;
 use std::{cell::RefCell, rc::Rc};
@@ -23,6 +23,9 @@ impl Default for Architecture {
         let tape = session.tape();
         let configs = architecture();
         let mut iterator = configs.iter().peekable();
+        let linear_0 = session.linear(16, 32, 6);
+        let linear_1 = session.linear(32, 6 * 16, 1);
+        let linear_2 = session.linear(16, 32, 1);
         let softmax = session.softmax(true);
         Self {
             embedding: FullDifferentiableModuleConfig {
@@ -32,13 +35,7 @@ impl Default for Architecture {
             }
             .borrow()
             .into(),
-            linear_0: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            linear_0,
             sigmoid_0: FullDifferentiableModuleConfig {
                 accelerator: &accelerator,
                 tape: &tape,
@@ -53,13 +50,7 @@ impl Default for Architecture {
             }
             .borrow()
             .into(),
-            linear_1: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            linear_1,
             sigmoid_1: FullDifferentiableModuleConfig {
                 accelerator: &accelerator,
                 tape: &tape,
@@ -67,13 +58,7 @@ impl Default for Architecture {
             }
             .borrow()
             .into(),
-            linear_2: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            linear_2,
             softmax,
         }
     }
@@ -107,11 +92,6 @@ pub fn architecture() -> Vec<DifferentiableModuleConfig> {
             num_embeddings: 16,
             embedding_dim: 32,
         }),
-        DifferentiableModuleConfig::Linear(LinearConfig {
-            weights_rows: 16,
-            weights_cols: 32,
-            bias_rows: 6,
-        }),
         DifferentiableModuleConfig::Sigmoid(Default::default()),
         DifferentiableModuleConfig::Reshape(ReshapeConfig {
             input_rows: 6,
@@ -119,16 +99,6 @@ pub fn architecture() -> Vec<DifferentiableModuleConfig> {
             output_rows: 1,
             output_cols: 6 * 16,
         }),
-        DifferentiableModuleConfig::Linear(LinearConfig {
-            weights_rows: 32,
-            weights_cols: 6 * 16,
-            bias_rows: 1,
-        }),
         DifferentiableModuleConfig::Sigmoid(Default::default()),
-        DifferentiableModuleConfig::Linear(LinearConfig {
-            weights_rows: 16,
-            weights_cols: 32,
-            bias_rows: 1,
-        }),
     ]
 }

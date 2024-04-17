@@ -125,15 +125,3 @@ impl DifferentiableModuleTrait for Linear {
         self.biases.has_gradient = true;
     }
 }
-
-pub struct LinearConfig {
-    pub weights_rows: usize,
-    pub weights_cols: usize,
-    pub bias_rows: usize,
-}
-
-impl Into<Linear> for &LinearConfig {
-    fn into(self) -> Linear {
-        Linear::new(self.weights_rows, self.weights_cols, self.bias_rows)
-    }
-}

@@ -1,6 +1,6 @@
 use crate::{
     Accelerator, DeltaWorkingMemory, DifferentiableModuleTrait, Embedding, EmbeddingConfig, Error,
-    Linear, LinearConfig, Reshape, ReshapeConfig, Sigmoid, SigmoidConfig, Softmax, Tensor,
+    Linear, Reshape, ReshapeConfig, Sigmoid, SigmoidConfig, Softmax, Tensor,
 };
 
 pub enum DifferentiableModuleEnum {
@@ -163,7 +163,6 @@ impl DifferentiableModuleTrait for DifferentiableModuleEnum {
 
 pub enum DifferentiableModuleConfig {
     Embedding(EmbeddingConfig),
-    Linear(LinearConfig),
     Reshape(ReshapeConfig),
     Sigmoid(SigmoidConfig),
 }
@@ -173,9 +172,6 @@ impl Into<DifferentiableModuleEnum> for &DifferentiableModuleConfig {
         match self {
             DifferentiableModuleConfig::Embedding(config) => {
                 DifferentiableModuleEnum::Embedding(config.into())
-            }
-            DifferentiableModuleConfig::Linear(config) => {
-                DifferentiableModuleEnum::Linear(config.into())
             }
             DifferentiableModuleConfig::Reshape(config) => {
                 DifferentiableModuleEnum::Reshape(config.into())

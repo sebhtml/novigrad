@@ -2,7 +2,7 @@ use std::{borrow::Borrow, cell::RefCell, rc::Rc};
 
 use crate::{
     Accelerator, DifferentiableModule, DifferentiableModuleConfig, EmbeddingConfig, Error, Forward,
-    FullDifferentiableModuleConfig, LinearConfig, ReshapeConfig, Session, Tape, Tensor,
+    FullDifferentiableModuleConfig, ReshapeConfig, Session, Tape, Tensor,
 };
 
 pub struct Architecture {
@@ -19,6 +19,7 @@ impl Default for Architecture {
         let tape = session.tape();
         let configs = architecture();
         let mut iterator = configs.iter().peekable();
+        let linear = session.linear(256, 32 * 384, 1);
         let softmax = session.softmax(true);
         Self {
             embedding: FullDifferentiableModuleConfig {
@@ -35,13 +36,7 @@ impl Default for Architecture {
             }
             .borrow()
             .into(),
-            linear: FullDifferentiableModuleConfig {
-                accelerator: &accelerator,
-                tape: &tape,
-                config: iterator.next().unwrap(),
-            }
-            .borrow()
-            .into(),
+            linear,
             softmax,
         }
     }
@@ -76,11 +71,6 @@ pub fn architecture() -> Vec<DifferentiableModuleConfig> {
             input_cols: 384,
             output_rows: 1,
             output_cols: 32 * 384,
-        }),
-        DifferentiableModuleConfig::Linear(LinearConfig {
-            weights_rows: 256,
-            weights_cols: 32 * 384,
-            bias_rows: 1,
         }),
     ]
 }

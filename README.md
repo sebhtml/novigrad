@@ -10,20 +10,20 @@ It aims to be a minimalist neural network framework in Rust.
 # Other frameworks
 
 - [PyTorch](https://github.com/pytorch/pytorch)
-- (TensorFlow)[https://github.com/tensorflow/tensorflow]
+- [TensorFlow](https://github.com/tensorflow/tensorflow)
 - [Burn](https://github.com/tracel-ai/burn/tree/main)
 - [Tinygrad](https://github.com/tinygrad/tinygrad)
 
 # Hardware used
 
+- [NVIDIA GeForce RTX 4060 Laptop GPU](https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4060-4060ti/)
 - Lenovo Legion 7 Laptop
 - [AMD Ryzen 7 7840HS](https://www.amd.com/en/products/apu/amd-ryzen-7-7840hs)
 - [AMD Radeon 780M Graphics](https://www.techpowerup.com/gpu-specs/radeon-780m.c4020)
-- [NVIDIA GeForce RTX 4060 Laptop GPU](https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4060-4060ti/)
 
 # Roadmap
 
-see TODO.md
+see [TODO.md](TODO.md)
 
 # Run the program
 

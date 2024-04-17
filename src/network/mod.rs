@@ -8,14 +8,14 @@ use crate::{
     accelerator::Accelerator,
     back_propagation,
     loss::{LossFunction, LossFunctionType},
-    DifferentiableModule, DifferentiableModuleConfig, DifferentiableModuleTrait, Error,
-    FullDifferentiableModuleConfig, Optimizer, OptimizerTrait, Tape, Tensor,
+    DifferentiableModule, DifferentiableModuleConfig, Error, FullDifferentiableModuleConfig,
+    Optimizer, OptimizerTrait, Tape, Tensor,
 };
 
 pub struct Network {
     forward_layers: Vec<DifferentiableModule>,
     loss_function: LossFunctionType,
-    accelerator: Accelerator,
+    accelerator: Rc<Accelerator>,
     optimizer: Optimizer,
     tape: Rc<RefCell<Tape>>,
 }
@@ -75,12 +75,14 @@ impl Network {
         layer_configs: &Vec<DifferentiableModuleConfig>,
         loss_function: LossFunctionType,
     ) -> Self {
+        let accelerator = Rc::new(Default::default());
         let tape = Rc::new(RefCell::new(Default::default()));
         Self {
             forward_layers: layer_configs
                 .into_iter()
                 .map(|layer_config| {
                     FullDifferentiableModuleConfig {
+                        accelerator: &accelerator,
                         tape: &tape,
                         config: &layer_config,
                     }
@@ -89,7 +91,7 @@ impl Network {
                 })
                 .collect(),
             loss_function,
-            accelerator: Default::default(),
+            accelerator,
             tape,
             optimizer: Default::default(),
         }
@@ -193,11 +195,7 @@ impl Network {
         previous_activation_tensor.assign(&self.accelerator, input);
         for layer_index in 0..self.forward_layers.len() {
             let layer = &mut self.forward_layers[layer_index];
-            let op_result = layer.forward(
-                &self.accelerator,
-                previous_activation_tensor,
-                activation_tensor,
-            );
+            let op_result = layer.forward(previous_activation_tensor, activation_tensor);
             op_result.expect("Ok");
             previous_activation_tensor.assign(&self.accelerator, activation_tensor);
         }

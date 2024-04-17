@@ -51,38 +51,29 @@ pub trait DifferentiableModuleTrait {
 }
 
 pub struct DifferentiableModule {
+    accelerator: Rc<Accelerator>,
     tape: Rc<RefCell<Tape>>,
     variant: Rc<RefCell<DifferentiableModuleEnum>>,
 }
 
-impl DifferentiableModuleTrait for DifferentiableModule {
-    fn compute_gradient(
-        &mut self,
-        accelerator: &Accelerator,
-        layer_input: &Tensor,
-        layer_output_delta: &Tensor,
-    ) {
+impl DifferentiableModule {
+    pub fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
         let variant = &mut *self.variant.deref().borrow_mut();
-        variant.compute_gradient(accelerator, layer_input, layer_output_delta)
+        variant.compute_gradient(self.accelerator.deref(), layer_input, layer_output_delta)
     }
 
-    fn commit_change(
-        &mut self,
-        accelerator: &Accelerator,
-        learning_rate: f32,
-    ) -> Result<(), Error> {
+    pub fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
         let variant = &mut *self.variant.deref().borrow_mut();
-        variant.commit_change(accelerator, learning_rate)
+        variant.commit_change(self.accelerator.deref(), learning_rate)
     }
 
-    fn forward(
+    pub fn forward(
         &mut self,
-        accelerator: &Accelerator,
         layer_input: &Tensor,
         layer_output: &mut Tensor,
     ) -> Result<(), Error> {
         let variant = &mut *self.variant.deref().borrow_mut();
-        variant.forward(accelerator, layer_input, layer_output)?;
+        variant.forward(self.accelerator.deref(), layer_input, layer_output)?;
         self.tape.deref().borrow_mut().push(
             self.variant.borrow(),
             Rc::new(layer_output.clone()).borrow(),
@@ -90,19 +81,17 @@ impl DifferentiableModuleTrait for DifferentiableModule {
         Ok(())
     }
 
-    fn backward(
-        &self,
-        accelerator: &Accelerator,
-        layer_output_delta: &Tensor,
-        previous_layer_output_delta: &mut Tensor,
-    ) {
+    pub fn backward(&self, layer_output_delta: &Tensor, previous_layer_output_delta: &mut Tensor) {
         let variant = &mut *self.variant.deref().borrow_mut();
-        variant.backward(accelerator, layer_output_delta, previous_layer_output_delta)
+        variant.backward(
+            self.accelerator.deref(),
+            layer_output_delta,
+            previous_layer_output_delta,
+        )
     }
 
-    fn get_layer_output_delta(
+    pub fn get_layer_output_delta(
         &self,
-        accelerator: &Accelerator,
         working_memory: &mut DeltaWorkingMemory,
         layer_input: &Tensor,
         layer_output: &Tensor,
@@ -112,7 +101,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
     ) {
         let variant = &mut *self.variant.deref().borrow_mut();
         variant.get_layer_output_delta(
-            accelerator,
+            self.accelerator.deref(),
             working_memory,
             layer_input,
             layer_output,
@@ -124,6 +113,7 @@ impl DifferentiableModuleTrait for DifferentiableModule {
 }
 
 pub struct FullDifferentiableModuleConfig<'a> {
+    pub accelerator: &'a Rc<Accelerator>,
     pub tape: &'a Rc<RefCell<Tape>>,
     pub config: &'a DifferentiableModuleConfig,
 }
@@ -132,8 +122,10 @@ impl<'a> Into<DifferentiableModule> for &FullDifferentiableModuleConfig<'a> {
     fn into(self) -> DifferentiableModule {
         let config = self.config;
         let variant = config.into();
+        let accelerator = self.accelerator;
         let tape = self.tape;
         DifferentiableModule {
+            accelerator: accelerator.clone(),
             tape: tape.clone(),
             variant: Rc::new(RefCell::new(variant)),
         }

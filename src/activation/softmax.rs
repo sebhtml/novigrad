@@ -1,6 +1,6 @@
 use crate::accelerator::Accelerator;
 use crate::Error;
-use crate::{ActivationFunction, DifferentiableModuleTrait, Tensor};
+use crate::{ActivationFunction, OperatorTrait, Tensor};
 use std::f32::consts::E;
 
 #[derive(Clone)]
@@ -94,7 +94,7 @@ impl ActivationFunction for Softmax {
     }
 }
 
-impl DifferentiableModuleTrait for Softmax {
+impl OperatorTrait for Softmax {
     fn compute_gradient(
         &mut self,
         _accelerator: &Accelerator,

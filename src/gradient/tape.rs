@@ -1,9 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{DifferentiableModuleEnum, Tensor};
+use crate::{OperatorEnum, Tensor};
 
 pub struct Record {
-    pub module: Rc<RefCell<DifferentiableModuleEnum>>,
+    pub operator: Rc<RefCell<OperatorEnum>>,
     pub output: Rc<Tensor>,
 }
 
@@ -20,9 +20,9 @@ impl Default for Tape {
 }
 
 impl Tape {
-    pub fn push(&mut self, module: &Rc<RefCell<DifferentiableModuleEnum>>, output: &Rc<Tensor>) {
+    pub fn push(&mut self, operator: &Rc<RefCell<OperatorEnum>>, output: &Rc<Tensor>) {
         self.records.push(Record {
-            module: module.clone(),
+            operator: operator.clone(),
             output: output.clone(),
         })
     }

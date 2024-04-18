@@ -1,15 +1,15 @@
-use crate::{Accelerator, DifferentiableModule, Error, Forward, Operators, Tape, Tensor};
+use crate::{Accelerator, Error, Forward, Operator, Operators, Tape, Tensor};
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Architecture {
-    embedding: DifferentiableModule,
-    linear_0: DifferentiableModule,
-    sigmoid_0: DifferentiableModule,
-    reshape: DifferentiableModule,
-    linear_1: DifferentiableModule,
-    sigmoid_1: DifferentiableModule,
-    linear_2: DifferentiableModule,
-    softmax: DifferentiableModule,
+    embedding: Operator,
+    linear_0: Operator,
+    sigmoid_0: Operator,
+    reshape: Operator,
+    linear_1: Operator,
+    sigmoid_1: Operator,
+    linear_2: Operator,
+    softmax: Operator,
 }
 
 impl Default for Architecture {

@@ -1,6 +1,6 @@
 mod operators;
 pub use operators::*;
-mod differentiable_module_enum;
-pub use differentiable_module_enum::*;
-mod differentiable_module;
-pub use differentiable_module::*;
+mod operator_enum;
+pub use operator_enum::*;
+mod operator;
+pub use operator::*;

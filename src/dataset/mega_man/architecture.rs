@@ -1,12 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{Accelerator, DifferentiableModule, Error, Forward, Operators, Tape, Tensor};
+use crate::{Accelerator, Error, Forward, Operator, Operators, Tape, Tensor};
 
 pub struct Architecture {
-    embedding: DifferentiableModule,
-    reshape: DifferentiableModule,
-    linear: DifferentiableModule,
-    softmax: DifferentiableModule,
+    embedding: Operator,
+    reshape: Operator,
+    linear: Operator,
+    softmax: Operator,
 }
 
 impl Default for Architecture {

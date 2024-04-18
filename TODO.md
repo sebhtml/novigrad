@@ -1,5 +1,3 @@
-- move modules to modules/
-- rename Session to Modules
 - enable tape recording only during training
 - add Blas implementation for CuBlas using https://crates.io/crates/cudarc
 - add capability for having N blocks side-by-side in a layer (required for multi-head attention)

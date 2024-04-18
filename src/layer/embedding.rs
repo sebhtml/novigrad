@@ -1,6 +1,6 @@
 use crate::{
-    accelerator::Accelerator, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor,
-    Error, Tensor,
+    accelerator::Accelerator, DeltaWorkingMemory, DifferentiableTensor, Error, OperatorTrait,
+    Tensor,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -16,7 +16,7 @@ impl Embedding {
     }
 }
 
-impl DifferentiableModuleTrait for Embedding {
+impl OperatorTrait for Embedding {
     fn compute_gradient(
         &mut self,
         accelerator: &Accelerator,

@@ -1,6 +1,6 @@
 use crate::accelerator::Accelerator;
 use crate::Error;
-use crate::{ActivationFunction, DeltaWorkingMemory, DifferentiableModuleTrait, Tensor};
+use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
 use std::f32::consts::E;
 
 #[derive(Clone, Default)]
@@ -57,7 +57,7 @@ impl ActivationFunction for Sigmoid {
     }
 }
 
-impl DifferentiableModuleTrait for Sigmoid {
+impl OperatorTrait for Sigmoid {
     fn compute_gradient(
         &mut self,
         _accelerator: &Accelerator,

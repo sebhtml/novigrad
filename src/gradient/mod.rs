@@ -9,7 +9,7 @@ pub use differentiable_tensor::*;
 mod back_propagation;
 pub use back_propagation::*;
 
-pub trait DifferentiableModuleTrait {
+pub trait OperatorTrait {
     fn compute_gradient(
         &mut self,
         accelerator: &Accelerator,

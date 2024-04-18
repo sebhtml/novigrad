@@ -1,8 +1,8 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    accelerator::Accelerator, DeltaWorkingMemory, DifferentiableModuleTrait, DifferentiableTensor,
-    Error, Tensor,
+    accelerator::Accelerator, DeltaWorkingMemory, DifferentiableTensor, Error, OperatorTrait,
+    Tensor,
 };
 
 pub struct Linear {
@@ -35,7 +35,7 @@ impl Linear {
     }
 }
 
-impl DifferentiableModuleTrait for Linear {
+impl OperatorTrait for Linear {
     fn commit_change(
         &mut self,
         accelerator: &Accelerator,

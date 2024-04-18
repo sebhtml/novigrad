@@ -1,8 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    Accelerator, DifferentiableModule, DifferentiableModuleEnum, Embedding, Linear, Reshape,
-    Sigmoid, Softmax, Tape,
+    Accelerator, Embedding, Linear, Operator, OperatorEnum, Reshape, Sigmoid, Softmax, Tape,
 };
 
 pub struct Operators {
@@ -28,13 +27,14 @@ impl Operators {
         self.tape.clone()
     }
 
-    pub fn embedding(&self, num_embeddings: usize, embedding_dim: usize) -> DifferentiableModule {
-        DifferentiableModule::new(
+    pub fn embedding(&self, num_embeddings: usize, embedding_dim: usize) -> Operator {
+        Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(DifferentiableModuleEnum::Embedding(
-                Embedding::new(num_embeddings, embedding_dim),
-            ))),
+            Rc::new(RefCell::new(OperatorEnum::Embedding(Embedding::new(
+                num_embeddings,
+                embedding_dim,
+            )))),
         )
     }
 
@@ -44,26 +44,24 @@ impl Operators {
         input_cols: usize,
         output_rows: usize,
         output_cols: usize,
-    ) -> DifferentiableModule {
-        DifferentiableModule::new(
+    ) -> Operator {
+        Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(DifferentiableModuleEnum::Reshape(
-                Reshape::new(input_rows, input_cols, output_rows, output_cols),
-            ))),
+            Rc::new(RefCell::new(OperatorEnum::Reshape(Reshape::new(
+                input_rows,
+                input_cols,
+                output_rows,
+                output_cols,
+            )))),
         )
     }
 
-    pub fn linear(
-        &self,
-        weights_rows: usize,
-        weights_cols: usize,
-        bias_rows: usize,
-    ) -> DifferentiableModule {
-        DifferentiableModule::new(
+    pub fn linear(&self, weights_rows: usize, weights_cols: usize, bias_rows: usize) -> Operator {
+        Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(DifferentiableModuleEnum::Linear(Linear::new(
+            Rc::new(RefCell::new(OperatorEnum::Linear(Linear::new(
                 weights_rows,
                 weights_cols,
                 bias_rows,
@@ -71,23 +69,21 @@ impl Operators {
         )
     }
 
-    pub fn sigmoid(&self) -> DifferentiableModule {
-        DifferentiableModule::new(
+    pub fn sigmoid(&self) -> Operator {
+        Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(DifferentiableModuleEnum::Sigmoid(
-                Sigmoid::default(),
-            ))),
+            Rc::new(RefCell::new(OperatorEnum::Sigmoid(Sigmoid::default()))),
         )
     }
 
-    pub fn softmax(&self, using_cross_entropy_loss: bool) -> DifferentiableModule {
-        DifferentiableModule::new(
+    pub fn softmax(&self, using_cross_entropy_loss: bool) -> Operator {
+        Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(DifferentiableModuleEnum::Softmax(
-                Softmax::new(using_cross_entropy_loss),
-            ))),
+            Rc::new(RefCell::new(OperatorEnum::Softmax(Softmax::new(
+                using_cross_entropy_loss,
+            )))),
         )
     }
 }

@@ -2,11 +2,11 @@ use std::mem::swap;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    Accelerator, DeltaWorkingMemory, DifferentiableModuleEnum, LossFunction, LossFunctionType,
-    Tape, Tensor, TrainWorkingMemory,
+    Accelerator, DeltaWorkingMemory, LossFunction, LossFunctionType, OperatorEnum, Tape, Tensor,
+    TrainWorkingMemory,
 };
 
-use crate::gradient::DifferentiableModuleTrait;
+use crate::gradient::OperatorTrait;
 
 /// Back-propagation
 pub fn back_propagation(
@@ -55,13 +55,13 @@ pub fn back_propagation(
         }
 
         {
-            let next_layer: Option<Rc<RefCell<DifferentiableModuleEnum>>> = if is_last_layer {
+            let next_layer: Option<Rc<RefCell<OperatorEnum>>> = if is_last_layer {
                 None
             } else {
                 let next_layer_index = layer_index + 1;
                 let tape = tape.deref().borrow();
-                let module = tape.records[next_layer_index].module.clone();
-                Some(module)
+                let operator = tape.records[next_layer_index].operator.clone();
+                Some(operator)
             };
 
             let tmp = &mut working_memory.tmp;
@@ -86,8 +86,7 @@ pub fn back_propagation(
             }
 
             let tape = tape.deref().borrow();
-            let layer: &DifferentiableModuleEnum =
-                &tape.records[layer_index].module.deref().borrow();
+            let layer: &OperatorEnum = &tape.records[layer_index].operator.deref().borrow();
             layer.get_layer_output_delta(
                 accelerator,
                 error_working_memory,
@@ -103,8 +102,8 @@ pub fn back_propagation(
 
         {
             let tape = tape.deref().borrow();
-            let layer: &mut DifferentiableModuleEnum =
-                &mut tape.records[layer_index].module.deref().borrow_mut();
+            let layer: &mut OperatorEnum =
+                &mut tape.records[layer_index].operator.deref().borrow_mut();
             layer.compute_gradient(accelerator, previous_activation_tensor, layer_delta);
         }
 

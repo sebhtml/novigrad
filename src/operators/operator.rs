@@ -1,17 +1,16 @@
 use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    Accelerator, DeltaWorkingMemory, DifferentiableModuleEnum, DifferentiableModuleTrait, Error,
-    Forward, Tape, Tensor,
+    Accelerator, DeltaWorkingMemory, Error, Forward, OperatorEnum, OperatorTrait, Tape, Tensor,
 };
 
-pub struct DifferentiableModule {
+pub struct Operator {
     accelerator: Rc<Accelerator>,
     tape: Rc<RefCell<Tape>>,
-    variant: Rc<RefCell<DifferentiableModuleEnum>>,
+    variant: Rc<RefCell<OperatorEnum>>,
 }
 
-impl Forward for DifferentiableModule {
+impl Forward for Operator {
     fn forward(&mut self, layer_input: &Tensor) -> Result<Tensor, Error> {
         let mut layer_output = Tensor::default();
         let variant = &mut *self.variant.deref().borrow_mut();
@@ -32,11 +31,11 @@ impl Forward for DifferentiableModule {
     }
 }
 
-impl DifferentiableModule {
+impl Operator {
     pub fn new(
         accelerator: Rc<Accelerator>,
         tape: Rc<RefCell<Tape>>,
-        variant: Rc<RefCell<DifferentiableModuleEnum>>,
+        variant: Rc<RefCell<OperatorEnum>>,
     ) -> Self {
         Self {
             accelerator,

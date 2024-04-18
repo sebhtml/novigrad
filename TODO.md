@@ -1,3 +1,6 @@
+- TODO back propagation should not receive loss_function
+- TODO optimizer should not receive tape
+- TODO store interior of Tensor in Rc
 - add capability for having N inputs in forward method
 - implement OperatorTrait for LossFunction
 - enable tape recording only during training

@@ -9,10 +9,21 @@ It aims to be a minimalist neural network framework written in Rust.
 
 # Other frameworks
 
+Rust
+- [Burn](https://github.com/tracel-ai/burn/tree/main)
+- [candle](https://github.com/huggingface/candle)
+- [dfdx]( https://github.com/coreylowman/dfdx)
+- [tch-rs](https://github.com/LaurentMazare/tch-rs)
+
+Python
 - [PyTorch](https://github.com/pytorch/pytorch)
 - [TensorFlow](https://github.com/tensorflow/tensorflow)
-- [Burn](https://github.com/tracel-ai/burn/tree/main)
-- [Tinygrad](https://github.com/tinygrad/tinygrad)
+- [micrograd](https://github.com/karpathy/micrograd)
+- [teenygrad](https://github.com/tinygrad/teenygrad)
+- [tinygrad](https://github.com/tinygrad/tinygrad)
+
+C++
+- [onnx](https://github.com/onnx/onnx)
 
 # Hardware used
 

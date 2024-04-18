@@ -77,7 +77,7 @@ impl OperatorTrait for Embedding {
     ) {
         layer_delta.assign(accelerator, back_propagated_delta)
     }
-    
+
     fn forward2(
         &mut self,
         _accelerator: &Accelerator,

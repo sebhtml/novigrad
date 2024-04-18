@@ -70,7 +70,7 @@ impl OperatorTrait for Reshape {
         let op_result = layer_delta.reshape(self.input_rows, self.input_cols);
         op_result.expect("Ok");
     }
-    
+
     fn forward2(
         &mut self,
         _accelerator: &Accelerator,

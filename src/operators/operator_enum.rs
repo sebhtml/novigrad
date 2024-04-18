@@ -149,7 +149,7 @@ impl OperatorTrait for OperatorEnum {
             ),
         }
     }
-    
+
     fn forward2(
         &mut self,
         accelerator: &Accelerator,

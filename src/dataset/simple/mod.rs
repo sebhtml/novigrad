@@ -1,4 +1,4 @@
-use crate::{into_one_hot_encoded_rows, loss::LossFunctionType, DatasetDetails, Tensor};
+use crate::{into_one_hot_encoded_rows, DatasetDetails, LossFunctionType, Tensor};
 
 mod architecture;
 use architecture::*;

@@ -2,7 +2,7 @@ use std::fs;
 
 mod architecture;
 use crate::into_one_hot_encoded_rows;
-use crate::{loss::LossFunctionType, DatasetDetails, Tensor};
+use crate::{DatasetDetails, LossFunctionType, Tensor};
 use architecture::*;
 
 fn load_examples() -> Vec<(Tensor, Tensor)> {

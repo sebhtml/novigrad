@@ -1,7 +1,7 @@
 mod mega_man;
 mod simple;
 
-use crate::{loss::LossFunctionType, Forward, Tensor};
+use crate::{Forward, LossFunctionType, Tensor};
 
 pub enum Dataset {
     Simple,

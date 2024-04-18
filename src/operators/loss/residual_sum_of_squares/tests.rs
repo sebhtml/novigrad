@@ -1,4 +1,4 @@
-use crate::{loss::LossFunction, Tensor};
+use crate::{LossFunction, Tensor};
 
 use super::ResidualSumOfSquares;
 

@@ -5,10 +5,8 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
-    accelerator::Accelerator,
-    back_propagation,
-    loss::{LossFunction, LossFunctionType},
-    Error, Forward, Optimizer, OptimizerTrait, Tape, Tensor,
+    accelerator::Accelerator, back_propagation, Error, Forward, LossFunction, LossFunctionType,
+    Optimizer, OptimizerTrait, Tape, Tensor,
 };
 
 pub struct Network {

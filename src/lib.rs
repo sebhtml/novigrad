@@ -16,5 +16,5 @@ mod accelerator;
 pub use accelerator::*;
 mod optimizer;
 pub use optimizer::*;
-mod modules;
-pub use modules::*;
+mod operators;
+pub use operators::*;

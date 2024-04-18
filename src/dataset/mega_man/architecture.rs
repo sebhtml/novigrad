@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{Accelerator, DifferentiableModule, Error, Forward, Session, Tape, Tensor};
+use crate::{Accelerator, DifferentiableModule, Error, Forward, Operators, Tape, Tensor};
 
 pub struct Architecture {
     embedding: DifferentiableModule,
@@ -11,27 +11,23 @@ pub struct Architecture {
 
 impl Default for Architecture {
     fn default() -> Self {
-        let session = Session::default();
-        let embedding = session.embedding(256, 384);
-        let reshape = session.reshape(32, 384, 1, 32 * 384);
-        let linear = session.linear(256, 32 * 384, 1);
-        let softmax = session.softmax(true);
+        let ops = Operators::default();
         Self {
-            embedding,
-            reshape,
-            linear,
-            softmax,
+            embedding: ops.embedding(256, 384),
+            reshape: ops.reshape(32, 384, 1, 32 * 384),
+            linear: ops.linear(256, 32 * 384, 1),
+            softmax: ops.softmax(true),
         }
     }
 }
 
 impl Forward for Architecture {
-    fn forward(&mut self, layer_input: &Tensor) -> Result<Tensor, Error> {
-        let embedding = self.embedding.forward(layer_input)?;
-        let reshape = self.reshape.forward(&embedding)?;
-        let linear = self.linear.forward(&reshape)?;
-        let softmax = self.softmax.forward(&linear)?;
-        Ok(softmax)
+    fn forward(&mut self, x: &Tensor) -> Result<Tensor, Error> {
+        let x = self.embedding.forward(&x)?;
+        let x = self.reshape.forward(&x)?;
+        let x = self.linear.forward(&x)?;
+        let x = self.softmax.forward(&x)?;
+        Ok(x)
     }
 
     fn accelerator(&self) -> Rc<Accelerator> {

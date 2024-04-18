@@ -5,12 +5,12 @@ use crate::{
     Sigmoid, Softmax, Tape,
 };
 
-pub struct Session {
+pub struct Operators {
     accelerator: Rc<Accelerator>,
     tape: Rc<RefCell<Tape>>,
 }
 
-impl Default for Session {
+impl Default for Operators {
     fn default() -> Self {
         Self {
             accelerator: Default::default(),
@@ -19,7 +19,7 @@ impl Default for Session {
     }
 }
 
-impl Session {
+impl Operators {
     pub fn accelerator(&self) -> Rc<Accelerator> {
         self.accelerator.clone()
     }

@@ -77,6 +77,15 @@ impl OperatorTrait for Embedding {
     ) {
         layer_delta.assign(accelerator, back_propagated_delta)
     }
+    
+    fn forward2(
+        &mut self,
+        _accelerator: &Accelerator,
+        _input1: &Tensor,
+        _input2: &Tensor,
+    ) -> Result<Tensor, Error> {
+        panic!()
+    }
 }
 
 fn get_embedding_table(num_embeddings: usize, embedding_dim: usize) -> Tensor {

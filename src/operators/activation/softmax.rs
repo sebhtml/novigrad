@@ -151,4 +151,13 @@ impl OperatorTrait for Softmax {
             op_result.expect("Ok");
         }
     }
+    
+    fn forward2(
+        &mut self,
+        _accelerator: &Accelerator,
+        _input1: &Tensor,
+        _input2: &Tensor,
+    ) -> Result<Tensor, Error> {
+        panic!()
+    }
 }

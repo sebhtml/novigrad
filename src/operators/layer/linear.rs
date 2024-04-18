@@ -124,4 +124,13 @@ impl OperatorTrait for Linear {
         self.biases.gradient.assign(accelerator, layer_output_delta);
         self.biases.has_gradient = true;
     }
+    
+    fn forward2(
+        &mut self,
+        _accelerator: &Accelerator,
+        _input1: &Tensor,
+        _input2: &Tensor,
+    ) -> Result<Tensor, Error> {
+        panic!()
+    }
 }

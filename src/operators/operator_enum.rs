@@ -149,4 +149,19 @@ impl OperatorTrait for OperatorEnum {
             ),
         }
     }
+    
+    fn forward2(
+        &mut self,
+        accelerator: &Accelerator,
+        input1: &Tensor,
+        input2: &Tensor,
+    ) -> Result<Tensor, Error> {
+        match self {
+            OperatorEnum::Embedding(operator) => operator.forward2(accelerator, input1, input2),
+            OperatorEnum::Linear(operator) => operator.forward2(accelerator, input1, input2),
+            OperatorEnum::Reshape(operator) => operator.forward2(accelerator, input1, input2),
+            OperatorEnum::Sigmoid(operator) => operator.forward2(accelerator, input1, input2),
+            OperatorEnum::Softmax(operator) => operator.forward2(accelerator, input1, input2),
+        }
+    }
 }

@@ -109,4 +109,13 @@ impl OperatorTrait for Sigmoid {
         let op_result = layer_f_derivative.element_wise_mul(back_propagated_delta, layer_delta);
         op_result.expect("Ok");
     }
+    
+    fn forward2(
+        &mut self,
+        _accelerator: &Accelerator,
+        _input1: &Tensor,
+        _input2: &Tensor,
+    ) -> Result<Tensor, Error> {
+        panic!()
+    }
 }

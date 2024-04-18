@@ -135,23 +135,26 @@ impl Network {
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
-        {
-            let layer_output = &mut working_memory.layer_output;
-            let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-            self.forward(previous_activation_tensor, x, layer_output)?;
-        }
+        let layer_output = &mut working_memory.layer_output;
+        let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
+        self.forward(previous_activation_tensor, x, layer_output)?;
+
+        // TODO, do this instead just after forward:
+        // loss_function.forward(y, layer_output)
 
         back_propagation(
             x,
             y,
             working_memory,
             error_working_memory,
+            // TODO loss_function should appear in the tape instead of passing it here.
             &self.loss_function,
             &self.accelerator,
             &self.tape,
         );
 
         self.optimizer.optimize(&self.tape, &self.accelerator);
+
         Ok(())
     }
 

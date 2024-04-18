@@ -1,6 +1,7 @@
+- add capability for having N inputs in forward method
+- implement OperatorTrait for LossFunction
 - enable tape recording only during training
 - add Blas implementation for CuBlas using https://crates.io/crates/cudarc
-- add capability for having N blocks side-by-side in a layer (required for multi-head attention)
 
 - implement Dropout
 - implement Concat

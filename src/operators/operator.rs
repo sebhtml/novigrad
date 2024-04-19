@@ -54,9 +54,15 @@ impl Operator {
         variant.commit_change(self.accelerator.deref(), learning_rate)
     }
 
-    pub fn backward(&self, layer_output_delta: &Tensor, previous_layer_output_delta: &mut Tensor) {
+    pub fn backward(
+        &self,
+        inputs: &Vec<Tensor>,
+        layer_output_delta: &Tensor,
+        previous_layer_output_delta: &mut Tensor,
+    ) {
         let variant = &mut *self.variant.deref().borrow_mut();
         variant.backward(
+            inputs,
             self.accelerator.deref(),
             layer_output_delta,
             previous_layer_output_delta,
@@ -66,7 +72,7 @@ impl Operator {
     pub fn get_layer_output_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output: &Tensor,
         back_propagated_layer_output_delta: &Tensor,
         is_last_layer: bool,
@@ -76,7 +82,7 @@ impl Operator {
         variant.get_layer_output_delta(
             self.accelerator.deref(),
             working_memory,
-            layer_input,
+            inputs,
             layer_output,
             back_propagated_layer_output_delta,
             is_last_layer,

@@ -70,6 +70,7 @@ pub fn back_propagation(
             let tmp = &mut working_memory.tmp;
             let layer_input: &Tensor = previous_activation_tensor;
             let back_propagated_delta = &mut working_memory.back_propagated_delta;
+            let inputs = vec![layer_input.clone()];
 
             let is_last_layer = next_layer.is_none();
             match next_layer {
@@ -81,6 +82,7 @@ pub fn back_propagation(
                     // Hidden layer
                     let next_layer = next_layer.deref();
                     next_layer.borrow().backward(
+                        &inputs,
                         accelerator,
                         next_layer_delta,
                         back_propagated_delta,
@@ -93,7 +95,7 @@ pub fn back_propagation(
             layer.get_layer_output_delta(
                 accelerator,
                 error_working_memory,
-                layer_input,
+                &inputs,
                 layer_output,
                 back_propagated_delta,
                 is_last_layer,

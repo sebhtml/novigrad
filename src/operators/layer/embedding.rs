@@ -58,6 +58,7 @@ impl OperatorTrait for Embedding {
 
     fn backward(
         &self,
+        _inputs: &Vec<Tensor>,
         _accelerator: &Accelerator,
         _layer_delta: &Tensor,
         _previous_layer_delta: &mut Tensor,
@@ -69,7 +70,7 @@ impl OperatorTrait for Embedding {
         &self,
         accelerator: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
-        _layer_input: &Tensor,
+        _inputs: &Vec<Tensor>,
         _layer_output: &Tensor,
         back_propagated_delta: &Tensor,
         _is_last_layer: bool,

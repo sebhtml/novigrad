@@ -23,8 +23,8 @@ pub trait OperatorTrait {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        layer_input: &Tensor,
-        layer_output: &mut Tensor,
+        input: &Tensor,
+        output: &mut Tensor,
     ) -> Result<(), Error>;
 
     fn forward2(
@@ -37,6 +37,7 @@ pub trait OperatorTrait {
     // TODO backward should return Error
     fn backward(
         &self,
+        inputs: &Vec<Tensor>,
         accelerator: &Accelerator,
         layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
@@ -47,7 +48,7 @@ pub trait OperatorTrait {
         &self,
         accelerator: &Accelerator,
         working_memory: &mut DeltaWorkingMemory,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output: &Tensor,
         back_propagated_layer_output_delta: &Tensor,
         is_last_layer: bool,

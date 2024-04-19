@@ -1,5 +1,4 @@
 == loss PR ==
-- backward receives inputs
 - forward() calls forward_many
 - forward2() calls forward_many
 - implement OperatorTrait for RMS and CrossEntropy

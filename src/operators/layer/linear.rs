@@ -81,6 +81,7 @@ impl OperatorTrait for Linear {
 
     fn backward(
         &self,
+        _inputs: &Vec<Tensor>,
         accelerator: &Accelerator,
         layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
@@ -98,7 +99,7 @@ impl OperatorTrait for Linear {
         &self,
         accelerator: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
-        _layer_input: &Tensor,
+        _inputs: &Vec<Tensor>,
         _layer_output: &Tensor,
         back_propagated_delta: &Tensor,
         _is_last_layer: bool,

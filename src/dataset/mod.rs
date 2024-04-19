@@ -1,7 +1,7 @@
 mod mega_man;
 mod simple;
 
-use crate::{ForwardArchitecture, LossFunctionType, Tensor};
+use crate::{ForwardArchitecture, Operator, Tensor};
 
 pub enum Dataset {
     Simple,
@@ -11,7 +11,7 @@ pub enum Dataset {
 pub struct DatasetDetails {
     pub examples: Vec<(Tensor, Tensor)>,
     pub architecture: Box<dyn ForwardArchitecture>,
-    pub loss_function_name: LossFunctionType,
+    pub loss_function_name: Operator,
     pub epochs: usize,
     pub progress: usize,
     pub initial_total_error_min: f32,

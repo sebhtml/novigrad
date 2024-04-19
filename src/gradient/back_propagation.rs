@@ -3,8 +3,7 @@ use std::mem::swap;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    Accelerator, DeltaWorkingMemory, LossFunction, LossFunctionType, OperatorEnum, Tape, Tensor,
-    TrainWorkingMemory,
+    Accelerator, DeltaWorkingMemory, Operator, OperatorEnum, Tape, Tensor, TrainWorkingMemory,
 };
 
 use crate::gradient::OperatorTrait;
@@ -15,7 +14,7 @@ pub fn back_propagation(
     y: &Tensor,
     working_memory: &mut TrainWorkingMemory,
     error_working_memory: &mut DeltaWorkingMemory,
-    loss_function: &LossFunctionType,
+    loss_function: &Operator,
     accelerator: &Accelerator,
     tape: &Rc<RefCell<Tape>>,
 ) {
@@ -53,8 +52,11 @@ pub fn back_propagation(
             // For the output layer, the next layer delta is the loss.
             // TODO, do this instead just after forward:
             // loss_function.forward(y, layer_output)
-            let op_result = loss_function.derive(&accelerator, y, &layer_output, next_layer_delta);
-            op_result.expect("Ok");
+            loss_function.backward(
+                &vec![y.clone(), layer_output.clone()],
+                &Default::default(),
+                next_layer_delta,
+            );
         }
 
         {

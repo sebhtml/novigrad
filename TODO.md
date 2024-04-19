@@ -1,5 +1,4 @@
 == loss PR ==
-- use Operator for loss in DatasetDetails
 - back propagation should not receive loss_function
 
 == Backlog ==

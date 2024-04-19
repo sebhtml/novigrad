@@ -39,7 +39,7 @@ impl Operator {
         }
     }
 
-    fn forward_inputs(&mut self, inputs: &Vec<Tensor>) -> Result<Tensor, Error> {
+    pub fn forward_inputs(&mut self, inputs: &Vec<Tensor>) -> Result<Tensor, Error> {
         let mut output = Tensor::default();
         let variant = &mut *self.variant.deref().borrow_mut();
         variant.forward(self.accelerator.deref(), inputs, &mut output)?;

@@ -49,8 +49,8 @@ pub trait OperatorTrait {
     );
 }
 
-pub trait Forward {
-    fn forward(&mut self, layer_input: &Tensor) -> Result<Tensor, Error>;
+pub trait ForwardArchitecture {
+    fn forward(&mut self, input: &Tensor) -> Result<Tensor, Error>;
     fn accelerator(&self) -> Rc<Accelerator>;
     fn tape(&self) -> Rc<RefCell<Tape>>;
 }

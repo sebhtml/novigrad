@@ -1,7 +1,8 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    Accelerator, DeltaWorkingMemory, Error, Forward, OperatorEnum, OperatorTrait, Tape, Tensor,
+    Accelerator, DeltaWorkingMemory, Error, ForwardArchitecture, OperatorEnum, OperatorTrait, Tape,
+    Tensor,
 };
 
 pub struct Operator {
@@ -10,18 +11,10 @@ pub struct Operator {
     variant: Rc<RefCell<OperatorEnum>>,
 }
 
-impl Forward for Operator {
+impl ForwardArchitecture for Operator {
     fn forward(&mut self, input: &Tensor) -> Result<Tensor, Error> {
         let inputs = vec![input.clone()];
-        let mut output = Tensor::default();
-        let variant = &mut *self.variant.deref().borrow_mut();
-        variant.forward(self.accelerator.deref(), &inputs, &mut output)?;
-        self.tape.deref().borrow_mut().push(
-            self.variant.clone(),
-            vec![input.clone()],
-            output.clone(),
-        );
-        Ok(output)
+        self.forward_inputs(&inputs)
     }
 
     fn accelerator(&self) -> Rc<Accelerator> {
@@ -45,6 +38,18 @@ impl Operator {
             variant,
         }
     }
+
+    fn forward_inputs(&mut self, inputs: &Vec<Tensor>) -> Result<Tensor, Error> {
+        let mut output = Tensor::default();
+        let variant = &mut *self.variant.deref().borrow_mut();
+        variant.forward(self.accelerator.deref(), inputs, &mut output)?;
+        self.tape
+            .deref()
+            .borrow_mut()
+            .push(self.variant.clone(), inputs.clone(), output.clone());
+        Ok(output)
+    }
+
     pub fn compute_gradient(&mut self, layer_input: &Tensor, layer_output_delta: &Tensor) {
         let variant = &mut *self.variant.deref().borrow_mut();
         variant.compute_gradient(self.accelerator.deref(), layer_input, layer_output_delta)

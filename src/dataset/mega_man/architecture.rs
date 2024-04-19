@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{Accelerator, Error, Forward, Operator, Operators, Tape, Tensor};
+use crate::{Accelerator, Error, ForwardArchitecture, Operator, Operators, Tape, Tensor};
 
 pub struct Architecture {
     embedding: Operator,
@@ -21,7 +21,7 @@ impl Default for Architecture {
     }
 }
 
-impl Forward for Architecture {
+impl ForwardArchitecture for Architecture {
     fn forward(&mut self, x: &Tensor) -> Result<Tensor, Error> {
         let x = self.embedding.forward(&x)?;
         let x = self.reshape.forward(&x)?;

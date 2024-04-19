@@ -5,12 +5,12 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
-    accelerator::Accelerator, back_propagation, Error, Forward, LossFunction, LossFunctionType,
-    Optimizer, OptimizerTrait, Tape, Tensor,
+    accelerator::Accelerator, back_propagation, Error, ForwardArchitecture, LossFunction,
+    LossFunctionType, Optimizer, OptimizerTrait, Tape, Tensor,
 };
 
 pub struct Network {
-    architecture: Box<dyn Forward>,
+    architecture: Box<dyn ForwardArchitecture>,
     loss_function: LossFunctionType,
     accelerator: Rc<Accelerator>,
     optimizer: Optimizer,
@@ -68,7 +68,10 @@ impl PredictWorkingMemory {
 }
 
 impl Network {
-    pub fn new(architecture: Box<dyn Forward>, loss_function: LossFunctionType) -> Self {
+    pub fn new(
+        architecture: Box<dyn ForwardArchitecture>,
+        loss_function: LossFunctionType,
+    ) -> Self {
         let accelerator = architecture.accelerator();
         let tape = architecture.tape();
         Self {

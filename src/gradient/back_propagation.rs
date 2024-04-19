@@ -2,18 +2,15 @@ use std::borrow::Borrow;
 use std::mem::swap;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{
-    Accelerator, DeltaWorkingMemory, Operator, OperatorEnum, Tape, Tensor, TrainWorkingMemory,
-};
+use crate::{Accelerator, DeltaWorkingMemory, OperatorEnum, Tape, Tensor, TrainWorkingMemory};
 
 use crate::gradient::OperatorTrait;
 
 /// Back-propagation
 pub fn back_propagation(
-    y: &Tensor,
+    loss_gradient: &Tensor,
     working_memory: &mut TrainWorkingMemory,
     error_working_memory: &mut DeltaWorkingMemory,
-    loss_function: &Operator,
     accelerator: &Accelerator,
     tape: &Rc<RefCell<Tape>>,
 ) {
@@ -24,6 +21,7 @@ pub fn back_propagation(
         tape.records.len()
     };
 
+    next_layer_delta.assign(accelerator, loss_gradient);
     for layer_index in (0..layers_count).into_iter().rev() {
         let layer_output = &mut working_memory.layer_output;
         {
@@ -38,17 +36,6 @@ pub fn back_propagation(
             let tape = tape.deref().borrow();
             tape.records[layer_index].inputs.clone()
         };
-
-        if is_last_layer {
-            // For the output layer, the next layer delta is the loss.
-            // TODO, do this instead just after forward:
-            // loss_function.forward(y, layer_output)
-            loss_function.backward(
-                &vec![y.clone(), layer_output.clone()],
-                &Default::default(),
-                next_layer_delta,
-            );
-        }
 
         {
             let next_layer: Option<Rc<RefCell<OperatorEnum>>> = if is_last_layer {

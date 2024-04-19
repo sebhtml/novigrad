@@ -1,6 +1,3 @@
-== loss PR ==
-- back propagation should not receive loss_function
-
 == Backlog ==
 - store interior of Tensor in Rc
 - optimizer should not receive tape

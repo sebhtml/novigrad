@@ -4,7 +4,8 @@ use crate::{OperatorEnum, Tensor};
 
 pub struct Record {
     pub operator: Rc<RefCell<OperatorEnum>>,
-    pub output: Rc<Tensor>,
+    pub inputs: Vec<Tensor>,
+    pub output: Tensor,
 }
 
 pub struct Tape {
@@ -20,10 +21,16 @@ impl Default for Tape {
 }
 
 impl Tape {
-    pub fn push(&mut self, operator: &Rc<RefCell<OperatorEnum>>, output: &Rc<Tensor>) {
+    pub fn push(
+        &mut self,
+        operator: Rc<RefCell<OperatorEnum>>,
+        inputs: Vec<Tensor>,
+        output: Tensor,
+    ) {
         self.records.push(Record {
-            operator: operator.clone(),
-            output: output.clone(),
+            operator,
+            inputs,
+            output,
         })
     }
 

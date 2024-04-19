@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::mem::swap;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
@@ -29,7 +30,7 @@ pub fn back_propagation(
         let layer_output = &mut working_memory.layer_output;
         {
             let tape = tape.deref().borrow();
-            let tensor = tape.records[layer_index].output.deref();
+            let tensor = tape.records[layer_index].output.borrow();
             layer_output.assign(accelerator, tensor);
         }
 
@@ -43,7 +44,7 @@ pub fn back_propagation(
             }
             _ => {
                 let tape = tape.deref().borrow();
-                let tensor = tape.records[layer_index - 1].output.deref();
+                let tensor = tape.records[layer_index - 1].output.borrow();
                 previous_activation_tensor.assign(accelerator, tensor);
             }
         };

@@ -1,14 +1,13 @@
 == loss PR ==
-- add inputs in tape
+- backward receives inputs
 - forward() calls forward_many
 - forward2() calls forward_many
-- backward receives inputs
 - implement OperatorTrait for RMS and CrossEntropy
 - back propagation should not receive loss_function
 
 == Backlog ==
-- optimizer should not receive tape
 - store interior of Tensor in Rc
+- optimizer should not receive tape
 - add capability for having N inputs in forward method
 - implement OperatorTrait for LossFunction
 - enable tape recording only during training

@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
     Accelerator, DeltaWorkingMemory, Error, Forward, OperatorEnum, OperatorTrait, Tape, Tensor,
@@ -11,15 +11,16 @@ pub struct Operator {
 }
 
 impl Forward for Operator {
-    fn forward(&mut self, layer_input: &Tensor) -> Result<Tensor, Error> {
-        let mut layer_output = Tensor::default();
+    fn forward(&mut self, input: &Tensor) -> Result<Tensor, Error> {
+        let mut output = Tensor::default();
         let variant = &mut *self.variant.deref().borrow_mut();
-        variant.forward(self.accelerator.deref(), layer_input, &mut layer_output)?;
+        variant.forward(self.accelerator.deref(), input, &mut output)?;
         self.tape.deref().borrow_mut().push(
-            self.variant.borrow(),
-            Rc::new(layer_output.clone()).borrow(),
+            self.variant.clone(),
+            vec![input.clone()],
+            output.clone(),
         );
-        Ok(layer_output)
+        Ok(output)
     }
 
     fn accelerator(&self) -> Rc<Accelerator> {

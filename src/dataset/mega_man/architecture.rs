@@ -9,9 +9,8 @@ pub struct Architecture {
     softmax: Operator,
 }
 
-impl Default for Architecture {
-    fn default() -> Self {
-        let ops = Operators::default();
+impl Architecture {
+    pub fn new(ops: &Operators) -> Self {
         Self {
             embedding: ops.embedding(256, 384),
             reshape: ops.reshape(32, 384, 1, 32 * 384),

@@ -12,9 +12,8 @@ pub struct Architecture {
     softmax: Operator,
 }
 
-impl Default for Architecture {
-    fn default() -> Self {
-        let ops = Operators::default();
+impl Architecture {
+    pub fn new(ops: &Operators) -> Self {
         Self {
             embedding: ops.embedding(16, 32),
             linear_0: ops.linear(16, 32, 6),

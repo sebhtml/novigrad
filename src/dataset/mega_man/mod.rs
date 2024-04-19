@@ -1,7 +1,7 @@
 use std::fs;
 
 mod architecture;
-use crate::into_one_hot_encoded_rows;
+use crate::{into_one_hot_encoded_rows, Operators};
 use crate::{DatasetDetails, LossFunctionType, Tensor};
 use architecture::*;
 
@@ -41,9 +41,10 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
 }
 
 pub fn load_dataset() -> DatasetDetails {
+    let ops = Operators::default();
     DatasetDetails {
         examples: load_examples(),
-        architecture: Box::new(Architecture::default()),
+        architecture: Box::new(Architecture::new(&ops)),
         epochs: 300,
         progress: 100,
         loss_function_name: LossFunctionType::CrossEntropyLoss(Default::default()),

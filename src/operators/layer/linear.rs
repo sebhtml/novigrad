@@ -113,9 +113,10 @@ impl OperatorTrait for Linear {
     fn compute_gradient(
         &mut self,
         accelerator: &Accelerator,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
     ) {
+        let layer_input = &inputs[0];
         let a = layer_input;
         let b = layer_output_delta;
         let c = &mut self.weights.gradient;

@@ -10,7 +10,6 @@ use crate::gradient::OperatorTrait;
 
 /// Back-propagation
 pub fn back_propagation(
-    x: &Tensor,
     y: &Tensor,
     working_memory: &mut TrainWorkingMemory,
     error_working_memory: &mut DeltaWorkingMemory,
@@ -35,17 +34,9 @@ pub fn back_propagation(
 
         let is_last_layer = layer_index == layers_count - 1;
 
-        let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-
-        match layer_index {
-            0 => {
-                previous_activation_tensor.assign(accelerator, x);
-            }
-            _ => {
-                let tape = tape.deref().borrow();
-                let tensor = tape.records[layer_index - 1].output.borrow();
-                previous_activation_tensor.assign(accelerator, tensor);
-            }
+        let inputs: Vec<Tensor> = {
+            let tape = tape.deref().borrow();
+            tape.records[layer_index].inputs.clone()
         };
 
         if is_last_layer {
@@ -70,9 +61,7 @@ pub fn back_propagation(
             };
 
             let tmp = &mut working_memory.tmp;
-            let layer_input: &Tensor = previous_activation_tensor;
             let back_propagated_delta = &mut working_memory.back_propagated_delta;
-            let inputs = vec![layer_input.clone()];
 
             let is_last_layer = next_layer.is_none();
             match next_layer {
@@ -111,7 +100,7 @@ pub fn back_propagation(
             let tape = tape.deref().borrow();
             let layer: &mut OperatorEnum =
                 &mut tape.records[layer_index].operator.deref().borrow_mut();
-            layer.compute_gradient(accelerator, previous_activation_tensor, layer_delta);
+            layer.compute_gradient(accelerator, &inputs, layer_delta);
         }
 
         swap(next_layer_delta, layer_delta);

@@ -17,30 +17,30 @@ impl OperatorTrait for OperatorEnum {
     fn compute_gradient(
         &mut self,
         accelerator: &Accelerator,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
     ) {
         match self {
             OperatorEnum::Embedding(operator) => {
-                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::Linear(operator) => {
-                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::Reshape(operator) => {
-                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::Sigmoid(operator) => {
-                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::Softmax(operator) => {
-                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::ResidualSumOfSquares(operator) => {
-                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::CrossEntropyLoss(operator) => {
-                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
         }
     }

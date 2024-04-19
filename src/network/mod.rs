@@ -144,7 +144,6 @@ impl Network {
         // loss_function.forward(y, layer_output)
 
         back_propagation(
-            x,
             y,
             working_memory,
             error_working_memory,

@@ -20,9 +20,10 @@ impl OperatorTrait for Embedding {
     fn compute_gradient(
         &mut self,
         accelerator: &Accelerator,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
     ) {
+        let layer_input = &inputs[0];
         let a = layer_output_delta;
         let b = layer_input;
         let c = &mut self.embedding_table.gradient;

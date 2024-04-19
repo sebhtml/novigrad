@@ -49,7 +49,7 @@ impl OperatorTrait for ResidualSumOfSquares {
     fn compute_gradient(
         &mut self,
         _accelerator: &Accelerator,
-        _layer_input: &Tensor,
+        _inputs: &Vec<Tensor>,
         _layer_output_delta: &Tensor,
     ) {
     }

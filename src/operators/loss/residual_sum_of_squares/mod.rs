@@ -70,7 +70,7 @@ impl OperatorTrait for ResidualSumOfSquares {
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
-        let actual = &inputs[0];
+        let actual = &inputs[1];
         let loss = self.evaluate(accelerator, expected, actual)?;
         let tensor = Tensor::new(1, 1, vec![loss]);
         output.assign(accelerator, &tensor);
@@ -86,7 +86,7 @@ impl OperatorTrait for ResidualSumOfSquares {
     ) {
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
-        let actual = &inputs[0];
+        let actual = &inputs[1];
         let op_result = self.derive(accelerator, expected, actual, previous_layer_output_delta);
         op_result.expect("Ok");
     }

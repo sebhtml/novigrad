@@ -70,6 +70,10 @@ pub fn back_propagation(
                     back_propagated_delta.assign(accelerator, next_layer_delta);
                 }
                 Some(next_layer) => {
+                    let inputs: Vec<Tensor> = {
+                        let tape = tape.deref().borrow();
+                        tape.records[layer_index + 1].inputs.clone()
+                    };
                     // Hidden layer
                     let next_layer = next_layer.deref();
                     next_layer.borrow().backward(

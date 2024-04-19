@@ -1,6 +1,4 @@
 == loss PR ==
-- forward() calls forward_many
-- forward2() calls forward_many
 - implement OperatorTrait for RMS and CrossEntropy
 - back propagation should not receive loss_function
 

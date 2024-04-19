@@ -23,16 +23,9 @@ pub trait OperatorTrait {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        input: &Tensor,
+        inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error>;
-
-    fn forward2(
-        &mut self,
-        accelerator: &Accelerator,
-        input1: &Tensor,
-        input2: &Tensor,
-    ) -> Result<Tensor, Error>;
 
     // TODO backward should return Error
     fn backward(

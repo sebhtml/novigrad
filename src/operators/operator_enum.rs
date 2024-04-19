@@ -54,15 +54,15 @@ impl OperatorTrait for OperatorEnum {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        input: &Tensor,
+        inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
         match self {
-            OperatorEnum::Embedding(that) => that.forward(accelerator, input, output),
-            OperatorEnum::Linear(that) => that.forward(accelerator, input, output),
-            OperatorEnum::Reshape(that) => that.forward(accelerator, input, output),
-            OperatorEnum::Sigmoid(that) => that.forward(accelerator, input, output),
-            OperatorEnum::Softmax(that) => that.forward(accelerator, input, output),
+            OperatorEnum::Embedding(that) => that.forward(accelerator, inputs, output),
+            OperatorEnum::Linear(that) => that.forward(accelerator, inputs, output),
+            OperatorEnum::Reshape(that) => that.forward(accelerator, inputs, output),
+            OperatorEnum::Sigmoid(that) => that.forward(accelerator, inputs, output),
+            OperatorEnum::Softmax(that) => that.forward(accelerator, inputs, output),
         }
     }
 
@@ -148,21 +148,6 @@ impl OperatorTrait for OperatorEnum {
                 is_last_layer,
                 layer_delta,
             ),
-        }
-    }
-
-    fn forward2(
-        &mut self,
-        accelerator: &Accelerator,
-        input1: &Tensor,
-        input2: &Tensor,
-    ) -> Result<Tensor, Error> {
-        match self {
-            OperatorEnum::Embedding(operator) => operator.forward2(accelerator, input1, input2),
-            OperatorEnum::Linear(operator) => operator.forward2(accelerator, input1, input2),
-            OperatorEnum::Reshape(operator) => operator.forward2(accelerator, input1, input2),
-            OperatorEnum::Sigmoid(operator) => operator.forward2(accelerator, input1, input2),
-            OperatorEnum::Softmax(operator) => operator.forward2(accelerator, input1, input2),
         }
     }
 }

@@ -45,9 +45,10 @@ impl OperatorTrait for Embedding {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        input: &Tensor,
+        inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
+        let input = &inputs[0];
         debug_assert_eq!(input.cols(), self.embedding_table.tensor.rows());
         let a = input;
         let b = &self.embedding_table.tensor;
@@ -77,15 +78,6 @@ impl OperatorTrait for Embedding {
         layer_delta: &mut Tensor,
     ) {
         layer_delta.assign(accelerator, back_propagated_delta)
-    }
-
-    fn forward2(
-        &mut self,
-        _accelerator: &Accelerator,
-        _input1: &Tensor,
-        _input2: &Tensor,
-    ) -> Result<Tensor, Error> {
-        panic!()
     }
 }
 

@@ -12,9 +12,10 @@ pub struct Operator {
 
 impl Forward for Operator {
     fn forward(&mut self, input: &Tensor) -> Result<Tensor, Error> {
+        let inputs = vec![input.clone()];
         let mut output = Tensor::default();
         let variant = &mut *self.variant.deref().borrow_mut();
-        variant.forward(self.accelerator.deref(), input, &mut output)?;
+        variant.forward(self.accelerator.deref(), &inputs, &mut output)?;
         self.tape.deref().borrow_mut().push(
             self.variant.clone(),
             vec![input.clone()],

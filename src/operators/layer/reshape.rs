@@ -43,9 +43,10 @@ impl OperatorTrait for Reshape {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        input: &Tensor,
+        inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
+        let input = &inputs[0];
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
         output.assign(accelerator, input);
@@ -75,14 +76,5 @@ impl OperatorTrait for Reshape {
         layer_delta.assign(accelerator, back_propagated_delta);
         let op_result = layer_delta.reshape(self.input_rows, self.input_cols);
         op_result.expect("Ok");
-    }
-
-    fn forward2(
-        &mut self,
-        _accelerator: &Accelerator,
-        _input1: &Tensor,
-        _input2: &Tensor,
-    ) -> Result<Tensor, Error> {
-        panic!()
     }
 }

@@ -48,6 +48,7 @@ impl OperatorTrait for Embedding {
         inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
+        debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
         debug_assert_eq!(input.cols(), self.embedding_table.tensor.rows());
         let a = input;

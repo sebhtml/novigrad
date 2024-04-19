@@ -1,5 +1,4 @@
 == loss PR ==
-- implement OperatorTrait for RMS and CrossEntropy
 - back propagation should not receive loss_function
 
 == Backlog ==

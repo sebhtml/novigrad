@@ -52,6 +52,7 @@ impl OperatorTrait for Linear {
         inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
+        debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B

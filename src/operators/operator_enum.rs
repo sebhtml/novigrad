@@ -19,20 +19,20 @@ impl OperatorTrait for OperatorEnum {
         layer_output_delta: &Tensor,
     ) {
         match self {
-            OperatorEnum::Embedding(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Embedding(operator) => {
+                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
-            OperatorEnum::Linear(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Linear(operator) => {
+                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
-            OperatorEnum::Reshape(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Reshape(operator) => {
+                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
-            OperatorEnum::Sigmoid(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Sigmoid(operator) => {
+                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
-            OperatorEnum::Softmax(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Softmax(operator) => {
+                operator.compute_gradient(accelerator, layer_input, layer_output_delta)
             }
         }
     }
@@ -43,11 +43,11 @@ impl OperatorTrait for OperatorEnum {
         learning_rate: f32,
     ) -> Result<(), Error> {
         match self {
-            OperatorEnum::Embedding(that) => that.commit_change(accelerator, learning_rate),
-            OperatorEnum::Linear(that) => that.commit_change(accelerator, learning_rate),
-            OperatorEnum::Reshape(that) => that.commit_change(accelerator, learning_rate),
-            OperatorEnum::Sigmoid(that) => that.commit_change(accelerator, learning_rate),
-            OperatorEnum::Softmax(that) => that.commit_change(accelerator, learning_rate),
+            OperatorEnum::Embedding(operator) => operator.commit_change(accelerator, learning_rate),
+            OperatorEnum::Linear(operator) => operator.commit_change(accelerator, learning_rate),
+            OperatorEnum::Reshape(operator) => operator.commit_change(accelerator, learning_rate),
+            OperatorEnum::Sigmoid(operator) => operator.commit_change(accelerator, learning_rate),
+            OperatorEnum::Softmax(operator) => operator.commit_change(accelerator, learning_rate),
         }
     }
 
@@ -58,11 +58,11 @@ impl OperatorTrait for OperatorEnum {
         output: &mut Tensor,
     ) -> Result<(), Error> {
         match self {
-            OperatorEnum::Embedding(that) => that.forward(accelerator, inputs, output),
-            OperatorEnum::Linear(that) => that.forward(accelerator, inputs, output),
-            OperatorEnum::Reshape(that) => that.forward(accelerator, inputs, output),
-            OperatorEnum::Sigmoid(that) => that.forward(accelerator, inputs, output),
-            OperatorEnum::Softmax(that) => that.forward(accelerator, inputs, output),
+            OperatorEnum::Embedding(operator) => operator.forward(accelerator, inputs, output),
+            OperatorEnum::Linear(operator) => operator.forward(accelerator, inputs, output),
+            OperatorEnum::Reshape(operator) => operator.forward(accelerator, inputs, output),
+            OperatorEnum::Sigmoid(operator) => operator.forward(accelerator, inputs, output),
+            OperatorEnum::Softmax(operator) => operator.forward(accelerator, inputs, output),
         }
     }
 
@@ -74,20 +74,20 @@ impl OperatorTrait for OperatorEnum {
         previous_layer_delta: &mut Tensor,
     ) {
         match self {
-            OperatorEnum::Embedding(that) => {
-                that.backward(inputs, accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Embedding(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
-            OperatorEnum::Linear(that) => {
-                that.backward(inputs, accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Linear(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
-            OperatorEnum::Reshape(that) => {
-                that.backward(inputs, accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Reshape(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
-            OperatorEnum::Sigmoid(that) => {
-                that.backward(inputs, accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Sigmoid(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
-            OperatorEnum::Softmax(that) => {
-                that.backward(inputs, accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Softmax(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
         }
     }
@@ -103,7 +103,7 @@ impl OperatorTrait for OperatorEnum {
         layer_delta: &mut Tensor,
     ) {
         match self {
-            OperatorEnum::Embedding(that) => that.get_layer_output_delta(
+            OperatorEnum::Embedding(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 inputs,
@@ -112,7 +112,7 @@ impl OperatorTrait for OperatorEnum {
                 is_last_layer,
                 layer_delta,
             ),
-            OperatorEnum::Linear(that) => that.get_layer_output_delta(
+            OperatorEnum::Linear(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 inputs,
@@ -121,7 +121,7 @@ impl OperatorTrait for OperatorEnum {
                 is_last_layer,
                 layer_delta,
             ),
-            OperatorEnum::Reshape(that) => that.get_layer_output_delta(
+            OperatorEnum::Reshape(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 inputs,
@@ -130,7 +130,7 @@ impl OperatorTrait for OperatorEnum {
                 is_last_layer,
                 layer_delta,
             ),
-            OperatorEnum::Sigmoid(that) => that.get_layer_output_delta(
+            OperatorEnum::Sigmoid(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 inputs,
@@ -139,7 +139,7 @@ impl OperatorTrait for OperatorEnum {
                 is_last_layer,
                 layer_delta,
             ),
-            OperatorEnum::Softmax(that) => that.get_layer_output_delta(
+            OperatorEnum::Softmax(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
                 inputs,

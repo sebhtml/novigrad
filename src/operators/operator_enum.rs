@@ -13,6 +13,27 @@ pub enum OperatorEnum {
     CrossEntropyLoss(CrossEntropyLoss),
 }
 
+impl Into<String> for &OperatorEnum {
+    fn into(self) -> String {
+        match self {
+            OperatorEnum::Embedding(_) => "Embedding",
+            OperatorEnum::Linear(_) => "Linear",
+            OperatorEnum::Reshape(_) => "Reshape",
+            OperatorEnum::Sigmoid(_) => "Sigmoid",
+            OperatorEnum::Softmax(_) => "Softmax",
+            OperatorEnum::ResidualSumOfSquares(_) => "ResidualSumOfSquares",
+            OperatorEnum::CrossEntropyLoss(_) => "CrossEntropyLoss",
+        }
+        .into()
+    }
+}
+
+impl OperatorEnum {
+    pub fn name(&self) -> String {
+        self.into()
+    }
+}
+
 impl OperatorTrait for OperatorEnum {
     fn compute_gradient(
         &mut self,

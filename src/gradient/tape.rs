@@ -27,6 +27,16 @@ impl Tape {
         inputs: Vec<Tensor>,
         output: Tensor,
     ) {
+        {
+            let operator_name = (*operator).borrow().name();
+            println!(
+                "Tape is recording a record: operator: {}  inputs: {}  output: {}",
+                operator_name,
+                inputs.len(),
+                1
+            );
+        }
+
         self.records.push(Record {
             operator,
             inputs,

@@ -136,6 +136,7 @@ impl Network {
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
+        println!("-----------BEGIN-------------");
         let layer_output = &mut working_memory.layer_output;
         let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
         self.forward(previous_activation_tensor, x, layer_output)?;
@@ -149,6 +150,8 @@ impl Network {
             &Default::default(),
             &mut loss_gradient,
         );
+
+        println!("-----------END-------------");
 
         // TODO, do this instead just after forward:
         // loss_function.forward(y, layer_output)

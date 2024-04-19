@@ -11,6 +11,13 @@ pub struct Operator {
     variant: Rc<RefCell<OperatorEnum>>,
 }
 
+impl Into<String> for Operator {
+    fn into(self) -> String {
+        let variant: &OperatorEnum = &self.variant.deref().borrow();
+        variant.into()
+    }
+}
+
 impl ForwardArchitecture for Operator {
     fn forward(&mut self, input: &Tensor) -> Result<Tensor, Error> {
         let inputs = vec![input.clone()];
@@ -41,8 +48,11 @@ impl Operator {
 
     pub fn forward_inputs(&mut self, inputs: &Vec<Tensor>) -> Result<Tensor, Error> {
         let mut output = Tensor::default();
-        let variant = &mut *self.variant.deref().borrow_mut();
-        variant.forward(self.accelerator.deref(), inputs, &mut output)?;
+        {
+            let variant = &mut *self.variant.deref().borrow_mut();
+            variant.forward(self.accelerator.deref(), inputs, &mut output)?;
+        }
+
         self.tape
             .deref()
             .borrow_mut()

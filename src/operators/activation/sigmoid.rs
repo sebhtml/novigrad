@@ -101,7 +101,6 @@ impl OperatorTrait for Sigmoid {
         inputs: &Vec<Tensor>,
         layer_output: &Tensor,
         back_propagated_delta: &Tensor,
-        _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
         // Compute activation function derivative.

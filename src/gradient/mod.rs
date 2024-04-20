@@ -44,7 +44,6 @@ pub trait OperatorTrait {
         inputs: &Vec<Tensor>,
         layer_output: &Tensor,
         back_propagated_layer_output_delta: &Tensor,
-        is_last_layer: bool,
         layer_output_delta: &mut Tensor,
     );
 }

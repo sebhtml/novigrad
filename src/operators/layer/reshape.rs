@@ -71,7 +71,6 @@ impl OperatorTrait for Reshape {
         _inputs: &Vec<Tensor>,
         _layer_output: &Tensor,
         back_propagated_delta: &Tensor,
-        _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
         layer_delta.assign(accelerator, back_propagated_delta);

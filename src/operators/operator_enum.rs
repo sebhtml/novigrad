@@ -146,7 +146,6 @@ impl OperatorTrait for OperatorEnum {
         inputs: &Vec<Tensor>,
         layer_output: &Tensor,
         back_propagated_delta: &Tensor,
-        is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
         match self {
@@ -156,7 +155,6 @@ impl OperatorTrait for OperatorEnum {
                 inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
             OperatorEnum::Linear(operator) => operator.get_layer_output_delta(
@@ -165,7 +163,6 @@ impl OperatorTrait for OperatorEnum {
                 inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
             OperatorEnum::Reshape(operator) => operator.get_layer_output_delta(
@@ -174,7 +171,6 @@ impl OperatorTrait for OperatorEnum {
                 inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
             OperatorEnum::Sigmoid(operator) => operator.get_layer_output_delta(
@@ -183,7 +179,6 @@ impl OperatorTrait for OperatorEnum {
                 inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
             OperatorEnum::Softmax(operator) => operator.get_layer_output_delta(
@@ -192,7 +187,6 @@ impl OperatorTrait for OperatorEnum {
                 inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
             OperatorEnum::ResidualSumOfSquares(operator) => operator.get_layer_output_delta(
@@ -201,7 +195,6 @@ impl OperatorTrait for OperatorEnum {
                 inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
             OperatorEnum::CrossEntropyLoss(operator) => operator.get_layer_output_delta(
@@ -210,7 +203,6 @@ impl OperatorTrait for OperatorEnum {
                 inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
         }

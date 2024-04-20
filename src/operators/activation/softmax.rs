@@ -138,11 +138,10 @@ impl OperatorTrait for Softmax {
         inputs: &Vec<Tensor>,
         layer_output: &Tensor,
         back_propagated_delta: &Tensor,
-        is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
         // Compute activation function derivative.
-        if is_last_layer && self.using_cross_entropy_loss {
+        if self.using_cross_entropy_loss {
             // Softmax and Cross Entropy Loss are best friends.
             layer_delta.assign(accelerator, &back_propagated_delta);
         } else {

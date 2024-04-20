@@ -27,16 +27,6 @@ impl Tape {
         inputs: Vec<Tensor>,
         output: Tensor,
     ) {
-        {
-            let operator_name = (*operator).borrow().name();
-            println!(
-                "Tape is recording a record: operator: {}  inputs: {}  output: {}",
-                operator_name,
-                inputs.len(),
-                1
-            );
-        }
-
         self.records.push(Record {
             operator,
             inputs,
@@ -46,5 +36,21 @@ impl Tape {
 
     pub fn clear(&mut self) {
         self.records.clear();
+    }
+
+    pub fn print_records(&self) {
+        println!("Tape records: {}", self.records.len());
+        for record in self.records.iter() {
+            let operator = &record.operator;
+            let inputs = &record.inputs;
+
+            let operator_name = (*operator).borrow().name();
+            println!(
+                "Tape is recording a record: operator: {}  inputs: {}  output: {}",
+                operator_name,
+                inputs.len(),
+                1
+            );
+        }
     }
 }

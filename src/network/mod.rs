@@ -136,28 +136,14 @@ impl Network {
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
-        println!("-----------BEGIN-------------");
         let layer_output = &mut working_memory.layer_output;
         let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
         self.forward(previous_activation_tensor, x, layer_output)?;
 
-        let mut loss_gradient = Tensor::default();
-        // For the output layer, the next layer delta is the loss.
-        // TODO, do this instead just after forward:
-        // loss_function.forward(y, layer_output)
-        self.loss_function.backward(
-            &vec![y.clone(), layer_output.clone()],
-            &Default::default(),
-            &mut loss_gradient,
-        );
-
-        println!("-----------END-------------");
-
-        // TODO, do this instead just after forward:
-        // loss_function.forward(y, layer_output)
+        self.loss_function
+            .forward_inputs(&vec![y.clone(), layer_output.clone()])?;
 
         back_propagation(
-            &loss_gradient, // TODO remove this argument
             working_memory,
             error_working_memory,
             &self.accelerator,

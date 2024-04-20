@@ -8,7 +8,6 @@ use crate::gradient::OperatorTrait;
 
 /// Back-propagation
 pub fn back_propagation(
-    loss_gradient: &Tensor,
     working_memory: &mut TrainWorkingMemory,
     error_working_memory: &mut DeltaWorkingMemory,
     accelerator: &Accelerator,
@@ -21,7 +20,7 @@ pub fn back_propagation(
         tape.records.len()
     };
 
-    next_layer_delta.assign(accelerator, loss_gradient);
+    next_layer_delta.assign(accelerator, &Default::default());
     for layer_index in (0..layers_count).into_iter().rev() {
         let layer_output = &mut working_memory.layer_output;
         {
@@ -50,7 +49,6 @@ pub fn back_propagation(
             let tmp = &mut working_memory.tmp;
             let back_propagated_delta = &mut working_memory.back_propagated_delta;
 
-            let is_last_layer = next_layer.is_none();
             match next_layer {
                 None => {
                     // use the output of the loss function¸
@@ -80,7 +78,6 @@ pub fn back_propagation(
                 &inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 tmp,
             );
 

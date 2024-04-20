@@ -22,6 +22,7 @@ pub fn back_propagation(
 
     let back_propagated_delta = &mut working_memory.back_propagated_delta;
     next_layer_delta.assign(accelerator, &Default::default());
+    back_propagated_delta.assign(accelerator, next_layer_delta);
 
     for layer_index in (0..layers_count).into_iter().rev() {
         let record = &records[layer_index];
@@ -29,9 +30,7 @@ pub fn back_propagation(
         let output = record.output();
         let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
 
-        if layer_index == layers_count - 1 {
-            back_propagated_delta.assign(accelerator, next_layer_delta);
-        } else {
+        if layer_index != layers_count - 1 {
             let next_layer_index = layer_index + 1;
             let next_record = &records[next_layer_index];
             let next_operator: &Box<dyn OperatorTrait> = &next_record.operator().deref().borrow();

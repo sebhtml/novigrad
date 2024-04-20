@@ -20,7 +20,7 @@
 
 - bpe tokenizer
 
-- add tape to decouple compute from storage
+- determine the value of using_cross_entropy_loss at run time
 - centralize panic! calls
 - check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
 - add Blas implementation for AMD GPUs.

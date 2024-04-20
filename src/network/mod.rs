@@ -143,14 +143,15 @@ impl Network {
         self.loss_function
             .forward_inputs(&vec![y.clone(), layer_output.clone()])?;
 
-        back_propagation(
+        let gradients = back_propagation(
             working_memory,
             error_working_memory,
             &self.accelerator,
             &self.tape,
-        );
+        )?;
 
-        self.optimizer.optimize(&self.tape, &self.accelerator);
+        self.optimizer
+            .optimize(&self.tape, gradients, &self.accelerator);
 
         Ok(())
     }

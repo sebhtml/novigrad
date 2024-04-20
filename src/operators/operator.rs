@@ -1,7 +1,8 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    Accelerator, DeltaWorkingMemory, Error, Forward, OperatorEnum, OperatorTrait, Tape, Tensor,
+    Accelerator, DeltaWorkingMemory, Error, Forward, Gradient, OperatorEnum, OperatorTrait, Tape,
+    Tensor,
 };
 
 pub struct Operator {
@@ -59,9 +60,13 @@ impl Operator {
         Ok(output)
     }
 
-    pub fn compute_gradient(&mut self, inputs: &Vec<Tensor>, layer_output_delta: &Tensor) {
+    pub fn compute_gradient(
+        &mut self,
+        inputs: &Vec<Tensor>,
+        layer_output_delta: &Tensor,
+    ) -> Result<Vec<Gradient>, Error> {
         let variant = &mut *self.variant.deref().borrow_mut();
-        variant.compute_gradient(self.accelerator.deref(), inputs, layer_output_delta)
+        variant.compute_gradients(self.accelerator.deref(), inputs, layer_output_delta)
     }
 
     pub fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {

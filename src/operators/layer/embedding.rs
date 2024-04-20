@@ -14,12 +14,13 @@ impl Embedding {
 }
 
 impl OperatorTrait for Embedding {
-    fn compute_gradient(
+    fn compute_gradients(
         &mut self,
         accelerator: &Accelerator,
         inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
-    ) {
+    ) -> Result<Vec<Gradient>, Error> {
+        let mut gradients = vec![];
         let layer_input = &inputs[0];
         let a = layer_output_delta;
         let b = layer_input;
@@ -27,6 +28,8 @@ impl OperatorTrait for Embedding {
         c.reset(b.cols(), a.cols(), 0.0);
         let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
         op_result.expect("Ok");
+
+        Ok(gradients)
     }
 
     fn commit_change(

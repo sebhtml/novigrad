@@ -106,12 +106,13 @@ impl OperatorTrait for Linear {
         layer_delta.assign(accelerator, back_propagated_delta)
     }
 
-    fn compute_gradient(
+    fn compute_gradients(
         &mut self,
         accelerator: &Accelerator,
         inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
-    ) {
+    ) -> Result<Vec<Gradient>, Error> {
+        let mut gradients = vec![];
         let layer_input = &inputs[0];
         let a = layer_input;
         let b = layer_output_delta;
@@ -121,5 +122,7 @@ impl OperatorTrait for Linear {
         op_result.expect("Ok");
 
         self.biases.gradient.assign(accelerator, layer_output_delta);
+
+        Ok(gradients)
     }
 }

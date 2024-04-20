@@ -1,4 +1,4 @@
-use crate::{accelerator::Accelerator, Error, OperatorTrait, Tensor};
+use crate::{accelerator::Accelerator, Error, Gradient, OperatorTrait, Tensor};
 
 use super::LossFunction;
 
@@ -46,12 +46,13 @@ impl LossFunction for ResidualSumOfSquares {
 }
 
 impl OperatorTrait for ResidualSumOfSquares {
-    fn compute_gradient(
+    fn compute_gradients(
         &mut self,
         _accelerator: &Accelerator,
         _inputs: &Vec<Tensor>,
         _layer_output_delta: &Tensor,
-    ) {
+    ) -> Result<Vec<Gradient>, Error> {
+        Ok(vec![])
     }
 
     fn commit_change(

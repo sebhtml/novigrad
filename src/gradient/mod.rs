@@ -10,12 +10,12 @@ mod back_propagation;
 pub use back_propagation::*;
 
 pub trait OperatorTrait {
-    fn compute_gradient(
+    fn compute_gradients(
         &mut self,
         accelerator: &Accelerator,
         inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
-    );
+    ) -> Result<Vec<Gradient>, Error>;
 
     fn commit_change(&mut self, accelerator: &Accelerator, learning_rate: f32)
         -> Result<(), Error>;

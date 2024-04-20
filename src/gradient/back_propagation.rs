@@ -2,7 +2,10 @@ use std::borrow::Borrow;
 use std::mem::swap;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{Accelerator, DeltaWorkingMemory, OperatorEnum, Tape, Tensor, TrainWorkingMemory};
+use crate::{
+    Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorEnum, Tape, Tensor,
+    TrainWorkingMemory,
+};
 
 use crate::gradient::OperatorTrait;
 
@@ -12,7 +15,8 @@ pub fn back_propagation(
     error_working_memory: &mut DeltaWorkingMemory,
     accelerator: &Accelerator,
     tape: &Rc<RefCell<Tape>>,
-) {
+) -> Result<Vec<Gradient>, Error> {
+    let mut gradients = vec![];
     let next_layer_delta = &mut working_memory.next_layer_delta;
     let layer_delta = &mut working_memory.layer_delta;
     let layers_count = {
@@ -88,9 +92,12 @@ pub fn back_propagation(
             let tape = tape.deref().borrow();
             let layer: &mut OperatorEnum =
                 &mut tape.records[layer_index].operator.deref().borrow_mut();
-            layer.compute_gradient(accelerator, &inputs, layer_delta);
+            let mut operator_gradients =
+                layer.compute_gradients(accelerator, &inputs, layer_delta)?;
+            gradients.append(&mut operator_gradients);
         }
 
         swap(next_layer_delta, layer_delta);
     }
+    Ok(gradients)
 }

@@ -1,12 +1,17 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{Accelerator, OperatorEnum, OperatorTrait, OptimizerTrait, Tape};
+use crate::{Accelerator, Gradient, OperatorEnum, OperatorTrait, OptimizerTrait, Tape};
 
 #[derive(Default)]
 pub struct GradientDescent {}
 
 impl OptimizerTrait for GradientDescent {
-    fn optimize(&self, tape: &Rc<RefCell<Tape>>, accelerator: &Accelerator) {
+    fn optimize(
+        &self,
+        tape: &Rc<RefCell<Tape>>,
+        gradients: Vec<Gradient>,
+        accelerator: &Accelerator,
+    ) {
         let layers_count = {
             let tape = tape.deref().borrow();
             tape.records.len()

@@ -4,21 +4,18 @@ use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Tensor};
 
 mod tape;
 pub use tape::*;
-mod differentiable_tensor;
-pub use differentiable_tensor::*;
+mod gradient;
+pub use gradient::*;
 mod back_propagation;
 pub use back_propagation::*;
 
 pub trait OperatorTrait {
-    fn compute_gradient(
+    fn compute_gradients(
         &mut self,
         accelerator: &Accelerator,
         inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
-    );
-
-    fn commit_change(&mut self, accelerator: &Accelerator, learning_rate: f32)
-        -> Result<(), Error>;
+    ) -> Result<Vec<Gradient>, Error>;
 
     fn forward(
         &mut self,

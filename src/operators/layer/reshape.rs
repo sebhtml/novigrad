@@ -1,4 +1,4 @@
-use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, OperatorTrait, Tensor};
+use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 pub struct Reshape {
     input_rows: usize,
@@ -24,20 +24,13 @@ impl Reshape {
 }
 
 impl OperatorTrait for Reshape {
-    fn compute_gradient(
+    fn compute_gradients(
         &mut self,
         _accelerator: &Accelerator,
         _inputs: &Vec<Tensor>,
         _layer_output_delta: &Tensor,
-    ) {
-    }
-
-    fn commit_change(
-        &mut self,
-        _accelerator: &Accelerator,
-        _learning_rate: f32,
-    ) -> Result<(), Error> {
-        Ok(())
+    ) -> Result<Vec<Gradient>, Error> {
+        Ok(vec![])
     }
 
     fn forward(

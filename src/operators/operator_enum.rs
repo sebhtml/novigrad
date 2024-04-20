@@ -1,6 +1,6 @@
 use crate::{
-    Accelerator, CrossEntropyLoss, DeltaWorkingMemory, Embedding, Error, Linear, OperatorTrait,
-    Reshape, ResidualSumOfSquares, Sigmoid, Softmax, Tensor,
+    Accelerator, CrossEntropyLoss, DeltaWorkingMemory, Embedding, Error, Gradient, Linear,
+    OperatorTrait, Reshape, ResidualSumOfSquares, Sigmoid, Softmax, Tensor,
 };
 
 pub enum OperatorEnum {
@@ -35,53 +35,33 @@ impl OperatorEnum {
 }
 
 impl OperatorTrait for OperatorEnum {
-    fn compute_gradient(
+    fn compute_gradients(
         &mut self,
         accelerator: &Accelerator,
         inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
-    ) {
+    ) -> Result<Vec<Gradient>, Error> {
         match self {
             OperatorEnum::Embedding(operator) => {
-                operator.compute_gradient(accelerator, inputs, layer_output_delta)
+                operator.compute_gradients(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::Linear(operator) => {
-                operator.compute_gradient(accelerator, inputs, layer_output_delta)
+                operator.compute_gradients(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::Reshape(operator) => {
-                operator.compute_gradient(accelerator, inputs, layer_output_delta)
+                operator.compute_gradients(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::Sigmoid(operator) => {
-                operator.compute_gradient(accelerator, inputs, layer_output_delta)
+                operator.compute_gradients(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::Softmax(operator) => {
-                operator.compute_gradient(accelerator, inputs, layer_output_delta)
+                operator.compute_gradients(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::ResidualSumOfSquares(operator) => {
-                operator.compute_gradient(accelerator, inputs, layer_output_delta)
+                operator.compute_gradients(accelerator, inputs, layer_output_delta)
             }
             OperatorEnum::CrossEntropyLoss(operator) => {
-                operator.compute_gradient(accelerator, inputs, layer_output_delta)
-            }
-        }
-    }
-
-    fn commit_change(
-        &mut self,
-        accelerator: &Accelerator,
-        learning_rate: f32,
-    ) -> Result<(), Error> {
-        match self {
-            OperatorEnum::Embedding(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::Linear(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::Reshape(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::Sigmoid(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::Softmax(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::ResidualSumOfSquares(operator) => {
-                operator.commit_change(accelerator, learning_rate)
-            }
-            OperatorEnum::CrossEntropyLoss(operator) => {
-                operator.commit_change(accelerator, learning_rate)
+                operator.compute_gradients(accelerator, inputs, layer_output_delta)
             }
         }
     }

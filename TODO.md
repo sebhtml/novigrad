@@ -1,8 +1,3 @@
-== Optimizer PR
-- optimizer should not receive tape
-- enable tape recording only during training
-- move learning rate in dataset details
-
 == Box PR ==
 - use Box<dyn T> instead of enum for operators
 
@@ -10,17 +5,19 @@
 - store interior of Tensor in Rc
 
 == Backlog ==
+- enable tape recording only during training
+- move learning rate in dataset details
+
 - add Blas implementation for CuBlas using https://crates.io/crates/cudarc
 
 - implement Dropout
 - implement Concat
 - implement Matmul
 - implement Mask
-- add Gelu
-
-- shuffle examples in each epoch
+- implement Gelu
 - implement TransformerBlock
 
+- shuffle examples in each epoch
 - bpe tokenizer
 
 - determine the value of using_cross_entropy_loss at run time

@@ -1,23 +1,17 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{Accelerator, OperatorEnum, OperatorTrait, OptimizerTrait, Tape};
+use crate::{Accelerator, Gradient, OptimizerTrait, Tensor};
 
 #[derive(Default)]
 pub struct GradientDescent {}
 
 impl OptimizerTrait for GradientDescent {
-    fn optimize(&self, tape: &Rc<RefCell<Tape>>, accelerator: &Accelerator) {
-        let layers_count = {
-            let tape = tape.deref().borrow();
-            tape.records.len()
-        };
-
+    fn optimize(&self, gradients: Vec<Gradient>, accelerator: &Accelerator) {
         let learning_rate: f32 = 0.5;
-        for layer_index in 0..layers_count {
-            let tape = tape.deref().borrow();
-            let layer: &mut OperatorEnum =
-                &mut tape.records[layer_index].operator.deref().borrow_mut();
-            let op_result = layer.commit_change(accelerator, learning_rate);
+        for gradient in gradients {
+            let tensor: &mut Tensor = &mut gradient.tensor().deref().borrow_mut();
+            let gradient = gradient.gradient();
+            let op_result = Tensor::saxpy(accelerator, -learning_rate, gradient, tensor);
             op_result.expect("Ok");
         }
     }

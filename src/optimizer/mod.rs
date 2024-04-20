@@ -1,12 +1,10 @@
 mod gradient_descent;
-use std::{cell::RefCell, rc::Rc};
-
 pub use gradient_descent::*;
 
-use crate::{Accelerator, Tape};
+use crate::{Accelerator, Gradient};
 
 pub trait OptimizerTrait {
-    fn optimize(&self, tape: &Rc<RefCell<Tape>>, accelerator: &Accelerator);
+    fn optimize(&self, gradients: Vec<Gradient>, accelerator: &Accelerator);
 }
 
 pub enum Optimizer {
@@ -14,9 +12,9 @@ pub enum Optimizer {
 }
 
 impl OptimizerTrait for Optimizer {
-    fn optimize(&self, tape: &Rc<RefCell<Tape>>, accelerator: &Accelerator) {
+    fn optimize(&self, gradients: Vec<Gradient>, accelerator: &Accelerator) {
         match self {
-            Optimizer::GradientDescent(object) => object.optimize(tape, accelerator),
+            Optimizer::GradientDescent(object) => object.optimize(gradients, accelerator),
         }
     }
 }

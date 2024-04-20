@@ -103,7 +103,6 @@ impl Network {
 
     pub fn total_error(
         &mut self,
-        working_memory: &mut PredictWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         outputs: &Vec<Rc<Tensor>>,
     ) -> Result<f32, Error> {

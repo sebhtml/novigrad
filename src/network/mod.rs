@@ -150,8 +150,7 @@ impl Network {
             &self.tape,
         )?;
 
-        self.optimizer
-            .optimize(&self.tape, gradients, &self.accelerator);
+        self.optimizer.optimize(gradients, &self.accelerator);
 
         Ok(())
     }

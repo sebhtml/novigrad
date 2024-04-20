@@ -1,6 +1,3 @@
-== Optimizer PR
-- optimizer should not receive tape
-
 == Box PR ==
 - use Box<dyn T> instead of enum for operators
 

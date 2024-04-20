@@ -1,10 +1,12 @@
+use std::{cell::RefCell, ops::Deref, rc::Rc};
+
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 pub struct Linear {
-    weights: Gradient,
-    biases: Gradient,
+    weights: Rc<RefCell<Tensor>>,
+    biases: Rc<RefCell<Tensor>>,
 }
 
 impl Linear {
@@ -26,8 +28,8 @@ impl Linear {
         biases.reset(bias_rows, weights_rows, Default::default());
 
         Linear {
-            weights: weights.into(),
-            biases: biases.into(),
+            weights: Rc::new(RefCell::new(weights)),
+            biases: Rc::new(RefCell::new(biases)),
         }
     }
 }
@@ -35,11 +37,9 @@ impl Linear {
 impl OperatorTrait for Linear {
     fn commit_change(
         &mut self,
-        accelerator: &Accelerator,
-        learning_rate: f32,
+        _accelerator: &Accelerator,
+        _learning_rate: f32,
     ) -> Result<(), Error> {
-        self.weights.commit_change(accelerator, learning_rate);
-        self.biases.commit_change(accelerator, learning_rate);
         Ok(())
     }
 
@@ -58,9 +58,10 @@ impl OperatorTrait for Linear {
         // W is transposed.
 
         // use GEMM to do C = A * W^T + C  with weights and biases all together.
-        let biases = &self.biases.tensor;
+        let weights: &Tensor = &self.weights.deref().borrow();
+        let biases: &Tensor = &self.biases.deref().borrow();
         let a = input;
-        let b = &self.weights.tensor;
+        let b = weights;
         let c = output;
         c.assign(accelerator, biases);
         let op_result = Tensor::gemm(accelerator, false, true, 1.0, a, b, 1.0, c, false);
@@ -85,7 +86,8 @@ impl OperatorTrait for Linear {
         layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
     ) {
-        let a = &self.weights.tensor;
+        let weights: &Tensor = &self.weights.deref().borrow();
+        let a = weights;
         let b = layer_output_delta;
         let c = previous_layer_output_delta;
         c.reset(b.rows(), a.cols(), 0.0);
@@ -113,15 +115,20 @@ impl OperatorTrait for Linear {
         layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error> {
         let mut gradients = vec![];
+        let mut weights_gradient = Tensor::default();
+        let mut biases_gradient = Tensor::default();
         let layer_input = &inputs[0];
         let a = layer_input;
         let b = layer_output_delta;
-        let c = &mut self.weights.gradient;
+        let c = &mut weights_gradient;
         c.reset(b.cols(), a.cols(), 0.0);
         let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
         op_result.expect("Ok");
 
-        self.biases.gradient.assign(accelerator, layer_output_delta);
+        biases_gradient.assign(accelerator, layer_output_delta);
+
+        gradients.push(Gradient::new(self.weights.clone(), weights_gradient));
+        gradients.push(Gradient::new(self.biases.clone(), biases_gradient));
 
         Ok(gradients)
     }

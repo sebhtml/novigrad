@@ -1,30 +1,19 @@
+use std::{cell::RefCell, ops::Deref, rc::Rc};
+
 use crate::{Accelerator, Tensor};
 
 pub struct Gradient {
-    pub tensor: Tensor,
-    pub gradient: Tensor,
+    tensor: Rc<RefCell<Tensor>>,
+    gradient: Tensor,
 }
 
 impl Gradient {
-    pub fn new(tensor: Tensor) -> Self {
-        Self {
-            tensor,
-            gradient: Default::default(),
-        }
+    pub fn new(tensor: Rc<RefCell<Tensor>>, gradient: Tensor) -> Self {
+        Self { tensor, gradient }
     }
-    pub fn commit_change(&mut self, accelerator: &Accelerator, learning_rate: f32) {
-        let op_result = Tensor::saxpy(
-            accelerator,
-            -learning_rate,
-            &self.gradient,
-            &mut self.tensor,
-        );
+    pub fn commit_change(&self, accelerator: &Accelerator, learning_rate: f32) {
+        let tensor: &mut Tensor = &mut self.tensor.deref().borrow_mut();
+        let op_result = Tensor::saxpy(accelerator, -learning_rate, &self.gradient, tensor);
         op_result.expect("Ok");
-    }
-}
-
-impl From<Tensor> for Gradient {
-    fn from(value: Tensor) -> Self {
-        Self::new(value)
     }
 }

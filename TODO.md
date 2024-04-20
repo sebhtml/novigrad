@@ -1,8 +1,5 @@
-== Box PR ==
-- use Box<dyn T> instead of enum for operators
-
 == Tensor storage PR ==
-- store interior of Tensor in Rc
+- use Rc<Tensor> in inputs and output of OperatorTrait
 
 == Backlog ==
 - enable tape recording only during training

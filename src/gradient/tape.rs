@@ -1,9 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{OperatorEnum, Tensor};
+use crate::{OperatorTrait, Tensor};
 
 pub struct Record {
-    pub operator: Rc<RefCell<OperatorEnum>>,
+    pub operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
     pub inputs: Vec<Tensor>,
     pub output: Tensor,
 }
@@ -23,7 +23,7 @@ impl Default for Tape {
 impl Tape {
     pub fn push(
         &mut self,
-        operator: Rc<RefCell<OperatorEnum>>,
+        operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
         inputs: Vec<Tensor>,
         output: Tensor,
     ) {
@@ -44,7 +44,7 @@ impl Tape {
             let operator = &record.operator;
             let inputs = &record.inputs;
 
-            let operator_name = (*operator).borrow().name();
+            let operator_name = (*operator).borrow().name().to_owned();
             println!(
                 "Tape is recording a record: operator: {}  inputs: {}  output: {}",
                 operator_name,

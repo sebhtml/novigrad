@@ -15,14 +15,11 @@ pub fn back_propagation(
     let mut gradients = vec![];
     let next_layer_delta = &mut working_memory.next_layer_delta;
     let layer_delta = &mut working_memory.layer_delta;
-    let layers_count = {
-        let tape = tape.deref().borrow();
-        tape.records.len()
-    };
+    let tape: &Tape = &tape.deref().borrow();
+    let layers_count = { tape.records.len() };
 
     next_layer_delta.assign(accelerator, &Default::default());
     for layer_index in (0..layers_count).into_iter().rev() {
-        let tape: &Tape = &tape.deref().borrow();
         let inputs: &Vec<Rc<Tensor>> = &tape.records[layer_index].inputs;
         let output: &Rc<Tensor> = &tape.records[layer_index].output;
 

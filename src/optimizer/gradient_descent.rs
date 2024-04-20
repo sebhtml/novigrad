@@ -11,6 +11,7 @@ impl OptimizerTrait for GradientDescent {
         for gradient in gradients {
             let tensor: &mut Tensor = &mut gradient.tensor().deref().borrow_mut();
             let gradient = gradient.gradient();
+
             let op_result = Tensor::saxpy(accelerator, -learning_rate, gradient, tensor);
             op_result.expect("Ok");
         }

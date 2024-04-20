@@ -33,9 +33,8 @@ pub fn back_propagation(
             inputs,
             output,
             back_propagated_delta,
-            tmp,
+            layer_delta,
         );
-        tmp.clip(-1.0, 1.0, layer_delta);
 
         let mut operator_gradients =
             operator.compute_gradients(accelerator, inputs, layer_delta)?;
@@ -45,7 +44,8 @@ pub fn back_propagation(
             gradients.append(&mut operator_gradients);
         }
 
-        operator.backward(inputs, accelerator, layer_delta, back_propagated_delta);
+        operator.backward(inputs, accelerator, layer_delta, tmp);
+        tmp.clip(-1.0, 1.0, back_propagated_delta);
     }
     Ok(gradients)
 }

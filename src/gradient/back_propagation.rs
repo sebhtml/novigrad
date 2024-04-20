@@ -1,7 +1,9 @@
 use std::mem::swap;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{Accelerator, DeltaWorkingMemory, Error, Gradient, Tape, Tensor, TrainWorkingMemory};
+use crate::{
+    Accelerator, DeltaWorkingMemory, Error, Gradient, Record, Tape, Tensor, TrainWorkingMemory,
+};
 
 use crate::gradient::OperatorTrait;
 
@@ -16,12 +18,14 @@ pub fn back_propagation(
     let next_layer_delta = &mut working_memory.next_layer_delta;
     let layer_delta = &mut working_memory.layer_delta;
     let tape: &Tape = &tape.deref().borrow();
+    let records: &Vec<Record> = &tape.records();
     let layers_count = { tape.records().len() };
 
     next_layer_delta.assign(accelerator, &Default::default());
     for layer_index in (0..layers_count).into_iter().rev() {
-        let inputs: &Vec<Rc<Tensor>> = &tape.records()[layer_index].inputs();
-        let output: &Rc<Tensor> = &tape.records()[layer_index].output();
+        let record: &Record = &records[layer_index];
+        let inputs: &Vec<Rc<Tensor>> = record.inputs();
+        let output: &Rc<Tensor> = record.output();
 
         let is_last_layer = layer_index == layers_count - 1;
 

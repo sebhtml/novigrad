@@ -1,7 +1,7 @@
 mod mega_man;
 mod simple;
 
-use crate::{ForwardArchitecture, Operator, Tensor};
+use crate::{Forward, Operator, Tensor};
 
 pub enum Dataset {
     Simple,
@@ -10,7 +10,7 @@ pub enum Dataset {
 
 pub struct DatasetDetails {
     pub examples: Vec<(Tensor, Tensor)>,
-    pub architecture: Box<dyn ForwardArchitecture>,
+    pub architecture: Box<dyn Forward>,
     pub loss_function_name: Operator,
     pub epochs: usize,
     pub progress: usize,

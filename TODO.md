@@ -3,6 +3,9 @@
 - enable tape recording only during training
 - move learning rate in dataset details
 
+== Box PR ==
+- use Box<dyn T> instead of enum for operators
+
 == Tensor storage PR ==
 - store interior of Tensor in Rc
 

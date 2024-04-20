@@ -48,7 +48,7 @@ pub trait OperatorTrait {
     );
 }
 
-pub trait ForwardArchitecture {
+pub trait Forward {
     fn forward(&mut self, input: &Tensor) -> Result<Tensor, Error>;
     fn accelerator(&self) -> Rc<Accelerator>;
     fn tape(&self) -> Rc<RefCell<Tape>>;

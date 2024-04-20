@@ -1,8 +1,7 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    Accelerator, DeltaWorkingMemory, Error, ForwardArchitecture, OperatorEnum, OperatorTrait, Tape,
-    Tensor,
+    Accelerator, DeltaWorkingMemory, Error, Forward, OperatorEnum, OperatorTrait, Tape, Tensor,
 };
 
 pub struct Operator {
@@ -18,7 +17,7 @@ impl Into<String> for Operator {
     }
 }
 
-impl ForwardArchitecture for Operator {
+impl Forward for Operator {
     fn forward(&mut self, input: &Tensor) -> Result<Tensor, Error> {
         let inputs = vec![input.clone()];
         self.forward_inputs(&inputs)

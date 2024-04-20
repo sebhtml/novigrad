@@ -20,9 +20,10 @@ impl OperatorTrait for Embedding {
     fn compute_gradient(
         &mut self,
         accelerator: &Accelerator,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
     ) {
+        let layer_input = &inputs[0];
         let a = layer_output_delta;
         let b = layer_input;
         let c = &mut self.embedding_table.gradient;
@@ -45,9 +46,11 @@ impl OperatorTrait for Embedding {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        input: &Tensor,
+        inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
+        debug_assert_eq!(inputs.len(), 1);
+        let input = &inputs[0];
         debug_assert_eq!(input.cols(), self.embedding_table.tensor.rows());
         let a = input;
         let b = &self.embedding_table.tensor;
@@ -58,6 +61,7 @@ impl OperatorTrait for Embedding {
 
     fn backward(
         &self,
+        _inputs: &Vec<Tensor>,
         _accelerator: &Accelerator,
         _layer_delta: &Tensor,
         _previous_layer_delta: &mut Tensor,
@@ -69,10 +73,9 @@ impl OperatorTrait for Embedding {
         &self,
         accelerator: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
-        _layer_input: &Tensor,
+        _inputs: &Vec<Tensor>,
         _layer_output: &Tensor,
         back_propagated_delta: &Tensor,
-        _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
         layer_delta.assign(accelerator, back_propagated_delta)

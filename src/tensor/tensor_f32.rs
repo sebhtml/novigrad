@@ -418,3 +418,14 @@ impl F32Operation for F32Mul {
         <f32 as Mul>::mul(left, right)
     }
 }
+
+impl TryInto<f32> for Tensor {
+    type Error = Error;
+
+    fn try_into(self) -> Result<f32, Self::Error> {
+        match self.shape() {
+            (1, 1) => Ok(self.get(0, 0)),
+            _ => Err(Error::UnsupportedOperation),
+        }
+    }
+}

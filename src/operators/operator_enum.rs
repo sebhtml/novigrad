@@ -1,6 +1,6 @@
 use crate::{
-    Accelerator, DeltaWorkingMemory, Embedding, Error, Linear, OperatorTrait, Reshape, Sigmoid,
-    Softmax, Tensor,
+    Accelerator, CrossEntropyLoss, DeltaWorkingMemory, Embedding, Error, Linear, OperatorTrait,
+    Reshape, ResidualSumOfSquares, Sigmoid, Softmax, Tensor,
 };
 
 pub enum OperatorEnum {
@@ -9,30 +9,59 @@ pub enum OperatorEnum {
     Reshape(Reshape),
     Sigmoid(Sigmoid),
     Softmax(Softmax),
+    ResidualSumOfSquares(ResidualSumOfSquares),
+    CrossEntropyLoss(CrossEntropyLoss),
+}
+
+impl Into<String> for &OperatorEnum {
+    fn into(self) -> String {
+        match self {
+            OperatorEnum::Embedding(_) => "Embedding",
+            OperatorEnum::Linear(_) => "Linear",
+            OperatorEnum::Reshape(_) => "Reshape",
+            OperatorEnum::Sigmoid(_) => "Sigmoid",
+            OperatorEnum::Softmax(_) => "Softmax",
+            OperatorEnum::ResidualSumOfSquares(_) => "ResidualSumOfSquares",
+            OperatorEnum::CrossEntropyLoss(_) => "CrossEntropyLoss",
+        }
+        .into()
+    }
+}
+
+impl OperatorEnum {
+    pub fn name(&self) -> String {
+        self.into()
+    }
 }
 
 impl OperatorTrait for OperatorEnum {
     fn compute_gradient(
         &mut self,
         accelerator: &Accelerator,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
     ) {
         match self {
-            OperatorEnum::Embedding(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Embedding(operator) => {
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
-            OperatorEnum::Linear(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Linear(operator) => {
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
-            OperatorEnum::Reshape(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Reshape(operator) => {
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
-            OperatorEnum::Sigmoid(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Sigmoid(operator) => {
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
-            OperatorEnum::Softmax(that) => {
-                that.compute_gradient(accelerator, layer_input, layer_output_delta)
+            OperatorEnum::Softmax(operator) => {
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
+            }
+            OperatorEnum::ResidualSumOfSquares(operator) => {
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
+            }
+            OperatorEnum::CrossEntropyLoss(operator) => {
+                operator.compute_gradient(accelerator, inputs, layer_output_delta)
             }
         }
     }
@@ -43,50 +72,69 @@ impl OperatorTrait for OperatorEnum {
         learning_rate: f32,
     ) -> Result<(), Error> {
         match self {
-            OperatorEnum::Embedding(that) => that.commit_change(accelerator, learning_rate),
-            OperatorEnum::Linear(that) => that.commit_change(accelerator, learning_rate),
-            OperatorEnum::Reshape(that) => that.commit_change(accelerator, learning_rate),
-            OperatorEnum::Sigmoid(that) => that.commit_change(accelerator, learning_rate),
-            OperatorEnum::Softmax(that) => that.commit_change(accelerator, learning_rate),
+            OperatorEnum::Embedding(operator) => operator.commit_change(accelerator, learning_rate),
+            OperatorEnum::Linear(operator) => operator.commit_change(accelerator, learning_rate),
+            OperatorEnum::Reshape(operator) => operator.commit_change(accelerator, learning_rate),
+            OperatorEnum::Sigmoid(operator) => operator.commit_change(accelerator, learning_rate),
+            OperatorEnum::Softmax(operator) => operator.commit_change(accelerator, learning_rate),
+            OperatorEnum::ResidualSumOfSquares(operator) => {
+                operator.commit_change(accelerator, learning_rate)
+            }
+            OperatorEnum::CrossEntropyLoss(operator) => {
+                operator.commit_change(accelerator, learning_rate)
+            }
         }
     }
 
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        input: &Tensor,
+        inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
         match self {
-            OperatorEnum::Embedding(that) => that.forward(accelerator, input, output),
-            OperatorEnum::Linear(that) => that.forward(accelerator, input, output),
-            OperatorEnum::Reshape(that) => that.forward(accelerator, input, output),
-            OperatorEnum::Sigmoid(that) => that.forward(accelerator, input, output),
-            OperatorEnum::Softmax(that) => that.forward(accelerator, input, output),
+            OperatorEnum::Embedding(operator) => operator.forward(accelerator, inputs, output),
+            OperatorEnum::Linear(operator) => operator.forward(accelerator, inputs, output),
+            OperatorEnum::Reshape(operator) => operator.forward(accelerator, inputs, output),
+            OperatorEnum::Sigmoid(operator) => operator.forward(accelerator, inputs, output),
+            OperatorEnum::Softmax(operator) => operator.forward(accelerator, inputs, output),
+            OperatorEnum::ResidualSumOfSquares(operator) => {
+                operator.forward(accelerator, inputs, output)
+            }
+            OperatorEnum::CrossEntropyLoss(operator) => {
+                operator.forward(accelerator, inputs, output)
+            }
         }
     }
 
     fn backward(
         &self,
+        inputs: &Vec<Tensor>,
         accelerator: &Accelerator,
         layer_delta: &Tensor,
         previous_layer_delta: &mut Tensor,
     ) {
         match self {
-            OperatorEnum::Embedding(that) => {
-                that.backward(accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Embedding(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
-            OperatorEnum::Linear(that) => {
-                that.backward(accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Linear(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
-            OperatorEnum::Reshape(that) => {
-                that.backward(accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Reshape(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
-            OperatorEnum::Sigmoid(that) => {
-                that.backward(accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Sigmoid(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
-            OperatorEnum::Softmax(that) => {
-                that.backward(accelerator, layer_delta, previous_layer_delta)
+            OperatorEnum::Softmax(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
+            }
+            OperatorEnum::ResidualSumOfSquares(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
+            }
+            OperatorEnum::CrossEntropyLoss(operator) => {
+                operator.backward(inputs, accelerator, layer_delta, previous_layer_delta)
             }
         }
     }
@@ -95,56 +143,66 @@ impl OperatorTrait for OperatorEnum {
         &self,
         accelerator: &Accelerator,
         working_memory: &mut DeltaWorkingMemory,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output: &Tensor,
         back_propagated_delta: &Tensor,
-        is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
         match self {
-            OperatorEnum::Embedding(that) => that.get_layer_output_delta(
+            OperatorEnum::Embedding(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
-                layer_input,
+                inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
-            OperatorEnum::Linear(that) => that.get_layer_output_delta(
+            OperatorEnum::Linear(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
-                layer_input,
+                inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
-            OperatorEnum::Reshape(that) => that.get_layer_output_delta(
+            OperatorEnum::Reshape(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
-                layer_input,
+                inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
-            OperatorEnum::Sigmoid(that) => that.get_layer_output_delta(
+            OperatorEnum::Sigmoid(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
-                layer_input,
+                inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 layer_delta,
             ),
-            OperatorEnum::Softmax(that) => that.get_layer_output_delta(
+            OperatorEnum::Softmax(operator) => operator.get_layer_output_delta(
                 accelerator,
                 working_memory,
-                layer_input,
+                inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
+                layer_delta,
+            ),
+            OperatorEnum::ResidualSumOfSquares(operator) => operator.get_layer_output_delta(
+                accelerator,
+                working_memory,
+                inputs,
+                layer_output,
+                back_propagated_delta,
+                layer_delta,
+            ),
+            OperatorEnum::CrossEntropyLoss(operator) => operator.get_layer_output_delta(
+                accelerator,
+                working_memory,
+                inputs,
+                layer_output,
+                back_propagated_delta,
                 layer_delta,
             ),
         }

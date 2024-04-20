@@ -49,9 +49,11 @@ impl OperatorTrait for Linear {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        input: &Tensor,
+        inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
+        debug_assert_eq!(inputs.len(), 1);
+        let input = &inputs[0];
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.
@@ -81,6 +83,7 @@ impl OperatorTrait for Linear {
 
     fn backward(
         &self,
+        _inputs: &Vec<Tensor>,
         accelerator: &Accelerator,
         layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
@@ -98,10 +101,9 @@ impl OperatorTrait for Linear {
         &self,
         accelerator: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
-        _layer_input: &Tensor,
+        _inputs: &Vec<Tensor>,
         _layer_output: &Tensor,
         back_propagated_delta: &Tensor,
-        _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
         layer_delta.assign(accelerator, back_propagated_delta)
@@ -110,9 +112,10 @@ impl OperatorTrait for Linear {
     fn compute_gradient(
         &mut self,
         accelerator: &Accelerator,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output_delta: &Tensor,
     ) {
+        let layer_input = &inputs[0];
         let a = layer_input;
         let b = layer_output_delta;
         let c = &mut self.weights.gradient;

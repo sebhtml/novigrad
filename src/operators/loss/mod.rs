@@ -34,11 +34,11 @@ impl LossFunction for LossFunctionType {
         actual: &Tensor,
     ) -> Result<f32, Error> {
         match self {
-            LossFunctionType::ResidualSumOfSquares(that) => {
-                that.evaluate(accelerator, expected, actual)
+            LossFunctionType::ResidualSumOfSquares(operator) => {
+                operator.evaluate(accelerator, expected, actual)
             }
-            LossFunctionType::CrossEntropyLoss(that) => {
-                that.evaluate(accelerator, expected, actual)
+            LossFunctionType::CrossEntropyLoss(operator) => {
+                operator.evaluate(accelerator, expected, actual)
             }
         }
     }
@@ -51,11 +51,11 @@ impl LossFunction for LossFunctionType {
         result: &mut Tensor,
     ) -> Result<(), Error> {
         match self {
-            LossFunctionType::ResidualSumOfSquares(that) => {
-                that.derive(accelerator, expected, actual, result)
+            LossFunctionType::ResidualSumOfSquares(operator) => {
+                operator.derive(accelerator, expected, actual, result)
             }
-            LossFunctionType::CrossEntropyLoss(that) => {
-                that.derive(accelerator, expected, actual, result)
+            LossFunctionType::CrossEntropyLoss(operator) => {
+                operator.derive(accelerator, expected, actual, result)
             }
         }
     }

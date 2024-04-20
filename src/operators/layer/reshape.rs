@@ -27,7 +27,7 @@ impl OperatorTrait for Reshape {
     fn compute_gradient(
         &mut self,
         _accelerator: &Accelerator,
-        _layer_input: &Tensor,
+        _inputs: &Vec<Tensor>,
         _layer_output_delta: &Tensor,
     ) {
     }
@@ -43,16 +43,24 @@ impl OperatorTrait for Reshape {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        input: &Tensor,
+        inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
+        debug_assert_eq!(inputs.len(), 1);
+        let input = &inputs[0];
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
         output.assign(accelerator, input);
         output.reshape(self.output_rows, self.output_cols)
     }
 
-    fn backward(&self, accelerator: &Accelerator, layer_delta: &Tensor, output_diff: &mut Tensor) {
+    fn backward(
+        &self,
+        _inputs: &Vec<Tensor>,
+        accelerator: &Accelerator,
+        layer_delta: &Tensor,
+        output_diff: &mut Tensor,
+    ) {
         output_diff.assign(accelerator, layer_delta);
     }
 
@@ -60,10 +68,9 @@ impl OperatorTrait for Reshape {
         &self,
         accelerator: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
-        _layer_input: &Tensor,
+        _inputs: &Vec<Tensor>,
         _layer_output: &Tensor,
         back_propagated_delta: &Tensor,
-        _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
         layer_delta.assign(accelerator, back_propagated_delta);

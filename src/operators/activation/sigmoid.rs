@@ -61,7 +61,7 @@ impl OperatorTrait for Sigmoid {
     fn compute_gradient(
         &mut self,
         _accelerator: &Accelerator,
-        _layer_input: &Tensor,
+        _inputs: &Vec<Tensor>,
         _layer_output_delta: &Tensor,
     ) {
     }
@@ -77,14 +77,16 @@ impl OperatorTrait for Sigmoid {
     fn forward(
         &mut self,
         _accelerator: &Accelerator,
-        input: &Tensor,
+        inputs: &Vec<Tensor>,
         output: &mut Tensor,
     ) -> Result<(), Error> {
+        let input = &inputs[0];
         self.activate(input, output)
     }
 
     fn backward(
         &self,
+        _inputs: &Vec<Tensor>,
         accelerator: &Accelerator,
         layer_delta: &Tensor,
         previous_layer_delta: &mut Tensor,
@@ -96,15 +98,15 @@ impl OperatorTrait for Sigmoid {
         &self,
         _accelerator: &Accelerator,
         working_memory: &mut DeltaWorkingMemory,
-        layer_input: &Tensor,
+        inputs: &Vec<Tensor>,
         layer_output: &Tensor,
         back_propagated_delta: &Tensor,
-        _is_last_layer: bool,
         layer_delta: &mut Tensor,
     ) {
         // Compute activation function derivative.
+        let input = &inputs[0];
         let layer_f_derivative = &mut working_memory.layer_f_derivative;
-        let op_result = self.derive(layer_input, layer_output, layer_f_derivative);
+        let op_result = self.derive(input, layer_output, layer_f_derivative);
         op_result.expect("Ok");
         let op_result = layer_f_derivative.element_wise_mul(back_propagated_delta, layer_delta);
         op_result.expect("Ok");

@@ -1,19 +1,29 @@
-- add capability for having N inputs in forward method
-- implement OperatorTrait for LossFunction
+== Optimizer PR
+- optimizer should not receive tape
 - enable tape recording only during training
+- move learning rate in dataset details
+
+== Box PR ==
+- use Box<dyn T> instead of enum for operators
+
+== Tensor storage PR ==
+- store interior of Tensor in Rc
+
+== Backlog ==
 - add Blas implementation for CuBlas using https://crates.io/crates/cudarc
 
 - implement Dropout
 - implement Concat
 - implement Matmul
 - implement Mask
-- move learning rate in dataset details
+- add Gelu
+
 - shuffle examples in each epoch
 - implement TransformerBlock
 
 - bpe tokenizer
-- add gelu
-- add tape to decouple compute from storage
+
+- determine the value of using_cross_entropy_loss at run time
 - centralize panic! calls
 - check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
 - add Blas implementation for AMD GPUs.

@@ -1,7 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    Accelerator, Embedding, Linear, Operator, OperatorEnum, Reshape, Sigmoid, Softmax, Tape,
+    Accelerator, CrossEntropyLoss, Embedding, Linear, Operator, OperatorEnum, Reshape,
+    ResidualSumOfSquares, Sigmoid, Softmax, Tape,
 };
 
 pub struct Operators {
@@ -84,6 +85,26 @@ impl Operators {
             Rc::new(RefCell::new(OperatorEnum::Softmax(Softmax::new(
                 using_cross_entropy_loss,
             )))),
+        )
+    }
+
+    pub fn residual_sum_of_squares(&self) -> Operator {
+        Operator::new(
+            self.accelerator(),
+            self.tape(),
+            Rc::new(RefCell::new(OperatorEnum::ResidualSumOfSquares(
+                ResidualSumOfSquares::default(),
+            ))),
+        )
+    }
+
+    pub fn cross_entropy_loss(&self) -> Operator {
+        Operator::new(
+            self.accelerator(),
+            self.tape(),
+            Rc::new(RefCell::new(OperatorEnum::CrossEntropyLoss(
+                CrossEntropyLoss::default(),
+            ))),
         )
     }
 }

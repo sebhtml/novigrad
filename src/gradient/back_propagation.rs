@@ -1,20 +1,15 @@
+use std::borrow::Borrow;
 use std::mem::swap;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{
-    Accelerator, DeltaWorkingMemory, LossFunction, LossFunctionType, OperatorEnum, Tape, Tensor,
-    TrainWorkingMemory,
-};
+use crate::{Accelerator, DeltaWorkingMemory, OperatorEnum, Tape, Tensor, TrainWorkingMemory};
 
 use crate::gradient::OperatorTrait;
 
 /// Back-propagation
 pub fn back_propagation(
-    x: &Tensor,
-    y: &Tensor,
     working_memory: &mut TrainWorkingMemory,
     error_working_memory: &mut DeltaWorkingMemory,
-    loss_function: &LossFunctionType,
     accelerator: &Accelerator,
     tape: &Rc<RefCell<Tape>>,
 ) {
@@ -25,36 +20,21 @@ pub fn back_propagation(
         tape.records.len()
     };
 
+    next_layer_delta.assign(accelerator, &Default::default());
     for layer_index in (0..layers_count).into_iter().rev() {
         let layer_output = &mut working_memory.layer_output;
         {
             let tape = tape.deref().borrow();
-            let tensor = tape.records[layer_index].output.deref();
+            let tensor = tape.records[layer_index].output.borrow();
             layer_output.assign(accelerator, tensor);
         }
 
         let is_last_layer = layer_index == layers_count - 1;
 
-        let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-
-        match layer_index {
-            0 => {
-                previous_activation_tensor.assign(accelerator, x);
-            }
-            _ => {
-                let tape = tape.deref().borrow();
-                let tensor = tape.records[layer_index - 1].output.deref();
-                previous_activation_tensor.assign(accelerator, tensor);
-            }
+        let inputs: Vec<Tensor> = {
+            let tape = tape.deref().borrow();
+            tape.records[layer_index].inputs.clone()
         };
-
-        if is_last_layer {
-            // For the output layer, the next layer delta is the loss.
-            // TODO, do this instead just after forward:
-            // loss_function.forward(y, layer_output)
-            let op_result = loss_function.derive(&accelerator, y, &layer_output, next_layer_delta);
-            op_result.expect("Ok");
-        }
 
         {
             let next_layer: Option<Rc<RefCell<OperatorEnum>>> = if is_last_layer {
@@ -67,19 +47,22 @@ pub fn back_propagation(
             };
 
             let tmp = &mut working_memory.tmp;
-            let layer_input: &Tensor = previous_activation_tensor;
             let back_propagated_delta = &mut working_memory.back_propagated_delta;
 
-            let is_last_layer = next_layer.is_none();
             match next_layer {
                 None => {
                     // use the output of the loss function¸
                     back_propagated_delta.assign(accelerator, next_layer_delta);
                 }
                 Some(next_layer) => {
+                    let inputs: Vec<Tensor> = {
+                        let tape = tape.deref().borrow();
+                        tape.records[layer_index + 1].inputs.clone()
+                    };
                     // Hidden layer
                     let next_layer = next_layer.deref();
                     next_layer.borrow().backward(
+                        &inputs,
                         accelerator,
                         next_layer_delta,
                         back_propagated_delta,
@@ -92,10 +75,9 @@ pub fn back_propagation(
             layer.get_layer_output_delta(
                 accelerator,
                 error_working_memory,
-                layer_input,
+                &inputs,
                 layer_output,
                 back_propagated_delta,
-                is_last_layer,
                 tmp,
             );
 
@@ -106,7 +88,7 @@ pub fn back_propagation(
             let tape = tape.deref().borrow();
             let layer: &mut OperatorEnum =
                 &mut tape.records[layer_index].operator.deref().borrow_mut();
-            layer.compute_gradient(accelerator, previous_activation_tensor, layer_delta);
+            layer.compute_gradient(accelerator, &inputs, layer_delta);
         }
 
         swap(next_layer_delta, layer_delta);

@@ -5,13 +5,13 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
-    accelerator::Accelerator, back_propagation, Error, Forward, LossFunction, LossFunctionType,
-    Optimizer, OptimizerTrait, Tape, Tensor,
+    accelerator::Accelerator, back_propagation, Error, Forward, Operator, Optimizer,
+    OptimizerTrait, Tape, Tensor,
 };
 
 pub struct Network {
     architecture: Box<dyn Forward>,
-    loss_function: LossFunctionType,
+    loss_function: Operator,
     accelerator: Rc<Accelerator>,
     optimizer: Optimizer,
     tape: Rc<RefCell<Tape>>,
@@ -68,7 +68,7 @@ impl PredictWorkingMemory {
 }
 
 impl Network {
-    pub fn new(architecture: Box<dyn Forward>, loss_function: LossFunctionType) -> Self {
+    pub fn new(architecture: Box<dyn Forward>, loss_function: Operator) -> Self {
         let accelerator = architecture.accelerator();
         let tape = architecture.tape();
         Self {
@@ -116,8 +116,9 @@ impl Network {
             let target = &outputs[i];
             let example_error = self
                 .loss_function
-                .evaluate(&self.accelerator, target, &activation_tensor)
+                .forward_inputs(&vec![target.clone(), activation_tensor.clone()])
                 .expect("Ok");
+            let example_error: f32 = example_error.try_into()?;
             total_error += example_error;
         }
 
@@ -139,16 +140,12 @@ impl Network {
         let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
         self.forward(previous_activation_tensor, x, layer_output)?;
 
-        // TODO, do this instead just after forward:
-        // loss_function.forward(y, layer_output)
+        self.loss_function
+            .forward_inputs(&vec![y.clone(), layer_output.clone()])?;
 
         back_propagation(
-            x,
-            y,
             working_memory,
             error_working_memory,
-            // TODO loss_function should appear in the tape instead of passing it here.
-            &self.loss_function,
             &self.accelerator,
             &self.tape,
         );

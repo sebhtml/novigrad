@@ -24,47 +24,7 @@ pub fn back_propagation(
     next_layer_delta.reset(1, 333, 0.0);
     back_propagated_delta.reset(1, 444, 0.0);
 
-    /*
-               simple dataset
-               Ok shapes
-               ----
-    Layer 8 next_layer_delta (1, 333)
-    After call to backward (1, 444)
-    After call to clip (1, 444)
-    Layer 7 next_layer_delta (1, 444)
-    After call to backward (1, 16)
-    After call to clip (1, 16)
-    Layer 6 next_layer_delta (1, 16)
-    After call to backward (1, 16)
-    After call to clip (1, 16)
-    Layer 5 next_layer_delta (1, 16)
-    After call to backward (1, 32)
-    After call to clip (1, 32)
-    Layer 4 next_layer_delta (1, 32)
-    After call to backward (1, 32)
-    After call to clip (1, 32)
-    Layer 3 next_layer_delta (1, 32)
-    After call to backward (1, 96)
-    After call to clip (6, 16)
-    Layer 2 next_layer_delta (6, 16)
-    After call to backward (6, 16)
-    After call to clip (6, 16)
-    Layer 1 next_layer_delta (6, 16)
-    After call to backward (6, 16)
-    After call to clip (6, 16)
-    Layer 0 next_layer_delta (6, 16)
-    After call to backward (6, 32)
-    After call to clip (6, 32)
-
-
-            */
-    println!("----");
     for layer_index in (0..layers_count).into_iter().rev() {
-        println!(
-            "Layer {} next_layer_delta {:?}",
-            layer_index,
-            next_layer_delta.shape()
-        );
         let record = &records[layer_index];
         let inputs = record.inputs();
         let output = record.output();
@@ -82,8 +42,7 @@ pub fn back_propagation(
                 next_layer_delta,
                 back_propagated_delta,
             );
-        };
-        println!("After call to backward {:?}", back_propagated_delta.shape());
+        }
 
         operator.get_layer_output_delta(
             accelerator,
@@ -93,13 +52,16 @@ pub fn back_propagation(
             back_propagated_delta,
             tmp,
         );
+
         tmp.clip(-1.0, 1.0, layer_delta);
-        println!("After call to clip {:?}", layer_delta.shape());
 
         let mut operator_gradients =
             operator.compute_gradients(accelerator, inputs, layer_delta)?;
 
-        gradients.append(&mut operator_gradients);
+        if operator_gradients.len() > 0 {
+            debug_assert_eq!(layer_delta.shape(), output.shape());
+            gradients.append(&mut operator_gradients);
+        }
 
         swap(next_layer_delta, layer_delta);
     }

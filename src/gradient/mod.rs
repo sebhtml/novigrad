@@ -12,14 +12,14 @@ pub use back_propagation::*;
 pub trait OperatorTrait {
     fn name(&self) -> &str;
     fn compute_gradients(
-        &mut self,
+        &self,
         accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
         layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error>;
 
     fn forward(
-        &mut self,
+        &self,
         accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error>;

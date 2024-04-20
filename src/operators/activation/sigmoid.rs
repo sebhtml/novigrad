@@ -60,7 +60,7 @@ impl ActivationFunction for Sigmoid {
 
 impl OperatorTrait for Sigmoid {
     fn compute_gradients(
-        &mut self,
+        &self,
         _accelerator: &Accelerator,
         _inputs: &Vec<Rc<Tensor>>,
         _layer_output_delta: &Tensor,
@@ -69,7 +69,7 @@ impl OperatorTrait for Sigmoid {
     }
 
     fn forward(
-        &mut self,
+        &self,
         _accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error> {

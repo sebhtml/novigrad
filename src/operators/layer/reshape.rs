@@ -27,7 +27,7 @@ impl Reshape {
 
 impl OperatorTrait for Reshape {
     fn compute_gradients(
-        &mut self,
+        &self,
         _accelerator: &Accelerator,
         _inputs: &Vec<Rc<Tensor>>,
         _layer_output_delta: &Tensor,
@@ -36,7 +36,7 @@ impl OperatorTrait for Reshape {
     }
 
     fn forward(
-        &mut self,
+        &self,
         accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error> {

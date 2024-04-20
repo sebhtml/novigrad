@@ -20,7 +20,7 @@ impl Embedding {
 
 impl OperatorTrait for Embedding {
     fn compute_gradients(
-        &mut self,
+        &self,
         accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
         layer_output_delta: &Tensor,
@@ -41,7 +41,7 @@ impl OperatorTrait for Embedding {
     }
 
     fn forward(
-        &mut self,
+        &self,
         accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error> {

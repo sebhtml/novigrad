@@ -61,7 +61,7 @@ impl LossFunction for CrossEntropyLoss {
 
 impl OperatorTrait for CrossEntropyLoss {
     fn compute_gradients(
-        &mut self,
+        &self,
         _accelerator: &Accelerator,
         _inputs: &Vec<Rc<Tensor>>,
         _layer_output_delta: &Tensor,
@@ -70,7 +70,7 @@ impl OperatorTrait for CrossEntropyLoss {
     }
 
     fn forward(
-        &mut self,
+        &self,
         accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error> {

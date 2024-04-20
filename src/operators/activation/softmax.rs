@@ -97,7 +97,7 @@ impl ActivationFunction for Softmax {
 
 impl OperatorTrait for Softmax {
     fn compute_gradients(
-        &mut self,
+        &self,
         _accelerator: &Accelerator,
         _inputs: &Vec<Rc<Tensor>>,
         _layer_output_delta: &Tensor,
@@ -106,7 +106,7 @@ impl OperatorTrait for Softmax {
     }
 
     fn forward(
-        &mut self,
+        &self,
         _accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error> {

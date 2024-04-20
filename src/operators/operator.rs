@@ -69,11 +69,6 @@ impl Operator {
         variant.compute_gradients(self.accelerator.deref(), inputs, layer_output_delta)
     }
 
-    pub fn commit_change(&mut self, learning_rate: f32) -> Result<(), Error> {
-        let variant = &mut *self.variant.deref().borrow_mut();
-        variant.commit_change(self.accelerator.deref(), learning_rate)
-    }
-
     pub fn backward(
         &self,
         inputs: &Vec<Tensor>,

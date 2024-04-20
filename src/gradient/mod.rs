@@ -17,9 +17,6 @@ pub trait OperatorTrait {
         layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error>;
 
-    fn commit_change(&mut self, accelerator: &Accelerator, learning_rate: f32)
-        -> Result<(), Error>;
-
     fn forward(
         &mut self,
         accelerator: &Accelerator,

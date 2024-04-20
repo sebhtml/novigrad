@@ -66,26 +66,6 @@ impl OperatorTrait for OperatorEnum {
         }
     }
 
-    fn commit_change(
-        &mut self,
-        accelerator: &Accelerator,
-        learning_rate: f32,
-    ) -> Result<(), Error> {
-        match self {
-            OperatorEnum::Embedding(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::Linear(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::Reshape(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::Sigmoid(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::Softmax(operator) => operator.commit_change(accelerator, learning_rate),
-            OperatorEnum::ResidualSumOfSquares(operator) => {
-                operator.commit_change(accelerator, learning_rate)
-            }
-            OperatorEnum::CrossEntropyLoss(operator) => {
-                operator.commit_change(accelerator, learning_rate)
-            }
-        }
-    }
-
     fn forward(
         &mut self,
         accelerator: &Accelerator,

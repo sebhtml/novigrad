@@ -67,14 +67,6 @@ impl OperatorTrait for CrossEntropyLoss {
         Ok(vec![])
     }
 
-    fn commit_change(
-        &mut self,
-        _accelerator: &Accelerator,
-        _learning_rate: f32,
-    ) -> Result<(), Error> {
-        Ok(())
-    }
-
     fn forward(
         &mut self,
         accelerator: &Accelerator,

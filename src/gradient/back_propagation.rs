@@ -25,19 +25,38 @@ pub fn back_propagation(
     back_propagated_delta.assign(accelerator, next_layer_delta);
 
     /*
-        simple dataset
-        Ok shapes
-        ----
+           simple dataset
+           Ok shapes
+           ----
     Layer 8 next_layer_delta (0, 0)
+    After call to backward (0, 0)
+    After call to clip (0, 0)
     Layer 7 next_layer_delta (0, 0)
+    After call to backward (1, 16)
+    After call to clip (1, 16)
     Layer 6 next_layer_delta (1, 16)
+    After call to backward (1, 16)
+    After call to clip (1, 16)
     Layer 5 next_layer_delta (1, 16)
+    After call to backward (1, 32)
+    After call to clip (1, 32)
     Layer 4 next_layer_delta (1, 32)
+    After call to backward (1, 32)
+    After call to clip (1, 32)
     Layer 3 next_layer_delta (1, 32)
+    After call to backward (1, 96)
+    After call to clip (6, 16)
     Layer 2 next_layer_delta (6, 16)
+    After call to backward (6, 16)
+    After call to clip (6, 16)
     Layer 1 next_layer_delta (6, 16)
+    After call to backward (6, 16)
+    After call to clip (6, 16)
     Layer 0 next_layer_delta (6, 16)
-     */
+    After call to backward (6, 32)
+    After call to clip (6, 32)
+
+        */
     println!("----");
     for layer_index in (0..layers_count).into_iter().rev() {
         println!(
@@ -63,6 +82,7 @@ pub fn back_propagation(
                 back_propagated_delta,
             );
         };
+        println!("After call to backward {:?}", back_propagated_delta.shape());
 
         operator.get_layer_output_delta(
             accelerator,
@@ -73,6 +93,7 @@ pub fn back_propagation(
             tmp,
         );
         tmp.clip(-1.0, 1.0, layer_delta);
+        println!("After call to clip {:?}", layer_delta.shape());
 
         let mut operator_gradients =
             operator.compute_gradients(accelerator, inputs, layer_delta)?;

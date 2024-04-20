@@ -20,66 +20,46 @@ pub fn back_propagation(
     let tape: &Tape = &tape.deref().borrow();
     let records: &Vec<Record> = &tape.records();
     let layers_count = { tape.records().len() };
-
+    let tmp = &mut working_memory.tmp;
+    let back_propagated_delta = &mut working_memory.back_propagated_delta;
     next_layer_delta.assign(accelerator, &Default::default());
     for layer_index in (0..layers_count).into_iter().rev() {
-        let record: &Record = &records[layer_index];
-        let inputs: &Vec<Rc<Tensor>> = record.inputs();
-        let output: &Rc<Tensor> = record.output();
+        let record = &records[layer_index];
+        let inputs = record.inputs();
+        let output = record.output();
+        let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
+        if layer_index == layers_count - 1 {
+            back_propagated_delta.assign(accelerator, next_layer_delta);
+        } else {
+            let next_layer_index = layer_index + 1;
+            let next_operator: &Box<dyn OperatorTrait> =
+                &records[next_layer_index].operator().deref().borrow();
+            let next_inputs: &Vec<Rc<Tensor>> = { &tape.records()[layer_index + 1].inputs() };
 
-        let is_last_layer = layer_index == layers_count - 1;
-
-        {
-            let next_layer: Option<Rc<RefCell<Box<dyn OperatorTrait>>>> = if is_last_layer {
-                None
-            } else {
-                let next_layer_index = layer_index + 1;
-                let operator = tape.records()[next_layer_index].operator().clone();
-                Some(operator)
-            };
-
-            let tmp = &mut working_memory.tmp;
-            let back_propagated_delta = &mut working_memory.back_propagated_delta;
-
-            match next_layer {
-                None => {
-                    // use the output of the loss function¸
-                    back_propagated_delta.assign(accelerator, next_layer_delta);
-                }
-                Some(next_layer) => {
-                    let inputs: &Vec<Rc<Tensor>> = { &tape.records()[layer_index + 1].inputs() };
-                    // Hidden layer
-                    let next_layer = next_layer.deref();
-                    next_layer.borrow().backward(
-                        &inputs,
-                        accelerator,
-                        next_layer_delta,
-                        back_propagated_delta,
-                    );
-                }
-            }
-
-            let layer: &Box<dyn OperatorTrait> =
-                &tape.records()[layer_index].operator().deref().borrow();
-            layer.get_layer_output_delta(
+            let next_layer = next_operator.deref();
+            next_layer.backward(
+                &next_inputs,
                 accelerator,
-                error_working_memory,
-                &inputs,
-                &output,
+                next_layer_delta,
                 back_propagated_delta,
-                tmp,
             );
+        };
 
-            tmp.clip(-1.0, 1.0, layer_delta)
-        }
+        operator.get_layer_output_delta(
+            accelerator,
+            error_working_memory,
+            &inputs,
+            &output,
+            back_propagated_delta,
+            tmp,
+        );
 
-        {
-            let layer: &mut Box<dyn OperatorTrait> =
-                &mut tape.records()[layer_index].operator().deref().borrow_mut();
-            let mut operator_gradients =
-                layer.compute_gradients(accelerator, &inputs, layer_delta)?;
-            gradients.append(&mut operator_gradients);
-        }
+        tmp.clip(-1.0, 1.0, layer_delta);
+
+        let mut operator_gradients =
+            operator.compute_gradients(accelerator, &inputs, layer_delta)?;
+
+        gradients.append(&mut operator_gradients);
 
         swap(next_layer_delta, layer_delta);
     }

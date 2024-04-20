@@ -27,7 +27,6 @@ impl OperatorTrait for Embedding {
         c.reset(b.cols(), a.cols(), 0.0);
         let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
         op_result.expect("Ok");
-        self.embedding_table.has_gradient = true;
     }
 
     fn commit_change(

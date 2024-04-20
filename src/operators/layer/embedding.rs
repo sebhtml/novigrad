@@ -61,11 +61,11 @@ impl OperatorTrait for Embedding {
     fn backward(
         &self,
         _inputs: &Vec<Rc<Tensor>>,
-        _accelerator: &Accelerator,
-        _layer_delta: &Tensor,
-        _previous_layer_delta: &mut Tensor,
+        accelerator: &Accelerator,
+        layer_delta: &Tensor,
+        previous_layer_delta: &mut Tensor,
     ) {
-        panic!("Embedding can not go backward !");
+        previous_layer_delta.assign(accelerator, layer_delta)
     }
 
     fn get_layer_output_delta(

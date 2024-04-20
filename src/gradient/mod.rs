@@ -14,21 +14,20 @@ pub trait OperatorTrait {
     fn compute_gradients(
         &mut self,
         accelerator: &Accelerator,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Rc<Tensor>>,
         layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error>;
 
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        inputs: &Vec<Tensor>,
-        output: &mut Tensor,
-    ) -> Result<(), Error>;
+        inputs: &Vec<Rc<Tensor>>,
+    ) -> Result<Rc<Tensor>, Error>;
 
     // TODO backward should return Error
     fn backward(
         &self,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,
         layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
@@ -39,15 +38,15 @@ pub trait OperatorTrait {
         &self,
         accelerator: &Accelerator,
         working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Tensor>,
-        layer_output: &Tensor,
+        inputs: &Vec<Rc<Tensor>>,
+        output: &Rc<Tensor>,
         back_propagated_layer_output_delta: &Tensor,
         layer_output_delta: &mut Tensor,
     );
 }
 
 pub trait Forward {
-    fn forward(&mut self, input: &Tensor) -> Result<Tensor, Error>;
+    fn forward(&mut self, input: &Rc<Tensor>) -> Result<Rc<Tensor>, Error>;
     fn accelerator(&self) -> Rc<Accelerator>;
     fn tape(&self) -> Rc<RefCell<Tape>>;
 }

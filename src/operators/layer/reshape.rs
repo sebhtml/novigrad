@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 pub struct Reshape {
@@ -27,7 +29,7 @@ impl OperatorTrait for Reshape {
     fn compute_gradients(
         &mut self,
         _accelerator: &Accelerator,
-        _inputs: &Vec<Tensor>,
+        _inputs: &Vec<Rc<Tensor>>,
         _layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error> {
         Ok(vec![])
@@ -36,20 +38,21 @@ impl OperatorTrait for Reshape {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        inputs: &Vec<Tensor>,
-        output: &mut Tensor,
-    ) -> Result<(), Error> {
+        inputs: &Vec<Rc<Tensor>>,
+    ) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
+        let mut output = Tensor::default();
         output.assign(accelerator, input);
-        output.reshape(self.output_rows, self.output_cols)
+        output.reshape(self.output_rows, self.output_cols)?;
+        Ok(Rc::new(output))
     }
 
     fn backward(
         &self,
-        _inputs: &Vec<Tensor>,
+        _inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,
         layer_delta: &Tensor,
         output_diff: &mut Tensor,
@@ -61,8 +64,8 @@ impl OperatorTrait for Reshape {
         &self,
         accelerator: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
-        _inputs: &Vec<Tensor>,
-        _layer_output: &Tensor,
+        _inputs: &Vec<Rc<Tensor>>,
+        _output: &Rc<Tensor>,
         back_propagated_delta: &Tensor,
         layer_delta: &mut Tensor,
     ) {

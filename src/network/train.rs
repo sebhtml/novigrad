@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{
     DatasetDetails, DeltaWorkingMemory, Error, Network, PredictWorkingMemory, Tensor,
     TrainWorkingMemory,
@@ -39,8 +41,8 @@ pub fn print_expected_output_and_actual_output(
 fn print_total_error(
     working_memory: &mut PredictWorkingMemory,
     network: &mut Network,
-    inputs: &Vec<Tensor>,
-    outputs: &Vec<Tensor>,
+    inputs: &Vec<Rc<Tensor>>,
+    outputs: &Vec<Rc<Tensor>>,
     last_total_error: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
@@ -72,6 +74,10 @@ pub fn train_network_on_dataset(
     let mut error_working_memory = DeltaWorkingMemory::default();
     let mut predict_working_memory = PredictWorkingMemory::new(examples.len());
 
+    let examples: Vec<(Rc<Tensor>, Rc<Tensor>)> = examples
+        .into_iter()
+        .map(|(x, y)| (Rc::new(x), Rc::new(y)))
+        .collect();
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
     let mut network = Network::new(architecture, loss_function_name);
@@ -116,9 +122,7 @@ pub fn train_network_on_dataset(
         epochs,
     )?;
 
-    let activation_tensors = &mut predict_working_memory.activation_tensors;
-    let previous_activation_tensor_f32 = &mut predict_working_memory.previous_activation_tensor;
-    network.predict_many(previous_activation_tensor_f32, &inputs, activation_tensors)?;
+    let activation_tensors = network.predict_many(&inputs)?;
 
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();

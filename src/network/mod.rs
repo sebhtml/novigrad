@@ -85,8 +85,8 @@ impl Network {
         working_memory: &mut TrainWorkingMemory,
         error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
-        inputs: &Vec<Tensor>,
-        outputs: &Vec<Tensor>,
+        inputs: &Vec<Rc<Tensor>>,
+        outputs: &Vec<Rc<Tensor>>,
     ) -> Result<(), Error> {
         for i in 0..inputs.len() {
             self.train_back_propagation(
@@ -104,20 +104,18 @@ impl Network {
     pub fn total_error(
         &mut self,
         working_memory: &mut PredictWorkingMemory,
-        inputs: &Vec<Tensor>,
-        outputs: &Vec<Tensor>,
+        inputs: &Vec<Rc<Tensor>>,
+        outputs: &Vec<Rc<Tensor>>,
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
-        let activation_tensor = &mut working_memory.activation_tensor;
-        let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-
         for i in 0..inputs.len() {
-            self.forward(previous_activation_tensor, &inputs[i], activation_tensor)?;
+            let output = self.forward(&inputs[i])?;
             let target = &outputs[i];
             let example_error = self
                 .loss_function
-                .forward_inputs(&vec![target.clone(), activation_tensor.clone()])
+                .forward_inputs(&vec![target.clone(), output.clone()])
                 .expect("Ok");
+            let example_error: &Tensor = example_error.deref();
             let example_error: f32 = example_error.try_into()?;
             total_error += example_error;
         }
@@ -131,17 +129,15 @@ impl Network {
         error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
-        x: &Tensor,
-        y: &Tensor,
+        x: &Rc<Tensor>,
+        y: &Rc<Tensor>,
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
-        let layer_output = &mut working_memory.layer_output;
-        let previous_activation_tensor = &mut working_memory.previous_activation_tensor;
-        self.forward(previous_activation_tensor, x, layer_output)?;
+        let output = self.forward(x)?;
 
         self.loss_function
-            .forward_inputs(&vec![y.clone(), layer_output.clone()])?;
+            .forward_inputs(&vec![y.clone(), output.clone()])?;
 
         let gradients = back_propagation(
             working_memory,
@@ -155,31 +151,20 @@ impl Network {
         Ok(())
     }
 
-    pub fn predict_many(
-        &mut self,
-        previous_activation_tensor: &mut Tensor,
-        inputs: &Vec<Tensor>,
-        activation_tensors: &mut Vec<Tensor>,
-    ) -> Result<(), Error> {
+    pub fn predict_many(&mut self, inputs: &Vec<Rc<Tensor>>) -> Result<Vec<Rc<Tensor>>, Error> {
         let len = inputs.len();
+        let mut outputs = vec![];
         let mut i = 0;
         while i < len {
             let input = &inputs[i];
-            let activation_tensor = &mut activation_tensors[i];
-            self.forward(previous_activation_tensor, input, activation_tensor)?;
+            let output = self.forward(input)?;
+            outputs.push(output);
             i += 1;
         }
-        Ok(())
+        Ok(outputs)
     }
 
-    pub fn forward(
-        &mut self,
-        _previous_activation_tensor: &mut Tensor,
-        input: &Tensor,
-        activation_tensor: &mut Tensor,
-    ) -> Result<(), Error> {
-        let output = self.architecture.forward(input)?;
-        activation_tensor.assign(&self.accelerator, &output);
-        Ok(())
+    pub fn forward(&mut self, input: &Rc<Tensor>) -> Result<Rc<Tensor>, Error> {
+        self.architecture.forward(input)
     }
 }

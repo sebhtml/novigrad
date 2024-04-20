@@ -419,7 +419,7 @@ impl F32Operation for F32Mul {
     }
 }
 
-impl TryInto<f32> for Tensor {
+impl TryInto<f32> for &Tensor {
     type Error = Error;
 
     fn try_into(self) -> Result<f32, Self::Error> {

@@ -4,8 +4,8 @@ use crate::{OperatorTrait, Tensor};
 
 pub struct Record {
     pub operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
-    pub inputs: Vec<Tensor>,
-    pub output: Tensor,
+    pub inputs: Vec<Rc<Tensor>>,
+    pub output: Rc<Tensor>,
 }
 
 pub struct Tape {
@@ -24,8 +24,8 @@ impl Tape {
     pub fn push(
         &mut self,
         operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
-        inputs: Vec<Tensor>,
-        output: Tensor,
+        inputs: Vec<Rc<Tensor>>,
+        output: Rc<Tensor>,
     ) {
         self.records.push(Record {
             operator,

@@ -1,13 +1,10 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{
-    accelerator::Accelerator, DeltaWorkingMemory, DifferentiableTensor, Error, OperatorTrait,
-    Tensor,
-};
+use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 pub struct Linear {
-    weights: DifferentiableTensor,
-    biases: DifferentiableTensor,
+    weights: Gradient,
+    biases: Gradient,
 }
 
 impl Linear {

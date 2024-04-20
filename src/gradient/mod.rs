@@ -4,8 +4,8 @@ use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Tensor};
 
 mod tape;
 pub use tape::*;
-mod differentiable_tensor;
-pub use differentiable_tensor::*;
+mod gradient;
+pub use gradient::*;
 mod back_propagation;
 pub use back_propagation::*;
 

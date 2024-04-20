@@ -1,11 +1,8 @@
-use crate::{
-    accelerator::Accelerator, DeltaWorkingMemory, DifferentiableTensor, Error, OperatorTrait,
-    Tensor,
-};
+use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
-    embedding_table: DifferentiableTensor,
+    embedding_table: Gradient,
 }
 
 impl Embedding {

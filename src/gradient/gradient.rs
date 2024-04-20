@@ -1,12 +1,12 @@
 use crate::{Accelerator, Tensor};
 
-pub struct DifferentiableTensor {
+pub struct Gradient {
     pub tensor: Tensor,
     pub gradient: Tensor,
     pub has_gradient: bool,
 }
 
-impl DifferentiableTensor {
+impl Gradient {
     pub fn new(tensor: Tensor) -> Self {
         Self {
             tensor,
@@ -30,7 +30,7 @@ impl DifferentiableTensor {
     }
 }
 
-impl From<Tensor> for DifferentiableTensor {
+impl From<Tensor> for Gradient {
     fn from(value: Tensor) -> Self {
         Self::new(value)
     }

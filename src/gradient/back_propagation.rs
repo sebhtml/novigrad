@@ -2,10 +2,7 @@ use std::borrow::Borrow;
 use std::mem::swap;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{
-    Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorEnum, Tape, Tensor,
-    TrainWorkingMemory,
-};
+use crate::{Accelerator, DeltaWorkingMemory, Error, Gradient, Tape, Tensor, TrainWorkingMemory};
 
 use crate::gradient::OperatorTrait;
 
@@ -41,7 +38,7 @@ pub fn back_propagation(
         };
 
         {
-            let next_layer: Option<Rc<RefCell<OperatorEnum>>> = if is_last_layer {
+            let next_layer: Option<Rc<RefCell<Box<dyn OperatorTrait>>>> = if is_last_layer {
                 None
             } else {
                 let next_layer_index = layer_index + 1;
@@ -75,7 +72,8 @@ pub fn back_propagation(
             }
 
             let tape = tape.deref().borrow();
-            let layer: &OperatorEnum = &tape.records[layer_index].operator.deref().borrow();
+            let layer: &Box<dyn OperatorTrait> =
+                &tape.records[layer_index].operator.deref().borrow();
             layer.get_layer_output_delta(
                 accelerator,
                 error_working_memory,
@@ -90,7 +88,7 @@ pub fn back_propagation(
 
         {
             let tape = tape.deref().borrow();
-            let layer: &mut OperatorEnum =
+            let layer: &mut Box<dyn OperatorTrait> =
                 &mut tape.records[layer_index].operator.deref().borrow_mut();
             let mut operator_gradients =
                 layer.compute_gradients(accelerator, &inputs, layer_delta)?;

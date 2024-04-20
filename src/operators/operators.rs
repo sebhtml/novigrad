@@ -1,8 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    Accelerator, CrossEntropyLoss, Embedding, Linear, Operator, OperatorEnum, Reshape,
-    ResidualSumOfSquares, Sigmoid, Softmax, Tape,
+    Accelerator, CrossEntropyLoss, Embedding, Linear, Operator, Reshape, ResidualSumOfSquares,
+    Sigmoid, Softmax, Tape,
 };
 
 pub struct Operators {
@@ -32,7 +32,7 @@ impl Operators {
         Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(OperatorEnum::Embedding(Embedding::new(
+            Rc::new(RefCell::new(Box::new(Embedding::new(
                 num_embeddings,
                 embedding_dim,
             )))),
@@ -49,7 +49,7 @@ impl Operators {
         Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(OperatorEnum::Reshape(Reshape::new(
+            Rc::new(RefCell::new(Box::new(Reshape::new(
                 input_rows,
                 input_cols,
                 output_rows,
@@ -62,7 +62,7 @@ impl Operators {
         Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(OperatorEnum::Linear(Linear::new(
+            Rc::new(RefCell::new(Box::new(Linear::new(
                 weights_rows,
                 weights_cols,
                 bias_rows,
@@ -74,7 +74,7 @@ impl Operators {
         Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(OperatorEnum::Sigmoid(Sigmoid::default()))),
+            Rc::new(RefCell::new(Box::new(Sigmoid::default()))),
         )
     }
 
@@ -82,7 +82,7 @@ impl Operators {
         Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(OperatorEnum::Softmax(Softmax::new(
+            Rc::new(RefCell::new(Box::new(Softmax::new(
                 using_cross_entropy_loss,
             )))),
         )
@@ -92,9 +92,7 @@ impl Operators {
         Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(OperatorEnum::ResidualSumOfSquares(
-                ResidualSumOfSquares::default(),
-            ))),
+            Rc::new(RefCell::new(Box::new(ResidualSumOfSquares::default()))),
         )
     }
 
@@ -102,9 +100,7 @@ impl Operators {
         Operator::new(
             self.accelerator(),
             self.tape(),
-            Rc::new(RefCell::new(OperatorEnum::CrossEntropyLoss(
-                CrossEntropyLoss::default(),
-            ))),
+            Rc::new(RefCell::new(Box::new(CrossEntropyLoss::default()))),
         )
     }
 }

@@ -124,4 +124,8 @@ impl OperatorTrait for Linear {
 
         Ok(gradients)
     }
+
+    fn name(&self) -> &str {
+        "Linear"
+    }
 }

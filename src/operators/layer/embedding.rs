@@ -78,6 +78,10 @@ impl OperatorTrait for Embedding {
     ) {
         layer_delta.assign(accelerator, back_propagated_delta)
     }
+
+    fn name(&self) -> &str {
+        "Embedding"
+    }
 }
 
 fn get_embedding_table(num_embeddings: usize, embedding_dim: usize) -> Tensor {

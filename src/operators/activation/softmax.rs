@@ -146,4 +146,8 @@ impl OperatorTrait for Softmax {
             op_result.expect("Ok");
         }
     }
+
+    fn name(&self) -> &str {
+        "Softmax"
+    }
 }

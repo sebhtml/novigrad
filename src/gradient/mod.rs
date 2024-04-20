@@ -10,6 +10,7 @@ mod back_propagation;
 pub use back_propagation::*;
 
 pub trait OperatorTrait {
+    fn name(&self) -> &str;
     fn compute_gradients(
         &mut self,
         accelerator: &Accelerator,

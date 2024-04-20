@@ -95,4 +95,8 @@ impl OperatorTrait for ResidualSumOfSquares {
     ) {
         layer_output_delta.assign(accelerator, back_propagated_layer_output_delta)
     }
+
+    fn name(&self) -> &str {
+        "ResidualSumOfSquares"
+    }
 }

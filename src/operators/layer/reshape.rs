@@ -70,4 +70,8 @@ impl OperatorTrait for Reshape {
         let op_result = layer_delta.reshape(self.input_rows, self.input_cols);
         op_result.expect("Ok");
     }
+
+    fn name(&self) -> &str {
+        "Reshape"
+    }
 }

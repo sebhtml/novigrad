@@ -1,21 +1,13 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    Accelerator, DeltaWorkingMemory, Error, Forward, Gradient, OperatorEnum, OperatorTrait, Tape,
-    Tensor,
+    Accelerator, DeltaWorkingMemory, Error, Forward, Gradient, OperatorTrait, Tape, Tensor,
 };
 
 pub struct Operator {
     accelerator: Rc<Accelerator>,
     tape: Rc<RefCell<Tape>>,
-    variant: Rc<RefCell<OperatorEnum>>,
-}
-
-impl Into<String> for Operator {
-    fn into(self) -> String {
-        let variant: &OperatorEnum = &self.variant.deref().borrow();
-        variant.into()
-    }
+    variant: Rc<RefCell<Box<dyn OperatorTrait>>>,
 }
 
 impl Forward for Operator {
@@ -37,7 +29,7 @@ impl Operator {
     pub fn new(
         accelerator: Rc<Accelerator>,
         tape: Rc<RefCell<Tape>>,
-        variant: Rc<RefCell<OperatorEnum>>,
+        variant: Rc<RefCell<Box<dyn OperatorTrait>>>,
     ) -> Self {
         Self {
             accelerator,

@@ -16,12 +16,12 @@ pub fn back_propagation(
     let next_layer_delta = &mut working_memory.next_layer_delta;
     let layer_delta = &mut working_memory.layer_delta;
     let tape: &Tape = &tape.deref().borrow();
-    let layers_count = { tape.records.len() };
+    let layers_count = { tape.records().len() };
 
     next_layer_delta.assign(accelerator, &Default::default());
     for layer_index in (0..layers_count).into_iter().rev() {
-        let inputs: &Vec<Rc<Tensor>> = &tape.records[layer_index].inputs;
-        let output: &Rc<Tensor> = &tape.records[layer_index].output;
+        let inputs: &Vec<Rc<Tensor>> = &tape.records()[layer_index].inputs();
+        let output: &Rc<Tensor> = &tape.records()[layer_index].output();
 
         let is_last_layer = layer_index == layers_count - 1;
 
@@ -30,7 +30,7 @@ pub fn back_propagation(
                 None
             } else {
                 let next_layer_index = layer_index + 1;
-                let operator = tape.records[next_layer_index].operator.clone();
+                let operator = tape.records()[next_layer_index].operator().clone();
                 Some(operator)
             };
 
@@ -43,7 +43,7 @@ pub fn back_propagation(
                     back_propagated_delta.assign(accelerator, next_layer_delta);
                 }
                 Some(next_layer) => {
-                    let inputs: &Vec<Rc<Tensor>> = { &tape.records[layer_index + 1].inputs };
+                    let inputs: &Vec<Rc<Tensor>> = { &tape.records()[layer_index + 1].inputs() };
                     // Hidden layer
                     let next_layer = next_layer.deref();
                     next_layer.borrow().backward(
@@ -56,7 +56,7 @@ pub fn back_propagation(
             }
 
             let layer: &Box<dyn OperatorTrait> =
-                &tape.records[layer_index].operator.deref().borrow();
+                &tape.records()[layer_index].operator().deref().borrow();
             layer.get_layer_output_delta(
                 accelerator,
                 error_working_memory,
@@ -71,7 +71,7 @@ pub fn back_propagation(
 
         {
             let layer: &mut Box<dyn OperatorTrait> =
-                &mut tape.records[layer_index].operator.deref().borrow_mut();
+                &mut tape.records()[layer_index].operator().deref().borrow_mut();
             let mut operator_gradients =
                 layer.compute_gradients(accelerator, &inputs, layer_delta)?;
             gradients.append(&mut operator_gradients);

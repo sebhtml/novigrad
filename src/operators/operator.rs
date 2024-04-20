@@ -11,7 +11,7 @@ pub struct Operator {
 }
 
 impl Forward for Operator {
-    fn forward(&mut self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&mut self, input: &Rc<Tensor>) -> Result<Rc<Tensor>, Error> {
         let inputs = vec![input.clone()];
         self.forward_inputs(&inputs)
     }
@@ -38,12 +38,9 @@ impl Operator {
         }
     }
 
-    pub fn forward_inputs(&mut self, inputs: &Vec<Tensor>) -> Result<Tensor, Error> {
-        let mut output = Tensor::default();
-        {
-            let variant = &mut *self.variant.deref().borrow_mut();
-            variant.forward(self.accelerator.deref(), inputs, &mut output)?;
-        }
+    pub fn forward_inputs(&mut self, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+        let variant = &mut *self.variant.deref().borrow_mut();
+        let output = variant.forward(self.accelerator.deref(), inputs)?;
 
         self.tape
             .deref()
@@ -54,7 +51,7 @@ impl Operator {
 
     pub fn compute_gradient(
         &mut self,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Rc<Tensor>>,
         layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error> {
         let variant = &mut *self.variant.deref().borrow_mut();
@@ -63,7 +60,7 @@ impl Operator {
 
     pub fn backward(
         &self,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Rc<Tensor>>,
         layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
     ) {
@@ -79,8 +76,8 @@ impl Operator {
     pub fn get_layer_output_delta(
         &self,
         working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Tensor>,
-        layer_output: &Tensor,
+        inputs: &Vec<Rc<Tensor>>,
+        output: &Rc<Tensor>,
         back_propagated_layer_output_delta: &Tensor,
         layer_output_delta: &mut Tensor,
     ) {
@@ -89,7 +86,7 @@ impl Operator {
             self.accelerator.deref(),
             working_memory,
             inputs,
-            layer_output,
+            output,
             back_propagated_layer_output_delta,
             layer_output_delta,
         )

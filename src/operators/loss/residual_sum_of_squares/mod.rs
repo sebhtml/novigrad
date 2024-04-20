@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{accelerator::Accelerator, Error, Gradient, OperatorTrait, Tensor};
 
 use super::LossFunction;
@@ -49,7 +51,7 @@ impl OperatorTrait for ResidualSumOfSquares {
     fn compute_gradients(
         &mut self,
         _accelerator: &Accelerator,
-        _inputs: &Vec<Tensor>,
+        _inputs: &Vec<Rc<Tensor>>,
         _layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error> {
         Ok(vec![])
@@ -58,21 +60,19 @@ impl OperatorTrait for ResidualSumOfSquares {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        inputs: &Vec<Tensor>,
-        output: &mut Tensor,
-    ) -> Result<(), Error> {
+        inputs: &Vec<Rc<Tensor>>,
+    ) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
         let actual = &inputs[1];
         let loss = self.evaluate(accelerator, expected, actual)?;
-        let tensor = Tensor::new(1, 1, vec![loss]);
-        output.assign(accelerator, &tensor);
-        Ok(())
+        let output = Tensor::new(1, 1, vec![loss]);
+        Ok(output.into())
     }
 
     fn backward(
         &self,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,
         _layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
@@ -88,8 +88,8 @@ impl OperatorTrait for ResidualSumOfSquares {
         &self,
         accelerator: &Accelerator,
         _working_memory: &mut crate::DeltaWorkingMemory,
-        _inputs: &Vec<Tensor>,
-        _layer_output: &Tensor,
+        _inputs: &Vec<Rc<Tensor>>,
+        _output: &Rc<Tensor>,
         back_propagated_layer_output_delta: &Tensor,
         layer_output_delta: &mut Tensor,
     ) {

@@ -2,6 +2,7 @@ use crate::accelerator::Accelerator;
 use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
 use crate::{Error, Gradient};
 use std::f32::consts::E;
+use std::rc::Rc;
 
 #[derive(Clone, Default)]
 pub struct Sigmoid {}
@@ -61,7 +62,7 @@ impl OperatorTrait for Sigmoid {
     fn compute_gradients(
         &mut self,
         _accelerator: &Accelerator,
-        _inputs: &Vec<Tensor>,
+        _inputs: &Vec<Rc<Tensor>>,
         _layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error> {
         Ok(Default::default())
@@ -70,16 +71,17 @@ impl OperatorTrait for Sigmoid {
     fn forward(
         &mut self,
         _accelerator: &Accelerator,
-        inputs: &Vec<Tensor>,
-        output: &mut Tensor,
-    ) -> Result<(), Error> {
+        inputs: &Vec<Rc<Tensor>>,
+    ) -> Result<Rc<Tensor>, Error> {
         let input = &inputs[0];
-        self.activate(input, output)
+        let mut output = Tensor::default();
+        self.activate(input, &mut output)?;
+        Ok(Rc::new(output))
     }
 
     fn backward(
         &self,
-        _inputs: &Vec<Tensor>,
+        _inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,
         layer_delta: &Tensor,
         previous_layer_delta: &mut Tensor,
@@ -91,15 +93,15 @@ impl OperatorTrait for Sigmoid {
         &self,
         _accelerator: &Accelerator,
         working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Tensor>,
-        layer_output: &Tensor,
+        inputs: &Vec<Rc<Tensor>>,
+        output: &Rc<Tensor>,
         back_propagated_delta: &Tensor,
         layer_delta: &mut Tensor,
     ) {
         // Compute activation function derivative.
         let input = &inputs[0];
         let layer_f_derivative = &mut working_memory.layer_f_derivative;
-        let op_result = self.derive(input, layer_output, layer_f_derivative);
+        let op_result = self.derive(input, output, layer_f_derivative);
         op_result.expect("Ok");
         let op_result = layer_f_derivative.element_wise_mul(back_propagated_delta, layer_delta);
         op_result.expect("Ok");

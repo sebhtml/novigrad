@@ -38,11 +38,11 @@ impl OperatorTrait for Linear {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        inputs: &Vec<Tensor>,
-        output: &mut Tensor,
-    ) -> Result<(), Error> {
+        inputs: &Vec<Rc<Tensor>>,
+    ) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
+        let mut output = Tensor::default();
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.
@@ -54,7 +54,7 @@ impl OperatorTrait for Linear {
         let biases: &Tensor = &self.biases.deref().borrow();
         let a = input;
         let b = weights;
-        let c = output;
+        let c = &mut output;
         c.assign(accelerator, biases);
         let op_result = Tensor::gemm(accelerator, false, true, 1.0, a, b, 1.0, c, false);
         match op_result {
@@ -68,12 +68,12 @@ impl OperatorTrait for Linear {
             }
         }
 
-        Ok(())
+        Ok(Rc::new(output))
     }
 
     fn backward(
         &self,
-        _inputs: &Vec<Tensor>,
+        _inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,
         layer_output_delta: &Tensor,
         previous_layer_output_delta: &mut Tensor,
@@ -92,8 +92,8 @@ impl OperatorTrait for Linear {
         &self,
         accelerator: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
-        _inputs: &Vec<Tensor>,
-        _layer_output: &Tensor,
+        _inputs: &Vec<Rc<Tensor>>,
+        _output: &Rc<Tensor>,
         back_propagated_delta: &Tensor,
         layer_delta: &mut Tensor,
     ) {
@@ -103,7 +103,7 @@ impl OperatorTrait for Linear {
     fn compute_gradients(
         &mut self,
         accelerator: &Accelerator,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Rc<Tensor>>,
         layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error> {
         let mut gradients = vec![];

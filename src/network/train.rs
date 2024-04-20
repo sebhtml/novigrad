@@ -1,7 +1,6 @@
-use crate::{
-    DatasetDetails, DeltaWorkingMemory, Error, Network, PredictWorkingMemory, Tensor,
-    TrainWorkingMemory,
-};
+use std::rc::Rc;
+
+use crate::{DatasetDetails, DeltaWorkingMemory, Error, Network, Tensor, TrainWorkingMemory};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -37,14 +36,13 @@ pub fn print_expected_output_and_actual_output(
 }
 
 fn print_total_error(
-    working_memory: &mut PredictWorkingMemory,
     network: &mut Network,
-    inputs: &Vec<Tensor>,
-    outputs: &Vec<Tensor>,
+    inputs: &Vec<Rc<Tensor>>,
+    outputs: &Vec<Rc<Tensor>>,
     last_total_error: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
-    let total_error = network.total_error(working_memory, inputs, outputs)?;
+    let total_error = network.total_error(inputs, outputs)?;
     let change = (total_error - last_total_error) / last_total_error;
     println!(
         "Epoch {} Total_error {}, change: {}",
@@ -70,8 +68,11 @@ pub fn train_network_on_dataset(
 
     let mut train_working_memory = TrainWorkingMemory::default();
     let mut error_working_memory = DeltaWorkingMemory::default();
-    let mut predict_working_memory = PredictWorkingMemory::new(examples.len());
 
+    let examples: Vec<(Rc<Tensor>, Rc<Tensor>)> = examples
+        .into_iter()
+        .map(|(x, y)| (Rc::new(x), Rc::new(y)))
+        .collect();
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
     let mut network = Network::new(architecture, loss_function_name);
@@ -82,15 +83,9 @@ pub fn train_network_on_dataset(
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
-            let total_error = print_total_error(
-                &mut predict_working_memory,
-                &mut network,
-                &inputs,
-                &outputs,
-                last_total_error,
-                epoch,
-            )
-            .expect("Ok");
+            let total_error =
+                print_total_error(&mut network, &inputs, &outputs, last_total_error, epoch)
+                    .expect("Ok");
             if epoch == 0 {
                 initial_total_error = total_error;
             }
@@ -107,18 +102,10 @@ pub fn train_network_on_dataset(
             &outputs,
         )?;
     }
-    let final_total_error = print_total_error(
-        &mut predict_working_memory,
-        &mut network,
-        &inputs,
-        &outputs,
-        last_total_error,
-        epochs,
-    )?;
+    let final_total_error =
+        print_total_error(&mut network, &inputs, &outputs, last_total_error, epochs)?;
 
-    let activation_tensors = &mut predict_working_memory.activation_tensors;
-    let previous_activation_tensor_f32 = &mut predict_working_memory.previous_activation_tensor;
-    network.predict_many(previous_activation_tensor_f32, &inputs, activation_tensors)?;
+    let activation_tensors = network.predict_many(&inputs)?;
 
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();

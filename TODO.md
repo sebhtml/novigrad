@@ -1,12 +1,16 @@
-== Tensor storage PR ==
-- use Rc<Tensor> in inputs and output of OperatorTrait
+== backward MR ==
 
-== Backlog ==
+- rewrite back propagation function
+- group compute_gradients, get_layer_output_delta with backward in OperatorTrait
+
+== cuda MR ==
+- add Blas implementation for CuBlas using https://crates.io/crates/cudarc
+
+== training MR ==
 - enable tape recording only during training
 - move learning rate in dataset details
 
-- add Blas implementation for CuBlas using https://crates.io/crates/cudarc
-
+== Backlog ==
 - implement Dropout
 - implement Concat
 - implement Matmul

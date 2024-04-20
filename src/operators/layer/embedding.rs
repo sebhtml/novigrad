@@ -22,7 +22,7 @@ impl OperatorTrait for Embedding {
     fn compute_gradients(
         &mut self,
         accelerator: &Accelerator,
-        inputs: &Vec<Tensor>,
+        inputs: &Vec<Rc<Tensor>>,
         layer_output_delta: &Tensor,
     ) -> Result<Vec<Gradient>, Error> {
         let mut gradients = vec![];
@@ -43,23 +43,24 @@ impl OperatorTrait for Embedding {
     fn forward(
         &mut self,
         accelerator: &Accelerator,
-        inputs: &Vec<Tensor>,
-        output: &mut Tensor,
-    ) -> Result<(), Error> {
+        inputs: &Vec<Rc<Tensor>>,
+    ) -> Result<Rc<Tensor>, Error> {
         let embedding_table: &Tensor = &self.embedding_table.deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
+        let mut output = Tensor::default();
         debug_assert_eq!(input.cols(), embedding_table.rows());
         let a = input;
         let b = &embedding_table;
-        let c = output;
+        let c = &mut output;
         c.reset(a.rows(), b.cols(), 0.0);
-        Tensor::matmul(accelerator, false, false, a, b, c, false)
+        Tensor::matmul(accelerator, false, false, a, b, c, false)?;
+        Ok(Rc::new(output))
     }
 
     fn backward(
         &self,
-        _inputs: &Vec<Tensor>,
+        _inputs: &Vec<Rc<Tensor>>,
         _accelerator: &Accelerator,
         _layer_delta: &Tensor,
         _previous_layer_delta: &mut Tensor,
@@ -71,8 +72,8 @@ impl OperatorTrait for Embedding {
         &self,
         accelerator: &Accelerator,
         _working_memory: &mut DeltaWorkingMemory,
-        _inputs: &Vec<Tensor>,
-        _layer_output: &Tensor,
+        _inputs: &Vec<Rc<Tensor>>,
+        _output: &Rc<Tensor>,
         back_propagated_delta: &Tensor,
         layer_delta: &mut Tensor,
     ) {

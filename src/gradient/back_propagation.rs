@@ -21,17 +21,17 @@ pub fn back_propagation(
     let tmp = &mut working_memory.tmp;
 
     let back_propagated_delta = &mut working_memory.back_propagated_delta;
-    next_layer_delta.assign(accelerator, &Default::default());
-    back_propagated_delta.assign(accelerator, next_layer_delta);
+    next_layer_delta.reset(1, 333, 0.0);
+    back_propagated_delta.reset(1, 444, 0.0);
 
     /*
-           simple dataset
-           Ok shapes
-           ----
-    Layer 8 next_layer_delta (0, 0)
-    After call to backward (0, 0)
-    After call to clip (0, 0)
-    Layer 7 next_layer_delta (0, 0)
+               simple dataset
+               Ok shapes
+               ----
+    Layer 8 next_layer_delta (1, 333)
+    After call to backward (1, 444)
+    After call to clip (1, 444)
+    Layer 7 next_layer_delta (1, 444)
     After call to backward (1, 16)
     After call to clip (1, 16)
     Layer 6 next_layer_delta (1, 16)
@@ -56,7 +56,8 @@ pub fn back_propagation(
     After call to backward (6, 32)
     After call to clip (6, 32)
 
-        */
+
+            */
     println!("----");
     for layer_index in (0..layers_count).into_iter().rev() {
         println!(

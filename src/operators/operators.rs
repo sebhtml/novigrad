@@ -15,8 +15,7 @@ impl Default for Operators {
         let accelerator = match Accelerator::cublas() {
             Ok(cublas) => {
                 println!("Using cublas");
-                //cublas;
-                Accelerator::cblas()
+                cublas
             }
             _ => {
                 println!("Using cblas");

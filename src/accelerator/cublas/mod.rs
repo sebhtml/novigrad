@@ -1,5 +1,7 @@
 use std::{ffi::c_void, sync::Arc};
 
+mod tests;
+
 use cudarc::{
     cublas::{
         result::create_handle,
@@ -73,7 +75,6 @@ impl AcceleratorInterface for CuBlas {
         let beta = &beta as *const f32;
 
         // TODO use impl Gemm<f32> for CudaBlas with DevicePtr<T>.
-
         let status = unsafe {
             cublasSgemmEx(
                 handle, transa, transb, m, n, k, alpha, a, a_type, lda, b, b_type, ldb, beta, c,

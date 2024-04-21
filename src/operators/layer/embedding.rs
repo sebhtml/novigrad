@@ -34,7 +34,7 @@ impl OperatorTrait for Embedding {
 
         let mut gradients = vec![];
         {
-            let mut gradient = Tensor::default();
+            let mut gradient = Tensor::new(0, 0, vec![0.0]);
             let input = &inputs[0];
             let a: &Tensor = layer_delta;
             let b: &Tensor = input;
@@ -59,7 +59,7 @@ impl OperatorTrait for Embedding {
         let embedding_table: &Tensor = &self.embedding_table.deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
-        let mut output = Tensor::default();
+        let mut output = Tensor::new(0, 0, vec![0.0]);
         debug_assert_eq!(input.cols(), embedding_table.rows());
         let a = input;
         let b = &embedding_table;

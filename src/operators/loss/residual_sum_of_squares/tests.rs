@@ -10,7 +10,7 @@ fn derive() {
         Tensor::new(1, 8, vec![-6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0]);
     let loss_function = ResidualSumOfSquares::default();
     let accelerator = Accelerator::cblas();
-    let mut actual_derived_loss = Tensor::default();
+    let mut actual_derived_loss = Tensor::new(0, 0, vec![0.0]);
     let op_result = loss_function.derive(
         &accelerator,
         &expected_tensor,

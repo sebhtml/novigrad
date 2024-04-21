@@ -52,7 +52,7 @@ impl OperatorTrait for Reshape {
         let input = &inputs[0];
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
-        let mut output = Tensor::default();
+        let mut output = Tensor::new(0, 0, vec![0.0]);
         output.assign(accelerator, input);
         output.reshape(self.output_rows, self.output_cols)?;
         Ok(Rc::new(output))

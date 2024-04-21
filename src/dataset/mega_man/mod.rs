@@ -21,8 +21,8 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
     let max_number_of_examples = 10;
-    let mut one_hot_encoded_tokens = Tensor::default();
-    let mut output_multiclass = Tensor::default();
+    let mut one_hot_encoded_tokens = Tensor::new(0, 0, vec![0.0]);
+    let mut output_multiclass = Tensor::new(0, 0, vec![0.0]);
     while i + context_size < tokens.len() && i < max_number_of_examples {
         let next_token_index = i + context_size;
         let input_tokens = &tokens[i..next_token_index];

@@ -27,7 +27,7 @@ impl LossFunction for ResidualSumOfSquares {
         if expected.shape() != actual.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        let mut diffs = Tensor::default();
+        let mut diffs = Tensor::new(0, 0, vec![0.0]);
         diffs.assign(accelerator, expected);
         Tensor::sub(accelerator, actual, &mut diffs)?;
         Tensor::dot_product(accelerator, &diffs, &diffs)

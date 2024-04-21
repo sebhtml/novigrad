@@ -2,8 +2,8 @@ use crate::{
     accelerator::{Accelerator, AcceleratorInterface, Layout, Transpose},
     Error,
 };
-use std::{fmt::Display, ops::Mul};
 use rustacuda::memory::cuda_malloc;
+use std::{fmt::Display, ops::Mul};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {
@@ -12,17 +12,8 @@ pub struct Tensor {
     values: Vec<f32>,
 }
 
-impl Default for Tensor {
-    fn default() -> Self {
-        Self {
-            rows: Default::default(),
-            cols: Default::default(),
-            values: Default::default(),
-        }
-    }
-}
-
 impl Tensor {
+    // TODO add device argument
     pub fn new(rows: usize, cols: usize, values: Vec<f32>) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
         Self { rows, cols, values }

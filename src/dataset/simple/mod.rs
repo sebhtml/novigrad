@@ -19,8 +19,8 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
     ));
 
     let num_classes = 16;
-    let mut one_hot_encoded_input = Tensor::default();
-    let mut one_hot_encoded_output = Tensor::default();
+    let mut one_hot_encoded_input = Tensor::new(0, 0, vec![0.0]);
+    let mut one_hot_encoded_output = Tensor::new(0, 0, vec![0.0]);
     let examples = examples
         .into_iter()
         .map(|example| {

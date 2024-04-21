@@ -130,7 +130,7 @@ impl OperatorTrait for Softmax {
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error> {
         let input = &inputs[0];
-        let mut output = Tensor::default();
+        let mut output = Tensor::new(0, 0, vec![0.0]);
         self.activate(input, &mut output)?;
         Ok(output.into())
     }

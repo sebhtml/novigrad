@@ -13,7 +13,7 @@ use cudarc::{
     driver::CudaDevice,
 };
 
-use crate::{AcceleratorInterface, Error, Layout, Transpose};
+use crate::{AcceleratorInterface, Error, Transpose};
 
 pub struct CuBlas {
     handle: cublasHandle_t,
@@ -45,8 +45,6 @@ impl AcceleratorInterface for CuBlas {
     // TODO return Result
     fn sgemm(
         &self,
-        // TODO remove Layout::Column
-        layout: Layout,
         transa: Transpose,
         transb: Transpose,
         m: i32,
@@ -61,7 +59,6 @@ impl AcceleratorInterface for CuBlas {
         c: &mut [f32],
         ldc: i32,
     ) {
-        debug_assert_eq!(layout, Layout::ColumnMajor);
         let handle = self.handle;
         let transa = transa.into();
         let transb = transb.into();

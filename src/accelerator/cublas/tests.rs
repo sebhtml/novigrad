@@ -2,7 +2,7 @@
 #[ignore]
 #[test]
 fn cublas_sgemm_column_major() {
-    use crate::accelerator::{AcceleratorInterface, Layout, Transpose};
+    use crate::accelerator::{AcceleratorInterface, Transpose};
     use crate::CuBlas;
 
     let (m, n, k) = (2, 4, 3);
@@ -30,7 +30,6 @@ fn cublas_sgemm_column_major() {
     let accelerator = CuBlas::try_default().unwrap();
 
     accelerator.sgemm(
-        Layout::ColumnMajor,
         Transpose::None,
         Transpose::None,
         m,

@@ -13,15 +13,6 @@ impl Default for CBlas {
     }
 }
 
-impl Into<Layout> for super::Layout {
-    fn into(self) -> cblas::Layout {
-        match self {
-            super::Layout::RowMajor => Layout::RowMajor,
-            super::Layout::ColumnMajor => Layout::ColumnMajor,
-        }
-    }
-}
-
 impl Into<Transpose> for super::Transpose {
     fn into(self) -> Transpose {
         match self {
@@ -35,7 +26,6 @@ impl Into<Transpose> for super::Transpose {
 impl AcceleratorInterface for CBlas {
     fn sgemm(
         &self,
-        layout: super::Layout,
         transa: super::Transpose,
         transb: super::Transpose,
         m: i32,
@@ -50,7 +40,7 @@ impl AcceleratorInterface for CBlas {
         c: &mut [f32],
         ldc: i32,
     ) {
-        let layout = layout.into();
+        let layout = Layout::ColumnMajor;
         let transa = transa.into();
         let transb = transb.into();
         unsafe {

@@ -5,12 +5,6 @@ pub use cublas::*;
 
 use crate::Error;
 
-#[derive(Debug, PartialEq)]
-pub enum Layout {
-    RowMajor,
-    ColumnMajor,
-}
-
 pub enum Transpose {
     None,
     Ordinary,
@@ -35,7 +29,6 @@ pub trait AcceleratorInterface {
     ///
     fn sgemm(
         &self,
-        layout: Layout,
         transa: Transpose,
         transb: Transpose,
         m: i32,
@@ -86,7 +79,6 @@ impl Accelerator {
 impl AcceleratorInterface for Accelerator {
     fn sgemm(
         &self,
-        layout: Layout,
         transa: Transpose,
         transb: Transpose,
         m: i32,
@@ -102,12 +94,12 @@ impl AcceleratorInterface for Accelerator {
         ldc: i32,
     ) {
         match self {
-            Accelerator::CBlas(accelerator) => accelerator.sgemm(
-                layout, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
-            ),
-            Accelerator::CuBlas(accelerator) => accelerator.sgemm(
-                layout, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
-            ),
+            Accelerator::CBlas(accelerator) => {
+                accelerator.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+            }
+            Accelerator::CuBlas(accelerator) => {
+                accelerator.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+            }
         }
     }
 

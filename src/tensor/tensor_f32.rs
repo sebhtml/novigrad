@@ -1,8 +1,8 @@
 use crate::{
-    accelerator::{Accelerator, AcceleratorInterface, Layout, Transpose},
+    accelerator::{Accelerator, AcceleratorInterface, Transpose},
     Error,
 };
-use rustacuda::memory::cuda_malloc;
+// use rustacuda::memory::cuda_malloc; //TODO use cuda_malloc
 use std::{fmt::Display, ops::Mul};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -178,7 +178,6 @@ impl Tensor {
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
             accelerator.sgemm(
-                Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::None,
                 n as i32,
@@ -201,7 +200,6 @@ impl Tensor {
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
             accelerator.sgemm(
-                Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::Ordinary,
                 n as i32,
@@ -225,7 +223,6 @@ impl Tensor {
             let (m, n, k) = (a.rows, b.rows, a.cols);
 
             accelerator.sgemm(
-                Layout::ColumnMajor,
                 Transpose::Ordinary,
                 Transpose::None,
                 n as i32,
@@ -249,7 +246,6 @@ impl Tensor {
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
             accelerator.sgemm(
-                Layout::ColumnMajor,
                 Transpose::Ordinary,
                 Transpose::Ordinary,
                 n as i32,
@@ -273,7 +269,6 @@ impl Tensor {
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
             accelerator.sgemm(
-                Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::None,
                 m as i32,
@@ -297,7 +292,6 @@ impl Tensor {
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
             accelerator.sgemm(
-                Layout::ColumnMajor,
                 Transpose::None,
                 Transpose::Ordinary,
                 m as i32,

@@ -8,7 +8,7 @@
 == Concat MR ==
 
 - store output tensor in operator
-
+- store gradients in output tensors during back prop
 - implement Concat
 - implement Matmul
 - implement Add

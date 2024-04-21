@@ -11,12 +11,15 @@ pub use back_propagation::*;
 
 pub trait OperatorTrait {
     fn name(&self) -> &str;
+
     fn compute_gradients(
         &self,
-        accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-        layer_output_delta: &Tensor,
-    ) -> Result<Vec<Gradient>, Error>;
+        _accelerator: &Accelerator,
+        _inputs: &Vec<Rc<Tensor>>,
+        _layer_output_delta: &Tensor,
+    ) -> Result<Vec<Gradient>, Error> {
+        Err(Error::UnsupportedOperation)
+    }
 
     fn forward(
         &self,
@@ -24,14 +27,14 @@ pub trait OperatorTrait {
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error>;
 
-    // TODO backward should return Error
     fn backward2(
         &self,
-        inputs: &Vec<Rc<Tensor>>,
-        accelerator: &Accelerator,
-        layer_output_delta: &Tensor,
-        previous_layer_output_delta: &mut Tensor,
-    );
+        _inputs: &Vec<Rc<Tensor>>,
+        _accelerator: &Accelerator,
+        _layer_output_delta: &Tensor,
+        _previous_layer_output_delta: &mut Tensor,
+    ) {
+    }
 
     fn backward(
         &self,
@@ -57,16 +60,16 @@ pub trait OperatorTrait {
         Ok((back_propagated_delta.clone(), operator_gradients))
     }
 
-    // TODO get_layer_delta should return Error
     fn get_layer_output_delta(
         &self,
-        accelerator: &Accelerator,
-        working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<Tensor>>,
-        output: &Rc<Tensor>,
-        back_propagated_layer_output_delta: &Tensor,
-        layer_output_delta: &mut Tensor,
-    );
+        _accelerator: &Accelerator,
+        _working_memory: &mut DeltaWorkingMemory,
+        _inputs: &Vec<Rc<Tensor>>,
+        _output: &Rc<Tensor>,
+        _back_propagated_layer_output_delta: &Tensor,
+        _layer_output_delta: &mut Tensor,
+    ) {
+    }
 }
 
 pub trait Forward {

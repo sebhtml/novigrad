@@ -3,6 +3,7 @@ use crate::{
     Error,
 };
 use std::{fmt::Display, ops::Mul};
+use rustacuda::memory::cuda_malloc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tensor {

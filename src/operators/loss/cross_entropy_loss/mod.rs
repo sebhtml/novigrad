@@ -63,21 +63,12 @@ impl OperatorTrait for CrossEntropyLoss {
     fn backward(
         &self,
         accelerator: &Accelerator,
-        error_working_memory: &mut DeltaWorkingMemory,
+        _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
-        output: &Rc<Tensor>,
+        _output: &Rc<Tensor>,
         back_propagated_delta: &mut Tensor,
-        layer_delta: &mut Tensor,
+        _layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
-        self.get_layer_output_delta(
-            accelerator,
-            error_working_memory,
-            inputs,
-            output,
-            back_propagated_delta,
-            layer_delta,
-        );
-
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
         let actual = &inputs[1];

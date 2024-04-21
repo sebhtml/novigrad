@@ -68,14 +68,6 @@ impl OperatorTrait for Sigmoid {
         back_propagated_delta: &mut Tensor,
         layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
-        self.get_layer_output_delta(
-            accelerator,
-            error_working_memory,
-            inputs,
-            output,
-            back_propagated_delta,
-            layer_delta,
-        );
         {
             // Compute activation function derivative.
             let input = &inputs[0];

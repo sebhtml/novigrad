@@ -55,18 +55,12 @@ impl OperatorTrait for ResidualSumOfSquares {
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
         back_propagated_delta: &mut Tensor,
-        layer_delta: &mut Tensor,
+        _layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
-        {
-            layer_delta.assign(accelerator, back_propagated_delta)
-        }
-
-        {
-            debug_assert_eq!(inputs.len(), 2);
-            let expected = &inputs[0];
-            let actual = &inputs[1];
-            self.derive(accelerator, expected, actual, back_propagated_delta)?;
-        }
+        debug_assert_eq!(inputs.len(), 2);
+        let expected = &inputs[0];
+        let actual = &inputs[1];
+        self.derive(accelerator, expected, actual, back_propagated_delta)?;
 
         Ok((back_propagated_delta.clone(), vec![]))
     }

@@ -26,13 +26,21 @@ impl Reshape {
 }
 
 impl OperatorTrait for Reshape {
-    fn compute_gradients(
+    fn backward(
         &self,
-        _accelerator: &Accelerator,
+        accelerator: &Accelerator,
+        _error_working_memory: &mut DeltaWorkingMemory,
         _inputs: &Vec<Rc<Tensor>>,
-        _layer_output_delta: &Tensor,
-    ) -> Result<Vec<Gradient>, Error> {
-        Ok(vec![])
+        _output: &Rc<Tensor>,
+        back_propagated_delta: &mut Tensor,
+        layer_delta: &mut Tensor,
+    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        layer_delta.assign(accelerator, back_propagated_delta);
+        layer_delta.reshape(self.input_rows, self.input_cols)?;
+
+        back_propagated_delta.assign(accelerator, layer_delta);
+
+        Ok((back_propagated_delta.clone(), vec![]))
     }
 
     fn forward(
@@ -48,30 +56,6 @@ impl OperatorTrait for Reshape {
         output.assign(accelerator, input);
         output.reshape(self.output_rows, self.output_cols)?;
         Ok(Rc::new(output))
-    }
-
-    fn backward2(
-        &self,
-        _inputs: &Vec<Rc<Tensor>>,
-        accelerator: &Accelerator,
-        layer_delta: &Tensor,
-        output_diff: &mut Tensor,
-    ) {
-        output_diff.assign(accelerator, layer_delta);
-    }
-
-    fn get_layer_output_delta(
-        &self,
-        accelerator: &Accelerator,
-        _working_memory: &mut DeltaWorkingMemory,
-        _inputs: &Vec<Rc<Tensor>>,
-        _output: &Rc<Tensor>,
-        back_propagated_delta: &Tensor,
-        layer_delta: &mut Tensor,
-    ) {
-        layer_delta.assign(accelerator, back_propagated_delta);
-        let op_result = layer_delta.reshape(self.input_rows, self.input_cols);
-        op_result.expect("Ok");
     }
 
     fn name(&self) -> &str {

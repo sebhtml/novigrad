@@ -71,58 +71,47 @@ impl OperatorTrait for Linear {
         Ok(Rc::new(output))
     }
 
-    fn backward2(
-        &self,
-        _inputs: &Vec<Rc<Tensor>>,
-        accelerator: &Accelerator,
-        layer_output_delta: &Tensor,
-        previous_layer_output_delta: &mut Tensor,
-    ) {
-        let weights: &Tensor = &self.weights.deref().borrow();
-        let a = weights;
-        let b = layer_output_delta;
-        let c = previous_layer_output_delta;
-        c.reset(b.rows(), a.cols(), 0.0);
-        let op_result = Tensor::matmul(accelerator, true, true, a, b, c, true);
-
-        op_result.expect("Ok");
-    }
-
-    fn get_layer_output_delta(
+    fn backward(
         &self,
         accelerator: &Accelerator,
-        _working_memory: &mut DeltaWorkingMemory,
-        _inputs: &Vec<Rc<Tensor>>,
-        _output: &Rc<Tensor>,
-        back_propagated_delta: &Tensor,
-        layer_delta: &mut Tensor,
-    ) {
-        layer_delta.assign(accelerator, back_propagated_delta)
-    }
-
-    fn compute_gradients(
-        &self,
-        accelerator: &Accelerator,
+        _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
-        layer_output_delta: &Tensor,
-    ) -> Result<Vec<Gradient>, Error> {
+        _output: &Rc<Tensor>,
+        back_propagated_delta: &mut Tensor,
+        layer_delta: &mut Tensor,
+    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        {
+            layer_delta.assign(accelerator, back_propagated_delta);
+        }
+
         let mut gradients = vec![];
-        let mut weights_gradient = Tensor::default();
-        let mut biases_gradient = Tensor::default();
-        let layer_input = &inputs[0];
-        let a = layer_input;
-        let b = layer_output_delta;
-        let c = &mut weights_gradient;
-        c.reset(b.cols(), a.cols(), 0.0);
-        let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
-        op_result.expect("Ok");
+        {
+            let mut weights_gradient = Tensor::default();
+            let mut biases_gradient = Tensor::default();
+            let input = &inputs[0];
+            let a: &Tensor = input;
+            let b: &Tensor = layer_delta;
+            let c: &mut Tensor = &mut weights_gradient;
+            c.reset(b.cols(), a.cols(), 0.0);
+            let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
+            op_result.expect("Ok");
 
-        biases_gradient.assign(accelerator, layer_output_delta);
+            biases_gradient.assign(accelerator, layer_delta);
 
-        gradients.push(Gradient::new(self.weights.clone(), weights_gradient));
-        gradients.push(Gradient::new(self.biases.clone(), biases_gradient));
+            gradients.push(Gradient::new(self.weights.clone(), weights_gradient));
+            gradients.push(Gradient::new(self.biases.clone(), biases_gradient));
+        }
 
-        Ok(gradients)
+        {
+            let weights: &Tensor = &self.weights.deref().borrow();
+            let a: &Tensor = weights;
+            let b: &Tensor = layer_delta;
+            let c: &mut Tensor = back_propagated_delta;
+            c.reset(b.rows(), a.cols(), 0.0);
+            Tensor::matmul(accelerator, true, true, a, b, c, true)?;
+        }
+
+        Ok((back_propagated_delta.clone(), gradients))
     }
 
     fn name(&self) -> &str {

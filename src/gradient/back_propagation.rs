@@ -1,8 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{
-    Accelerator, DeltaWorkingMemory, Error, Gradient, Record, Tape, Tensor, TrainWorkingMemory,
-};
+use crate::{Accelerator, DeltaWorkingMemory, Error, Gradient, Record, Tape, TrainWorkingMemory};
 
 use crate::gradient::OperatorTrait;
 
@@ -28,8 +26,7 @@ pub fn back_propagation(
         let output = record.output();
         let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
 
-        let (back_propagated_gradient, operator_gradients) = backward(
-            operator,
+        let (back_propagated_gradient, operator_gradients) = operator.backward(
             accelerator,
             error_working_memory,
             inputs,
@@ -48,28 +45,4 @@ pub fn back_propagation(
         }
     }
     Ok(gradients)
-}
-
-fn backward(
-    operator: &Box<dyn OperatorTrait>,
-    accelerator: &Accelerator,
-    error_working_memory: &mut DeltaWorkingMemory,
-    inputs: &Vec<Rc<Tensor>>,
-    output: &Rc<Tensor>,
-    back_propagated_delta: &mut Tensor,
-    layer_delta: &mut Tensor,
-) -> Result<(Tensor, Vec<Gradient>), Error> {
-    operator.get_layer_output_delta(
-        accelerator,
-        error_working_memory,
-        inputs,
-        output,
-        back_propagated_delta,
-        layer_delta,
-    );
-
-    let operator_gradients = operator.compute_gradients(accelerator, inputs, layer_delta)?;
-    operator.backward2(inputs, accelerator, layer_delta, back_propagated_delta);
-
-    Ok((back_propagated_delta.clone(), operator_gradients))
 }

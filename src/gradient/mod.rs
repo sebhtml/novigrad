@@ -33,6 +33,30 @@ pub trait OperatorTrait {
         previous_layer_output_delta: &mut Tensor,
     );
 
+    fn backward(
+        &self,
+        accelerator: &Accelerator,
+        error_working_memory: &mut DeltaWorkingMemory,
+        inputs: &Vec<Rc<Tensor>>,
+        output: &Rc<Tensor>,
+        back_propagated_delta: &mut Tensor,
+        layer_delta: &mut Tensor,
+    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        self.get_layer_output_delta(
+            accelerator,
+            error_working_memory,
+            inputs,
+            output,
+            back_propagated_delta,
+            layer_delta,
+        );
+
+        let operator_gradients = self.compute_gradients(accelerator, inputs, layer_delta)?;
+        self.backward2(inputs, accelerator, layer_delta, back_propagated_delta);
+
+        Ok((back_propagated_delta.clone(), operator_gradients))
+    }
+
     // TODO get_layer_delta should return Error
     fn get_layer_output_delta(
         &self,

@@ -1,6 +1,11 @@
 mod cblas;
 pub use cblas::*;
+mod cublas;
+pub use cublas::*;
 
+use crate::Error;
+
+#[derive(Debug, PartialEq)]
 pub enum Layout {
     RowMajor,
     ColumnMajor,
@@ -62,11 +67,18 @@ pub trait AcceleratorInterface {
 
 pub enum Accelerator {
     CBlas(CBlas),
+    CuBlas(CuBlas),
 }
 
-impl Default for Accelerator {
-    fn default() -> Self {
-        Accelerator::CBlas(Default::default())
+impl Accelerator {
+    pub fn cblas() -> Self {
+        Accelerator::CBlas(CBlas::default())
+    }
+    pub fn cublas() -> Result<Self, Error> {
+        match CuBlas::try_default() {
+            Ok(cublas) => Ok(Accelerator::CuBlas(cublas)),
+            Err(error) => Err(error),
+        }
     }
 }
 
@@ -93,30 +105,37 @@ impl AcceleratorInterface for Accelerator {
             Accelerator::CBlas(accelerator) => accelerator.sgemm(
                 layout, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
             ),
+            Accelerator::CuBlas(accelerator) => accelerator.sgemm(
+                layout, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
+            ),
         }
     }
 
     fn sdot(&self, n: i32, x: &[f32], incx: i32, y: &[f32], incy: i32) -> f32 {
         match self {
             Accelerator::CBlas(accelerator) => accelerator.sdot(n, x, incx, y, incy),
+            Accelerator::CuBlas(accelerator) => accelerator.sdot(n, x, incx, y, incy),
         }
     }
 
     fn scopy(&self, n: i32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
             Accelerator::CBlas(accelerator) => accelerator.scopy(n, x, incx, y, incy),
+            Accelerator::CuBlas(accelerator) => accelerator.scopy(n, x, incx, y, incy),
         }
     }
 
     fn saxpy(&self, n: i32, alpha: f32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
             Accelerator::CBlas(accelerator) => accelerator.saxpy(n, alpha, x, incx, y, incy),
+            Accelerator::CuBlas(accelerator) => accelerator.saxpy(n, alpha, x, incx, y, incy),
         }
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: &mut [f32], incx: i32) {
         match self {
             Accelerator::CBlas(accelerator) => accelerator.sscal(n, alpha, x, incx),
+            Accelerator::CuBlas(accelerator) => accelerator.sscal(n, alpha, x, incx),
         }
     }
 }

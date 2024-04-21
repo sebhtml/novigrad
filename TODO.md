@@ -1,10 +1,10 @@
-== cuda MR ==
-- add Blas implementation for CuBlas using https://crates.io/crates/cudarc
-
-== Concat MR ==
+== gradient MR ==
 
 - store output tensor in operator
 - store gradients in output tensors during back prop
+
+== Concat MR ==
+
 - implement Concat
 - implement Matmul
 - implement Add

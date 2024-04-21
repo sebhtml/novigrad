@@ -12,8 +12,19 @@ pub struct Operators {
 
 impl Default for Operators {
     fn default() -> Self {
+        let accelerator = match Accelerator::cublas() {
+            Ok(cublas) => {
+                println!("Using cublas");
+                //cublas;
+                Accelerator::cblas()
+            }
+            _ => {
+                println!("Using cblas");
+                Accelerator::cblas()
+            }
+        };
         Self {
-            accelerator: Default::default(),
+            accelerator: accelerator.into(),
             tape: Default::default(),
         }
     }

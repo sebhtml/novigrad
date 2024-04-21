@@ -16,7 +16,6 @@ pub fn back_propagation(
     let tape: &Tape = &tape.deref().borrow();
     let records: &Vec<Record> = &tape.records();
     let layers_count = { tape.records().len() };
-    let tmp = &mut working_memory.tmp;
 
     let back_propagated_delta = &mut working_memory.back_propagated_delta;
     back_propagated_delta.reset(0, 0, Default::default());
@@ -27,25 +26,30 @@ pub fn back_propagation(
         let output = record.output();
         let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
 
-        operator.get_layer_output_delta(
-            accelerator,
-            error_working_memory,
-            inputs,
-            output,
-            back_propagated_delta,
-            layer_delta,
-        );
+        let (back_propagated_gradient, operator_gradients) = {
+            operator.get_layer_output_delta(
+                accelerator,
+                error_working_memory,
+                inputs,
+                output,
+                back_propagated_delta,
+                layer_delta,
+            );
 
-        let mut operator_gradients =
-            operator.compute_gradients(accelerator, inputs, layer_delta)?;
+            let operator_gradients =
+                operator.compute_gradients(accelerator, inputs, layer_delta)?;
+            operator.backward(inputs, accelerator, layer_delta, back_propagated_delta);
+            (back_propagated_delta.clone(), operator_gradients)
+        };
+
+        back_propagated_gradient.clip(-1.0, 1.0, back_propagated_delta);
 
         if operator_gradients.len() > 0 {
             debug_assert_eq!(layer_delta.shape(), output.shape());
-            gradients.append(&mut operator_gradients);
         }
-
-        operator.backward(inputs, accelerator, layer_delta, tmp);
-        tmp.clip(-1.0, 1.0, back_propagated_delta);
+        for gradient in operator_gradients {
+            gradients.push(gradient);
+        }
     }
     Ok(gradients)
 }

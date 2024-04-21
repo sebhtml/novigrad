@@ -1,5 +1,5 @@
 use crate::accelerator::Accelerator;
-use crate::{ActivationFunction, OperatorTrait, Tensor};
+use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
 use crate::{Error, Gradient};
 use std::f32::consts::E;
 use std::rc::Rc;
@@ -96,13 +96,32 @@ impl ActivationFunction for Softmax {
 }
 
 impl OperatorTrait for Softmax {
-    fn compute_gradients(
+    fn backward(
         &self,
-        _accelerator: &Accelerator,
-        _inputs: &Vec<Rc<Tensor>>,
-        _layer_output_delta: &Tensor,
-    ) -> Result<Vec<Gradient>, Error> {
-        Ok(vec![])
+        accelerator: &Accelerator,
+        error_working_memory: &mut DeltaWorkingMemory,
+        inputs: &Vec<Rc<Tensor>>,
+        output: &Rc<Tensor>,
+        back_propagated_delta: &mut Tensor,
+        layer_delta: &mut Tensor,
+    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        {
+            // Compute activation function derivative.
+            if self.using_cross_entropy_loss {
+                // Softmax and Cross Entropy Loss are best friends.
+                layer_delta.assign(accelerator, &back_propagated_delta);
+            } else {
+                let input = &inputs[0];
+                let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
+                self.derive(input, output, layer_f_derivative)?;
+
+                layer_f_derivative.element_wise_mul(back_propagated_delta, layer_delta)?;
+            }
+        }
+
+        back_propagated_delta.assign(accelerator, layer_delta);
+
+        Ok((back_propagated_delta.clone(), vec![]))
     }
 
     fn forward(
@@ -114,39 +133,6 @@ impl OperatorTrait for Softmax {
         let mut output = Tensor::default();
         self.activate(input, &mut output)?;
         Ok(output.into())
-    }
-
-    fn backward2(
-        &self,
-        _inputs: &Vec<Rc<Tensor>>,
-        accelerator: &Accelerator,
-        layer_delta: &Tensor,
-        previous_layer_delta: &mut Tensor,
-    ) {
-        previous_layer_delta.assign(accelerator, layer_delta)
-    }
-
-    fn get_layer_output_delta(
-        &self,
-        accelerator: &Accelerator,
-        working_memory: &mut crate::DeltaWorkingMemory,
-        inputs: &Vec<Rc<Tensor>>,
-        output: &Rc<Tensor>,
-        back_propagated_delta: &Tensor,
-        layer_delta: &mut Tensor,
-    ) {
-        // Compute activation function derivative.
-        if self.using_cross_entropy_loss {
-            // Softmax and Cross Entropy Loss are best friends.
-            layer_delta.assign(accelerator, &back_propagated_delta);
-        } else {
-            let input = &inputs[0];
-            let layer_f_derivative = &mut working_memory.layer_f_derivative;
-            let op_result = self.derive(input, output, layer_f_derivative);
-            op_result.expect("Ok");
-            let op_result = layer_f_derivative.element_wise_mul(back_propagated_delta, layer_delta);
-            op_result.expect("Ok");
-        }
     }
 
     fn name(&self) -> &str {

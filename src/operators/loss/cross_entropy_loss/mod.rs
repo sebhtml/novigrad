@@ -82,7 +82,7 @@ impl OperatorTrait for CrossEntropyLoss {
         Ok(Rc::new(output))
     }
 
-    fn backward(
+    fn backward2(
         &self,
         inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,

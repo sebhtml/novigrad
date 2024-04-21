@@ -69,7 +69,7 @@ fn backward(
     );
 
     let operator_gradients = operator.compute_gradients(accelerator, inputs, layer_delta)?;
-    operator.backward(inputs, accelerator, layer_delta, back_propagated_delta);
+    operator.backward2(inputs, accelerator, layer_delta, back_propagated_delta);
 
     Ok((back_propagated_delta.clone(), operator_gradients))
 }

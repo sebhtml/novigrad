@@ -70,7 +70,7 @@ impl OperatorTrait for ResidualSumOfSquares {
         Ok(output.into())
     }
 
-    fn backward(
+    fn backward2(
         &self,
         inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,

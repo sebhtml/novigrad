@@ -65,7 +65,7 @@ impl Operator {
         previous_layer_output_delta: &mut Tensor,
     ) {
         let variant = &mut *self.variant.deref().borrow_mut();
-        variant.backward(
+        variant.backward2(
             inputs,
             self.accelerator.deref(),
             layer_output_delta,

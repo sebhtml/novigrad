@@ -116,7 +116,7 @@ impl OperatorTrait for Softmax {
         Ok(output.into())
     }
 
-    fn backward(
+    fn backward2(
         &self,
         _inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,

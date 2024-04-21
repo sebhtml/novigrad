@@ -79,7 +79,7 @@ impl OperatorTrait for Sigmoid {
         Ok(Rc::new(output))
     }
 
-    fn backward(
+    fn backward2(
         &self,
         _inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,

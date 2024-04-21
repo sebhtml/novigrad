@@ -21,6 +21,6 @@ impl OptimizerTrait for Optimizer {
 
 impl Default for Optimizer {
     fn default() -> Self {
-        Self::GradientDescent(Default::default())
+        Self::GradientDescent(GradientDescent::default())
     }
 }

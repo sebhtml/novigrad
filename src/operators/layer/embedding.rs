@@ -19,29 +19,40 @@ impl Embedding {
 }
 
 impl OperatorTrait for Embedding {
-    fn compute_gradients(
-        &mut self,
+    fn backward(
+        &self,
         accelerator: &Accelerator,
+        _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
-        layer_output_delta: &Tensor,
-    ) -> Result<Vec<Gradient>, Error> {
+        _output: &Rc<Tensor>,
+        back_propagated_delta: &mut Tensor,
+        layer_delta: &mut Tensor,
+    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        {
+            layer_delta.assign(accelerator, back_propagated_delta);
+        }
+
         let mut gradients = vec![];
-        let mut gradient = Tensor::default();
-        let layer_input = &inputs[0];
-        let a = layer_output_delta;
-        let b = layer_input;
-        let c = &mut gradient;
-        c.reset(b.cols(), a.cols(), 0.0);
-        let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
-        op_result.expect("Ok");
+        {
+            let mut gradient = Tensor::default();
+            let input = &inputs[0];
+            let a: &Tensor = layer_delta;
+            let b: &Tensor = input;
+            let c: &mut Tensor = &mut gradient;
+            c.reset(b.cols(), a.cols(), 0.0);
+            let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
+            op_result.expect("Ok");
 
-        gradients.push(Gradient::new(self.embedding_table.clone(), gradient));
+            gradients.push(Gradient::new(self.embedding_table.clone(), gradient));
+        }
 
-        Ok(gradients)
+        back_propagated_delta.assign(accelerator, layer_delta);
+
+        Ok((back_propagated_delta.clone(), gradients))
     }
 
     fn forward(
-        &mut self,
+        &self,
         accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error> {
@@ -56,28 +67,6 @@ impl OperatorTrait for Embedding {
         c.reset(a.rows(), b.cols(), 0.0);
         Tensor::matmul(accelerator, false, false, a, b, c, false)?;
         Ok(Rc::new(output))
-    }
-
-    fn backward(
-        &self,
-        _inputs: &Vec<Rc<Tensor>>,
-        _accelerator: &Accelerator,
-        _layer_delta: &Tensor,
-        _previous_layer_delta: &mut Tensor,
-    ) {
-        panic!("Embedding can not go backward !");
-    }
-
-    fn get_layer_output_delta(
-        &self,
-        accelerator: &Accelerator,
-        _working_memory: &mut DeltaWorkingMemory,
-        _inputs: &Vec<Rc<Tensor>>,
-        _output: &Rc<Tensor>,
-        back_propagated_delta: &Tensor,
-        layer_delta: &mut Tensor,
-    ) {
-        layer_delta.assign(accelerator, back_propagated_delta)
     }
 
     fn name(&self) -> &str {

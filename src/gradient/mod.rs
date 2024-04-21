@@ -11,38 +11,22 @@ pub use back_propagation::*;
 
 pub trait OperatorTrait {
     fn name(&self) -> &str;
-    fn compute_gradients(
-        &mut self,
-        accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-        layer_output_delta: &Tensor,
-    ) -> Result<Vec<Gradient>, Error>;
 
     fn forward(
-        &mut self,
+        &self,
         accelerator: &Accelerator,
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error>;
 
-    // TODO backward should return Error
     fn backward(
         &self,
-        inputs: &Vec<Rc<Tensor>>,
         accelerator: &Accelerator,
-        layer_output_delta: &Tensor,
-        previous_layer_output_delta: &mut Tensor,
-    );
-
-    // TODO get_layer_delta should return Error
-    fn get_layer_output_delta(
-        &self,
-        accelerator: &Accelerator,
-        working_memory: &mut DeltaWorkingMemory,
+        error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         output: &Rc<Tensor>,
-        back_propagated_layer_output_delta: &Tensor,
-        layer_output_delta: &mut Tensor,
-    );
+        back_propagated_delta: &mut Tensor,
+        layer_delta: &mut Tensor,
+    ) -> Result<(Tensor, Vec<Gradient>), Error>;
 }
 
 pub trait Forward {

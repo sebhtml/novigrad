@@ -3,13 +3,39 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{OperatorTrait, Tensor};
 
 pub struct Record {
-    pub operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
-    pub inputs: Vec<Rc<Tensor>>,
-    pub output: Rc<Tensor>,
+    operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
+    inputs: Vec<Rc<Tensor>>,
+    output: Rc<Tensor>,
+}
+
+impl Record {
+    pub fn new(
+        operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
+        inputs: Vec<Rc<Tensor>>,
+        output: Rc<Tensor>,
+    ) -> Self {
+        Self {
+            operator,
+            inputs,
+            output,
+        }
+    }
+
+    pub fn operator(&self) -> &Rc<RefCell<Box<dyn OperatorTrait>>> {
+        &self.operator
+    }
+
+    pub fn inputs(&self) -> &Vec<Rc<Tensor>> {
+        &self.inputs
+    }
+
+    pub fn output(&self) -> &Rc<Tensor> {
+        &self.output
+    }
 }
 
 pub struct Tape {
-    pub records: Vec<Record>,
+    records: Vec<Record>,
 }
 
 impl Default for Tape {
@@ -27,11 +53,11 @@ impl Tape {
         inputs: Vec<Rc<Tensor>>,
         output: Rc<Tensor>,
     ) {
-        self.records.push(Record {
-            operator,
-            inputs,
-            output,
-        })
+        self.records.push(Record::new(operator, inputs, output))
+    }
+
+    pub fn records(&self) -> &Vec<Record> {
+        &self.records
     }
 
     pub fn clear(&mut self) {

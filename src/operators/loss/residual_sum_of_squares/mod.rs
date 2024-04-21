@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{accelerator::Accelerator, Error, Gradient, OperatorTrait, Tensor};
+use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 use super::LossFunction;
 
@@ -48,13 +48,27 @@ impl LossFunction for ResidualSumOfSquares {
 }
 
 impl OperatorTrait for ResidualSumOfSquares {
-    fn compute_gradients(
+    fn backward(
         &self,
-        _accelerator: &Accelerator,
-        _inputs: &Vec<Rc<Tensor>>,
-        _layer_output_delta: &Tensor,
-    ) -> Result<Vec<Gradient>, Error> {
-        Ok(vec![])
+        accelerator: &Accelerator,
+        _error_working_memory: &mut DeltaWorkingMemory,
+        inputs: &Vec<Rc<Tensor>>,
+        _output: &Rc<Tensor>,
+        back_propagated_delta: &mut Tensor,
+        layer_delta: &mut Tensor,
+    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        {
+            layer_delta.assign(accelerator, back_propagated_delta)
+        }
+
+        {
+            debug_assert_eq!(inputs.len(), 2);
+            let expected = &inputs[0];
+            let actual = &inputs[1];
+            self.derive(accelerator, expected, actual, back_propagated_delta)?;
+        }
+
+        Ok((back_propagated_delta.clone(), vec![]))
     }
 
     fn forward(
@@ -68,32 +82,6 @@ impl OperatorTrait for ResidualSumOfSquares {
         let loss = self.evaluate(accelerator, expected, actual)?;
         let output = Tensor::new(1, 1, vec![loss]);
         Ok(output.into())
-    }
-
-    fn backward2(
-        &self,
-        inputs: &Vec<Rc<Tensor>>,
-        accelerator: &Accelerator,
-        _layer_output_delta: &Tensor,
-        previous_layer_output_delta: &mut Tensor,
-    ) {
-        debug_assert_eq!(inputs.len(), 2);
-        let expected = &inputs[0];
-        let actual = &inputs[1];
-        let op_result = self.derive(accelerator, expected, actual, previous_layer_output_delta);
-        op_result.expect("Ok");
-    }
-
-    fn get_layer_output_delta(
-        &self,
-        accelerator: &Accelerator,
-        _working_memory: &mut crate::DeltaWorkingMemory,
-        _inputs: &Vec<Rc<Tensor>>,
-        _output: &Rc<Tensor>,
-        back_propagated_layer_output_delta: &Tensor,
-        layer_output_delta: &mut Tensor,
-    ) {
-        layer_output_delta.assign(accelerator, back_propagated_layer_output_delta)
     }
 
     fn name(&self) -> &str {

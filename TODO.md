@@ -1,7 +1,3 @@
-== backward MR ==
-
-- group compute_gradients, get_layer_output_delta with backward in OperatorTrait
-
 == cuda MR ==
 - add Blas implementation for CuBlas using https://crates.io/crates/cudarc
 

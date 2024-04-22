@@ -1,8 +1,7 @@
 == CUDA MR ==
 
 - pass Tensor to Device
-- rename accelerator to device
-- create tensor using device
+- create tensors with device
 - store Tensor on Device Cuda
 
 == gradient MR ==

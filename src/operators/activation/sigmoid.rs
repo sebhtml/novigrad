@@ -1,4 +1,4 @@
-use crate::accelerator::Accelerator;
+use crate::devices::Device;
 use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
 use crate::{Error, Gradient};
 use std::f32::consts::E;
@@ -61,7 +61,7 @@ impl ActivationFunction for Sigmoid {
 impl OperatorTrait for Sigmoid {
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        accelerator: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         output: &Rc<Tensor>,
@@ -83,7 +83,7 @@ impl OperatorTrait for Sigmoid {
 
     fn forward(
         &self,
-        _accelerator: &Accelerator,
+        _accelerator: &Device,
         inputs: &Vec<Rc<Tensor>>,
     ) -> Result<Rc<Tensor>, Error> {
         let input = &inputs[0];

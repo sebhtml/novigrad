@@ -1,5 +1,5 @@
 use crate::{
-    accelerator::{Accelerator, AcceleratorInterface, Transpose},
+    devices::{Device, DeviceInterface, Transpose},
     Error,
 };
 // use rustacuda::memory::cuda_malloc; //TODO use cuda_malloc
@@ -87,7 +87,7 @@ impl Tensor {
         self.values[index] = value;
     }
 
-    pub fn assign(&mut self, accelerator: &Accelerator, from: &Tensor) {
+    pub fn assign(&mut self, accelerator: &Device, from: &Tensor) {
         self.reset(from.rows, from.cols, 0.0);
         Tensor::copy(accelerator, from, self);
     }
@@ -117,7 +117,7 @@ impl Tensor {
         self.operation::<F32Mul>(right, result)
     }
 
-    pub fn dot_product(accelerator: &Accelerator, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    pub fn dot_product(accelerator: &Device, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -128,7 +128,7 @@ impl Tensor {
         let incy = 1;
         Ok(accelerator.sdot(n, x, incx, y, incy))
     }
-    fn copy(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) {
+    fn copy(accelerator: &Device, x: &Tensor, y: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &x.values;
         let incx = 1;
@@ -138,7 +138,7 @@ impl Tensor {
     }
 
     pub fn matmul(
-        accelerator: &Accelerator,
+        accelerator: &Device,
         transa: bool,
         transb: bool,
         a: &Tensor,
@@ -162,7 +162,7 @@ impl Tensor {
     }
 
     pub fn gemm(
-        accelerator: &Accelerator,
+        accelerator: &Device,
         transa: bool,
         transb: bool,
         alpha: f32,
@@ -313,18 +313,18 @@ impl Tensor {
         }
     }
 
-    pub fn sub(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn sub(accelerator: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         let alpha = -1.0;
         Self::saxpy(accelerator, alpha, x, y)
     }
 
-    pub fn add(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn add(accelerator: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         let alpha = 1.0;
         Self::saxpy(accelerator, alpha, x, y)
     }
 
     pub fn saxpy(
-        accelerator: &Accelerator,
+        accelerator: &Device,
         alpha: f32,
         x: &Tensor,
         y: &mut Tensor,
@@ -355,7 +355,7 @@ impl Tensor {
         }
     }
 
-    pub fn scalar_mul(accelerator: &Accelerator, alpha: f32, x: &mut Tensor) {
+    pub fn scalar_mul(accelerator: &Device, alpha: f32, x: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &mut x.values;
         let incx = 1;

@@ -1,4 +1,4 @@
-use crate::{Accelerator, Error, Forward, Operator, Operators, Tape, Tensor};
+use crate::{Device, Error, Forward, Operator, Operators, Tape, Tensor};
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Architecture {
@@ -40,7 +40,7 @@ impl Forward for Architecture {
         Ok(x)
     }
 
-    fn accelerator(&self) -> Rc<Accelerator> {
+    fn accelerator(&self) -> Rc<Device> {
         self.embedding.accelerator()
     }
 

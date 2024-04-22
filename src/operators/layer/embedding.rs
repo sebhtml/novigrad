@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
@@ -21,7 +21,7 @@ impl Embedding {
 impl OperatorTrait for Embedding {
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        accelerator: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
@@ -51,11 +51,7 @@ impl OperatorTrait for Embedding {
         Ok((back_propagated_delta.clone(), gradients))
     }
 
-    fn forward(
-        &self,
-        accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-    ) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, accelerator: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         let embedding_table: &Tensor = &self.embedding_table.deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];

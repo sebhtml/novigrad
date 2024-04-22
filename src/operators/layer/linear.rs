@@ -2,7 +2,7 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 pub struct Linear {
     weights: Rc<RefCell<Tensor>>,
@@ -35,11 +35,7 @@ impl Linear {
 }
 
 impl OperatorTrait for Linear {
-    fn forward(
-        &self,
-        accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-    ) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, accelerator: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
         let mut output = Tensor::new(0, 0, vec![0.0]);
@@ -73,7 +69,7 @@ impl OperatorTrait for Linear {
 
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        accelerator: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,

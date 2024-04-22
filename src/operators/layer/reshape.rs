@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 pub struct Reshape {
     input_rows: usize,
@@ -28,7 +28,7 @@ impl Reshape {
 impl OperatorTrait for Reshape {
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        accelerator: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         _inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
@@ -43,11 +43,7 @@ impl OperatorTrait for Reshape {
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(
-        &self,
-        accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-    ) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, accelerator: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
         debug_assert_eq!(input.rows(), self.input_rows);

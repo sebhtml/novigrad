@@ -1,26 +1,26 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    Accelerator, CrossEntropyLoss, Embedding, Linear, Operator, Reshape, ResidualSumOfSquares,
-    Sigmoid, Softmax, Tape,
+    CrossEntropyLoss, Device, Embedding, Linear, Operator, Reshape, ResidualSumOfSquares, Sigmoid,
+    Softmax, Tape,
 };
 
 pub struct Operators {
-    accelerator: Rc<Accelerator>,
+    accelerator: Rc<Device>,
     tape: Rc<RefCell<Tape>>,
 }
 
 impl Default for Operators {
     fn default() -> Self {
-        let accelerator = match Accelerator::cublas() {
+        let accelerator = match Device::cuda() {
             Ok(_cublas) => {
                 println!("Using cublas");
                 //cublas // TODO
-                Accelerator::cblas()
+                Device::cpu()
             }
             _ => {
                 println!("Using cblas");
-                Accelerator::cblas()
+                Device::cpu()
             }
         };
         Self {
@@ -31,7 +31,7 @@ impl Default for Operators {
 }
 
 impl Operators {
-    pub fn accelerator(&self) -> Rc<Accelerator> {
+    pub fn accelerator(&self) -> Rc<Device> {
         self.accelerator.clone()
     }
 

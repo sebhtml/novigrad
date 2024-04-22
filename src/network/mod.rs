@@ -5,14 +5,14 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
-    accelerator::Accelerator, back_propagation, Error, Forward, Operator, Optimizer,
-    OptimizerTrait, Tape, Tensor,
+    back_propagation, devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tape,
+    Tensor,
 };
 
 pub struct Network {
     architecture: Box<dyn Forward>,
     loss_function: Operator,
-    accelerator: Rc<Accelerator>,
+    accelerator: Rc<Device>,
     optimizer: Optimizer,
     tape: Rc<RefCell<Tape>>,
 }

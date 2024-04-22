@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use super::LossFunction;
-use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 #[derive(Clone)]
 pub struct CrossEntropyLoss {}
@@ -18,7 +18,7 @@ impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     fn evaluate(
         &self,
-        _accelerator: &Accelerator,
+        _accelerator: &Device,
         expected: &Tensor,
         actual: &Tensor,
     ) -> Result<f32, Error> {
@@ -49,7 +49,7 @@ impl LossFunction for CrossEntropyLoss {
     /// output of the softmax function - expected output (one-hot encoded)
     fn derive(
         &self,
-        accelerator: &Accelerator,
+        accelerator: &Device,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,
@@ -62,7 +62,7 @@ impl LossFunction for CrossEntropyLoss {
 impl OperatorTrait for CrossEntropyLoss {
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        accelerator: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
@@ -77,11 +77,7 @@ impl OperatorTrait for CrossEntropyLoss {
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(
-        &self,
-        accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-    ) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, accelerator: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
         let actual = &inputs[1];

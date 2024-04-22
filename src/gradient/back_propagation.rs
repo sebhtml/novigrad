@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{Accelerator, DeltaWorkingMemory, Error, Gradient, Record, Tape, TrainWorkingMemory};
+use crate::{DeltaWorkingMemory, Device, Error, Gradient, Record, Tape, TrainWorkingMemory};
 
 use crate::gradient::OperatorTrait;
 
@@ -8,7 +8,7 @@ use crate::gradient::OperatorTrait;
 pub fn back_propagation(
     working_memory: &mut TrainWorkingMemory,
     error_working_memory: &mut DeltaWorkingMemory,
-    accelerator: &Accelerator,
+    accelerator: &Device,
     tape: &Rc<RefCell<Tape>>,
 ) -> Result<Vec<Gradient>, Error> {
     let mut gradients = vec![];

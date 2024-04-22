@@ -1,13 +1,13 @@
 use cblas::{saxpy, scopy, sdot, sgemm, sscal, Layout, Transpose};
 
-use super::AcceleratorInterface;
+use super::DeviceInterface;
 extern crate blas_src;
 
 mod tests;
 
-pub struct CBlas {}
+pub struct CpuDevice {}
 
-impl Default for CBlas {
+impl Default for CpuDevice {
     fn default() -> Self {
         Self {}
     }
@@ -23,7 +23,7 @@ impl Into<Transpose> for super::Transpose {
     }
 }
 
-impl AcceleratorInterface for CBlas {
+impl DeviceInterface for CpuDevice {
     fn sgemm(
         &self,
         transa: super::Transpose,

@@ -1,7 +1,7 @@
-mod cblas;
-pub use cblas::*;
-mod cublas;
-pub use cublas::*;
+mod cpu;
+pub use cpu::*;
+mod cuda;
+pub use cuda::*;
 
 use crate::Error;
 
@@ -11,7 +11,7 @@ pub enum Transpose {
     Conjugate,
 }
 
-pub trait AcceleratorInterface {
+pub trait DeviceInterface {
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
     ///
@@ -58,25 +58,25 @@ pub trait AcceleratorInterface {
     fn sscal(&self, n: i32, alpha: f32, x: &mut [f32], incx: i32);
 }
 
-pub enum Accelerator {
-    CBlas(CBlas),
-    CuBlas(CuBlas),
+pub enum Device {
+    Cpu(CpuDevice),
+    Cuda(CudaDevice),
 }
 
-impl Accelerator {
-    pub fn cblas() -> Self {
-        Accelerator::CBlas(CBlas::default())
+impl Device {
+    pub fn cpu() -> Self {
+        Device::Cpu(CpuDevice::default())
     }
-    pub fn cublas() -> Result<Self, Error> {
-        match CuBlas::try_default() {
-            Ok(cublas) => Ok(Accelerator::CuBlas(cublas)),
+    pub fn cuda() -> Result<Self, Error> {
+        match CudaDevice::try_default() {
+            Ok(cublas) => Ok(Device::Cuda(cublas)),
             Err(error) => Err(error),
         }
     }
 }
 
 // TODO add an argument &self to allow to choose between CBlas and CuBlas and the AMD one too.
-impl AcceleratorInterface for Accelerator {
+impl DeviceInterface for Device {
     fn sgemm(
         &self,
         transa: Transpose,
@@ -94,10 +94,10 @@ impl AcceleratorInterface for Accelerator {
         ldc: i32,
     ) {
         match self {
-            Accelerator::CBlas(accelerator) => {
+            Device::Cpu(accelerator) => {
                 accelerator.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
-            Accelerator::CuBlas(accelerator) => {
+            Device::Cuda(accelerator) => {
                 accelerator.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
         }
@@ -105,29 +105,29 @@ impl AcceleratorInterface for Accelerator {
 
     fn sdot(&self, n: i32, x: &[f32], incx: i32, y: &[f32], incy: i32) -> f32 {
         match self {
-            Accelerator::CBlas(accelerator) => accelerator.sdot(n, x, incx, y, incy),
-            Accelerator::CuBlas(accelerator) => accelerator.sdot(n, x, incx, y, incy),
+            Device::Cpu(accelerator) => accelerator.sdot(n, x, incx, y, incy),
+            Device::Cuda(accelerator) => accelerator.sdot(n, x, incx, y, incy),
         }
     }
 
     fn scopy(&self, n: i32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
-            Accelerator::CBlas(accelerator) => accelerator.scopy(n, x, incx, y, incy),
-            Accelerator::CuBlas(accelerator) => accelerator.scopy(n, x, incx, y, incy),
+            Device::Cpu(accelerator) => accelerator.scopy(n, x, incx, y, incy),
+            Device::Cuda(accelerator) => accelerator.scopy(n, x, incx, y, incy),
         }
     }
 
     fn saxpy(&self, n: i32, alpha: f32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
-            Accelerator::CBlas(accelerator) => accelerator.saxpy(n, alpha, x, incx, y, incy),
-            Accelerator::CuBlas(accelerator) => accelerator.saxpy(n, alpha, x, incx, y, incy),
+            Device::Cpu(accelerator) => accelerator.saxpy(n, alpha, x, incx, y, incy),
+            Device::Cuda(accelerator) => accelerator.saxpy(n, alpha, x, incx, y, incy),
         }
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: &mut [f32], incx: i32) {
         match self {
-            Accelerator::CBlas(accelerator) => accelerator.sscal(n, alpha, x, incx),
-            Accelerator::CuBlas(accelerator) => accelerator.sscal(n, alpha, x, incx),
+            Device::Cpu(accelerator) => accelerator.sscal(n, alpha, x, incx),
+            Device::Cuda(accelerator) => accelerator.sscal(n, alpha, x, incx),
         }
     }
 }

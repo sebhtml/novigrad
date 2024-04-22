@@ -2,8 +2,8 @@
 #[ignore]
 #[test]
 fn cublas_sgemm_column_major() {
-    use crate::accelerator::{AcceleratorInterface, Transpose};
-    use crate::CuBlas;
+    use crate::devices::{DeviceInterface, Transpose};
+    use crate::CudaDevice;
 
     let (m, n, k) = (2, 4, 3);
     let a = vec![
@@ -27,7 +27,7 @@ fn cublas_sgemm_column_major() {
         4.0, 2.0, //
     ];
 
-    let accelerator = CuBlas::try_default().unwrap();
+    let accelerator = CudaDevice::try_default().unwrap();
 
     accelerator.sgemm(
         Transpose::None,

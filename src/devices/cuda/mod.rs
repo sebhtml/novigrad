@@ -10,22 +10,22 @@ use cudarc::{
             cublasSgemmEx, cublasSscal_v2, cublasStatus_t, cudaDataType,
         },
     },
-    driver::CudaDevice,
+    driver,
 };
 
-use crate::{AcceleratorInterface, Error, Transpose};
+use crate::{DeviceInterface, Error, Transpose};
 
-pub struct CuBlas {
+pub struct CudaDevice {
     handle: cublasHandle_t,
-    _dev: Arc<CudaDevice>,
+    _dev: Arc<driver::CudaDevice>,
 }
 
-impl CuBlas {
-    pub fn try_default() -> Result<CuBlas, Error> {
+impl CudaDevice {
+    pub fn try_default() -> Result<CudaDevice, Error> {
         let handle = create_handle();
         let dev = cudarc::driver::CudaDevice::new(0);
         match (handle, dev) {
-            (Ok(handle), Ok(dev)) => Ok(CuBlas { handle, _dev: dev }),
+            (Ok(handle), Ok(dev)) => Ok(CudaDevice { handle, _dev: dev }),
             _ => Err(Error::UnsupportedOperation),
         }
     }
@@ -41,7 +41,7 @@ impl Into<cublasOperation_t> for Transpose {
     }
 }
 
-impl AcceleratorInterface for CuBlas {
+impl DeviceInterface for CudaDevice {
     // TODO return Result
     fn sgemm(
         &self,

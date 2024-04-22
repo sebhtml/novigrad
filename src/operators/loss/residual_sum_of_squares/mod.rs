@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 use super::LossFunction;
 
@@ -20,7 +20,7 @@ impl LossFunction for ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
     fn evaluate(
         &self,
-        accelerator: &Accelerator,
+        accelerator: &Device,
         expected: &Tensor,
         actual: &Tensor,
     ) -> Result<f32, Error> {
@@ -35,7 +35,7 @@ impl LossFunction for ResidualSumOfSquares {
 
     fn derive(
         &self,
-        accelerator: &Accelerator,
+        accelerator: &Device,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,
@@ -50,7 +50,7 @@ impl LossFunction for ResidualSumOfSquares {
 impl OperatorTrait for ResidualSumOfSquares {
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        accelerator: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
@@ -65,11 +65,7 @@ impl OperatorTrait for ResidualSumOfSquares {
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(
-        &self,
-        accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-    ) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, accelerator: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
         let actual = &inputs[1];

@@ -26,15 +26,15 @@ pub struct TrainWorkingMemory {
     pub tmp: Tensor,
 }
 
-impl Default for TrainWorkingMemory {
-    fn default() -> Self {
+impl TrainWorkingMemory {
+    pub fn new(device: &Device) -> Self {
         Self {
-            layer_output: Tensor::new(0, 0, vec![]),
-            next_layer_delta: Tensor::new(0, 0, vec![]),
-            back_propagated_delta: Tensor::new(0, 0, vec![]),
-            layer_delta: Tensor::new(0, 0, vec![]),
-            previous_activation_tensor: Tensor::new(0, 0, vec![]),
-            tmp: Tensor::new(0, 0, vec![]),
+            layer_output: device.tensor(0, 0, vec![]),
+            next_layer_delta: device.tensor(0, 0, vec![]),
+            back_propagated_delta: device.tensor(0, 0, vec![]),
+            layer_delta: device.tensor(0, 0, vec![]),
+            previous_activation_tensor: device.tensor(0, 0, vec![]),
+            tmp: device.tensor(0, 0, vec![]),
         }
     }
 }
@@ -43,10 +43,10 @@ pub struct DeltaWorkingMemory {
     pub layer_f_derivative: Tensor,
 }
 
-impl Default for DeltaWorkingMemory {
-    fn default() -> Self {
+impl DeltaWorkingMemory {
+    pub fn new(device: &Device) -> Self {
         Self {
-            layer_f_derivative: Tensor::new(0, 0, vec![]),
+            layer_f_derivative: device.tensor(0, 0, vec![]),
         }
     }
 }
@@ -58,11 +58,11 @@ pub struct PredictWorkingMemory {
 }
 
 impl PredictWorkingMemory {
-    pub fn new(examples_count: usize) -> Self {
+    pub fn new(examples_count: usize, device: &Device) -> Self {
         Self {
-            previous_activation_tensor: Tensor::new(0, 0, vec![]),
-            activation_tensor: Tensor::new(0, 0, vec![]),
-            activation_tensors: vec![Tensor::new(0, 0, vec![]); examples_count],
+            previous_activation_tensor: device.tensor(0, 0, vec![]),
+            activation_tensor: device.tensor(0, 0, vec![]),
+            activation_tensors: vec![device.tensor(0, 0, vec![]); examples_count],
         }
     }
 }

@@ -7,11 +7,12 @@ use crate::{
 
 #[test]
 fn new() {
+    let device = Device::default();
     // Given rows and cols
     // When a matrix is built
     // Then it has the appropriate shape
 
-    let matrix = Tensor::new(
+    let matrix = device.tensor(
         4,
         3,
         vec![
@@ -26,11 +27,12 @@ fn new() {
 
 #[test]
 fn multiplication_shape_compatibility() {
+    let device = Device::default();
     // Given two matrices with incompatible shapes
     // When a matrix multiplication is done
     // Then there is an error
 
-    let lhs = Tensor::new(
+    let lhs = device.tensor(
         1,
         1,
         vec![
@@ -38,7 +40,7 @@ fn multiplication_shape_compatibility() {
         ],
     );
 
-    let rhs = Tensor::new(
+    let rhs = device.tensor(
         2,
         1,
         vec![
@@ -47,7 +49,7 @@ fn multiplication_shape_compatibility() {
         ],
     );
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     result.reset(lhs.rows(), rhs.cols(), 0.0);
     let device = Device::cpu();
     let error = Tensor::matmul(&device, false, false, &lhs, &rhs, &mut result, false);
@@ -56,7 +58,8 @@ fn multiplication_shape_compatibility() {
 
 #[test]
 fn reshape_result() {
-    let mut lhs = Tensor::new(
+    let device = Device::default();
+    let mut lhs = device.tensor(
         2,
         4,
         vec![
@@ -65,7 +68,7 @@ fn reshape_result() {
         ],
     );
 
-    let expected = Tensor::new(
+    let expected = device.tensor(
         1,
         8,
         vec![
@@ -82,7 +85,8 @@ fn reshape_result() {
 
 #[test]
 fn reshape_error() {
-    let mut lhs = Tensor::new(
+    let device = Device::default();
+    let mut lhs = device.tensor(
         2,
         4,
         vec![
@@ -97,7 +101,8 @@ fn reshape_error() {
 
 #[test]
 fn get() {
-    let tensor = Tensor::new(
+    let device = Device::default();
+    let tensor = device.tensor(
         2,
         2,
         vec![
@@ -111,12 +116,13 @@ fn get() {
 
 #[test]
 fn clip() {
+    let device = Device::default();
     // Given a tensor with 0.0 and 1.0 values
     // When it is clipped
     // Then the clipped tensor contains clipped values
 
     let epsilon = 1e-8;
-    let tensor = Tensor::new(
+    let tensor = device.tensor(
         1,
         4,
         vec![
@@ -124,10 +130,10 @@ fn clip() {
             0.5, 0.7, //
         ],
     );
-    let mut clipped = Tensor::new(0, 0, vec![]);
+    let mut clipped = device.tensor(0, 0, vec![]);
     tensor.clip(0.0 + epsilon, 1.0 - epsilon, &mut clipped);
 
-    let expected = Tensor::new(
+    let expected = device.tensor(
         1,
         4,
         vec![
@@ -143,7 +149,8 @@ fn clip() {
 
 #[test]
 fn set() {
-    let mut tensor = Tensor::new(
+    let device = Device::default();
+    let mut tensor = device.tensor(
         2,
         2,
         vec![
@@ -158,7 +165,8 @@ fn set() {
 
 #[test]
 fn assign() {
-    let mut tensor = Tensor::new(
+    let device = Device::default();
+    let mut tensor = device.tensor(
         2,
         2,
         vec![
@@ -167,7 +175,7 @@ fn assign() {
         ],
     );
 
-    let tensor2 = Tensor::new(
+    let tensor2 = device.tensor(
         3,
         3,
         vec![
@@ -183,11 +191,12 @@ fn assign() {
 
 #[test]
 fn reset() {
+    let device = Device::default();
     // Given a tensor
     // When it is reset to a bigger shape
     // Then all values are set to 0.0
 
-    let mut tensor = Tensor::new(
+    let mut tensor = device.tensor(
         1,
         1,
         vec![
@@ -195,7 +204,7 @@ fn reset() {
         ],
     );
     tensor.reset(2, 1, Default::default());
-    let expected = Tensor::new(
+    let expected = device.tensor(
         2,
         1,
         vec![
@@ -208,11 +217,12 @@ fn reset() {
 
 #[test]
 fn matrix_multiplication_result() {
+    let device = Device::default();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs = Tensor::new(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -221,7 +231,7 @@ fn matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs = Tensor::new(
+    let rhs = device.tensor(
         2,
         3,
         vec![
@@ -229,7 +239,7 @@ fn matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let expected_result = Tensor::new(
+    let expected_result = device.tensor(
         3,
         3,
         vec![
@@ -245,7 +255,7 @@ fn matrix_multiplication_result() {
         ],
     );
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     result.reset(lhs.rows(), rhs.cols(), 0.0);
     let device = Device::cpu();
     _ = Tensor::matmul(&device, false, false, &lhs, &rhs, &mut result, false);
@@ -254,11 +264,12 @@ fn matrix_multiplication_result() {
 
 #[test]
 fn transposed_lhs_matrix_multiplication_result() {
+    let device = Device::default();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs2 = Tensor::new(
+    let lhs2 = device.tensor(
         3,
         2,
         vec![
@@ -267,9 +278,9 @@ fn transposed_lhs_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let mut lhs = Tensor::new(0, 0, vec![]);
+    let mut lhs = device.tensor(0, 0, vec![]);
     lhs2.transpose(&mut lhs);
-    let rhs = Tensor::new(
+    let rhs = device.tensor(
         2,
         3,
         vec![
@@ -277,7 +288,7 @@ fn transposed_lhs_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let expected_result = Tensor::new(
+    let expected_result = device.tensor(
         3,
         3,
         vec![
@@ -293,7 +304,7 @@ fn transposed_lhs_matrix_multiplication_result() {
         ],
     );
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     result.reset(lhs.cols(), rhs.cols(), 0.0);
     let device = Device::cpu();
     _ = Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, false);
@@ -302,11 +313,12 @@ fn transposed_lhs_matrix_multiplication_result() {
 
 #[test]
 fn transposed_rhs_matrix_multiplication_result() {
+    let device = Device::default();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs = Tensor::new(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -315,7 +327,7 @@ fn transposed_rhs_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs2 = Tensor::new(
+    let rhs2 = device.tensor(
         2,
         3,
         vec![
@@ -323,9 +335,9 @@ fn transposed_rhs_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let mut rhs = Tensor::new(0, 0, vec![]);
+    let mut rhs = device.tensor(0, 0, vec![]);
     rhs2.transpose(&mut rhs);
-    let expected_result = Tensor::new(
+    let expected_result = device.tensor(
         3,
         3,
         vec![
@@ -341,7 +353,7 @@ fn transposed_rhs_matrix_multiplication_result() {
         ],
     );
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     result.reset(lhs.rows(), rhs.rows(), 0.0);
     let device = Device::cpu();
     Tensor::matmul(&device, false, true, &lhs, &rhs, &mut result, false).expect("Ok");
@@ -350,7 +362,8 @@ fn transposed_rhs_matrix_multiplication_result() {
 
 #[test]
 fn lhs_t_rhs_t_result_matrix_multiplication_result() {
-    let lhs2 = Tensor::new(
+    let device = Device::default();
+    let lhs2 = device.tensor(
         3,
         2,
         vec![
@@ -359,9 +372,9 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let mut lhs = Tensor::new(0, 0, vec![]);
+    let mut lhs = device.tensor(0, 0, vec![]);
     lhs2.transpose(&mut lhs);
-    let rhs2 = Tensor::new(
+    let rhs2 = device.tensor(
         2,
         3,
         vec![
@@ -369,9 +382,9 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let mut rhs = Tensor::new(0, 0, vec![]);
+    let mut rhs = device.tensor(0, 0, vec![]);
     rhs2.transpose(&mut rhs);
-    let expected_result = Tensor::new(
+    let expected_result = device.tensor(
         3,
         3,
         vec![
@@ -387,7 +400,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
         ],
     );
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     result.reset(lhs.cols(), rhs.rows(), 0.0);
     let device = Device::cpu();
     Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, false).expect("Ok");
@@ -396,7 +409,8 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
 
 #[test]
 fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
-    let lhs2 = Tensor::new(
+    let device = Device::default();
+    let lhs2 = device.tensor(
         4,
         2,
         vec![
@@ -406,10 +420,10 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
             7.0, 8.0,
         ],
     );
-    let mut lhs = Tensor::new(0, 0, vec![]);
+    let mut lhs = device.tensor(0, 0, vec![]);
     lhs2.transpose(&mut lhs);
 
-    let rhs2 = Tensor::new(
+    let rhs2 = device.tensor(
         2,
         3,
         vec![
@@ -418,10 +432,10 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
         ],
     );
 
-    let mut rhs = Tensor::new(0, 0, vec![]);
+    let mut rhs = device.tensor(0, 0, vec![]);
     rhs2.transpose(&mut rhs);
 
-    let expected_result2 = Tensor::new(
+    let expected_result2 = device.tensor(
         4,
         3,
         vec![
@@ -439,10 +453,10 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
             7.0 * 13.0 + 8.0 * 16.0, //
         ],
     );
-    let mut expected_result = Tensor::new(0, 0, vec![]);
+    let mut expected_result = device.tensor(0, 0, vec![]);
     expected_result2.transpose(&mut expected_result);
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     result.reset(rhs.rows(), lhs.cols(), 0.0);
     let device = Device::cpu();
     Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, true).expect("Ok");
@@ -451,7 +465,8 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
 
 #[test]
 fn lhs_t_rhs_result_t_matrix_multiplication_result() {
-    let lhs2 = Tensor::new(
+    let device = Device::default();
+    let lhs2 = device.tensor(
         4,
         2,
         vec![
@@ -461,10 +476,10 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
             7.0, 8.0, //
         ],
     );
-    let mut lhs = Tensor::new(0, 0, vec![]);
+    let mut lhs = device.tensor(0, 0, vec![]);
     lhs2.transpose(&mut lhs);
 
-    let rhs = Tensor::new(
+    let rhs = device.tensor(
         2,
         3,
         vec![
@@ -473,7 +488,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
         ],
     );
 
-    let expected_result2 = Tensor::new(
+    let expected_result2 = device.tensor(
         4,
         3,
         vec![
@@ -491,10 +506,10 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
             7.0 * 13.0 + 8.0 * 16.0, //
         ],
     );
-    let mut expected_result = Tensor::new(0, 0, vec![]);
+    let mut expected_result = device.tensor(0, 0, vec![]);
     expected_result2.transpose(&mut expected_result);
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     result.reset(rhs.cols(), lhs.cols(), 0.0);
     let device = Device::cpu();
     Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, true).expect("Ok");
@@ -503,11 +518,12 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
 
 #[test]
 fn matrix_addition_result() {
+    let device = Device::default();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the addition lhs + rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs = Tensor::new(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -516,7 +532,7 @@ fn matrix_addition_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs: Tensor = Tensor::new(
+    let rhs: Tensor = device.tensor(
         3,
         2,
         vec![
@@ -525,7 +541,7 @@ fn matrix_addition_result() {
             13.0, 16.0, //
         ],
     );
-    let expected_result = Tensor::new(
+    let expected_result = device.tensor(
         3,
         2,
         vec![
@@ -538,7 +554,7 @@ fn matrix_addition_result() {
         ],
     );
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     let device = Device::cpu();
     result.assign(&device, &rhs);
     _ = Tensor::add(&device, &lhs, &mut result);
@@ -552,7 +568,7 @@ fn element_wise_mul_result() {
     // When the element-wise multiplication is done
     // Then the resulting matrix has the correct values
 
-    let lhs = Tensor::new(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -561,7 +577,7 @@ fn element_wise_mul_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs: Tensor = Tensor::new(
+    let rhs: Tensor = device.tensor(
         3,
         2,
         vec![
@@ -570,7 +586,7 @@ fn element_wise_mul_result() {
             13.0, 16.0, //
         ],
     );
-    let expected_result = Tensor::new(
+    let expected_result = device.tensor(
         3,
         2,
         vec![
@@ -583,18 +599,19 @@ fn element_wise_mul_result() {
         ],
     );
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     _ = lhs.element_wise_mul(device, &rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
 #[test]
 fn scalar_mul() {
+    let device = Device::default();
     // Given a left-hand side matrix and and a right-hand scalar
     // When scalar multiplication is done
     // Then the resulting matrix has the correct values
 
-    let lhs = Tensor::new(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -604,7 +621,7 @@ fn scalar_mul() {
         ],
     );
     let rhs = -2.0;
-    let expected_result = Tensor::new(
+    let expected_result = device.tensor(
         3,
         2,
         vec![
@@ -617,7 +634,7 @@ fn scalar_mul() {
         ],
     );
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     let device = Device::cpu();
     result.assign(&device, &lhs);
     Tensor::scalar_mul(&device, rhs, &mut result);
@@ -626,6 +643,7 @@ fn scalar_mul() {
 
 #[test]
 fn big_matrix_multiplication() {
+    let device = Device::default();
     let rows = 1024;
     let cols = 1024;
     let mut values = Vec::new();
@@ -633,9 +651,9 @@ fn big_matrix_multiplication() {
     for index in 0..values.len() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
-    let m = Tensor::new(rows, cols, values);
+    let m = device.tensor(rows, cols, values);
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     result.reset(m.rows(), m.cols(), 0.0);
     let device = Device::cpu();
     _ = Tensor::matmul(&device, false, false, &m, &m, &mut result, false);
@@ -643,6 +661,7 @@ fn big_matrix_multiplication() {
 
 #[test]
 fn big_matrix_addition() {
+    let device = Device::default();
     let rows = 1024;
     let cols = 1024;
     let mut values = Vec::new();
@@ -650,9 +669,9 @@ fn big_matrix_addition() {
     for index in 0..values.len() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
-    let m = Tensor::new(rows, cols, values);
+    let m = device.tensor(rows, cols, values);
 
-    let mut result = Tensor::new(0, 0, vec![]);
+    let mut result = device.tensor(0, 0, vec![]);
     let device = Device::cpu();
     result.assign(&device, &m);
     _ = Tensor::add(&device, &m, &mut result);
@@ -660,8 +679,9 @@ fn big_matrix_addition() {
 
 #[test]
 fn transpose() {
-    let matrix = Tensor::new(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
-    let mut matrix2 = Tensor::new(0, 0, vec![]);
+    let device = Device::default();
+    let matrix = device.tensor(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    let mut matrix2 = device.tensor(0, 0, vec![]);
     matrix.transpose(&mut matrix2);
     for row in 0..matrix.rows() {
         for col in 0..matrix.cols() {

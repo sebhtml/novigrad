@@ -14,7 +14,7 @@ pub struct Tensor {
 
 impl Tensor {
     // TODO add device argument
-    pub fn new(rows: usize, cols: usize, values: Vec<f32>) -> Self {
+    pub fn new(rows: usize, cols: usize, values: Vec<f32>, _device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
         Self { rows, cols, values }
     }

@@ -124,9 +124,9 @@ impl OperatorTrait for Softmax {
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(&self, _device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         let input = &inputs[0];
-        let mut output = Tensor::new(0, 0, vec![]);
+        let mut output = device.tensor(0, 0, vec![]);
         self.activate(input, &mut output)?;
         Ok(output.into())
     }

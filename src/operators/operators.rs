@@ -10,23 +10,10 @@ pub struct Operators {
     tape: Rc<RefCell<Tape>>,
 }
 
-impl Default for Operators {
-    fn default() -> Self {
-        let device = match Device::cuda() {
-            Ok(_cublas) => {
-                println!("Using cublas");
-                //cublas // TODO
-                Device::cpu()
-            }
-            _ => {
-                println!("Using cblas");
-                Device::cpu()
-            }
-        };
-        Self {
-            device: device.into(),
-            tape: Default::default(),
-        }
+impl Operators {
+    pub fn new(device: Rc<Device>) -> Self {
+        let tape = Default::default();
+        Self { device, tape }
     }
 }
 
@@ -46,6 +33,7 @@ impl Operators {
             Rc::new(RefCell::new(Box::new(Embedding::new(
                 num_embeddings,
                 embedding_dim,
+                &self.device,
             )))),
         )
     }
@@ -77,6 +65,7 @@ impl Operators {
                 weights_rows,
                 weights_cols,
                 bias_rows,
+                &self.device,
             )))),
         )
     }

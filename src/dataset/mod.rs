@@ -1,7 +1,9 @@
 mod mega_man;
 mod simple;
 
-use crate::{Forward, Operator, Tensor};
+use std::rc::Rc;
+
+use crate::{Device, Forward, Operator, Tensor};
 
 pub enum Dataset {
     Simple,
@@ -18,10 +20,10 @@ pub struct DatasetDetails {
     pub final_total_error_max: f32,
 }
 
-pub fn load_dataset(dataset: &Dataset) -> DatasetDetails {
+pub fn load_dataset(dataset: Dataset, device: Rc<Device>) -> DatasetDetails {
     match dataset {
-        Dataset::Simple => simple::load_dataset(),
-        Dataset::MegaMan => mega_man::load_dataset(),
+        Dataset::Simple => simple::load_dataset(device),
+        Dataset::MegaMan => mega_man::load_dataset(device),
     }
 }
 

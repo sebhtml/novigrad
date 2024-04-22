@@ -3,13 +3,12 @@
 #[test]
 fn cublas_sgemm_column_major() {
     use crate::devices::DeviceInterface;
-    use crate::CudaDevice;
-    use crate::Tensor;
+    use crate::Device;
 
-    let device = CudaDevice::try_default().unwrap();
+    let device = Device::cuda().unwrap();
 
     let (m, n, k) = (2, 4, 3);
-    let a = Tensor::new(
+    let a = device.tensor(
         2,
         3,
         vec![
@@ -19,7 +18,7 @@ fn cublas_sgemm_column_major() {
             3.0, 6.0, //
         ],
     );
-    let b = Tensor::new(
+    let b = device.tensor(
         3,
         4,
         vec![
@@ -30,7 +29,7 @@ fn cublas_sgemm_column_major() {
             4.0, 8.0, 12.0, //
         ],
     );
-    let mut c = Tensor::new(
+    let mut c = device.tensor(
         2,
         4,
         vec![

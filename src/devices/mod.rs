@@ -57,6 +57,12 @@ pub enum Device {
     Cuda(CudaDevice),
 }
 
+impl Default for Device {
+    fn default() -> Self {
+        Self::cpu()
+    }
+}
+
 impl Device {
     pub fn cpu() -> Self {
         Device::Cpu(CpuDevice::default())
@@ -66,6 +72,9 @@ impl Device {
             Ok(cublas) => Ok(Device::Cuda(cublas)),
             Err(error) => Err(error),
         }
+    }
+    pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Tensor {
+        Tensor::new(rows, cols, values, self)
     }
 }
 

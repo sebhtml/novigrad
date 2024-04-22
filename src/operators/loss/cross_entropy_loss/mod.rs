@@ -77,7 +77,7 @@ impl OperatorTrait for CrossEntropyLoss {
         let expected = &inputs[0];
         let actual = &inputs[1];
         let loss = self.evaluate(device, expected, actual)?;
-        let output = Tensor::new(1, 1, vec![loss]);
+        let output = device.tensor(1, 1, vec![loss]);
         Ok(Rc::new(output))
     }
 

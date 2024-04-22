@@ -22,7 +22,7 @@ impl LossFunction for ResidualSumOfSquares {
         if expected.shape() != actual.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        let mut diffs = Tensor::new(0, 0, vec![]);
+        let mut diffs = device.tensor(0, 0, vec![]);
         diffs.assign(device, expected);
         Tensor::sub(device, actual, &mut diffs)?;
         Tensor::dot_product(device, &diffs, &diffs)
@@ -65,7 +65,7 @@ impl OperatorTrait for ResidualSumOfSquares {
         let expected = &inputs[0];
         let actual = &inputs[1];
         let loss = self.evaluate(device, expected, actual)?;
-        let output = Tensor::new(1, 1, vec![loss]);
+        let output = device.tensor(1, 1, vec![loss]);
         Ok(output.into())
     }
 

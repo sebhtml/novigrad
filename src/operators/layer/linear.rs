@@ -10,7 +10,12 @@ pub struct Linear {
 }
 
 impl Linear {
-    pub fn new(weights_rows: usize, weights_cols: usize, bias_rows: usize) -> Self {
+    pub fn new(
+        weights_rows: usize,
+        weights_cols: usize,
+        bias_rows: usize,
+        device: &Device,
+    ) -> Self {
         // Xavier Initialization, or Glorot Initialization,
         let mut rng = thread_rng();
         let right = (6.0 as f32).sqrt() / (weights_cols as f32 + weights_rows as f32).sqrt();
@@ -22,9 +27,9 @@ impl Linear {
         for index in 0..weights.len() {
             weights[index] = rng.sample(uniform);
         }
-        let weights = Tensor::new(weights_rows, weights_cols, weights);
+        let weights = device.tensor(weights_rows, weights_cols, weights);
 
-        let mut biases = Tensor::new(0, 0, vec![]);
+        let mut biases = device.tensor(0, 0, vec![]);
         biases.reset(bias_rows, weights_rows, Default::default());
 
         Linear {
@@ -38,7 +43,7 @@ impl OperatorTrait for Linear {
     fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
-        let mut output = Tensor::new(0, 0, vec![]);
+        let mut output = device.tensor(0, 0, vec![]);
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.
@@ -56,7 +61,7 @@ impl OperatorTrait for Linear {
         match op_result {
             Ok(_) => (),
             Err(_) => {
-                let mut w_t = Tensor::new(0, 0, vec![]);
+                let mut w_t = device.tensor(0, 0, vec![]);
                 b.transpose(&mut w_t);
                 println!("Incompatible shapes in matrix multiplication");
                 println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
@@ -82,8 +87,8 @@ impl OperatorTrait for Linear {
 
         let mut gradients = vec![];
         {
-            let mut weights_gradient = Tensor::new(0, 0, vec![]);
-            let mut biases_gradient = Tensor::new(0, 0, vec![]);
+            let mut weights_gradient = device.tensor(0, 0, vec![]);
+            let mut biases_gradient = device.tensor(0, 0, vec![]);
             let input = &inputs[0];
             let a: &Tensor = input;
             let b: &Tensor = layer_delta;

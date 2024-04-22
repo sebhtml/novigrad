@@ -1,7 +1,8 @@
 == CUDA MR ==
 
+- use an enum for the values field in Tensor
 - use Result for return type of Device methods
-- create tensors with device
+- remove method reset()
 - store Tensor on Device Cuda using rustacuda DeviceBuf<f32>
 
 == gradient MR ==

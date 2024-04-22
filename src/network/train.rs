@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
-use crate::{DatasetDetails, DeltaWorkingMemory, Error, Network, Tensor, TrainWorkingMemory};
+use crate::{
+    DatasetDetails, DeltaWorkingMemory, Device, Error, Network, Tensor, TrainWorkingMemory,
+};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -60,14 +62,15 @@ pub struct NetworkTestOutput {
 
 pub fn train_network_on_dataset(
     dataset_details: DatasetDetails,
+    device: Rc<Device>,
 ) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
     let examples = dataset_details.examples;
     let architecture = dataset_details.architecture;
     let loss_function_name = dataset_details.loss_function_name;
 
-    let mut train_working_memory = TrainWorkingMemory::default();
-    let mut error_working_memory = DeltaWorkingMemory::default();
+    let mut train_working_memory = TrainWorkingMemory::new(&device);
+    let mut error_working_memory = DeltaWorkingMemory::new(&device);
 
     let examples: Vec<(Rc<Tensor>, Rc<Tensor>)> = examples
         .into_iter()

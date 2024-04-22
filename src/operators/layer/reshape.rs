@@ -48,7 +48,7 @@ impl OperatorTrait for Reshape {
         let input = &inputs[0];
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
-        let mut output = Tensor::new(0, 0, vec![]);
+        let mut output = device.tensor(0, 0, vec![]);
         output.assign(device, input);
         output.reshape(self.output_rows, self.output_cols)?;
         Ok(Rc::new(output))

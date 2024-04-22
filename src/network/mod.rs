@@ -12,7 +12,7 @@ use crate::{
 pub struct Network {
     architecture: Box<dyn Forward>,
     loss_function: Operator,
-    accelerator: Rc<Device>,
+    device: Rc<Device>,
     optimizer: Optimizer,
     tape: Rc<RefCell<Tape>>,
 }
@@ -69,12 +69,12 @@ impl PredictWorkingMemory {
 
 impl Network {
     pub fn new(architecture: Box<dyn Forward>, loss_function: Operator) -> Self {
-        let accelerator = architecture.accelerator();
+        let device = architecture.device();
         let tape = architecture.tape();
         Self {
             architecture,
             loss_function,
-            accelerator,
+            device,
             tape,
             optimizer: Default::default(),
         }
@@ -141,11 +141,11 @@ impl Network {
         let gradients = back_propagation(
             working_memory,
             error_working_memory,
-            &self.accelerator,
+            &self.device,
             &self.tape,
         )?;
 
-        self.optimizer.optimize(gradients, &self.accelerator);
+        self.optimizer.optimize(gradients, &self.device);
 
         Ok(())
     }

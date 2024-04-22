@@ -49,8 +49,8 @@ fn multiplication_shape_compatibility() {
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
     result.reset(lhs.rows(), rhs.cols(), 0.0);
-    let accelerator = Device::cpu();
-    let error = Tensor::matmul(&accelerator, false, false, &lhs, &rhs, &mut result, false);
+    let device = Device::cpu();
+    let error = Tensor::matmul(&device, false, false, &lhs, &rhs, &mut result, false);
     assert_eq!(error, Err(Error::IncompatibleTensorShapes))
 }
 
@@ -176,8 +176,8 @@ fn assign() {
             17.0, 18.0, 19.0, //
         ],
     );
-    let accelerator = Device::cpu();
-    tensor.assign(&accelerator, &tensor2);
+    let device = Device::cpu();
+    tensor.assign(&device, &tensor2);
     assert_eq!(tensor, tensor2);
 }
 
@@ -247,8 +247,8 @@ fn matrix_multiplication_result() {
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
     result.reset(lhs.rows(), rhs.cols(), 0.0);
-    let accelerator = Device::cpu();
-    _ = Tensor::matmul(&accelerator, false, false, &lhs, &rhs, &mut result, false);
+    let device = Device::cpu();
+    _ = Tensor::matmul(&device, false, false, &lhs, &rhs, &mut result, false);
     assert_eq!(result, expected_result);
 }
 
@@ -295,8 +295,8 @@ fn transposed_lhs_matrix_multiplication_result() {
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
     result.reset(lhs.cols(), rhs.cols(), 0.0);
-    let accelerator = Device::cpu();
-    _ = Tensor::matmul(&accelerator, true, false, &lhs, &rhs, &mut result, false);
+    let device = Device::cpu();
+    _ = Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, false);
     assert_eq!(result, expected_result);
 }
 
@@ -343,8 +343,8 @@ fn transposed_rhs_matrix_multiplication_result() {
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
     result.reset(lhs.rows(), rhs.rows(), 0.0);
-    let accelerator = Device::cpu();
-    Tensor::matmul(&accelerator, false, true, &lhs, &rhs, &mut result, false).expect("Ok");
+    let device = Device::cpu();
+    Tensor::matmul(&device, false, true, &lhs, &rhs, &mut result, false).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -389,8 +389,8 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
     result.reset(lhs.cols(), rhs.rows(), 0.0);
-    let accelerator = Device::cpu();
-    Tensor::matmul(&accelerator, true, true, &lhs, &rhs, &mut result, false).expect("Ok");
+    let device = Device::cpu();
+    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, false).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -444,8 +444,8 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
     result.reset(rhs.rows(), lhs.cols(), 0.0);
-    let accelerator = Device::cpu();
-    Tensor::matmul(&accelerator, true, true, &lhs, &rhs, &mut result, true).expect("Ok");
+    let device = Device::cpu();
+    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, true).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -496,8 +496,8 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
     result.reset(rhs.cols(), lhs.cols(), 0.0);
-    let accelerator = Device::cpu();
-    Tensor::matmul(&accelerator, true, false, &lhs, &rhs, &mut result, true).expect("Ok");
+    let device = Device::cpu();
+    Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, true).expect("Ok");
     assert_eq!(result, expected_result);
 }
 
@@ -539,9 +539,9 @@ fn matrix_addition_result() {
     );
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
-    let accelerator = Device::cpu();
-    result.assign(&accelerator, &rhs);
-    _ = Tensor::add(&accelerator, &lhs, &mut result);
+    let device = Device::cpu();
+    result.assign(&device, &rhs);
+    _ = Tensor::add(&device, &lhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -617,9 +617,9 @@ fn scalar_mul() {
     );
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
-    let accelerator = Device::cpu();
-    result.assign(&accelerator, &lhs);
-    Tensor::scalar_mul(&accelerator, rhs, &mut result);
+    let device = Device::cpu();
+    result.assign(&device, &lhs);
+    Tensor::scalar_mul(&device, rhs, &mut result);
     assert_eq!(result, expected_result);
 }
 
@@ -636,8 +636,8 @@ fn big_matrix_multiplication() {
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
     result.reset(m.rows(), m.cols(), 0.0);
-    let accelerator = Device::cpu();
-    _ = Tensor::matmul(&accelerator, false, false, &m, &m, &mut result, false);
+    let device = Device::cpu();
+    _ = Tensor::matmul(&device, false, false, &m, &m, &mut result, false);
 }
 
 #[test]
@@ -652,9 +652,9 @@ fn big_matrix_addition() {
     let m = Tensor::new(rows, cols, values);
 
     let mut result = Tensor::new(0, 0, vec![0.0]);
-    let accelerator = Device::cpu();
-    result.assign(&accelerator, &m);
-    _ = Tensor::add(&accelerator, &m, &mut result);
+    let device = Device::cpu();
+    result.assign(&device, &m);
+    _ = Tensor::add(&device, &m, &mut result);
 }
 
 #[test]

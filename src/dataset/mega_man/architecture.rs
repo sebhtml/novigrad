@@ -29,8 +29,8 @@ impl Forward for Architecture {
         Ok(x)
     }
 
-    fn accelerator(&self) -> Rc<Device> {
-        self.embedding.accelerator()
+    fn device(&self) -> Rc<Device> {
+        self.embedding.device()
     }
 
     fn tape(&self) -> Rc<RefCell<Tape>> {

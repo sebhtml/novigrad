@@ -6,13 +6,13 @@ use crate::{
 };
 
 pub struct Operators {
-    accelerator: Rc<Device>,
+    device: Rc<Device>,
     tape: Rc<RefCell<Tape>>,
 }
 
 impl Default for Operators {
     fn default() -> Self {
-        let accelerator = match Device::cuda() {
+        let device = match Device::cuda() {
             Ok(_cublas) => {
                 println!("Using cublas");
                 //cublas // TODO
@@ -24,15 +24,15 @@ impl Default for Operators {
             }
         };
         Self {
-            accelerator: accelerator.into(),
+            device: device.into(),
             tape: Default::default(),
         }
     }
 }
 
 impl Operators {
-    pub fn accelerator(&self) -> Rc<Device> {
-        self.accelerator.clone()
+    pub fn device(&self) -> Rc<Device> {
+        self.device.clone()
     }
 
     pub fn tape(&self) -> Rc<RefCell<Tape>> {
@@ -41,7 +41,7 @@ impl Operators {
 
     pub fn embedding(&self, num_embeddings: usize, embedding_dim: usize) -> Operator {
         Operator::new(
-            self.accelerator(),
+            self.device(),
             self.tape(),
             Rc::new(RefCell::new(Box::new(Embedding::new(
                 num_embeddings,
@@ -58,7 +58,7 @@ impl Operators {
         output_cols: usize,
     ) -> Operator {
         Operator::new(
-            self.accelerator(),
+            self.device(),
             self.tape(),
             Rc::new(RefCell::new(Box::new(Reshape::new(
                 input_rows,
@@ -71,7 +71,7 @@ impl Operators {
 
     pub fn linear(&self, weights_rows: usize, weights_cols: usize, bias_rows: usize) -> Operator {
         Operator::new(
-            self.accelerator(),
+            self.device(),
             self.tape(),
             Rc::new(RefCell::new(Box::new(Linear::new(
                 weights_rows,
@@ -83,7 +83,7 @@ impl Operators {
 
     pub fn sigmoid(&self) -> Operator {
         Operator::new(
-            self.accelerator(),
+            self.device(),
             self.tape(),
             Rc::new(RefCell::new(Box::new(Sigmoid::default()))),
         )
@@ -91,7 +91,7 @@ impl Operators {
 
     pub fn softmax(&self, using_cross_entropy_loss: bool) -> Operator {
         Operator::new(
-            self.accelerator(),
+            self.device(),
             self.tape(),
             Rc::new(RefCell::new(Box::new(Softmax::new(
                 using_cross_entropy_loss,
@@ -101,7 +101,7 @@ impl Operators {
 
     pub fn residual_sum_of_squares(&self) -> Operator {
         Operator::new(
-            self.accelerator(),
+            self.device(),
             self.tape(),
             Rc::new(RefCell::new(Box::new(ResidualSumOfSquares::default()))),
         )
@@ -109,7 +109,7 @@ impl Operators {
 
     pub fn cross_entropy_loss(&self) -> Operator {
         Operator::new(
-            self.accelerator(),
+            self.device(),
             self.tape(),
             Rc::new(RefCell::new(Box::new(CrossEntropyLoss::default()))),
         )

@@ -98,7 +98,7 @@ impl ActivationFunction for Softmax {
 impl OperatorTrait for Softmax {
     fn backward(
         &self,
-        accelerator: &Device,
+        device: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         output: &Rc<Tensor>,
@@ -109,7 +109,7 @@ impl OperatorTrait for Softmax {
             // Compute activation function derivative.
             if self.using_cross_entropy_loss {
                 // Softmax and Cross Entropy Loss are best friends.
-                layer_delta.assign(accelerator, &back_propagated_delta);
+                layer_delta.assign(device, &back_propagated_delta);
             } else {
                 let input = &inputs[0];
                 let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
@@ -119,16 +119,12 @@ impl OperatorTrait for Softmax {
             }
         }
 
-        back_propagated_delta.assign(accelerator, layer_delta);
+        back_propagated_delta.assign(device, layer_delta);
 
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(
-        &self,
-        _accelerator: &Device,
-        inputs: &Vec<Rc<Tensor>>,
-    ) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, _device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         let input = &inputs[0];
         let mut output = Tensor::new(0, 0, vec![0.0]);
         self.activate(input, &mut output)?;

@@ -21,7 +21,7 @@ impl Embedding {
 impl OperatorTrait for Embedding {
     fn backward(
         &self,
-        accelerator: &Device,
+        device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
@@ -29,7 +29,7 @@ impl OperatorTrait for Embedding {
         layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
         {
-            layer_delta.assign(accelerator, back_propagated_delta);
+            layer_delta.assign(device, back_propagated_delta);
         }
 
         let mut gradients = vec![];
@@ -40,18 +40,18 @@ impl OperatorTrait for Embedding {
             let b: &Tensor = input;
             let c: &mut Tensor = &mut gradient;
             c.reset(b.cols(), a.cols(), 0.0);
-            let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
+            let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
 
             gradients.push(Gradient::new(self.embedding_table.clone(), gradient));
         }
 
-        back_propagated_delta.assign(accelerator, layer_delta);
+        back_propagated_delta.assign(device, layer_delta);
 
         Ok((back_propagated_delta.clone(), gradients))
     }
 
-    fn forward(&self, accelerator: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         let embedding_table: &Tensor = &self.embedding_table.deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
@@ -61,7 +61,7 @@ impl OperatorTrait for Embedding {
         let b = &embedding_table;
         let c = &mut output;
         c.reset(a.rows(), b.cols(), 0.0);
-        Tensor::matmul(accelerator, false, false, a, b, c, false)?;
+        Tensor::matmul(device, false, false, a, b, c, false)?;
         Ok(Rc::new(output))
     }
 

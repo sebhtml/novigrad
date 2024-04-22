@@ -12,11 +12,11 @@ pub use back_propagation::*;
 pub trait OperatorTrait {
     fn name(&self) -> &str;
 
-    fn forward(&self, accelerator: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error>;
+    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error>;
 
     fn backward(
         &self,
-        accelerator: &Device,
+        device: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         output: &Rc<Tensor>,
@@ -27,6 +27,6 @@ pub trait OperatorTrait {
 
 pub trait Forward {
     fn forward(&mut self, input: &Rc<Tensor>) -> Result<Rc<Tensor>, Error>;
-    fn accelerator(&self) -> Rc<Device>;
+    fn device(&self) -> Rc<Device>;
     fn tape(&self) -> Rc<RefCell<Tape>>;
 }

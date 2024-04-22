@@ -87,9 +87,9 @@ impl Tensor {
         self.values[index] = value;
     }
 
-    pub fn assign(&mut self, accelerator: &Device, from: &Tensor) {
+    pub fn assign(&mut self, device: &Device, from: &Tensor) {
         self.reset(from.rows, from.cols, 0.0);
-        Tensor::copy(accelerator, from, self);
+        Tensor::copy(device, from, self);
     }
 
     pub fn transpose(&self, other: &mut Tensor) {
@@ -112,12 +112,12 @@ impl Tensor {
         &self.values
     }
 
-    // TODO use accelerator for element_wise_mul
+    // TODO use device for element_wise_mul
     pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         self.operation::<F32Mul>(right, result)
     }
 
-    pub fn dot_product(accelerator: &Device, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    pub fn dot_product(device: &Device, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -126,19 +126,19 @@ impl Tensor {
         let incx = 1;
         let y = &y.values;
         let incy = 1;
-        Ok(accelerator.sdot(n, x, incx, y, incy))
+        Ok(device.sdot(n, x, incx, y, incy))
     }
-    fn copy(accelerator: &Device, x: &Tensor, y: &mut Tensor) {
+    fn copy(device: &Device, x: &Tensor, y: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &x.values;
         let incx = 1;
         let y = &mut y.values;
         let incy = 1;
-        accelerator.scopy(n, x, incx, y, incy)
+        device.scopy(n, x, incx, y, incy)
     }
 
     pub fn matmul(
-        accelerator: &Device,
+        device: &Device,
         transa: bool,
         transb: bool,
         a: &Tensor,
@@ -149,7 +149,7 @@ impl Tensor {
         let alpha = 1.0;
         let beta = 0.0;
         Tensor::gemm(
-            accelerator,
+            device,
             transa,
             transb,
             alpha,
@@ -162,7 +162,7 @@ impl Tensor {
     }
 
     pub fn gemm(
-        accelerator: &Device,
+        device: &Device,
         transa: bool,
         transb: bool,
         alpha: f32,
@@ -177,7 +177,7 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
-            accelerator.sgemm(
+            device.sgemm(
                 Transpose::None,
                 Transpose::None,
                 n as i32,
@@ -199,7 +199,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
-            accelerator.sgemm(
+            device.sgemm(
                 Transpose::None,
                 Transpose::Ordinary,
                 n as i32,
@@ -222,7 +222,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.rows, b.rows, a.cols);
 
-            accelerator.sgemm(
+            device.sgemm(
                 Transpose::Ordinary,
                 Transpose::None,
                 n as i32,
@@ -245,7 +245,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
-            accelerator.sgemm(
+            device.sgemm(
                 Transpose::Ordinary,
                 Transpose::Ordinary,
                 n as i32,
@@ -268,7 +268,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
-            accelerator.sgemm(
+            device.sgemm(
                 Transpose::None,
                 Transpose::None,
                 m as i32,
@@ -291,7 +291,7 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
-            accelerator.sgemm(
+            device.sgemm(
                 Transpose::None,
                 Transpose::Ordinary,
                 m as i32,
@@ -313,22 +313,17 @@ impl Tensor {
         }
     }
 
-    pub fn sub(accelerator: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn sub(device: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         let alpha = -1.0;
-        Self::saxpy(accelerator, alpha, x, y)
+        Self::saxpy(device, alpha, x, y)
     }
 
-    pub fn add(accelerator: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn add(device: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         let alpha = 1.0;
-        Self::saxpy(accelerator, alpha, x, y)
+        Self::saxpy(device, alpha, x, y)
     }
 
-    pub fn saxpy(
-        accelerator: &Device,
-        alpha: f32,
-        x: &Tensor,
-        y: &mut Tensor,
-    ) -> Result<(), Error> {
+    pub fn saxpy(device: &Device, alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         if x.values.len() != y.values.len() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -337,11 +332,11 @@ impl Tensor {
         let incx = 1;
         let y = &mut y.values;
         let incy = 1;
-        accelerator.saxpy(n, alpha, x, incx, y, incy);
+        device.saxpy(n, alpha, x, incx, y, incy);
         Ok(())
     }
 
-    // TODO use accelerator to clip
+    // TODO use device to clip
     pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {
         result.reset(self.rows, self.cols, Default::default());
         let len = self.values.len();
@@ -355,11 +350,11 @@ impl Tensor {
         }
     }
 
-    pub fn scalar_mul(accelerator: &Device, alpha: f32, x: &mut Tensor) {
+    pub fn scalar_mul(device: &Device, alpha: f32, x: &mut Tensor) {
         let n = x.values.len() as i32;
         let x = &mut x.values;
         let incx = 1;
-        accelerator.sscal(n, alpha, x, incx)
+        device.sscal(n, alpha, x, incx)
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {

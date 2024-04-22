@@ -8,7 +8,7 @@ use crate::gradient::OperatorTrait;
 pub fn back_propagation(
     working_memory: &mut TrainWorkingMemory,
     error_working_memory: &mut DeltaWorkingMemory,
-    accelerator: &Device,
+    device: &Device,
     tape: &Rc<RefCell<Tape>>,
 ) -> Result<Vec<Gradient>, Error> {
     let mut gradients = vec![];
@@ -27,7 +27,7 @@ pub fn back_propagation(
         let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
 
         let (back_propagated_gradient, operator_gradients) = operator.backward(
-            accelerator,
+            device,
             error_working_memory,
             inputs,
             output,

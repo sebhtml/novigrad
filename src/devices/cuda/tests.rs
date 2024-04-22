@@ -27,9 +27,9 @@ fn cublas_sgemm_column_major() {
         4.0, 2.0, //
     ];
 
-    let accelerator = CudaDevice::try_default().unwrap();
+    let device = CudaDevice::try_default().unwrap();
 
-    accelerator.sgemm(
+    device.sgemm(
         Transpose::None,
         Transpose::None,
         m,

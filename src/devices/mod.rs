@@ -94,40 +94,40 @@ impl DeviceInterface for Device {
         ldc: i32,
     ) {
         match self {
-            Device::Cpu(accelerator) => {
-                accelerator.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+            Device::Cpu(device) => {
+                device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
-            Device::Cuda(accelerator) => {
-                accelerator.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+            Device::Cuda(device) => {
+                device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
         }
     }
 
     fn sdot(&self, n: i32, x: &[f32], incx: i32, y: &[f32], incy: i32) -> f32 {
         match self {
-            Device::Cpu(accelerator) => accelerator.sdot(n, x, incx, y, incy),
-            Device::Cuda(accelerator) => accelerator.sdot(n, x, incx, y, incy),
+            Device::Cpu(device) => device.sdot(n, x, incx, y, incy),
+            Device::Cuda(device) => device.sdot(n, x, incx, y, incy),
         }
     }
 
     fn scopy(&self, n: i32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
-            Device::Cpu(accelerator) => accelerator.scopy(n, x, incx, y, incy),
-            Device::Cuda(accelerator) => accelerator.scopy(n, x, incx, y, incy),
+            Device::Cpu(device) => device.scopy(n, x, incx, y, incy),
+            Device::Cuda(device) => device.scopy(n, x, incx, y, incy),
         }
     }
 
     fn saxpy(&self, n: i32, alpha: f32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
         match self {
-            Device::Cpu(accelerator) => accelerator.saxpy(n, alpha, x, incx, y, incy),
-            Device::Cuda(accelerator) => accelerator.saxpy(n, alpha, x, incx, y, incy),
+            Device::Cpu(device) => device.saxpy(n, alpha, x, incx, y, incy),
+            Device::Cuda(device) => device.saxpy(n, alpha, x, incx, y, incy),
         }
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: &mut [f32], incx: i32) {
         match self {
-            Device::Cpu(accelerator) => accelerator.sscal(n, alpha, x, incx),
-            Device::Cuda(accelerator) => accelerator.sscal(n, alpha, x, incx),
+            Device::Cpu(device) => device.sscal(n, alpha, x, incx),
+            Device::Cuda(device) => device.sscal(n, alpha, x, incx),
         }
     }
 }

@@ -16,12 +16,7 @@ const EPSILON: f32 = 1e-8;
 
 impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(
-        &self,
-        _accelerator: &Device,
-        expected: &Tensor,
-        actual: &Tensor,
-    ) -> Result<f32, Error> {
+    fn evaluate(&self, _device: &Device, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
         debug_assert_eq!(actual.shape(), expected.shape());
         let p = expected;
         let q = actual;
@@ -49,20 +44,20 @@ impl LossFunction for CrossEntropyLoss {
     /// output of the softmax function - expected output (one-hot encoded)
     fn derive(
         &self,
-        accelerator: &Device,
+        device: &Device,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        result.assign(accelerator, actual);
-        Tensor::sub(accelerator, expected, result)
+        result.assign(device, actual);
+        Tensor::sub(device, expected, result)
     }
 }
 
 impl OperatorTrait for CrossEntropyLoss {
     fn backward(
         &self,
-        accelerator: &Device,
+        device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
@@ -72,16 +67,16 @@ impl OperatorTrait for CrossEntropyLoss {
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
         let actual = &inputs[1];
-        self.derive(accelerator, expected, actual, back_propagated_delta)?;
+        self.derive(device, expected, actual, back_propagated_delta)?;
 
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(&self, accelerator: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
         let actual = &inputs[1];
-        let loss = self.evaluate(accelerator, expected, actual)?;
+        let loss = self.evaluate(device, expected, actual)?;
         let output = Tensor::new(1, 1, vec![loss]);
         Ok(Rc::new(output))
     }

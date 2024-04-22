@@ -35,7 +35,7 @@ impl Linear {
 }
 
 impl OperatorTrait for Linear {
-    fn forward(&self, accelerator: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
         let mut output = Tensor::new(0, 0, vec![0.0]);
@@ -51,8 +51,8 @@ impl OperatorTrait for Linear {
         let a = input;
         let b = weights;
         let c = &mut output;
-        c.assign(accelerator, biases);
-        let op_result = Tensor::gemm(accelerator, false, true, 1.0, a, b, 1.0, c, false);
+        c.assign(device, biases);
+        let op_result = Tensor::gemm(device, false, true, 1.0, a, b, 1.0, c, false);
         match op_result {
             Ok(_) => (),
             Err(_) => {
@@ -69,7 +69,7 @@ impl OperatorTrait for Linear {
 
     fn backward(
         &self,
-        accelerator: &Device,
+        device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
@@ -77,7 +77,7 @@ impl OperatorTrait for Linear {
         layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
         {
-            layer_delta.assign(accelerator, back_propagated_delta);
+            layer_delta.assign(device, back_propagated_delta);
         }
 
         let mut gradients = vec![];
@@ -89,10 +89,10 @@ impl OperatorTrait for Linear {
             let b: &Tensor = layer_delta;
             let c: &mut Tensor = &mut weights_gradient;
             c.reset(b.cols(), a.cols(), 0.0);
-            let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
+            let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
 
-            biases_gradient.assign(accelerator, layer_delta);
+            biases_gradient.assign(device, layer_delta);
 
             gradients.push(Gradient::new(self.weights.clone(), weights_gradient));
             gradients.push(Gradient::new(self.biases.clone(), biases_gradient));
@@ -104,7 +104,7 @@ impl OperatorTrait for Linear {
             let b: &Tensor = layer_delta;
             let c: &mut Tensor = back_propagated_delta;
             c.reset(b.rows(), a.cols(), 0.0);
-            Tensor::matmul(accelerator, true, true, a, b, c, true)?;
+            Tensor::matmul(device, true, true, a, b, c, true)?;
         }
 
         Ok((back_propagated_delta.clone(), gradients))

@@ -5,15 +5,10 @@ mod cross_entropy_loss;
 pub use cross_entropy_loss::*;
 
 pub trait LossFunction {
-    fn evaluate(
-        &self,
-        accelerator: &Device,
-        expected: &Tensor,
-        actual: &Tensor,
-    ) -> Result<f32, Error>;
+    fn evaluate(&self, device: &Device, expected: &Tensor, actual: &Tensor) -> Result<f32, Error>;
     fn derive(
         &self,
-        accelerator: &Device,
+        device: &Device,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,

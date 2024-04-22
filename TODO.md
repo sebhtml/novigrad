@@ -1,5 +1,6 @@
 == CUDA MR ==
 
+- remove reset method in Tensor
 - use Result for return type of Device methods
 - create tensors with device
 - store Tensor on Device Cuda

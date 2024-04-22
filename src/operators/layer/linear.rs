@@ -24,7 +24,7 @@ impl Linear {
         }
         let weights = Tensor::new(weights_rows, weights_cols, weights);
 
-        let mut biases = Tensor::new(0, 0, vec![0.0]);
+        let mut biases = Tensor::new(0, 0, vec![]);
         biases.reset(bias_rows, weights_rows, Default::default());
 
         Linear {
@@ -38,7 +38,7 @@ impl OperatorTrait for Linear {
     fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
-        let mut output = Tensor::new(0, 0, vec![0.0]);
+        let mut output = Tensor::new(0, 0, vec![]);
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.
@@ -56,7 +56,7 @@ impl OperatorTrait for Linear {
         match op_result {
             Ok(_) => (),
             Err(_) => {
-                let mut w_t = Tensor::new(0, 0, vec![0.0]);
+                let mut w_t = Tensor::new(0, 0, vec![]);
                 b.transpose(&mut w_t);
                 println!("Incompatible shapes in matrix multiplication");
                 println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
@@ -82,8 +82,8 @@ impl OperatorTrait for Linear {
 
         let mut gradients = vec![];
         {
-            let mut weights_gradient = Tensor::new(0, 0, vec![0.0]);
-            let mut biases_gradient = Tensor::new(0, 0, vec![0.0]);
+            let mut weights_gradient = Tensor::new(0, 0, vec![]);
+            let mut biases_gradient = Tensor::new(0, 0, vec![]);
             let input = &inputs[0];
             let a: &Tensor = input;
             let b: &Tensor = layer_delta;

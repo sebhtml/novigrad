@@ -29,12 +29,12 @@ pub struct TrainWorkingMemory {
 impl Default for TrainWorkingMemory {
     fn default() -> Self {
         Self {
-            layer_output: Tensor::new(0, 0, vec![0.0]),
-            next_layer_delta: Tensor::new(0, 0, vec![0.0]),
-            back_propagated_delta: Tensor::new(0, 0, vec![0.0]),
-            layer_delta: Tensor::new(0, 0, vec![0.0]),
-            previous_activation_tensor: Tensor::new(0, 0, vec![0.0]),
-            tmp: Tensor::new(0, 0, vec![0.0]),
+            layer_output: Tensor::new(0, 0, vec![]),
+            next_layer_delta: Tensor::new(0, 0, vec![]),
+            back_propagated_delta: Tensor::new(0, 0, vec![]),
+            layer_delta: Tensor::new(0, 0, vec![]),
+            previous_activation_tensor: Tensor::new(0, 0, vec![]),
+            tmp: Tensor::new(0, 0, vec![]),
         }
     }
 }
@@ -46,7 +46,7 @@ pub struct DeltaWorkingMemory {
 impl Default for DeltaWorkingMemory {
     fn default() -> Self {
         Self {
-            layer_f_derivative: Tensor::new(0, 0, vec![0.0]),
+            layer_f_derivative: Tensor::new(0, 0, vec![]),
         }
     }
 }
@@ -60,9 +60,9 @@ pub struct PredictWorkingMemory {
 impl PredictWorkingMemory {
     pub fn new(examples_count: usize) -> Self {
         Self {
-            previous_activation_tensor: Tensor::new(0, 0, vec![0.0]),
-            activation_tensor: Tensor::new(0, 0, vec![0.0]),
-            activation_tensors: vec![Tensor::new(0, 0, vec![0.0]); examples_count],
+            previous_activation_tensor: Tensor::new(0, 0, vec![]),
+            activation_tensor: Tensor::new(0, 0, vec![]),
+            activation_tensors: vec![Tensor::new(0, 0, vec![]); examples_count],
         }
     }
 }

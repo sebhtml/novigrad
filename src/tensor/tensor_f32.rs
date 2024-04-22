@@ -19,7 +19,12 @@ impl Tensor {
         Self { rows, cols, values }
     }
 
-    fn operation<Operation>(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error>
+    fn operation<Operation>(
+        &self,
+        device: &Device,
+        right: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error>
     where
         Operation: F32Operation,
     {
@@ -29,6 +34,8 @@ impl Tensor {
         }
 
         result.reset(left.rows, left.cols, Default::default());
+        debug_assert_eq!(result.shape(), left.shape());
+        Tensor::scalar_mul(device, 0.0, result);
 
         let result_ptr = result.values.as_mut_ptr();
         let left_ptr = left.values.as_ptr();
@@ -117,8 +124,13 @@ impl Tensor {
     }
 
     // TODO use device for element_wise_mul
-    pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        self.operation::<F32Mul>(right, result)
+    pub fn element_wise_mul(
+        &self,
+        device: &Device,
+        right: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        self.operation::<F32Mul>(device, right, result)
     }
 
     pub fn dot_product(device: &Device, x: &Tensor, y: &Tensor) -> Result<f32, Error> {

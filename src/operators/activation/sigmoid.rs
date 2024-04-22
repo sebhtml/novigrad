@@ -73,7 +73,7 @@ impl OperatorTrait for Sigmoid {
             let input = &inputs[0];
             let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
             self.derive(input, output, layer_f_derivative)?;
-            layer_f_derivative.element_wise_mul(back_propagated_delta, layer_delta)?;
+            layer_f_derivative.element_wise_mul(device, back_propagated_delta, layer_delta)?;
         }
 
         back_propagated_delta.assign(device, layer_delta);
@@ -83,7 +83,7 @@ impl OperatorTrait for Sigmoid {
 
     fn forward(&self, _device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         let input = &inputs[0];
-        let mut output = Tensor::new(0, 0, vec![0.0]);
+        let mut output = Tensor::new(0, 0, vec![]);
         self.activate(input, &mut output)?;
         Ok(Rc::new(output))
     }

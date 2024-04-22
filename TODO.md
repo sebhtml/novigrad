@@ -1,6 +1,6 @@
 == CUDA MR ==
 
-- pass Tensor to Device
+- use Result for return type of Device methods
 - create tensors with device
 - store Tensor on Device Cuda
 

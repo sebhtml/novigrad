@@ -112,6 +112,10 @@ impl Tensor {
         &self.values
     }
 
+    pub fn mut_values(&mut self) -> &mut Vec<f32> {
+        &mut self.values
+    }
+
     // TODO use device for element_wise_mul
     pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
         self.operation::<F32Mul>(right, result)
@@ -122,17 +126,13 @@ impl Tensor {
             return Err(Error::IncompatibleTensorShapes);
         }
         let n = x.values.len() as i32;
-        let x = &x.values;
         let incx = 1;
-        let y = &y.values;
         let incy = 1;
         Ok(device.sdot(n, x, incx, y, incy))
     }
     fn copy(device: &Device, x: &Tensor, y: &mut Tensor) {
         let n = x.values.len() as i32;
-        let x = &x.values;
         let incx = 1;
-        let y = &mut y.values;
         let incy = 1;
         device.scopy(n, x, incx, y, incy)
     }
@@ -178,19 +178,8 @@ impl Tensor {
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
             device.sgemm(
-                false,
-                false,
-                n as i32,
-                m as i32,
-                k as i32,
-                alpha,
-                &b.values,
-                n as i32,
-                &a.values,
-                k as i32,
-                beta,
-                &mut c.values,
-                n as i32,
+                false, false, n as i32, m as i32, k as i32, alpha, b, n as i32, a, k as i32, beta,
+                c, n as i32,
             );
             Ok(())
         } else if transa && !transb && !transpose_result {
@@ -206,12 +195,12 @@ impl Tensor {
                 m as i32,
                 k as i32,
                 alpha,
-                &b.values,
+                b,
                 n as i32,
-                &a.values,
+                a,
                 a.cols as i32,
                 beta,
-                &mut c.values,
+                c,
                 n as i32,
             );
 
@@ -229,12 +218,12 @@ impl Tensor {
                 m as i32,
                 k as i32,
                 alpha,
-                &b.values,
+                b,
                 b.cols as i32,
-                &a.values,
+                a,
                 k as i32,
                 beta,
-                &mut c.values,
+                c,
                 n as i32,
             );
 
@@ -252,12 +241,12 @@ impl Tensor {
                 m as i32,
                 k as i32,
                 alpha,
-                &b.values,
+                b,
                 b.cols as i32,
-                &a.values,
+                a,
                 a.cols as i32,
                 beta,
-                &mut c.values,
+                c,
                 n as i32,
             );
 
@@ -275,12 +264,12 @@ impl Tensor {
                 n as i32,
                 k as i32,
                 alpha,
-                &a.values,
+                a,
                 a.cols as i32,
-                &b.values,
+                b,
                 b.cols as i32,
                 beta,
-                &mut c.values,
+                c,
                 m as i32,
             );
 
@@ -298,12 +287,12 @@ impl Tensor {
                 n as i32,
                 k as i32,
                 alpha,
-                &a.values,
+                a,
                 a.cols as i32,
-                &b.values,
+                b,
                 b.cols as i32,
                 beta,
-                &mut c.values,
+                c,
                 m as i32,
             );
 
@@ -328,9 +317,7 @@ impl Tensor {
             return Err(Error::IncompatibleTensorShapes);
         }
         let n = x.values.len() as i32;
-        let x = &x.values;
         let incx = 1;
-        let y = &mut y.values;
         let incy = 1;
         device.saxpy(n, alpha, x, incx, y, incy);
         Ok(())
@@ -352,7 +339,6 @@ impl Tensor {
 
     pub fn scalar_mul(device: &Device, alpha: f32, x: &mut Tensor) {
         let n = x.values.len() as i32;
-        let x = &mut x.values;
         let incx = 1;
         device.sscal(n, alpha, x, incx)
     }

@@ -13,7 +13,7 @@ use cudarc::{
     driver,
 };
 
-use crate::{DeviceInterface, Error};
+use crate::{DeviceInterface, Error, Tensor};
 
 pub struct CudaDevice {
     handle: cublasHandle_t,
@@ -41,12 +41,12 @@ impl DeviceInterface for CudaDevice {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &[f32],
+        a: &Tensor,
         lda: i32,
-        b: &[f32],
+        b: &Tensor,
         ldb: i32,
         beta: f32,
-        c: &mut [f32],
+        c: &mut Tensor,
         ldc: i32,
     ) {
         let handle = self.handle;
@@ -58,9 +58,9 @@ impl DeviceInterface for CudaDevice {
             false => cublasOperation_t::CUBLAS_OP_N,
             true => cublasOperation_t::CUBLAS_OP_T,
         };
-        let a = a.as_ptr() as *const c_void;
-        let b = b.as_ptr() as *const c_void;
-        let c = c.as_mut_ptr() as *mut c_void;
+        let a = a.values().as_ptr() as *const c_void;
+        let b = b.values().as_ptr() as *const c_void;
+        let c = c.mut_values().as_mut_ptr() as *mut c_void;
         let a_type = cudaDataType::CUDA_R_32F;
         let b_type = cudaDataType::CUDA_R_32F;
         let c_type = cudaDataType::CUDA_R_32F;
@@ -78,20 +78,20 @@ impl DeviceInterface for CudaDevice {
     }
 
     // TODO return Result
-    fn saxpy(&self, n: i32, alpha: f32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
+    fn saxpy(&self, n: i32, alpha: f32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
         let handle = self.handle;
         let alpha = &alpha as *const f32;
-        let x = x.as_ptr();
-        let y = y.as_mut_ptr();
+        let x = x.values().as_ptr();
+        let y = y.mut_values().as_mut_ptr();
         let status = unsafe { cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
         assert_eq!(status, cublasStatus_t::CUBLAS_STATUS_SUCCESS);
     }
 
     // TODO return Result
-    fn sdot(&self, n: i32, x: &[f32], incx: i32, y: &[f32], incy: i32) -> f32 {
+    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> f32 {
         let handle = self.handle;
-        let x = x.as_ptr();
-        let y = y.as_ptr();
+        let x = x.values().as_ptr();
+        let y = y.values().as_ptr();
         let mut result: f32 = 0.0;
         let status = unsafe {
             let result = &mut result as *mut f32;
@@ -102,18 +102,18 @@ impl DeviceInterface for CudaDevice {
     }
 
     // TODO return Result
-    fn scopy(&self, n: i32, x: &[f32], incx: i32, y: &mut [f32], incy: i32) {
+    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
         let handle = self.handle;
-        let x = x.as_ptr();
-        let y = y.as_mut_ptr();
+        let x = x.values().as_ptr();
+        let y = y.mut_values().as_mut_ptr();
         let status = unsafe { cublasScopy_v2(handle, n, x, incx, y, incy) };
         assert_eq!(status, cublasStatus_t::CUBLAS_STATUS_SUCCESS);
     }
 
     // TODO return Result
-    fn sscal(&self, n: i32, alpha: f32, x: &mut [f32], incx: i32) {
+    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) {
         let handle = self.handle;
-        let x = x.as_mut_ptr();
+        let x = x.mut_values().as_mut_ptr();
         let alpha = &alpha as *const f32;
         let status = unsafe { cublasSscal_v2(handle, n, alpha, x, incx) };
         assert_eq!(status, cublasStatus_t::CUBLAS_STATUS_SUCCESS);

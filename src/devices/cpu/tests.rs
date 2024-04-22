@@ -1,7 +1,7 @@
 /// This is the example from https://docs.rs/cblas/latest/cblas/.
 #[test]
 fn cblas_sgemm_column_major() {
-    use crate::devices::{CpuDevice, DeviceInterface, Transpose};
+    use crate::devices::{CpuDevice, DeviceInterface};
     let (m, n, k) = (2, 4, 3);
     let a = vec![
         //
@@ -24,21 +24,7 @@ fn cblas_sgemm_column_major() {
         4.0, 2.0, //
     ];
 
-    CpuDevice::default().sgemm(
-        Transpose::None,
-        Transpose::None,
-        m,
-        n,
-        k,
-        1.0,
-        &a,
-        m,
-        &b,
-        k,
-        1.0,
-        &mut c,
-        m,
-    );
+    CpuDevice::default().sgemm(false, false, m, n, k, 1.0, &a, m, &b, k, 1.0, &mut c, m);
 
     assert_eq!(
         c,
@@ -54,7 +40,7 @@ fn cblas_sgemm_column_major() {
 
 #[test]
 fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
-    use crate::devices::{CpuDevice, DeviceInterface, Transpose};
+    use crate::devices::{CpuDevice, DeviceInterface};
     // From https://stackoverflow.com/questions/56043539/cublassgemm-row-major-multiplication
 
     let m = 2;
@@ -80,21 +66,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
         7.0, 2.0, 7.0, 2.0, //
     ];
 
-    CpuDevice::default().sgemm(
-        Transpose::None,
-        Transpose::None,
-        n,
-        m,
-        k,
-        1.0,
-        &b,
-        n,
-        &a,
-        k,
-        1.0,
-        &mut c,
-        n,
-    );
+    CpuDevice::default().sgemm(false, false, n, m, k, 1.0, &b, n, &a, k, 1.0, &mut c, n);
 
     assert_eq!(
         c,

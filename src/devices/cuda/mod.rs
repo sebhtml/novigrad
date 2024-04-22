@@ -13,7 +13,7 @@ use cudarc::{
     driver,
 };
 
-use crate::{DeviceInterface, Error, Transpose};
+use crate::{DeviceInterface, Error};
 
 pub struct CudaDevice {
     handle: cublasHandle_t,
@@ -31,22 +31,12 @@ impl CudaDevice {
     }
 }
 
-impl Into<cublasOperation_t> for Transpose {
-    fn into(self) -> cublasOperation_t {
-        match self {
-            Transpose::None => cublasOperation_t::CUBLAS_OP_N,
-            Transpose::Ordinary => cublasOperation_t::CUBLAS_OP_T,
-            Transpose::Conjugate => cublasOperation_t::CUBLAS_OP_C,
-        }
-    }
-}
-
 impl DeviceInterface for CudaDevice {
     // TODO return Result
     fn sgemm(
         &self,
-        transa: Transpose,
-        transb: Transpose,
+        transa: bool,
+        transb: bool,
         m: i32,
         n: i32,
         k: i32,
@@ -60,8 +50,14 @@ impl DeviceInterface for CudaDevice {
         ldc: i32,
     ) {
         let handle = self.handle;
-        let transa = transa.into();
-        let transb = transb.into();
+        let transa = match transa {
+            false => cublasOperation_t::CUBLAS_OP_N,
+            true => cublasOperation_t::CUBLAS_OP_T,
+        };
+        let transb = match transb {
+            false => cublasOperation_t::CUBLAS_OP_N,
+            true => cublasOperation_t::CUBLAS_OP_T,
+        };
         let a = a.as_ptr() as *const c_void;
         let b = b.as_ptr() as *const c_void;
         let c = c.as_mut_ptr() as *mut c_void;

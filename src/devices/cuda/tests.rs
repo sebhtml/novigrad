@@ -2,7 +2,7 @@
 #[ignore]
 #[test]
 fn cublas_sgemm_column_major() {
-    use crate::devices::{DeviceInterface, Transpose};
+    use crate::devices::DeviceInterface;
     use crate::CudaDevice;
 
     let (m, n, k) = (2, 4, 3);
@@ -29,21 +29,7 @@ fn cublas_sgemm_column_major() {
 
     let device = CudaDevice::try_default().unwrap();
 
-    device.sgemm(
-        Transpose::None,
-        Transpose::None,
-        m,
-        n,
-        k,
-        1.0,
-        &a,
-        m,
-        &b,
-        k,
-        1.0,
-        &mut c,
-        m,
-    );
+    device.sgemm(false, false, m, n, k, 1.0, &a, m, &b, k, 1.0, &mut c, m);
 
     assert_eq!(
         c,

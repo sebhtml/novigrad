@@ -1,5 +1,5 @@
 use crate::{
-    devices::{Device, DeviceInterface, Transpose},
+    devices::{Device, DeviceInterface},
     Error,
 };
 // use rustacuda::memory::cuda_malloc; //TODO use cuda_malloc
@@ -178,8 +178,8 @@ impl Tensor {
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
             device.sgemm(
-                Transpose::None,
-                Transpose::None,
+                false,
+                false,
                 n as i32,
                 m as i32,
                 k as i32,
@@ -200,8 +200,8 @@ impl Tensor {
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
             device.sgemm(
-                Transpose::None,
-                Transpose::Ordinary,
+                false,
+                true,
                 n as i32,
                 m as i32,
                 k as i32,
@@ -223,8 +223,8 @@ impl Tensor {
             let (m, n, k) = (a.rows, b.rows, a.cols);
 
             device.sgemm(
-                Transpose::Ordinary,
-                Transpose::None,
+                true,
+                false,
                 n as i32,
                 m as i32,
                 k as i32,
@@ -246,8 +246,8 @@ impl Tensor {
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
             device.sgemm(
-                Transpose::Ordinary,
-                Transpose::Ordinary,
+                true,
+                true,
                 n as i32,
                 m as i32,
                 k as i32,
@@ -269,8 +269,8 @@ impl Tensor {
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
             device.sgemm(
-                Transpose::None,
-                Transpose::None,
+                false,
+                false,
                 m as i32,
                 n as i32,
                 k as i32,
@@ -292,8 +292,8 @@ impl Tensor {
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
             device.sgemm(
-                Transpose::None,
-                Transpose::Ordinary,
+                false,
+                true,
                 m as i32,
                 n as i32,
                 k as i32,

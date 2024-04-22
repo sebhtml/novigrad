@@ -5,12 +5,6 @@ pub use cuda::*;
 
 use crate::Error;
 
-pub enum Transpose {
-    None,
-    Ordinary,
-    Conjugate,
-}
-
 pub trait DeviceInterface {
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
@@ -29,8 +23,8 @@ pub trait DeviceInterface {
     ///
     fn sgemm(
         &self,
-        transa: Transpose,
-        transb: Transpose,
+        transa: bool,
+        transb: bool,
         m: i32,
         n: i32,
         k: i32,
@@ -79,8 +73,8 @@ impl Device {
 impl DeviceInterface for Device {
     fn sgemm(
         &self,
-        transa: Transpose,
-        transb: Transpose,
+        transa: bool,
+        transb: bool,
         m: i32,
         n: i32,
         k: i32,

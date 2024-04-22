@@ -13,21 +13,11 @@ impl Default for CpuDevice {
     }
 }
 
-impl Into<Transpose> for super::Transpose {
-    fn into(self) -> Transpose {
-        match self {
-            super::Transpose::None => Transpose::None,
-            super::Transpose::Ordinary => Transpose::Ordinary,
-            super::Transpose::Conjugate => Transpose::Conjugate,
-        }
-    }
-}
-
 impl DeviceInterface for CpuDevice {
     fn sgemm(
         &self,
-        transa: super::Transpose,
-        transb: super::Transpose,
+        transa: bool,
+        transb: bool,
         m: i32,
         n: i32,
         k: i32,
@@ -41,8 +31,14 @@ impl DeviceInterface for CpuDevice {
         ldc: i32,
     ) {
         let layout = Layout::ColumnMajor;
-        let transa = transa.into();
-        let transb = transb.into();
+        let transa = match transa {
+            false => Transpose::None,
+            true => Transpose::Ordinary,
+        };
+        let transb = match transb {
+            false => Transpose::None,
+            true => Transpose::Ordinary,
+        };
         unsafe {
             sgemm(
                 layout, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,

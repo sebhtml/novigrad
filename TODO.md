@@ -1,12 +1,9 @@
 == gradient MR ==
 
 - remove Clone for Tensor
+- in reset(), if new len is different, do a cuda reallocation
 - store output tensor in operator
 - store gradients in output tensors during back prop
-
-== Clean-up MR ==
-
-- remove method reset()
 - use Result for return type of Device methods
 
 == Concat MR ==

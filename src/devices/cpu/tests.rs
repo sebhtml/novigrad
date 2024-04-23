@@ -41,7 +41,7 @@ fn cblas_sgemm_column_major() {
     device.sgemm(false, false, m, n, k, 1.0, &a, m, &b, k, 1.0, &mut c, m);
 
     assert_eq!(
-        c.values(),
+        &c.get_values(),
         &vec![
             //
             40.0, 90.0, //
@@ -98,11 +98,28 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
     device.sgemm(false, false, n, m, k, 1.0, &b, n, &a, k, 1.0, &mut c, n);
 
     assert_eq!(
-        c.values(),
+        &c.get_values(),
         &vec![
             //
             40.0, 50.0, 50.0, 60.0, //
             90.0, 100.0, 120.0, 130.0, //
         ]
     );
+}
+
+#[test]
+fn cpu_tensor() {
+    use crate::Device;
+    let device = Device::cpu();
+    let tensor = device.tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    assert_eq!(tensor.get_values(), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0,]);
+}
+
+#[test]
+fn cpu_set_value() {
+    use crate::Device;
+    let device = Device::cpu();
+    let mut tensor = device.tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    tensor.set_values(vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    assert_eq!(tensor.get_values(), vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0,]);
 }

@@ -1,21 +1,50 @@
+use rustacuda::memory::CopyDestination;
+use rustacuda::memory::DeviceBuffer;
+
 use crate::{
     devices::{Device, DeviceInterface},
     Error,
 };
-// use rustacuda::memory::cuda_malloc; //TODO use cuda_malloc
+
+use std::cell::RefCell;
+use std::ops::Deref;
+use std::ops::DerefMut;
+use std::rc::Rc;
 use std::{fmt::Display, ops::Mul};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
+pub enum DevBuffer {
+    CpuBuffer(Vec<f32>),
+    CudaBuffer(Rc<RefCell<DeviceBuffer<f32>>>),
+}
+
+// TODO remove Clone here
+#[derive(Clone, Debug)]
 pub struct Tensor {
     rows: usize,
     cols: usize,
-    values: Vec<f32>,
+    values: DevBuffer,
+}
+
+impl PartialEq for Tensor {
+    fn eq(&self, other: &Self) -> bool {
+        self.rows() == other.rows()
+            && self.cols() == other.cols()
+            && self.get_values() == other.get_values()
+    }
 }
 
 impl Tensor {
-    // TODO add device argument
-    pub fn new(rows: usize, cols: usize, values: Vec<f32>, _device: &Device) -> Self {
+    pub fn new(rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
+        let values = match device {
+            Device::Cpu(_) => DevBuffer::CpuBuffer(values),
+            Device::Cuda(_) => {
+                let mut buffer = unsafe { DeviceBuffer::uninitialized(values.len()).unwrap() };
+                buffer.copy_from(values.as_slice()).unwrap();
+                DevBuffer::CudaBuffer(Rc::new(RefCell::new(buffer)))
+            }
+        };
         Self { rows, cols, values }
     }
 
@@ -37,13 +66,17 @@ impl Tensor {
         debug_assert_eq!(result.shape(), left.shape());
         Tensor::scalar_mul(device, 0.0, result);
 
-        let result_ptr = result.values.as_mut_ptr();
-        let left_ptr = left.values.as_ptr();
-        let right_ptr = right.values.as_ptr();
+        let mut result_values = result.get_values();
+        let left_values = left.get_values();
+        let right_values = right.get_values();
+
+        let result_ptr = result_values.as_mut_ptr();
+        let left_ptr = left_values.as_ptr();
+        let right_ptr = right_values.as_ptr();
 
         unsafe {
             let mut index = 0;
-            let len = left.values.len();
+            let len = left_values.len();
             while index < len {
                 let left_cell = left_ptr.add(index);
                 let right_cell = right_ptr.add(index);
@@ -57,6 +90,8 @@ impl Tensor {
             }
         }
 
+        result.set_values(result_values);
+
         Ok(())
     }
 
@@ -68,6 +103,10 @@ impl Tensor {
         self.cols
     }
 
+    pub fn len(&self) -> usize {
+        self.rows() * self.cols()
+    }
+
     pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
@@ -76,8 +115,10 @@ impl Tensor {
         self.rows = new_rows;
         self.cols = new_cols;
         let values = self.rows * self.cols;
-        self.values.clear();
-        self.values.resize(values, value)
+        let mut self_values = self.get_values();
+        self_values.clear();
+        self_values.resize(values, value);
+        self.set_values(self_values)
     }
 
     fn index(&self, row: usize, col: usize) -> usize {
@@ -86,12 +127,15 @@ impl Tensor {
 
     pub fn get(&self, row: usize, col: usize) -> f32 {
         let index = self.index(row, col);
-        self.values[index]
+        let self_values = self.get_values();
+        self_values[index]
     }
 
     pub fn set(&mut self, row: usize, col: usize, value: f32) {
         let index = self.index(row, col);
-        self.values[index] = value;
+        let mut self_values = self.get_values();
+        self_values[index] = value;
+        self.set_values(self_values)
     }
 
     pub fn assign(&mut self, device: &Device, from: &Tensor) {
@@ -115,12 +159,48 @@ impl Tensor {
         }
     }
 
-    pub fn values(&self) -> &Vec<f32> {
-        &self.values
+    pub fn as_ptr(&self) -> *const f32 {
+        match &self.values {
+            DevBuffer::CpuBuffer(ref values) => values.as_ptr(),
+            DevBuffer::CudaBuffer(ref values) => values.deref().borrow().deref().as_ptr(),
+        }
     }
 
-    pub fn mut_values(&mut self) -> &mut Vec<f32> {
-        &mut self.values
+    pub fn as_mut_ptr(&mut self) -> *mut f32 {
+        match &mut self.values {
+            DevBuffer::CpuBuffer(ref mut values) => values.as_mut_ptr(),
+            DevBuffer::CudaBuffer(ref mut values) => {
+                values.deref().borrow_mut().deref_mut().as_mut_ptr()
+            }
+        }
+    }
+
+    // TODO Delete uses of get_values
+    pub fn get_values(&self) -> Vec<f32> {
+        match &self.values {
+            DevBuffer::CpuBuffer(ref values) => values.clone(),
+            DevBuffer::CudaBuffer(ref buffer) => {
+                let buffer = buffer.deref().borrow();
+                let mut values = vec![0.0; buffer.len()];
+                // TODO don't unwrap directly.
+                buffer.copy_to(values.as_mut_slice()).unwrap();
+                values
+            }
+        }
+    }
+
+    pub fn set_values(&mut self, new_values: Vec<f32>) {
+        match &mut self.values {
+            DevBuffer::CpuBuffer(ref mut values) => {
+                values.clear();
+                values.extend_from_slice(new_values.as_slice())
+            }
+            DevBuffer::CudaBuffer(buffer) => {
+                let mut buffer = buffer.deref().borrow_mut();
+                // TODO don't unwrap directly.
+                buffer.copy_from(new_values.as_slice()).unwrap();
+            }
+        }
     }
 
     // TODO use device for element_wise_mul
@@ -137,13 +217,13 @@ impl Tensor {
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        let n = x.values.len() as i32;
+        let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
         Ok(device.sdot(n, x, incx, y, incy))
     }
     fn copy(device: &Device, x: &Tensor, y: &mut Tensor) {
-        let n = x.values.len() as i32;
+        let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
         device.scopy(n, x, incx, y, incy)
@@ -325,10 +405,10 @@ impl Tensor {
     }
 
     pub fn saxpy(device: &Device, alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
-        if x.values.len() != y.values.len() {
+        if x.len() != y.len() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        let n = x.values.len() as i32;
+        let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
         device.saxpy(n, alpha, x, incx, y, incy);
@@ -338,25 +418,28 @@ impl Tensor {
     // TODO use device to clip
     pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {
         result.reset(self.rows, self.cols, Default::default());
-        let len = self.values.len();
+        let len = self.len();
         let mut index = 0;
+        let self_values = self.get_values();
+        let mut result_values = result.get_values();
         while index < len {
-            let mut value = self.values[index];
+            let mut value = self_values[index];
             value = value.max(min);
             value = value.min(max);
-            result.values[index] = value;
+            result_values[index] = value;
             index += 1;
         }
+        result.set_values(result_values)
     }
 
     pub fn scalar_mul(device: &Device, alpha: f32, x: &mut Tensor) {
-        let n = x.values.len() as i32;
+        let n = x.len() as i32;
         let incx = 1;
         device.sscal(n, alpha, x, incx)
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {
-        if (new_rows * new_cols) != self.values.len() {
+        if (new_rows * new_cols) != self.len() {
             return Err(Error::UnsupportedOperation);
         }
 

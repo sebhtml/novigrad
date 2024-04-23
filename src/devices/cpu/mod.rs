@@ -1,5 +1,5 @@
-use cblas::{saxpy, scopy, sdot, sgemm, sscal, Layout, Transpose};
-
+use cblas::{Layout, Transpose};
+extern crate cblas_sys as ffi;
 use crate::Tensor;
 
 use super::DeviceInterface;
@@ -41,36 +41,49 @@ impl DeviceInterface for CpuDevice {
             false => Transpose::None,
             true => Transpose::Ordinary,
         };
-        let a = a.values();
-        let b = b.values();
-        let c = c.mut_values();
+        let a = a.as_ptr();
+        let b = b.as_ptr();
+        let c = c.as_mut_ptr();
         unsafe {
-            sgemm(
-                layout, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
+            ffi::cblas_sgemm(
+                layout.into(),
+                transa.into(),
+                transb.into(),
+                m,
+                n,
+                k,
+                alpha,
+                a,
+                lda,
+                b,
+                ldb,
+                beta,
+                c,
+                ldc,
             )
         }
     }
 
     fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> f32 {
-        let x = x.values();
-        let y = y.values();
-        unsafe { sdot(n, x, incx, y, incy) }
+        let x = x.as_ptr();
+        let y = y.as_ptr();
+        unsafe { ffi::cblas_sdot(n, x, incx, y, incy) }
     }
 
     fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
-        let x = x.values();
-        let y = y.mut_values();
-        unsafe { scopy(n, x, incx, y, incy) }
+        let x = x.as_ptr();
+        let y = y.as_mut_ptr();
+        unsafe { ffi::cblas_scopy(n, x, incx, y, incy) }
     }
 
     fn saxpy(&self, n: i32, alpha: f32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
-        let x = x.values();
-        let y = y.mut_values();
-        unsafe { saxpy(n, alpha, x, incx, y, incy) }
+        let x = x.as_ptr();
+        let y = y.as_mut_ptr();
+        unsafe { ffi::cblas_saxpy(n, alpha, x, incx, y, incy) }
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) {
-        let x = x.mut_values();
-        unsafe { sscal(n, alpha, x, incx) }
+        let x = x.as_mut_ptr();
+        unsafe { ffi::cblas_sscal(n, alpha, x, incx) }
     }
 }

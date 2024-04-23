@@ -1,14 +1,13 @@
-== CUDA MR ==
-
-- use an enum for the values field in Tensor
-- use Result for return type of Device methods
-- remove method reset()
-- store Tensor on Device Cuda using rustacuda DeviceBuf<f32>
-
 == gradient MR ==
 
+- remove Clone for Tensor
 - store output tensor in operator
 - store gradients in output tensors during back prop
+
+== Clean-up MR ==
+
+- remove method reset()
+- use Result for return type of Device methods
 
 == Concat MR ==
 

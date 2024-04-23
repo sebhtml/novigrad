@@ -21,17 +21,12 @@ fn load_examples(device: &Device) -> Vec<(Tensor, Tensor)> {
     ));
 
     let num_classes = 16;
-    let mut one_hot_encoded_input = device.tensor(0, 0, vec![]);
-    let mut one_hot_encoded_output = device.tensor(0, 0, vec![]);
     let examples = examples
         .into_iter()
         .map(|example| {
-            into_one_hot_encoded_rows(&example.0, num_classes, &mut one_hot_encoded_input);
-            into_one_hot_encoded_rows(&example.1, num_classes, &mut one_hot_encoded_output);
-            (
-                one_hot_encoded_input.clone(),
-                one_hot_encoded_output.clone(),
-            )
+            let one_hot_encoded_input = into_one_hot_encoded_rows(device, &example.0, num_classes);
+            let one_hot_encoded_output = into_one_hot_encoded_rows(device, &example.1, num_classes);
+            (one_hot_encoded_input, one_hot_encoded_output)
         })
         .collect();
 

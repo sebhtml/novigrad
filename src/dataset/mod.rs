@@ -27,9 +27,19 @@ pub fn load_dataset(dataset: Dataset, device: Rc<Device>) -> DatasetDetails {
     }
 }
 
-pub fn into_one_hot_encoded_rows(input_tokens: &[usize], num_classes: usize, result: &mut Tensor) {
-    result.reset(input_tokens.len(), num_classes, Default::default());
+pub fn into_one_hot_encoded_rows(
+    device: &Device,
+    input_tokens: &[usize],
+    num_classes: usize,
+) -> Tensor {
+    let len = input_tokens.len() * num_classes;
+    let mut result = device.tensor(
+        input_tokens.len(),
+        num_classes,
+        vec![Default::default(); len],
+    );
     for (index, token) in input_tokens.iter().enumerate() {
         result.set(index, *token, 1.0);
     }
+    result
 }

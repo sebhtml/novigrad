@@ -5,6 +5,8 @@
 - store output tensor in operator
 - store gradients in output tensors during back prop
 - use Result for return type of Device methods
+- add a test with simple and cuda
+- add a test with mega_man and cuda
 
 == Concat MR ==
 

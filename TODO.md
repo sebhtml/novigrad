@@ -1,10 +1,11 @@
 == gradient MR ==
 
-- remove Clone for Tensor
-- in reset(), if new len is different, do a cuda reallocation
 - store output tensor in operator
 - store gradients in output tensors during back prop
+- remove Clone for Tensor
+- in reset(), if new len is different, do a cuda reallocation
 - use Result for return type of Device methods
+- don't store output in tape
 - add a test with simple and cuda
 - add a test with mega_man and cuda
 

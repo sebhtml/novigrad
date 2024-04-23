@@ -40,9 +40,13 @@ impl Linear {
 }
 
 impl OperatorTrait for Linear {
-    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+    fn forward(
+        &self,
+        device: &Device,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+    ) -> Result<Rc<RefCell<Tensor>>, Error> {
         debug_assert_eq!(inputs.len(), 1);
-        let input = &inputs[0];
+        let input: &Tensor = &inputs[0].deref().borrow();
         let mut output = device.tensor(0, 0, vec![]);
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
@@ -69,15 +73,15 @@ impl OperatorTrait for Linear {
             }
         }
 
-        Ok(Rc::new(output))
+        Ok(Rc::new(RefCell::new(output)))
     }
 
     fn backward(
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<Tensor>>,
-        _output: &Rc<Tensor>,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+        _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &mut Tensor,
         layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
@@ -89,7 +93,7 @@ impl OperatorTrait for Linear {
         {
             let mut weights_gradient = device.tensor(0, 0, vec![]);
             let mut biases_gradient = device.tensor(0, 0, vec![]);
-            let input = &inputs[0];
+            let input: &Tensor = &inputs[0].deref().borrow();
             let a: &Tensor = input;
             let b: &Tensor = layer_delta;
             let c: &mut Tensor = &mut weights_gradient;

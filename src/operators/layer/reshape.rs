@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
@@ -30,8 +30,8 @@ impl OperatorTrait for Reshape {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        _inputs: &Vec<Rc<Tensor>>,
-        _output: &Rc<Tensor>,
+        _inputs: &Vec<Rc<RefCell<Tensor>>>,
+        _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &mut Tensor,
         layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
@@ -43,15 +43,19 @@ impl OperatorTrait for Reshape {
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+    fn forward(
+        &self,
+        device: &Device,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+    ) -> Result<Rc<RefCell<Tensor>>, Error> {
         debug_assert_eq!(inputs.len(), 1);
-        let input = &inputs[0];
+        let input: &Tensor = &inputs[0].deref().borrow();
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
         let mut output = device.tensor(0, 0, vec![]);
         output.assign(device, input);
         output.reshape(self.output_rows, self.output_cols)?;
-        Ok(Rc::new(output))
+        Ok(Rc::new(RefCell::new(output)))
     }
 
     fn name(&self) -> &str {

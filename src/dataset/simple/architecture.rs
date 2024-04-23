@@ -28,7 +28,7 @@ impl Architecture {
 }
 
 impl Forward for Architecture {
-    fn forward(&mut self, x: &Rc<Tensor>) -> Result<Rc<Tensor>, Error> {
+    fn forward(&mut self, x: &Rc<RefCell<Tensor>>) -> Result<Rc<RefCell<Tensor>>, Error> {
         let x = self.embedding.forward(&x)?;
         let x = self.linear_0.forward(&x)?;
         let x = self.sigmoid_0.forward(&x)?;

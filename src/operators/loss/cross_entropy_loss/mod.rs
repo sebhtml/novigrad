@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use super::LossFunction;
 use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
@@ -59,26 +59,30 @@ impl OperatorTrait for CrossEntropyLoss {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<Tensor>>,
-        _output: &Rc<Tensor>,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+        _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &mut Tensor,
         _layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let expected = &inputs[0];
-        let actual = &inputs[1];
+        let expected: &Tensor = &inputs[0].deref().borrow();
+        let actual: &Tensor = &inputs[1].deref().borrow();
         self.derive(device, expected, actual, back_propagated_delta)?;
 
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+    fn forward(
+        &self,
+        device: &Device,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+    ) -> Result<Rc<RefCell<Tensor>>, Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let expected = &inputs[0];
-        let actual = &inputs[1];
+        let expected: &Tensor = &inputs[0].deref().borrow();
+        let actual: &Tensor = &inputs[1].deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
         let output = device.tensor(1, 1, vec![loss]);
-        Ok(Rc::new(output))
+        Ok(Rc::new(RefCell::new(output)))
     }
 
     fn name(&self) -> &str {

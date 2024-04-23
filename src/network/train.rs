@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
     DatasetDetails, DeltaWorkingMemory, Device, Error, Network, Tensor, TrainWorkingMemory,
@@ -39,8 +39,8 @@ pub fn print_expected_output_and_actual_output(
 
 fn print_total_error(
     network: &mut Network,
-    inputs: &Vec<Rc<Tensor>>,
-    outputs: &Vec<Rc<Tensor>>,
+    inputs: &Vec<Rc<RefCell<Tensor>>>,
+    outputs: &Vec<Rc<RefCell<Tensor>>>,
     last_total_error: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
@@ -72,9 +72,9 @@ pub fn train_network_on_dataset(
     let mut train_working_memory = TrainWorkingMemory::new(&device);
     let mut error_working_memory = DeltaWorkingMemory::new(&device);
 
-    let examples: Vec<(Rc<Tensor>, Rc<Tensor>)> = examples
+    let examples: Vec<(Rc<RefCell<Tensor>>, Rc<RefCell<Tensor>>)> = examples
         .into_iter()
-        .map(|(x, y)| (Rc::new(x), Rc::new(y)))
+        .map(|(x, y)| (Rc::new(RefCell::new(x)), Rc::new(RefCell::new(y))))
         .collect();
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
@@ -114,8 +114,8 @@ pub fn train_network_on_dataset(
     let mut actual_argmax_values = Vec::new();
 
     for i in 0..inputs.len() {
-        let expected_output = &outputs[i];
-        let actual_output = &activation_tensors[i];
+        let expected_output: &Tensor = &outputs[i].deref().borrow();
+        let actual_output: &Tensor = &activation_tensors[i].deref().borrow();
 
         let cols = expected_output.cols();
         let mut expected_argmax = 0;

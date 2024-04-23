@@ -4,15 +4,15 @@ use crate::{OperatorTrait, Tensor};
 
 pub struct Record {
     operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
-    inputs: Vec<Rc<Tensor>>,
-    output: Rc<Tensor>,
+    inputs: Vec<Rc<RefCell<Tensor>>>,
+    output: Rc<RefCell<Tensor>>,
 }
 
 impl Record {
     pub fn new(
         operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
-        inputs: Vec<Rc<Tensor>>,
-        output: Rc<Tensor>,
+        inputs: Vec<Rc<RefCell<Tensor>>>,
+        output: Rc<RefCell<Tensor>>,
     ) -> Self {
         Self {
             operator,
@@ -25,11 +25,11 @@ impl Record {
         &self.operator
     }
 
-    pub fn inputs(&self) -> &Vec<Rc<Tensor>> {
+    pub fn inputs(&self) -> &Vec<Rc<RefCell<Tensor>>> {
         &self.inputs
     }
 
-    pub fn output(&self) -> &Rc<Tensor> {
+    pub fn output(&self) -> &Rc<RefCell<Tensor>> {
         &self.output
     }
 }
@@ -50,8 +50,8 @@ impl Tape {
     pub fn push(
         &mut self,
         operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
-        inputs: Vec<Rc<Tensor>>,
-        output: Rc<Tensor>,
+        inputs: Vec<Rc<RefCell<Tensor>>>,
+        output: Rc<RefCell<Tensor>>,
     ) {
         self.records.push(Record::new(operator, inputs, output))
     }

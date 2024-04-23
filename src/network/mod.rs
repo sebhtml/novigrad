@@ -85,8 +85,8 @@ impl Network {
         working_memory: &mut TrainWorkingMemory,
         error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
-        inputs: &Vec<Rc<Tensor>>,
-        outputs: &Vec<Rc<Tensor>>,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+        outputs: &Vec<Rc<RefCell<Tensor>>>,
     ) -> Result<(), Error> {
         for i in 0..inputs.len() {
             self.train_back_propagation(
@@ -103,8 +103,8 @@ impl Network {
 
     pub fn total_error(
         &mut self,
-        inputs: &Vec<Rc<Tensor>>,
-        outputs: &Vec<Rc<Tensor>>,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+        outputs: &Vec<Rc<RefCell<Tensor>>>,
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
@@ -114,7 +114,7 @@ impl Network {
                 .loss_function
                 .forward_inputs(&vec![target.clone(), output.clone()])
                 .expect("Ok");
-            let example_error: &Tensor = example_error.deref();
+            let example_error: &Tensor = &example_error.deref().borrow();
             let example_error: f32 = example_error.try_into()?;
             total_error += example_error;
         }
@@ -128,8 +128,8 @@ impl Network {
         error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
-        x: &Rc<Tensor>,
-        y: &Rc<Tensor>,
+        x: &Rc<RefCell<Tensor>>,
+        y: &Rc<RefCell<Tensor>>,
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
@@ -150,7 +150,10 @@ impl Network {
         Ok(())
     }
 
-    pub fn predict_many(&mut self, inputs: &Vec<Rc<Tensor>>) -> Result<Vec<Rc<Tensor>>, Error> {
+    pub fn predict_many(
+        &mut self,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+    ) -> Result<Vec<Rc<RefCell<Tensor>>>, Error> {
         let len = inputs.len();
         let mut outputs = vec![];
         let mut i = 0;
@@ -163,7 +166,7 @@ impl Network {
         Ok(outputs)
     }
 
-    pub fn forward(&mut self, input: &Rc<Tensor>) -> Result<Rc<Tensor>, Error> {
+    pub fn forward(&mut self, input: &Rc<RefCell<Tensor>>) -> Result<Rc<RefCell<Tensor>>, Error> {
         self.architecture.forward(input)
     }
 }

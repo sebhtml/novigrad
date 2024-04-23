@@ -1,7 +1,9 @@
 use crate::devices::Device;
 use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
 use crate::{Error, Gradient};
+use std::cell::RefCell;
 use std::f32::consts::E;
+use std::ops::Deref;
 use std::rc::Rc;
 
 #[derive(Clone)]
@@ -100,8 +102,8 @@ impl OperatorTrait for Softmax {
         &self,
         device: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<Tensor>>,
-        output: &Rc<Tensor>,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+        output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &mut Tensor,
         layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
@@ -111,7 +113,8 @@ impl OperatorTrait for Softmax {
                 // Softmax and Cross Entropy Loss are best friends.
                 layer_delta.assign(device, &back_propagated_delta);
             } else {
-                let input = &inputs[0];
+                let input: &Tensor = &inputs[0].deref().borrow();
+                let output: &Tensor = &output.deref().borrow();
                 let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
                 self.derive(input, output, layer_f_derivative)?;
 
@@ -124,11 +127,15 @@ impl OperatorTrait for Softmax {
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
-        let input = &inputs[0];
+    fn forward(
+        &self,
+        device: &Device,
+        inputs: &Vec<Rc<RefCell<Tensor>>>,
+    ) -> Result<Rc<RefCell<Tensor>>, Error> {
+        let input: &Tensor = &inputs[0].deref().borrow();
         let mut output = device.tensor(0, 0, vec![]);
         self.activate(input, &mut output)?;
-        Ok(output.into())
+        Ok(Rc::new(RefCell::new(output)))
     }
 
     fn name(&self) -> &str {

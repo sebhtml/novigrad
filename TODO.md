@@ -1,23 +1,26 @@
-== gradient MR ==
+== CUDA training MR (in progress) ==
 
+- return gradients as Rc<RefCell<Tensor>>
+- remove Clone for Tensor
 - store output tensor in operator
 - store gradients in output tensors during back prop
-- remove Clone for Tensor
 - in reset(), if new len is different, do a cuda reallocation
-- don't store output in tape
 
 == New Tests MR ==
 
+- don't store output in tape
 - use Result for return type of Device methods
-- add a test with simple and cuda
-- add a test with mega_man and cuda
 - Instead of using Rc<RefCell<Tensor>>, use Rc<RefCell<TensorStorage>> inside Tensor
+- Don't call reset inside Tensor methods
+- remove Tensor::set method
+- remove Tensor::get method
 
-== Concat MR ==
+== Concat test MR ==
 
 - implement Concat
 - implement Matmul
 - implement Add
+- add a test with mega_man and cuda
 
 == training MR ==
 - enable tape recording only during training

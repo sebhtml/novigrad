@@ -190,6 +190,7 @@ impl Tensor {
     }
 
     pub fn set_values(&mut self, new_values: Vec<f32>) {
+        debug_assert_eq!(new_values.len(), self.len());
         match &mut self.values {
             DevBuffer::CpuBuffer(ref mut values) => {
                 values.clear();

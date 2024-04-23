@@ -1,9 +1,11 @@
-use crate::{into_one_hot_encoded_rows, DatasetDetails, Operators, Tensor};
+use std::rc::Rc;
+
+use crate::{into_one_hot_encoded_rows, DatasetDetails, Device, Operators, Tensor};
 
 mod architecture;
 use architecture::*;
 
-fn load_examples() -> Vec<(Tensor, Tensor)> {
+fn load_examples(device: &Device) -> Vec<(Tensor, Tensor)> {
     let mut examples = Vec::new();
 
     examples.push((
@@ -19,27 +21,23 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
     ));
 
     let num_classes = 16;
-    let mut one_hot_encoded_input = Tensor::default();
-    let mut one_hot_encoded_output = Tensor::default();
     let examples = examples
         .into_iter()
         .map(|example| {
-            into_one_hot_encoded_rows(&example.0, num_classes, &mut one_hot_encoded_input);
-            into_one_hot_encoded_rows(&example.1, num_classes, &mut one_hot_encoded_output);
-            (
-                one_hot_encoded_input.clone(),
-                one_hot_encoded_output.clone(),
-            )
+            let one_hot_encoded_input = into_one_hot_encoded_rows(device, &example.0, num_classes);
+            let one_hot_encoded_output = into_one_hot_encoded_rows(device, &example.1, num_classes);
+            (one_hot_encoded_input, one_hot_encoded_output)
         })
         .collect();
 
     examples
 }
 
-pub fn load_dataset() -> DatasetDetails {
-    let ops = Operators::default();
+pub fn load_dataset(device: Rc<Device>) -> DatasetDetails {
+    let examples = load_examples(&device);
+    let ops = Operators::new(device);
     DatasetDetails {
-        examples: load_examples(),
+        examples,
         architecture: Box::new(Architecture::new(&ops)),
         epochs: 1000,
         progress: 100,

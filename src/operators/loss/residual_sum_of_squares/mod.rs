@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 
 use super::LossFunction;
 
@@ -18,31 +18,26 @@ impl Default for ResidualSumOfSquares {
 
 impl LossFunction for ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
-    fn evaluate(
-        &self,
-        accelerator: &Accelerator,
-        expected: &Tensor,
-        actual: &Tensor,
-    ) -> Result<f32, Error> {
+    fn evaluate(&self, device: &Device, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
         if expected.shape() != actual.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        let mut diffs = Tensor::default();
-        diffs.assign(accelerator, expected);
-        Tensor::sub(accelerator, actual, &mut diffs)?;
-        Tensor::dot_product(accelerator, &diffs, &diffs)
+        let mut diffs = device.tensor(0, 0, vec![]);
+        diffs.assign(device, expected);
+        Tensor::sub(device, actual, &mut diffs)?;
+        Tensor::dot_product(device, &diffs, &diffs)
     }
 
     fn derive(
         &self,
-        accelerator: &Accelerator,
+        device: &Device,
         expected: &Tensor,
         actual: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        result.assign(accelerator, expected);
-        Tensor::sub(accelerator, actual, result)?;
-        Tensor::scalar_mul(accelerator, -2.0, result);
+        result.assign(device, expected);
+        Tensor::sub(device, actual, result)?;
+        Tensor::scalar_mul(device, -2.0, result);
         Ok(())
     }
 }
@@ -50,7 +45,7 @@ impl LossFunction for ResidualSumOfSquares {
 impl OperatorTrait for ResidualSumOfSquares {
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
@@ -60,21 +55,17 @@ impl OperatorTrait for ResidualSumOfSquares {
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
         let actual = &inputs[1];
-        self.derive(accelerator, expected, actual, back_propagated_delta)?;
+        self.derive(device, expected, actual, back_propagated_delta)?;
 
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(
-        &self,
-        accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-    ) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected = &inputs[0];
         let actual = &inputs[1];
-        let loss = self.evaluate(accelerator, expected, actual)?;
-        let output = Tensor::new(1, 1, vec![loss]);
+        let loss = self.evaluate(device, expected, actual)?;
+        let output = device.tensor(1, 1, vec![loss]);
         Ok(output.into())
     }
 

@@ -5,14 +5,14 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
-    accelerator::Accelerator, back_propagation, Error, Forward, Operator, Optimizer,
-    OptimizerTrait, Tape, Tensor,
+    back_propagation, devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tape,
+    Tensor,
 };
 
 pub struct Network {
     architecture: Box<dyn Forward>,
     loss_function: Operator,
-    accelerator: Rc<Accelerator>,
+    device: Rc<Device>,
     optimizer: Optimizer,
     tape: Rc<RefCell<Tape>>,
 }
@@ -26,15 +26,15 @@ pub struct TrainWorkingMemory {
     pub tmp: Tensor,
 }
 
-impl Default for TrainWorkingMemory {
-    fn default() -> Self {
+impl TrainWorkingMemory {
+    pub fn new(device: &Device) -> Self {
         Self {
-            layer_output: Default::default(),
-            next_layer_delta: Default::default(),
-            back_propagated_delta: Default::default(),
-            layer_delta: Default::default(),
-            previous_activation_tensor: Default::default(),
-            tmp: Default::default(),
+            layer_output: device.tensor(0, 0, vec![]),
+            next_layer_delta: device.tensor(0, 0, vec![]),
+            back_propagated_delta: device.tensor(0, 0, vec![]),
+            layer_delta: device.tensor(0, 0, vec![]),
+            previous_activation_tensor: device.tensor(0, 0, vec![]),
+            tmp: device.tensor(0, 0, vec![]),
         }
     }
 }
@@ -43,10 +43,10 @@ pub struct DeltaWorkingMemory {
     pub layer_f_derivative: Tensor,
 }
 
-impl Default for DeltaWorkingMemory {
-    fn default() -> Self {
+impl DeltaWorkingMemory {
+    pub fn new(device: &Device) -> Self {
         Self {
-            layer_f_derivative: Default::default(),
+            layer_f_derivative: device.tensor(0, 0, vec![]),
         }
     }
 }
@@ -58,23 +58,23 @@ pub struct PredictWorkingMemory {
 }
 
 impl PredictWorkingMemory {
-    pub fn new(examples_count: usize) -> Self {
+    pub fn new(examples_count: usize, device: &Device) -> Self {
         Self {
-            previous_activation_tensor: Default::default(),
-            activation_tensor: Default::default(),
-            activation_tensors: vec![Tensor::default(); examples_count],
+            previous_activation_tensor: device.tensor(0, 0, vec![]),
+            activation_tensor: device.tensor(0, 0, vec![]),
+            activation_tensors: vec![device.tensor(0, 0, vec![]); examples_count],
         }
     }
 }
 
 impl Network {
     pub fn new(architecture: Box<dyn Forward>, loss_function: Operator) -> Self {
-        let accelerator = architecture.accelerator();
+        let device = architecture.device();
         let tape = architecture.tape();
         Self {
             architecture,
             loss_function,
-            accelerator,
+            device,
             tape,
             optimizer: Default::default(),
         }
@@ -141,11 +141,11 @@ impl Network {
         let gradients = back_propagation(
             working_memory,
             error_working_memory,
-            &self.accelerator,
+            &self.device,
             &self.tape,
         )?;
 
-        self.optimizer.optimize(gradients, &self.accelerator);
+        self.optimizer.optimize(gradients, &self.device);
 
         Ok(())
     }

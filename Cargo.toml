@@ -16,9 +16,15 @@ inherits = "release"
 debug = true
 
 [dependencies]
+# CPU Blas
 cblas = "0.4.0"
 cblas-sys = "0.1.4"
 blas-src = { version = "0.8", features = ["blis"] }
+
+# CUDA Blas
+cudarc = "0.10.0"
+rustacuda = "0.1.3"
+
 rand = "0.8"
 
 [dev-dependencies]

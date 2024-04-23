@@ -1,11 +1,12 @@
 use std::fs;
+use std::rc::Rc;
 
 mod architecture;
-use crate::{into_one_hot_encoded_rows, Operators};
+use crate::{into_one_hot_encoded_rows, Device, Operators};
 use crate::{DatasetDetails, Tensor};
 use architecture::*;
 
-fn load_examples() -> Vec<(Tensor, Tensor)> {
+fn load_examples(device: &Device) -> Vec<(Tensor, Tensor)> {
     let num_classes = 256;
     let context_size = 32;
     let mut examples = Vec::new();
@@ -21,29 +22,28 @@ fn load_examples() -> Vec<(Tensor, Tensor)> {
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
     let max_number_of_examples = 10;
-    let mut one_hot_encoded_tokens = Tensor::default();
-    let mut output_multiclass = Tensor::default();
     while i + context_size < tokens.len() && i < max_number_of_examples {
         let next_token_index = i + context_size;
         let input_tokens = &tokens[i..next_token_index];
-        into_one_hot_encoded_rows(input_tokens, num_classes, &mut one_hot_encoded_tokens);
+        let one_hot_encoded_tokens = into_one_hot_encoded_rows(device, input_tokens, num_classes);
         let next_token = &tokens[next_token_index..next_token_index + 1];
-        into_one_hot_encoded_rows(next_token, num_classes, &mut output_multiclass);
+        let output_multiclass = into_one_hot_encoded_rows(device, next_token, num_classes);
 
         examples.push((
             //
-            one_hot_encoded_tokens.clone(), //
-            output_multiclass.clone(),
+            one_hot_encoded_tokens, //
+            output_multiclass,
         ));
         i += 1;
     }
     examples
 }
 
-pub fn load_dataset() -> DatasetDetails {
-    let ops = Operators::default();
+pub fn load_dataset(device: Rc<Device>) -> DatasetDetails {
+    let examples = load_examples(&device);
+    let ops = Operators::new(device);
     DatasetDetails {
-        examples: load_examples(),
+        examples,
         architecture: Box::new(Architecture::new(&ops)),
         epochs: 300,
         progress: 100,

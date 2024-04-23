@@ -1,7 +1,9 @@
 mod mega_man;
 mod simple;
 
-use crate::{Forward, Operator, Tensor};
+use std::rc::Rc;
+
+use crate::{Device, Forward, Operator, Tensor};
 
 pub enum Dataset {
     Simple,
@@ -18,16 +20,26 @@ pub struct DatasetDetails {
     pub final_total_error_max: f32,
 }
 
-pub fn load_dataset(dataset: &Dataset) -> DatasetDetails {
+pub fn load_dataset(dataset: Dataset, device: Rc<Device>) -> DatasetDetails {
     match dataset {
-        Dataset::Simple => simple::load_dataset(),
-        Dataset::MegaMan => mega_man::load_dataset(),
+        Dataset::Simple => simple::load_dataset(device),
+        Dataset::MegaMan => mega_man::load_dataset(device),
     }
 }
 
-pub fn into_one_hot_encoded_rows(input_tokens: &[usize], num_classes: usize, result: &mut Tensor) {
-    result.reset(input_tokens.len(), num_classes, Default::default());
+pub fn into_one_hot_encoded_rows(
+    device: &Device,
+    input_tokens: &[usize],
+    num_classes: usize,
+) -> Tensor {
+    let len = input_tokens.len() * num_classes;
+    let mut result = device.tensor(
+        input_tokens.len(),
+        num_classes,
+        vec![Default::default(); len],
+    );
     for (index, token) in input_tokens.iter().enumerate() {
         result.set(index, *token, 1.0);
     }
+    result
 }

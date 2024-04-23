@@ -1,33 +1,59 @@
+use rustacuda::memory::CopyDestination;
+use rustacuda::memory::DeviceBuffer;
+
 use crate::{
-    accelerator::{Accelerator, AcceleratorInterface, Layout, Transpose},
+    devices::{Device, DeviceInterface},
     Error,
 };
+
+use std::cell::RefCell;
+use std::ops::Deref;
+use std::ops::DerefMut;
+use std::rc::Rc;
 use std::{fmt::Display, ops::Mul};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
+pub enum DevBuffer {
+    CpuBuffer(Vec<f32>),
+    CudaBuffer(Rc<RefCell<DeviceBuffer<f32>>>),
+}
+
+// TODO remove Clone here
+#[derive(Clone, Debug)]
 pub struct Tensor {
     rows: usize,
     cols: usize,
-    values: Vec<f32>,
+    values: DevBuffer,
 }
 
-impl Default for Tensor {
-    fn default() -> Self {
-        Self {
-            rows: Default::default(),
-            cols: Default::default(),
-            values: Default::default(),
-        }
+impl PartialEq for Tensor {
+    fn eq(&self, other: &Self) -> bool {
+        self.rows() == other.rows()
+            && self.cols() == other.cols()
+            && self.get_values() == other.get_values()
     }
 }
 
 impl Tensor {
-    pub fn new(rows: usize, cols: usize, values: Vec<f32>) -> Self {
+    pub fn new(rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
+        let values = match device {
+            Device::Cpu(_) => DevBuffer::CpuBuffer(values),
+            Device::Cuda(_) => {
+                let mut buffer = unsafe { DeviceBuffer::uninitialized(values.len()).unwrap() };
+                buffer.copy_from(values.as_slice()).unwrap();
+                DevBuffer::CudaBuffer(Rc::new(RefCell::new(buffer)))
+            }
+        };
         Self { rows, cols, values }
     }
 
-    fn operation<Operation>(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error>
+    fn operation<Operation>(
+        &self,
+        device: &Device,
+        right: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error>
     where
         Operation: F32Operation,
     {
@@ -37,14 +63,20 @@ impl Tensor {
         }
 
         result.reset(left.rows, left.cols, Default::default());
+        debug_assert_eq!(result.shape(), left.shape());
+        Tensor::scalar_mul(device, 0.0, result);
 
-        let result_ptr = result.values.as_mut_ptr();
-        let left_ptr = left.values.as_ptr();
-        let right_ptr = right.values.as_ptr();
+        let mut result_values = result.get_values();
+        let left_values = left.get_values();
+        let right_values = right.get_values();
+
+        let result_ptr = result_values.as_mut_ptr();
+        let left_ptr = left_values.as_ptr();
+        let right_ptr = right_values.as_ptr();
 
         unsafe {
             let mut index = 0;
-            let len = left.values.len();
+            let len = left_values.len();
             while index < len {
                 let left_cell = left_ptr.add(index);
                 let right_cell = right_ptr.add(index);
@@ -58,6 +90,8 @@ impl Tensor {
             }
         }
 
+        result.set_values(result_values);
+
         Ok(())
     }
 
@@ -69,6 +103,10 @@ impl Tensor {
         self.cols
     }
 
+    pub fn len(&self) -> usize {
+        self.rows() * self.cols()
+    }
+
     pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
@@ -77,8 +115,10 @@ impl Tensor {
         self.rows = new_rows;
         self.cols = new_cols;
         let values = self.rows * self.cols;
-        self.values.clear();
-        self.values.resize(values, value)
+        let mut self_values = self.get_values();
+        self_values.clear();
+        self_values.resize(values, value);
+        self.set_values(self_values)
     }
 
     fn index(&self, row: usize, col: usize) -> usize {
@@ -87,17 +127,20 @@ impl Tensor {
 
     pub fn get(&self, row: usize, col: usize) -> f32 {
         let index = self.index(row, col);
-        self.values[index]
+        let self_values = self.get_values();
+        self_values[index]
     }
 
     pub fn set(&mut self, row: usize, col: usize, value: f32) {
         let index = self.index(row, col);
-        self.values[index] = value;
+        let mut self_values = self.get_values();
+        self_values[index] = value;
+        self.set_values(self_values)
     }
 
-    pub fn assign(&mut self, accelerator: &Accelerator, from: &Tensor) {
+    pub fn assign(&mut self, device: &Device, from: &Tensor) {
         self.reset(from.rows, from.cols, 0.0);
-        Tensor::copy(accelerator, from, self);
+        Tensor::copy(device, from, self);
     }
 
     pub fn transpose(&self, other: &mut Tensor) {
@@ -116,37 +159,78 @@ impl Tensor {
         }
     }
 
-    pub fn values(&self) -> &Vec<f32> {
-        &self.values
+    pub fn as_ptr(&self) -> *const f32 {
+        match &self.values {
+            DevBuffer::CpuBuffer(ref values) => values.as_ptr(),
+            DevBuffer::CudaBuffer(ref values) => values.deref().borrow().deref().as_ptr(),
+        }
     }
 
-    // TODO use accelerator for element_wise_mul
-    pub fn element_wise_mul(&self, right: &Tensor, result: &mut Tensor) -> Result<(), Error> {
-        self.operation::<F32Mul>(right, result)
+    pub fn as_mut_ptr(&mut self) -> *mut f32 {
+        match &mut self.values {
+            DevBuffer::CpuBuffer(ref mut values) => values.as_mut_ptr(),
+            DevBuffer::CudaBuffer(ref mut values) => {
+                values.deref().borrow_mut().deref_mut().as_mut_ptr()
+            }
+        }
     }
 
-    pub fn dot_product(accelerator: &Accelerator, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    // TODO Delete uses of get_values
+    pub fn get_values(&self) -> Vec<f32> {
+        match &self.values {
+            DevBuffer::CpuBuffer(ref values) => values.clone(),
+            DevBuffer::CudaBuffer(ref buffer) => {
+                let buffer = buffer.deref().borrow();
+                let mut values = vec![0.0; buffer.len()];
+                // TODO don't unwrap directly.
+                buffer.copy_to(values.as_mut_slice()).unwrap();
+                values
+            }
+        }
+    }
+
+    pub fn set_values(&mut self, new_values: Vec<f32>) {
+        match &mut self.values {
+            DevBuffer::CpuBuffer(ref mut values) => {
+                values.clear();
+                values.extend_from_slice(new_values.as_slice())
+            }
+            DevBuffer::CudaBuffer(buffer) => {
+                let mut buffer = buffer.deref().borrow_mut();
+                // TODO don't unwrap directly.
+                buffer.copy_from(new_values.as_slice()).unwrap();
+            }
+        }
+    }
+
+    // TODO use device for element_wise_mul
+    pub fn element_wise_mul(
+        &self,
+        device: &Device,
+        right: &Tensor,
+        result: &mut Tensor,
+    ) -> Result<(), Error> {
+        self.operation::<F32Mul>(device, right, result)
+    }
+
+    pub fn dot_product(device: &Device, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        let n = x.values.len() as i32;
-        let x = &x.values;
+        let n = x.len() as i32;
         let incx = 1;
-        let y = &y.values;
         let incy = 1;
-        Ok(accelerator.sdot(n, x, incx, y, incy))
+        Ok(device.sdot(n, x, incx, y, incy))
     }
-    fn copy(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) {
-        let n = x.values.len() as i32;
-        let x = &x.values;
+    fn copy(device: &Device, x: &Tensor, y: &mut Tensor) {
+        let n = x.len() as i32;
         let incx = 1;
-        let y = &mut y.values;
         let incy = 1;
-        accelerator.scopy(n, x, incx, y, incy)
+        device.scopy(n, x, incx, y, incy)
     }
 
     pub fn matmul(
-        accelerator: &Accelerator,
+        device: &Device,
         transa: bool,
         transb: bool,
         a: &Tensor,
@@ -157,7 +241,7 @@ impl Tensor {
         let alpha = 1.0;
         let beta = 0.0;
         Tensor::gemm(
-            accelerator,
+            device,
             transa,
             transb,
             alpha,
@@ -170,7 +254,7 @@ impl Tensor {
     }
 
     pub fn gemm(
-        accelerator: &Accelerator,
+        device: &Device,
         transa: bool,
         transb: bool,
         alpha: f32,
@@ -185,21 +269,9 @@ impl Tensor {
                 return Err(Error::IncompatibleTensorShapes);
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
-            accelerator.sgemm(
-                Layout::ColumnMajor,
-                Transpose::None,
-                Transpose::None,
-                n as i32,
-                m as i32,
-                k as i32,
-                alpha,
-                &b.values,
-                n as i32,
-                &a.values,
-                k as i32,
-                beta,
-                &mut c.values,
-                n as i32,
+            device.sgemm(
+                false, false, n as i32, m as i32, k as i32, alpha, b, n as i32, a, k as i32, beta,
+                c, n as i32,
             );
             Ok(())
         } else if transa && !transb && !transpose_result {
@@ -208,20 +280,19 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
-            accelerator.sgemm(
-                Layout::ColumnMajor,
-                Transpose::None,
-                Transpose::Ordinary,
+            device.sgemm(
+                false,
+                true,
                 n as i32,
                 m as i32,
                 k as i32,
                 alpha,
-                &b.values,
+                b,
                 n as i32,
-                &a.values,
+                a,
                 a.cols as i32,
                 beta,
-                &mut c.values,
+                c,
                 n as i32,
             );
 
@@ -232,20 +303,19 @@ impl Tensor {
             }
             let (m, n, k) = (a.rows, b.rows, a.cols);
 
-            accelerator.sgemm(
-                Layout::ColumnMajor,
-                Transpose::Ordinary,
-                Transpose::None,
+            device.sgemm(
+                true,
+                false,
                 n as i32,
                 m as i32,
                 k as i32,
                 alpha,
-                &b.values,
+                b,
                 b.cols as i32,
-                &a.values,
+                a,
                 k as i32,
                 beta,
-                &mut c.values,
+                c,
                 n as i32,
             );
 
@@ -256,20 +326,19 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
-            accelerator.sgemm(
-                Layout::ColumnMajor,
-                Transpose::Ordinary,
-                Transpose::Ordinary,
+            device.sgemm(
+                true,
+                true,
                 n as i32,
                 m as i32,
                 k as i32,
                 alpha,
-                &b.values,
+                b,
                 b.cols as i32,
-                &a.values,
+                a,
                 a.cols as i32,
                 beta,
-                &mut c.values,
+                c,
                 n as i32,
             );
 
@@ -280,20 +349,19 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.rows, a.rows);
 
-            accelerator.sgemm(
-                Layout::ColumnMajor,
-                Transpose::None,
-                Transpose::None,
+            device.sgemm(
+                false,
+                false,
                 m as i32,
                 n as i32,
                 k as i32,
                 alpha,
-                &a.values,
+                a,
                 a.cols as i32,
-                &b.values,
+                b,
                 b.cols as i32,
                 beta,
-                &mut c.values,
+                c,
                 m as i32,
             );
 
@@ -304,20 +372,19 @@ impl Tensor {
             }
             let (m, n, k) = (a.cols, b.cols, a.rows);
 
-            accelerator.sgemm(
-                Layout::ColumnMajor,
-                Transpose::None,
-                Transpose::Ordinary,
+            device.sgemm(
+                false,
+                true,
                 m as i32,
                 n as i32,
                 k as i32,
                 alpha,
-                &a.values,
+                a,
                 a.cols as i32,
-                &b.values,
+                b,
                 b.cols as i32,
                 beta,
-                &mut c.values,
+                c,
                 m as i32,
             );
 
@@ -327,57 +394,52 @@ impl Tensor {
         }
     }
 
-    pub fn sub(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn sub(device: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         let alpha = -1.0;
-        Self::saxpy(accelerator, alpha, x, y)
+        Self::saxpy(device, alpha, x, y)
     }
 
-    pub fn add(accelerator: &Accelerator, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn add(device: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         let alpha = 1.0;
-        Self::saxpy(accelerator, alpha, x, y)
+        Self::saxpy(device, alpha, x, y)
     }
 
-    pub fn saxpy(
-        accelerator: &Accelerator,
-        alpha: f32,
-        x: &Tensor,
-        y: &mut Tensor,
-    ) -> Result<(), Error> {
-        if x.values.len() != y.values.len() {
+    pub fn saxpy(device: &Device, alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+        if x.len() != y.len() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        let n = x.values.len() as i32;
-        let x = &x.values;
+        let n = x.len() as i32;
         let incx = 1;
-        let y = &mut y.values;
         let incy = 1;
-        accelerator.saxpy(n, alpha, x, incx, y, incy);
+        device.saxpy(n, alpha, x, incx, y, incy);
         Ok(())
     }
 
-    // TODO use accelerator to clip
+    // TODO use device to clip
     pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {
         result.reset(self.rows, self.cols, Default::default());
-        let len = self.values.len();
+        let len = self.len();
         let mut index = 0;
+        let self_values = self.get_values();
+        let mut result_values = result.get_values();
         while index < len {
-            let mut value = self.values[index];
+            let mut value = self_values[index];
             value = value.max(min);
             value = value.min(max);
-            result.values[index] = value;
+            result_values[index] = value;
             index += 1;
         }
+        result.set_values(result_values)
     }
 
-    pub fn scalar_mul(accelerator: &Accelerator, alpha: f32, x: &mut Tensor) {
-        let n = x.values.len() as i32;
-        let x = &mut x.values;
+    pub fn scalar_mul(device: &Device, alpha: f32, x: &mut Tensor) {
+        let n = x.len() as i32;
         let incx = 1;
-        accelerator.sscal(n, alpha, x, incx)
+        device.sscal(n, alpha, x, incx)
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {
-        if (new_rows * new_cols) != self.values.len() {
+        if (new_rows * new_cols) != self.len() {
             return Err(Error::UnsupportedOperation);
         }
 

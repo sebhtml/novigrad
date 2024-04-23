@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{accelerator::Accelerator, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
@@ -8,9 +8,10 @@ pub struct Embedding {
 }
 
 impl Embedding {
-    pub fn new(num_embeddings: usize, embedding_dim: usize) -> Self {
+    pub fn new(num_embeddings: usize, embedding_dim: usize, device: &Device) -> Self {
         Self {
             embedding_table: Rc::new(RefCell::new(get_embedding_table(
+                device,
                 num_embeddings,
                 embedding_dim,
             ))),
@@ -21,7 +22,7 @@ impl Embedding {
 impl OperatorTrait for Embedding {
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         _output: &Rc<Tensor>,
@@ -29,43 +30,39 @@ impl OperatorTrait for Embedding {
         layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
         {
-            layer_delta.assign(accelerator, back_propagated_delta);
+            layer_delta.assign(device, back_propagated_delta);
         }
 
         let mut gradients = vec![];
         {
-            let mut gradient = Tensor::default();
+            let mut gradient = device.tensor(0, 0, vec![]);
             let input = &inputs[0];
             let a: &Tensor = layer_delta;
             let b: &Tensor = input;
             let c: &mut Tensor = &mut gradient;
             c.reset(b.cols(), a.cols(), 0.0);
-            let op_result = Tensor::matmul(accelerator, true, false, a, b, c, true);
+            let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
 
             gradients.push(Gradient::new(self.embedding_table.clone(), gradient));
         }
 
-        back_propagated_delta.assign(accelerator, layer_delta);
+        back_propagated_delta.assign(device, layer_delta);
 
         Ok((back_propagated_delta.clone(), gradients))
     }
 
-    fn forward(
-        &self,
-        accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-    ) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         let embedding_table: &Tensor = &self.embedding_table.deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         let input = &inputs[0];
-        let mut output = Tensor::default();
+        let mut output = device.tensor(0, 0, vec![]);
         debug_assert_eq!(input.cols(), embedding_table.rows());
         let a = input;
         let b = &embedding_table;
         let c = &mut output;
         c.reset(a.rows(), b.cols(), 0.0);
-        Tensor::matmul(accelerator, false, false, a, b, c, false)?;
+        Tensor::matmul(device, false, false, a, b, c, false)?;
         Ok(Rc::new(output))
     }
 
@@ -74,7 +71,7 @@ impl OperatorTrait for Embedding {
     }
 }
 
-fn get_embedding_table(num_embeddings: usize, embedding_dim: usize) -> Tensor {
+fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> Tensor {
     let mut rng = thread_rng();
     let mut embeddings_table: Vec<f32> = Vec::new();
     let left = 0.0;
@@ -91,5 +88,5 @@ fn get_embedding_table(num_embeddings: usize, embedding_dim: usize) -> Tensor {
         embeddings_table.append(&mut token_embeddings);
         token += 1;
     }
-    Tensor::new(num_embeddings, embedding_dim, embeddings_table)
+    device.tensor(num_embeddings, embedding_dim, embeddings_table)
 }

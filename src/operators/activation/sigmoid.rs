@@ -1,4 +1,4 @@
-use crate::accelerator::Accelerator;
+use crate::devices::Device;
 use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
 use crate::{Error, Gradient};
 use std::f32::consts::E;
@@ -61,7 +61,7 @@ impl ActivationFunction for Sigmoid {
 impl OperatorTrait for Sigmoid {
     fn backward(
         &self,
-        accelerator: &Accelerator,
+        device: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<Tensor>>,
         output: &Rc<Tensor>,
@@ -73,21 +73,17 @@ impl OperatorTrait for Sigmoid {
             let input = &inputs[0];
             let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
             self.derive(input, output, layer_f_derivative)?;
-            layer_f_derivative.element_wise_mul(back_propagated_delta, layer_delta)?;
+            layer_f_derivative.element_wise_mul(device, back_propagated_delta, layer_delta)?;
         }
 
-        back_propagated_delta.assign(accelerator, layer_delta);
+        back_propagated_delta.assign(device, layer_delta);
 
         Ok((back_propagated_delta.clone(), vec![]))
     }
 
-    fn forward(
-        &self,
-        _accelerator: &Accelerator,
-        inputs: &Vec<Rc<Tensor>>,
-    ) -> Result<Rc<Tensor>, Error> {
+    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         let input = &inputs[0];
-        let mut output = Tensor::default();
+        let mut output = device.tensor(0, 0, vec![]);
         self.activate(input, &mut output)?;
         Ok(Rc::new(output))
     }

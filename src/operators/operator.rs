@@ -1,9 +1,9 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{Accelerator, Error, Forward, OperatorTrait, Tape, Tensor};
+use crate::{Device, Error, Forward, OperatorTrait, Tape, Tensor};
 
 pub struct Operator {
-    accelerator: Rc<Accelerator>,
+    device: Rc<Device>,
     tape: Rc<RefCell<Tape>>,
     variant: Rc<RefCell<Box<dyn OperatorTrait>>>,
 }
@@ -14,8 +14,8 @@ impl Forward for Operator {
         self.forward_inputs(&inputs)
     }
 
-    fn accelerator(&self) -> Rc<Accelerator> {
-        self.accelerator.clone()
+    fn device(&self) -> Rc<Device> {
+        self.device.clone()
     }
 
     fn tape(&self) -> Rc<RefCell<Tape>> {
@@ -25,12 +25,12 @@ impl Forward for Operator {
 
 impl Operator {
     pub fn new(
-        accelerator: Rc<Accelerator>,
+        device: Rc<Device>,
         tape: Rc<RefCell<Tape>>,
         variant: Rc<RefCell<Box<dyn OperatorTrait>>>,
     ) -> Self {
         Self {
-            accelerator,
+            device,
             tape,
             variant,
         }
@@ -38,7 +38,7 @@ impl Operator {
 
     pub fn forward_inputs(&mut self, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
         let variant = &mut *self.variant.deref().borrow_mut();
-        let output = variant.forward(self.accelerator.deref(), inputs)?;
+        let output = variant.forward(self.device.deref(), inputs)?;
 
         self.tape
             .deref()

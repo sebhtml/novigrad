@@ -1,10 +1,15 @@
-== cuda MR ==
-- add Blas implementation for CuBlas using https://crates.io/crates/cudarc
+== gradient MR ==
+
+- remove Clone for Tensor
+- in reset(), if new len is different, do a cuda reallocation
+- store output tensor in operator
+- store gradients in output tensors during back prop
+- use Result for return type of Device methods
+- add a test with simple and cuda
+- add a test with mega_man and cuda
 
 == Concat MR ==
 
-- store output tensor in operator
-- store gradients in output tensors during back prop
 - implement Concat
 - implement Matmul
 - implement Add

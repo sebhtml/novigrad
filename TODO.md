@@ -11,6 +11,7 @@
 - use Result for return type of Device methods
 - add a test with simple and cuda
 - add a test with mega_man and cuda
+- Instead of using Rc<RefCell<Tensor>>, use Rc<RefCell<TensorStorage>> inside Tensor
 
 == Concat MR ==
 

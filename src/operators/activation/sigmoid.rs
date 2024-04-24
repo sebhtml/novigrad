@@ -79,9 +79,10 @@ impl OperatorTrait for Sigmoid {
             layer_f_derivative.element_wise_mul(device, back_propagated_delta, layer_delta)?;
         }
 
-        back_propagated_delta.assign(device, layer_delta);
+        let mut gradient = device.tensor(0, 0, vec![]);
+        gradient.assign(device, layer_delta);
 
-        Ok((back_propagated_delta.clone(), vec![]))
+        Ok((gradient, vec![]))
     }
 
     fn forward(

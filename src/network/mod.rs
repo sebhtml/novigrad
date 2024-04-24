@@ -59,10 +59,14 @@ pub struct PredictWorkingMemory {
 
 impl PredictWorkingMemory {
     pub fn new(examples_count: usize, device: &Device) -> Self {
+        let mut activation_tensors = vec![];
+        for _ in 0..examples_count {
+            activation_tensors.push(device.tensor(0, 0, vec![]))
+        }
         Self {
             previous_activation_tensor: device.tensor(0, 0, vec![]),
             activation_tensor: device.tensor(0, 0, vec![]),
-            activation_tensors: vec![device.tensor(0, 0, vec![]); examples_count],
+            activation_tensors,
         }
     }
 }

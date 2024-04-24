@@ -38,9 +38,9 @@ impl OperatorTrait for Reshape {
         layer_delta.assign(device, back_propagated_delta);
         layer_delta.reshape(self.input_rows, self.input_cols)?;
 
-        back_propagated_delta.assign(device, layer_delta);
-
-        Ok((back_propagated_delta.clone(), vec![]))
+        let mut gradient = device.tensor(0, 0, vec![]);
+        gradient.assign(device, layer_delta);
+        Ok((gradient, vec![]))
     }
 
     fn forward(

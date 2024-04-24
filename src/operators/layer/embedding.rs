@@ -47,9 +47,10 @@ impl OperatorTrait for Embedding {
             gradients.push(Gradient::new(self.embedding_table.clone(), gradient));
         }
 
-        back_propagated_delta.assign(device, layer_delta);
+        let mut gradient = device.tensor(0, 0, vec![]);
+        gradient.assign(device, layer_delta);
 
-        Ok((back_propagated_delta.clone(), gradients))
+        Ok((gradient, gradients))
     }
 
     fn forward(

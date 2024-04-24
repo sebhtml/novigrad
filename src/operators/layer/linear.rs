@@ -116,7 +116,10 @@ impl OperatorTrait for Linear {
             Tensor::matmul(device, true, true, a, b, c, true)?;
         }
 
-        Ok((back_propagated_delta.clone(), gradients))
+        let mut gradient = device.tensor(0, 0, vec![]);
+        gradient.assign(device, back_propagated_delta);
+
+        Ok((gradient, gradients))
     }
 
     fn name(&self) -> &str {

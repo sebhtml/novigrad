@@ -1,4 +1,10 @@
 mod cpu;
+#[cfg(feature = "cuda")]
+use crate::Error;
+#[cfg(feature = "cuda")]
+use rustacuda::memory::CopyDestination;
+#[cfg(feature = "cuda")]
+use rustacuda::prelude::DeviceBuffer;
 use std::borrow::BorrowMut;
 
 pub use cpu::*;
@@ -7,13 +13,13 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{Error, Tensor};
+use crate::Tensor;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum DevBuffer {
     CpuBuffer(Vec<f32>),
     #[cfg(feature = "cuda")]
-    CudaBuffer(Rc<RefCell<DeviceBuffer<f32>>>),
+    CudaBuffer(DeviceBuffer<f32>),
 }
 
 impl DevBuffer {
@@ -21,7 +27,7 @@ impl DevBuffer {
         match &self {
             DevBuffer::CpuBuffer(ref values) => values.as_ptr(),
             #[cfg(feature = "cuda")]
-            DevBuffer::CudaBuffer(ref values) => values.deref().borrow().deref().as_ptr(),
+            DevBuffer::CudaBuffer(ref values) => values.as_ptr(),
         }
     }
 
@@ -29,9 +35,7 @@ impl DevBuffer {
         match self.borrow_mut() {
             DevBuffer::CpuBuffer(ref mut values) => values.as_mut_ptr(),
             #[cfg(feature = "cuda")]
-            DevBuffer::CudaBuffer(ref mut values) => {
-                values.deref().deref().borrow_mut().deref_mut().as_mut_ptr()
-            }
+            DevBuffer::CudaBuffer(ref mut values) => values.as_mut_ptr(),
         }
     }
 
@@ -41,7 +45,6 @@ impl DevBuffer {
             DevBuffer::CpuBuffer(ref values) => values.clone(),
             #[cfg(feature = "cuda")]
             DevBuffer::CudaBuffer(ref buffer) => {
-                let buffer = buffer.deref().borrow();
                 let mut values = vec![0.0; buffer.len()];
                 // TODO don't unwrap directly.
                 buffer.copy_to(values.as_mut_slice()).unwrap();
@@ -59,12 +62,7 @@ impl DevBuffer {
             #[cfg(feature = "cuda")]
             DevBuffer::CudaBuffer(ref mut buffer) => {
                 // TODO don't unwrap directly.
-                buffer
-                    .deref()
-                    .deref()
-                    .borrow_mut()
-                    .copy_from(new_values.as_slice())
-                    .unwrap();
+                buffer.copy_from(new_values.as_slice()).unwrap();
             }
         }
     }

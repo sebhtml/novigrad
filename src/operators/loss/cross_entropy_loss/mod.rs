@@ -61,15 +61,16 @@ impl OperatorTrait for CrossEntropyLoss {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
-        back_propagated_delta: &mut Tensor,
+        _back_propagated_delta: &mut Tensor,
         _layer_delta: &mut Tensor,
     ) -> Result<(Tensor, Vec<Gradient>), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &Tensor = &inputs[0].deref().borrow();
         let actual: &Tensor = &inputs[1].deref().borrow();
-        self.derive(device, expected, actual, back_propagated_delta)?;
+        let mut gradient = device.tensor(0, 0, vec![]);
+        self.derive(device, expected, actual, &mut gradient)?;
 
-        Ok((back_propagated_delta.clone(), vec![]))
+        Ok((gradient, vec![]))
     }
 
     fn forward(

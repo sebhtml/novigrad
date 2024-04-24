@@ -1,7 +1,6 @@
 == CUDA training MR (in progress) ==
 
 - return gradients as Rc<RefCell<Tensor>>
-- remove Clone for Tensor
 - store output tensor in operator
 - store gradients in output tensors during back prop
 - in reset(), if new len is different, do a cuda reallocation

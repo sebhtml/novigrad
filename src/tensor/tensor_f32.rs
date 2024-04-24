@@ -11,8 +11,7 @@ use crate::{
 
 use std::{fmt::Display, ops::Mul};
 
-// TODO remove Clone here
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Tensor {
     rows: usize,
     cols: usize,
@@ -37,7 +36,7 @@ impl Tensor {
                 // TODO don't unwrap
                 let mut buffer = unsafe { DeviceBuffer::uninitialized(values.len()).unwrap() };
                 buffer.copy_from(values.as_slice()).unwrap();
-                DevBuffer::CudaBuffer(Rc::new(RefCell::new(buffer)))
+                DevBuffer::CudaBuffer(buffer)
             }
         };
         Self { rows, cols, values }

@@ -27,17 +27,12 @@ impl OperatorTrait for Embedding {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &Tensor,
-        layer_delta: &mut Tensor,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
-        {
-            layer_delta.assign(device, back_propagated_delta);
-        }
-
         let mut gradients = vec![];
         {
             let mut gradient = device.tensor(0, 0, vec![]);
             let input: &Tensor = &inputs[0].deref().borrow();
-            let a: &Tensor = layer_delta;
+            let a: &Tensor = back_propagated_delta;
             let b: &Tensor = input;
             let c: &mut Tensor = &mut gradient;
             c.reset(b.cols(), a.cols(), 0.0);
@@ -51,7 +46,7 @@ impl OperatorTrait for Embedding {
         }
 
         let mut gradient = device.tensor(0, 0, vec![]);
-        gradient.assign(device, layer_delta);
+        gradient.assign(device, back_propagated_delta);
 
         Ok((Rc::new(RefCell::new(gradient)), gradients))
     }

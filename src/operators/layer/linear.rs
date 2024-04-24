@@ -83,25 +83,20 @@ impl OperatorTrait for Linear {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &Tensor,
-        layer_delta: &mut Tensor,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
-        {
-            layer_delta.assign(device, back_propagated_delta);
-        }
-
         let mut gradients = vec![];
         {
             let mut weights_gradient = device.tensor(0, 0, vec![]);
             let mut biases_gradient = device.tensor(0, 0, vec![]);
             let input: &Tensor = &inputs[0].deref().borrow();
             let a: &Tensor = input;
-            let b: &Tensor = layer_delta;
+            let b: &Tensor = back_propagated_delta;
             let c: &mut Tensor = &mut weights_gradient;
             c.reset(b.cols(), a.cols(), 0.0);
             let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
 
-            biases_gradient.assign(device, layer_delta);
+            biases_gradient.assign(device, back_propagated_delta);
 
             gradients.push(Gradient::new(
                 self.weights.clone(),
@@ -117,12 +112,11 @@ impl OperatorTrait for Linear {
         {
             let weights: &Tensor = &self.weights.deref().borrow();
             let a: &Tensor = weights;
-            let b: &Tensor = layer_delta;
+            let b: &Tensor = back_propagated_delta;
             let c: &mut Tensor = &mut gradient;
             c.reset(b.rows(), a.cols(), 0.0);
             Tensor::matmul(device, true, true, a, b, c, true)?;
         }
-
 
         Ok((Rc::new(RefCell::new(gradient)), gradients))
     }

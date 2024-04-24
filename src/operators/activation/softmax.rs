@@ -105,25 +105,26 @@ impl OperatorTrait for Softmax {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &Tensor,
-        layer_delta: &mut Tensor,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
+        let mut gradient = device.tensor(0, 0, vec![]);
         {
             // Compute activation function derivative.
             if self.using_cross_entropy_loss {
                 // Softmax and Cross Entropy Loss are best friends.
-                layer_delta.assign(device, &back_propagated_delta);
+                gradient.assign(device, &back_propagated_delta);
             } else {
                 let input: &Tensor = &inputs[0].deref().borrow();
                 let output: &Tensor = &output.deref().borrow();
                 let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
                 self.derive(input, output, layer_f_derivative)?;
 
-                layer_f_derivative.element_wise_mul(device, back_propagated_delta, layer_delta)?;
+                layer_f_derivative.element_wise_mul(
+                    device,
+                    back_propagated_delta,
+                    &mut gradient,
+                )?;
             }
         }
-
-        let mut gradient = device.tensor(0, 0, vec![]);
-        gradient.assign(device, layer_delta);
 
         Ok((Rc::new(RefCell::new(gradient)), vec![]))
     }

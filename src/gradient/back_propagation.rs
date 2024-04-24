@@ -32,7 +32,6 @@ pub fn back_propagation(
             inputs,
             output,
             back_propagated_delta,
-            layer_delta,
         )?;
 
         back_propagated_gradient

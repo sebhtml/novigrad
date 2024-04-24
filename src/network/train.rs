@@ -23,6 +23,7 @@ pub fn print_expected_output_and_actual_output(
     );
     println!("");
     for col in 0..cols {
+        // TODO is this the correct loss in the loss tensor
         let loss = match loss {
             Some(loss) => loss.get(0, col),
             _ => Default::default(),
@@ -84,6 +85,8 @@ pub fn train_network_on_dataset(
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
 
+    let (_, _) = print_results(&mut network, &inputs, &outputs);
+
     for epoch in 0..epochs {
         if epoch % progress == 0 {
             let total_error =
@@ -108,7 +111,24 @@ pub fn train_network_on_dataset(
     let final_total_error =
         print_total_error(&mut network, &inputs, &outputs, last_total_error, epochs)?;
 
-    let activation_tensors = network.predict_many(&inputs)?;
+    let (expected_argmax_values, actual_argmax_values) =
+        print_results(&mut network, &inputs, &outputs);
+
+    let output = NetworkTestOutput {
+        initial_total_error,
+        final_total_error,
+        expected_argmax_values,
+        actual_argmax_values,
+    };
+    Ok(output)
+}
+
+fn print_results(
+    network: &mut Network,
+    inputs: &Vec<Rc<RefCell<Tensor>>>,
+    outputs: &Vec<Rc<RefCell<Tensor>>>,
+) -> (Vec<usize>, Vec<usize>) {
+    let activation_tensors = network.predict_many(&inputs).unwrap();
 
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();
@@ -145,12 +165,5 @@ pub fn train_network_on_dataset(
             None,
         );
     }
-
-    let output = NetworkTestOutput {
-        initial_total_error,
-        final_total_error,
-        expected_argmax_values,
-        actual_argmax_values,
-    };
-    Ok(output)
+    (expected_argmax_values, actual_argmax_values)
 }

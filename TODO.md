@@ -3,12 +3,11 @@
 - store output tensor in operator
 - store gradients in output tensors during back prop
 - in reset(), if new len is different, do a cuda reallocation
+- don't store output in tape
 
 == New Tests MR ==
 
-- don't store output in tape
 - use Result for return type of Device methods
-- Instead of using Rc<RefCell<Tensor>>, use Rc<RefCell<TensorStorage>> inside Tensor
 - Don't call reset inside Tensor methods
 - remove Tensor::set method
 - remove Tensor::get method

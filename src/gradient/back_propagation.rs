@@ -13,7 +13,7 @@ pub fn back_propagation(
     device: &Device,
     tape: &Rc<RefCell<Tape>>,
 ) -> Result<Vec<Gradient>, Error> {
-    let mut gradients = vec![];
+    let mut enabled_gradients = vec![];
     let layer_delta = &mut working_memory.layer_delta;
     let tape: &Tape = &tape.deref().borrow();
     let records: &Vec<Record> = &tape.records();
@@ -45,9 +45,7 @@ pub fn back_propagation(
         if operator_gradients.len() > 0 {
             debug_assert_eq!(layer_delta.shape(), output.deref().borrow().shape());
         }
-        for gradient in operator_gradients {
-            gradients.push(gradient);
-        }
+        enabled_gradients.extend_from_slice(&operator_gradients);
     }
-    Ok(gradients)
+    Ok(enabled_gradients)
 }

@@ -95,7 +95,7 @@ impl OperatorTrait for Linear {
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
-        let mut tracked_gradients = vec![];
+        let mut enabled_gradients = vec![];
         let weights_gradient: &mut Tensor = &mut self.weights_gradient.deref().borrow_mut();
         let biases_gradient: &mut Tensor = &mut self.biases_gradient.deref().borrow_mut();
         {
@@ -109,11 +109,11 @@ impl OperatorTrait for Linear {
 
             biases_gradient.assign(device, back_propagated_delta);
 
-            tracked_gradients.push(Gradient::new(
+            enabled_gradients.push(Gradient::new(
                 self.weights.clone(),
                 self.weights_gradient.clone(),
             ));
-            tracked_gradients.push(Gradient::new(
+            enabled_gradients.push(Gradient::new(
                 self.biases.clone(),
                 self.biases_gradient.clone(),
             ));
@@ -129,7 +129,7 @@ impl OperatorTrait for Linear {
             Tensor::matmul(device, true, true, a, b, c, true)?;
         }
 
-        Ok((self.backward_gradient.clone(), tracked_gradients))
+        Ok((self.backward_gradient.clone(), enabled_gradients))
     }
 
     fn name(&self) -> &str {

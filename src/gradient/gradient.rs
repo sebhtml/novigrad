@@ -2,6 +2,7 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::Tensor;
 
+#[derive(Clone)]
 pub struct Gradient {
     tensor: Rc<RefCell<Tensor>>,
     gradient: Rc<RefCell<Tensor>>,

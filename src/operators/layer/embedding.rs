@@ -5,16 +5,22 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
     embedding_table: Rc<RefCell<Tensor>>,
+    embedding_table_gradient: Rc<RefCell<Tensor>>,
+    backward_gradient: Rc<RefCell<Tensor>>,
 }
 
 impl Embedding {
     pub fn new(num_embeddings: usize, embedding_dim: usize, device: &Device) -> Self {
+        let embedding_table_gradient = device.tensor(0, 0, vec![]);
+        let backward_gradient = device.tensor(0, 0, vec![]);
         Self {
             embedding_table: Rc::new(RefCell::new(get_embedding_table(
                 device,
                 num_embeddings,
                 embedding_dim,
             ))),
+            embedding_table_gradient: Rc::new(RefCell::new(embedding_table_gradient)),
+            backward_gradient: Rc::new(RefCell::new(backward_gradient)),
         }
     }
 }
@@ -29,27 +35,28 @@ impl OperatorTrait for Embedding {
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
-        let mut gradients = vec![];
+        let mut enabled_gradients = vec![];
         {
-            let mut gradient = device.tensor(0, 0, vec![]);
+            let embedding_table_gradient: &mut Tensor =
+                &mut self.embedding_table_gradient.deref().borrow_mut();
             let input: &Tensor = &inputs[0].deref().borrow();
             let a: &Tensor = back_propagated_delta;
             let b: &Tensor = input;
-            let c: &mut Tensor = &mut gradient;
+            let c: &mut Tensor = embedding_table_gradient;
             c.reset(b.cols(), a.cols(), 0.0);
             let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
 
-            gradients.push(Gradient::new(
+            enabled_gradients.push(Gradient::new(
                 self.embedding_table.clone(),
-                Rc::new(RefCell::new(gradient)),
+                self.embedding_table_gradient.clone(),
             ));
         }
 
-        let mut gradient = device.tensor(0, 0, vec![]);
-        gradient.assign(device, back_propagated_delta);
+        let backward_gradient: &mut Tensor = &mut self.backward_gradient.deref().borrow_mut();
+        backward_gradient.assign(device, back_propagated_delta);
 
-        Ok((Rc::new(RefCell::new(gradient)), gradients))
+        Ok((self.backward_gradient.clone(), enabled_gradients))
     }
 
     fn forward(

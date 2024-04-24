@@ -92,8 +92,9 @@ impl OperatorTrait for Linear {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
-        back_propagated_delta: &Tensor,
+        back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
+        let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
         let mut tracked_gradients = vec![];
         let weights_gradient: &mut Tensor = &mut self.weights_gradient.deref().borrow_mut();
         let biases_gradient: &mut Tensor = &mut self.biases_gradient.deref().borrow_mut();

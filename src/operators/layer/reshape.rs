@@ -32,8 +32,9 @@ impl OperatorTrait for Reshape {
         _error_working_memory: &mut DeltaWorkingMemory,
         _inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
-        back_propagated_delta: &Tensor,
+        back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
+        let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
         let mut gradient = device.tensor(0, 0, vec![]);
         gradient.assign(device, back_propagated_delta);
         gradient.reshape(self.input_rows, self.input_cols)?;

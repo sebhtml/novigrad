@@ -24,7 +24,7 @@ pub trait OperatorTrait {
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         output: &Rc<RefCell<Tensor>>,
-        back_propagated_delta: &Tensor,
+        back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error>;
 }
 

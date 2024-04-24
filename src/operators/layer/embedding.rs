@@ -26,8 +26,9 @@ impl OperatorTrait for Embedding {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
-        back_propagated_delta: &Tensor,
+        back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
+        let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
         let mut gradients = vec![];
         {
             let mut gradient = device.tensor(0, 0, vec![]);

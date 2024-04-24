@@ -35,7 +35,10 @@ pub fn back_propagation(
             layer_delta,
         )?;
 
-        back_propagated_gradient.clip(-1.0, 1.0, back_propagated_delta);
+        back_propagated_gradient
+            .deref()
+            .borrow_mut()
+            .clip(-1.0, 1.0, back_propagated_delta);
 
         if operator_gradients.len() > 0 {
             debug_assert_eq!(layer_delta.shape(), output.deref().borrow().shape());

@@ -33,14 +33,12 @@ impl OperatorTrait for Reshape {
         _inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &mut Tensor,
-        layer_delta: &mut Tensor,
-    ) -> Result<(Tensor, Vec<Gradient>), Error> {
-        layer_delta.assign(device, back_propagated_delta);
-        layer_delta.reshape(self.input_rows, self.input_cols)?;
-
+        _layer_delta: &mut Tensor,
+    ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
         let mut gradient = device.tensor(0, 0, vec![]);
-        gradient.assign(device, layer_delta);
-        Ok((gradient, vec![]))
+        gradient.assign(device, back_propagated_delta);
+        gradient.reshape(self.input_rows, self.input_cols)?;
+        Ok((Rc::new(RefCell::new(gradient)), vec![]))
     }
 
     fn forward(

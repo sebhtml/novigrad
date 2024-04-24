@@ -84,7 +84,7 @@ impl OperatorTrait for Linear {
         _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &mut Tensor,
         layer_delta: &mut Tensor,
-    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+    ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
         {
             layer_delta.assign(device, back_propagated_delta);
         }
@@ -103,8 +103,14 @@ impl OperatorTrait for Linear {
 
             biases_gradient.assign(device, layer_delta);
 
-            gradients.push(Gradient::new(self.weights.clone(), weights_gradient));
-            gradients.push(Gradient::new(self.biases.clone(), biases_gradient));
+            gradients.push(Gradient::new(
+                self.weights.clone(),
+                Rc::new(RefCell::new(weights_gradient)),
+            ));
+            gradients.push(Gradient::new(
+                self.biases.clone(),
+                Rc::new(RefCell::new(biases_gradient)),
+            ));
         }
 
         {
@@ -119,7 +125,7 @@ impl OperatorTrait for Linear {
         let mut gradient = device.tensor(0, 0, vec![]);
         gradient.assign(device, back_propagated_delta);
 
-        Ok((gradient, gradients))
+        Ok((Rc::new(RefCell::new(gradient)), gradients))
     }
 
     fn name(&self) -> &str {

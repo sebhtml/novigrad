@@ -28,7 +28,7 @@ impl OperatorTrait for Embedding {
         _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &mut Tensor,
         layer_delta: &mut Tensor,
-    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+    ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
         {
             layer_delta.assign(device, back_propagated_delta);
         }
@@ -44,13 +44,16 @@ impl OperatorTrait for Embedding {
             let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
 
-            gradients.push(Gradient::new(self.embedding_table.clone(), gradient));
+            gradients.push(Gradient::new(
+                self.embedding_table.clone(),
+                Rc::new(RefCell::new(gradient)),
+            ));
         }
 
         let mut gradient = device.tensor(0, 0, vec![]);
         gradient.assign(device, layer_delta);
 
-        Ok((gradient, gradients))
+        Ok((Rc::new(RefCell::new(gradient)), gradients))
     }
 
     fn forward(

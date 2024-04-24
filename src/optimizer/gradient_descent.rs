@@ -10,7 +10,7 @@ impl OptimizerTrait for GradientDescent {
         let learning_rate: f32 = 0.5;
         for gradient in gradients {
             let tensor: &mut Tensor = &mut gradient.tensor().deref().borrow_mut();
-            let gradient = gradient.gradient();
+            let gradient: &Tensor = &gradient.gradient().deref().borrow();
 
             let op_result = Tensor::saxpy(device, -learning_rate, gradient, tensor);
             op_result.expect("Ok");

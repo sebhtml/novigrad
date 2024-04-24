@@ -68,21 +68,19 @@ impl OperatorTrait for Sigmoid {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &mut Tensor,
-        layer_delta: &mut Tensor,
-    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        _layer_delta: &mut Tensor,
+    ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
+        let mut gradient = device.tensor(0, 0, vec![]);
         {
             // Compute activation function derivative.
             let input: &Tensor = &inputs[0].deref().borrow();
             let output: &Tensor = &output.deref().borrow();
             let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
             self.derive(input, output, layer_f_derivative)?;
-            layer_f_derivative.element_wise_mul(device, back_propagated_delta, layer_delta)?;
+            layer_f_derivative.element_wise_mul(device, back_propagated_delta, &mut gradient)?;
         }
 
-        let mut gradient = device.tensor(0, 0, vec![]);
-        gradient.assign(device, layer_delta);
-
-        Ok((gradient, vec![]))
+        Ok((Rc::new(RefCell::new(gradient)), vec![]))
     }
 
     fn forward(

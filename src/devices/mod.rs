@@ -1,6 +1,8 @@
 mod cpu;
 pub use cpu::*;
+#[cfg(feature = "cuda")]
 mod cuda;
+#[cfg(feature = "cuda")]
 pub use cuda::*;
 
 use crate::{Error, Tensor};
@@ -54,6 +56,7 @@ pub trait DeviceInterface {
 
 pub enum Device {
     Cpu(CpuDevice),
+    #[cfg(feature = "cuda")]
     Cuda(CudaDevice),
 }
 
@@ -67,6 +70,7 @@ impl Device {
     pub fn cpu() -> Self {
         Device::Cpu(CpuDevice::default())
     }
+    #[cfg(feature = "cuda")]
     pub fn cuda() -> Result<Self, Error> {
         match CudaDevice::try_default() {
             Ok(cublas) => Ok(Device::Cuda(cublas)),
@@ -100,6 +104,7 @@ impl DeviceInterface for Device {
             Device::Cpu(device) => {
                 device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => {
                 device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
@@ -109,6 +114,7 @@ impl DeviceInterface for Device {
     fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> f32 {
         match self {
             Device::Cpu(device) => device.sdot(n, x, incx, y, incy),
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => device.sdot(n, x, incx, y, incy),
         }
     }
@@ -116,6 +122,7 @@ impl DeviceInterface for Device {
     fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
         match self {
             Device::Cpu(device) => device.scopy(n, x, incx, y, incy),
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => device.scopy(n, x, incx, y, incy),
         }
     }
@@ -123,6 +130,7 @@ impl DeviceInterface for Device {
     fn saxpy(&self, n: i32, alpha: f32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
         match self {
             Device::Cpu(device) => device.saxpy(n, alpha, x, incx, y, incy),
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => device.saxpy(n, alpha, x, incx, y, incy),
         }
     }
@@ -130,6 +138,7 @@ impl DeviceInterface for Device {
     fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) {
         match self {
             Device::Cpu(device) => device.sscal(n, alpha, x, incx),
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => device.sscal(n, alpha, x, incx),
         }
     }

@@ -7,6 +7,9 @@ use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait,
 pub struct Linear {
     weights: Rc<RefCell<Tensor>>,
     biases: Rc<RefCell<Tensor>>,
+    weights_gradient: Rc<RefCell<Tensor>>,
+    biases_gradient: Rc<RefCell<Tensor>>,
+    backward_gradient: Rc<RefCell<Tensor>>,
 }
 
 impl Linear {
@@ -32,9 +35,16 @@ impl Linear {
         let mut biases = device.tensor(0, 0, vec![]);
         biases.reset(bias_rows, weights_rows, Default::default());
 
+        let weights_gradient = device.tensor(0, 0, vec![]);
+        let biases_gradient = device.tensor(0, 0, vec![]);
+        let backward_gradient = device.tensor(0, 0, vec![]);
+
         Linear {
             weights: Rc::new(RefCell::new(weights)),
             biases: Rc::new(RefCell::new(biases)),
+            weights_gradient: Rc::new(RefCell::new(weights_gradient)),
+            biases_gradient: Rc::new(RefCell::new(biases_gradient)),
+            backward_gradient: Rc::new(RefCell::new(backward_gradient)),
         }
     }
 }
@@ -84,41 +94,41 @@ impl OperatorTrait for Linear {
         _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &Tensor,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
-        let mut gradients = vec![];
+        let mut tracked_gradients = vec![];
+        let weights_gradient: &mut Tensor = &mut self.weights_gradient.deref().borrow_mut();
+        let biases_gradient: &mut Tensor = &mut self.biases_gradient.deref().borrow_mut();
         {
-            let mut weights_gradient = device.tensor(0, 0, vec![]);
-            let mut biases_gradient = device.tensor(0, 0, vec![]);
             let input: &Tensor = &inputs[0].deref().borrow();
             let a: &Tensor = input;
             let b: &Tensor = back_propagated_delta;
-            let c: &mut Tensor = &mut weights_gradient;
+            let c: &mut Tensor = weights_gradient;
             c.reset(b.cols(), a.cols(), 0.0);
             let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
 
             biases_gradient.assign(device, back_propagated_delta);
 
-            gradients.push(Gradient::new(
+            tracked_gradients.push(Gradient::new(
                 self.weights.clone(),
-                Rc::new(RefCell::new(weights_gradient)),
+                self.weights_gradient.clone(),
             ));
-            gradients.push(Gradient::new(
+            tracked_gradients.push(Gradient::new(
                 self.biases.clone(),
-                Rc::new(RefCell::new(biases_gradient)),
+                self.biases_gradient.clone(),
             ));
         }
 
-        let mut gradient = device.tensor(0, 0, vec![]);
+        let backward_gradient: &mut Tensor = &mut self.backward_gradient.deref().borrow_mut();
         {
             let weights: &Tensor = &self.weights.deref().borrow();
             let a: &Tensor = weights;
             let b: &Tensor = back_propagated_delta;
-            let c: &mut Tensor = &mut gradient;
+            let c: &mut Tensor = backward_gradient;
             c.reset(b.rows(), a.cols(), 0.0);
             Tensor::matmul(device, true, true, a, b, c, true)?;
         }
 
-        Ok((Rc::new(RefCell::new(gradient)), gradients))
+        Ok((self.backward_gradient.clone(), tracked_gradients))
     }
 
     fn name(&self) -> &str {

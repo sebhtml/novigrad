@@ -26,7 +26,7 @@ impl OperatorTrait for Embedding {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
-        back_propagated_delta: &mut Tensor,
+        back_propagated_delta: &Tensor,
         layer_delta: &mut Tensor,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
         {

@@ -1,18 +1,18 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{OperatorTrait, Tensor};
+use crate::{LearningTensor, OperatorTrait};
 
 pub struct Record {
     operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
-    inputs: Vec<Rc<RefCell<Tensor>>>,
-    output: Rc<RefCell<Tensor>>,
+    inputs: Vec<LearningTensor>,
+    output: LearningTensor,
 }
 
 impl Record {
     pub fn new(
         operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
-        inputs: Vec<Rc<RefCell<Tensor>>>,
-        output: Rc<RefCell<Tensor>>,
+        inputs: Vec<LearningTensor>,
+        output: LearningTensor,
     ) -> Self {
         Self {
             operator,
@@ -25,11 +25,11 @@ impl Record {
         &self.operator
     }
 
-    pub fn inputs(&self) -> &Vec<Rc<RefCell<Tensor>>> {
+    pub fn inputs(&self) -> &Vec<LearningTensor> {
         &self.inputs
     }
 
-    pub fn output(&self) -> &Rc<RefCell<Tensor>> {
+    pub fn output(&self) -> &LearningTensor {
         &self.output
     }
 }
@@ -50,8 +50,8 @@ impl Tape {
     pub fn push(
         &mut self,
         operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
-        inputs: Vec<Rc<RefCell<Tensor>>>,
-        output: Rc<RefCell<Tensor>>,
+        inputs: Vec<LearningTensor>,
+        output: LearningTensor,
     ) {
         self.records.push(Record::new(operator, inputs, output))
     }

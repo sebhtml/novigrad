@@ -1,6 +1,7 @@
 == CUDA training MR (in progress) ==
 
-- use LearningTensor
+- use LearningTensor in Linear and Embedding structs
+- use LearningTensor for backward_gradient
 - don't store output in tape
 - in reset(), if new len is different, do a cuda reallocation
 

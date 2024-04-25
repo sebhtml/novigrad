@@ -59,15 +59,16 @@ impl OperatorTrait for CrossEntropyLoss {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-        _output: &Rc<RefCell<Tensor>>,
+        inputs: &Vec<LearningTensor>,
+        _output: &LearningTensor,
         _back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
-        let expected: &Tensor = &inputs[0].deref().borrow();
-        let actual: &Tensor = &inputs[1].deref().borrow();
+
         {
+            let expected: &Tensor = &inputs[0].tensor().deref().borrow();
+            let actual: &Tensor = &inputs[1].tensor().deref().borrow();
             let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
             self.derive(device, expected, actual, backward_gradient)?;
         }
@@ -78,15 +79,15 @@ impl OperatorTrait for CrossEntropyLoss {
     fn forward(
         &self,
         device: &Device,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-    ) -> Result<Rc<RefCell<Tensor>>, Error> {
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
-        let expected: &Tensor = &inputs[0].deref().borrow();
-        let actual: &Tensor = &inputs[1].deref().borrow();
+        let output = device.learning_tensor(0, 0, vec![]);
+        let expected: &Tensor = &inputs[0].tensor().deref().borrow();
+        let actual: &Tensor = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
         {
-            let output: &mut Tensor = &mut output.deref().borrow_mut();
+            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
             output.reset(1, 1, loss);
         }
         Ok(output)

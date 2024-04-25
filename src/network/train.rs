@@ -1,6 +1,6 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
 
-use crate::{DatasetDetails, DeltaWorkingMemory, Device, Error, Network, Tensor};
+use crate::{DatasetDetails, DeltaWorkingMemory, Device, Error, LearningTensor, Network, Tensor};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -38,8 +38,8 @@ pub fn print_expected_output_and_actual_output(
 
 fn print_total_error(
     network: &mut Network,
-    inputs: &Vec<Rc<RefCell<Tensor>>>,
-    outputs: &Vec<Rc<RefCell<Tensor>>>,
+    inputs: &Vec<LearningTensor>,
+    outputs: &Vec<LearningTensor>,
     last_total_error: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
@@ -70,9 +70,19 @@ pub fn train_network_on_dataset(
 
     let mut error_working_memory = DeltaWorkingMemory::new(&device);
 
-    let examples: Vec<(Rc<RefCell<Tensor>>, Rc<RefCell<Tensor>>)> = examples
+    let examples: Vec<(_, _)> = examples
         .into_iter()
-        .map(|(x, y)| (Rc::new(RefCell::new(x)), Rc::new(RefCell::new(y))))
+        .map(|(x, y)| {
+            let x = LearningTensor::new(
+                Rc::new(RefCell::new(x)),
+                Rc::new(RefCell::new(device.tensor(0, 0, vec![]))),
+            );
+            let y = LearningTensor::new(
+                Rc::new(RefCell::new(y)),
+                Rc::new(RefCell::new(device.tensor(0, 0, vec![]))),
+            );
+            (x, y)
+        })
         .collect();
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
@@ -116,8 +126,8 @@ pub fn train_network_on_dataset(
 
 fn print_results(
     network: &mut Network,
-    inputs: &Vec<Rc<RefCell<Tensor>>>,
-    outputs: &Vec<Rc<RefCell<Tensor>>>,
+    inputs: &Vec<LearningTensor>,
+    outputs: &Vec<LearningTensor>,
 ) -> (Vec<usize>, Vec<usize>) {
     let activation_tensors = network.predict_many(&inputs).unwrap();
 
@@ -125,8 +135,8 @@ fn print_results(
     let mut actual_argmax_values = Vec::new();
 
     for i in 0..inputs.len() {
-        let expected_output: &Tensor = &outputs[i].deref().borrow();
-        let actual_output: &Tensor = &activation_tensors[i].deref().borrow();
+        let expected_output: &Tensor = &outputs[i].tensor().deref().borrow();
+        let actual_output: &Tensor = &activation_tensors[i].tensor().deref().borrow();
 
         let cols = expected_output.cols();
         let mut expected_argmax = 0;

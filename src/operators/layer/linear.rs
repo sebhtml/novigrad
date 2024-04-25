@@ -50,11 +50,11 @@ impl OperatorTrait for Linear {
     fn forward(
         &self,
         device: &Device,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-    ) -> Result<Rc<RefCell<Tensor>>, Error> {
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
-        let input: &Tensor = &inputs[0].deref().borrow();
-        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
+        let input: &Tensor = &inputs[0].tensor().deref().borrow();
+        let output = device.learning_tensor(0, 0, vec![]);
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.
@@ -63,7 +63,7 @@ impl OperatorTrait for Linear {
 
         // use GEMM to do C = A * W^T + C  with weights and biases all together.
         {
-            let output: &mut Tensor = &mut output.deref().borrow_mut();
+            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
             let weights: &Tensor = &self.weights.deref().borrow();
             let biases: &Tensor = &self.biases.deref().borrow();
             let a = input;
@@ -90,8 +90,8 @@ impl OperatorTrait for Linear {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-        _output: &Rc<RefCell<Tensor>>,
+        inputs: &Vec<LearningTensor>,
+        _output: &LearningTensor,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
@@ -100,7 +100,7 @@ impl OperatorTrait for Linear {
         {
             let weights_gradient: &mut Tensor = &mut self.weights_gradient.deref().borrow_mut();
             let biases_gradient: &mut Tensor = &mut self.biases_gradient.deref().borrow_mut();
-            let input: &Tensor = &inputs[0].deref().borrow();
+            let input: &Tensor = &inputs[0].tensor().deref().borrow();
             let a: &Tensor = input;
             let b: &Tensor = back_propagated_delta;
             let c: &mut Tensor = weights_gradient;

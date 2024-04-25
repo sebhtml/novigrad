@@ -15,21 +15,21 @@ pub trait OperatorTrait {
     fn forward(
         &self,
         device: &Device,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-    ) -> Result<Rc<RefCell<Tensor>>, Error>;
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<LearningTensor, Error>;
 
     fn backward(
         &self,
         device: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-        output: &Rc<RefCell<Tensor>>,
+        inputs: &Vec<LearningTensor>,
+        output: &LearningTensor,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error>;
 }
 
 pub trait Forward {
-    fn forward(&mut self, input: &Rc<RefCell<Tensor>>) -> Result<Rc<RefCell<Tensor>>, Error>;
+    fn forward(&mut self, input: &LearningTensor) -> Result<LearningTensor, Error>;
     fn device(&self) -> Rc<Device>;
     fn tape(&self) -> Rc<RefCell<Tape>>;
 }

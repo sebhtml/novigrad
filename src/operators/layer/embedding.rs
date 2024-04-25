@@ -27,8 +27,8 @@ impl OperatorTrait for Embedding {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-        _output: &Rc<RefCell<Tensor>>,
+        inputs: &Vec<LearningTensor>,
+        _output: &LearningTensor,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
@@ -37,7 +37,7 @@ impl OperatorTrait for Embedding {
         {
             let embedding_table_gradient: &mut Tensor =
                 &mut self.embedding_table_gradient.deref().borrow_mut();
-            let input: &Tensor = &inputs[0].deref().borrow();
+            let input: &Tensor = &inputs[0].tensor().deref().borrow();
             let a: &Tensor = back_propagated_delta;
             let b: &Tensor = input;
             let c: &mut Tensor = embedding_table_gradient;
@@ -62,14 +62,14 @@ impl OperatorTrait for Embedding {
     fn forward(
         &self,
         device: &Device,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-    ) -> Result<Rc<RefCell<Tensor>>, Error> {
-        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<LearningTensor, Error> {
+        let output = device.learning_tensor(0, 0, vec![]);
         let embedding_table: &Tensor = &self.embedding_table.deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         {
-            let input: &Tensor = &inputs[0].deref().borrow();
-            let output: &mut Tensor = &mut output.deref().borrow_mut();
+            let input: &Tensor = &inputs[0].tensor().deref().borrow();
+            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
             debug_assert_eq!(input.cols(), embedding_table.rows());
             let a = input;
             let b = &embedding_table;

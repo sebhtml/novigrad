@@ -30,8 +30,8 @@ impl OperatorTrait for Reshape {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        _inputs: &Vec<Rc<RefCell<Tensor>>>,
-        _output: &Rc<RefCell<Tensor>>,
+        _inputs: &Vec<LearningTensor>,
+        _output: &LearningTensor,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
@@ -48,15 +48,15 @@ impl OperatorTrait for Reshape {
     fn forward(
         &self,
         device: &Device,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-    ) -> Result<Rc<RefCell<Tensor>>, Error> {
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
-        let input: &Tensor = &inputs[0].deref().borrow();
+        let input: &Tensor = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
-        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
+        let output = device.learning_tensor(0, 0, vec![]);
         {
-            let output: &mut Tensor = &mut output.deref().borrow_mut();
+            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
             output.assign(device, input);
             output.reshape(self.output_rows, self.output_cols)?;
         }

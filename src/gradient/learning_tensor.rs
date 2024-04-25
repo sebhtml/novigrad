@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::Tensor;
 
@@ -10,10 +10,6 @@ pub struct LearningTensor {
 
 impl LearningTensor {
     pub fn new(tensor: Rc<RefCell<Tensor>>, gradient: Rc<RefCell<Tensor>>) -> Self {
-        debug_assert_eq!(
-            gradient.deref().borrow().shape(),
-            tensor.deref().borrow().shape()
-        );
         Self { tensor, gradient }
     }
     pub fn tensor(&self) -> &Rc<RefCell<Tensor>> {

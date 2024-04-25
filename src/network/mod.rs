@@ -1,12 +1,12 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
 pub use train::*;
 
 use crate::{
-    back_propagation, devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tape,
-    Tensor,
+    back_propagation, devices::Device, Error, Forward, LearningTensor, Operator, Optimizer,
+    OptimizerTrait, Tape, Tensor,
 };
 
 pub struct Network {
@@ -88,8 +88,8 @@ impl Network {
         &mut self,
         error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-        outputs: &Vec<Rc<RefCell<Tensor>>>,
+        inputs: &Vec<LearningTensor>,
+        outputs: &Vec<LearningTensor>,
     ) -> Result<(), Error> {
         for i in 0..inputs.len() {
             self.train_back_propagation(error_working_memory, epoch, i, &inputs[i], &outputs[i])?;
@@ -99,8 +99,8 @@ impl Network {
 
     pub fn total_error(
         &mut self,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-        outputs: &Vec<Rc<RefCell<Tensor>>>,
+        inputs: &Vec<LearningTensor>,
+        outputs: &Vec<LearningTensor>,
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
@@ -110,7 +110,7 @@ impl Network {
                 .loss_function
                 .forward_inputs(&vec![target.clone(), output.clone()])
                 .expect("Ok");
-            let example_error: &Tensor = &example_error.deref().borrow();
+            let example_error: &Tensor = &example_error.tensor().deref().borrow();
             let example_error: f32 = example_error.try_into()?;
             total_error += example_error;
         }
@@ -123,8 +123,8 @@ impl Network {
         error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
-        x: &Rc<RefCell<Tensor>>,
-        y: &Rc<RefCell<Tensor>>,
+        x: &LearningTensor,
+        y: &LearningTensor,
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
@@ -142,8 +142,8 @@ impl Network {
 
     pub fn predict_many(
         &mut self,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-    ) -> Result<Vec<Rc<RefCell<Tensor>>>, Error> {
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<Vec<LearningTensor>, Error> {
         let len = inputs.len();
         let mut outputs = vec![];
         let mut i = 0;
@@ -156,7 +156,7 @@ impl Network {
         Ok(outputs)
     }
 
-    pub fn forward(&mut self, input: &Rc<RefCell<Tensor>>) -> Result<Rc<RefCell<Tensor>>, Error> {
+    pub fn forward(&mut self, input: &LearningTensor) -> Result<LearningTensor, Error> {
         self.architecture.forward(input)
     }
 }

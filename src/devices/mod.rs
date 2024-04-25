@@ -5,7 +5,7 @@ use crate::Error;
 use rustacuda::memory::CopyDestination;
 #[cfg(feature = "cuda")]
 use rustacuda::prelude::DeviceBuffer;
-use std::borrow::BorrowMut;
+use std::{borrow::BorrowMut, cell::RefCell, rc::Rc};
 
 pub use cpu::*;
 #[cfg(feature = "cuda")]
@@ -13,7 +13,7 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::Tensor;
+use crate::{LearningTensor, Tensor};
 
 #[derive(Debug)]
 pub enum DevBuffer {
@@ -140,6 +140,13 @@ impl Device {
     }
     pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Tensor {
         Tensor::new(rows, cols, values, self)
+    }
+
+    pub fn learning_tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> LearningTensor {
+        LearningTensor::new(
+            Rc::new(RefCell::new(Self::tensor(&self, rows, cols, values))),
+            Rc::new(RefCell::new(Self::tensor(&self, 0, 0, vec![]))),
+        )
     }
 }
 

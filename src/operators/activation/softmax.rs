@@ -102,8 +102,8 @@ impl OperatorTrait for Softmax {
         &self,
         device: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-        output: &Rc<RefCell<Tensor>>,
+        inputs: &Vec<LearningTensor>,
+        output: &LearningTensor,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
@@ -115,8 +115,8 @@ impl OperatorTrait for Softmax {
                 // Softmax and Cross Entropy Loss are best friends.
                 backward_gradient.assign(device, back_propagated_delta);
             } else {
-                let input: &Tensor = &inputs[0].deref().borrow();
-                let output: &Tensor = &output.deref().borrow();
+                let input: &Tensor = &inputs[0].tensor().deref().borrow();
+                let output: &Tensor = &output.tensor().deref().borrow();
                 let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
                 self.derive(input, output, layer_f_derivative)?;
 
@@ -134,12 +134,12 @@ impl OperatorTrait for Softmax {
     fn forward(
         &self,
         device: &Device,
-        inputs: &Vec<Rc<RefCell<Tensor>>>,
-    ) -> Result<Rc<RefCell<Tensor>>, Error> {
-        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<LearningTensor, Error> {
+        let output = device.learning_tensor(0, 0, vec![]);
         {
-            let input: &Tensor = &inputs[0].deref().borrow();
-            let output: &mut Tensor = &mut output.deref().borrow_mut();
+            let input: &Tensor = &inputs[0].tensor().deref().borrow();
+            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
             self.activate(input, output)?;
         }
         Ok(output)

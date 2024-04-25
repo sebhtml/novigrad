@@ -1,10 +1,8 @@
 use crate::devices::Device;
 use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
 use crate::{Error, LearningTensor};
-use std::cell::RefCell;
 use std::f32::consts::E;
 use std::ops::Deref;
-use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Sigmoid {}
@@ -73,12 +71,10 @@ impl OperatorTrait for Sigmoid {
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-        back_propagated_delta: &Rc<RefCell<Tensor>>,
-    ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
-        let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
-        let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
+    ) -> Result<Vec<LearningTensor>, Error> {
+        let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
         {
-            let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
+            let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
             // Compute activation function derivative.
             let input: &Tensor = &inputs[0].tensor().deref().borrow();
             let output: &Tensor = &output.tensor().deref().borrow();
@@ -91,7 +87,7 @@ impl OperatorTrait for Sigmoid {
             )?;
         }
 
-        Ok((backward_gradient, vec![]))
+        Ok(vec![])
     }
 
     fn forward(

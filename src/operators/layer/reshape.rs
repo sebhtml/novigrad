@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::ops::Deref;
 
 use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
 
@@ -30,19 +30,17 @@ impl OperatorTrait for Reshape {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        _inputs: &Vec<LearningTensor>,
-        _output: &LearningTensor,
-        back_propagated_delta: &Rc<RefCell<Tensor>>,
-    ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
-        let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
-        let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
+        inputs: &Vec<LearningTensor>,
+        output: &LearningTensor,
+    ) -> Result<Vec<LearningTensor>, Error> {
+        let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
         {
-            let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
+            let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
             backward_gradient.assign(device, back_propagated_delta);
             backward_gradient.reshape(self.input_rows, self.input_cols)?;
         }
 
-        Ok((backward_gradient, vec![]))
+        Ok(vec![])
     }
 
     fn forward(

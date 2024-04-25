@@ -1,13 +1,18 @@
-== CUDA training MR (in progress) ==
+== LearningTensor MR (in progress) ==
 
-- use LearningTensor for backward_gradient
-- don't store output in tape
-- in reset(), if new len is different, do a cuda reallocation
+- 
+
+== backward method in==
+
+- store device in LearningTensor
+- add method backward in LearningTensor
 
 == New Tests MR ==
 
+- in reset(), if new len is different, do a cuda reallocation
 - use Result for return type of Device methods
 - Don't call reset inside Tensor methods
+- don't store output in tape
 - remove Tensor::set method
 - remove Tensor::get method
 

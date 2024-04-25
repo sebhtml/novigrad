@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::ops::Deref;
 
 use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
 
@@ -49,18 +49,16 @@ impl OperatorTrait for ResidualSumOfSquares {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         _output: &LearningTensor,
-        _back_propagated_delta: &Rc<RefCell<Tensor>>,
-    ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
+    ) -> Result<Vec<LearningTensor>, Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         let expected: &Tensor = &inputs[0].tensor().deref().borrow();
         let actual: &Tensor = &inputs[1].tensor().deref().borrow();
         {
-            let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
+            let backward_gradient: &mut Tensor = &mut inputs[1].gradient().deref().borrow_mut();
             self.derive(device, expected, actual, backward_gradient)?;
         }
 
-        Ok((backward_gradient, vec![]))
+        Ok(vec![])
     }
 
     fn forward(

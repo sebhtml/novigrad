@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error};
 
 mod tape;
 pub use tape::*;
@@ -24,8 +24,7 @@ pub trait OperatorTrait {
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-        back_propagated_delta: &Rc<RefCell<Tensor>>,
-    ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error>;
+    ) -> Result<Vec<LearningTensor>, Error>;
 }
 
 pub trait Forward {

@@ -24,19 +24,17 @@ pub fn back_propagation(
         let output = record.output();
         let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
 
-        let (back_propagated_gradient, operator_gradients) = operator.backward(
-            device,
-            error_working_memory,
-            inputs,
-            output,
-            &back_propagated_delta,
-        )?;
+        let operator_gradients = operator.backward(device, error_working_memory, inputs, output)?;
 
-        let back_propagated_delta: &mut Tensor = &mut back_propagated_delta.deref().borrow_mut();
-        back_propagated_gradient
-            .deref()
-            .borrow_mut()
-            .clip(-1.0, 1.0, back_propagated_delta);
+        for input in inputs {
+            let back_propagated_delta: &mut Tensor = &mut input.gradient().deref().borrow_mut();
+            let mut back_propagated_gradient = device.tensor(
+                back_propagated_delta.rows(),
+                back_propagated_delta.cols(),
+                back_propagated_delta.get_values(),
+            );
+            back_propagated_gradient.clip(-1.0, 1.0, back_propagated_delta);
+        }
 
         enabled_gradients.extend_from_slice(&operator_gradients);
     }

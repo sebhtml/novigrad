@@ -4,20 +4,21 @@ use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, Operator
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
-    embedding_table: Rc<RefCell<Tensor>>,
-    embedding_table_gradient: Rc<RefCell<Tensor>>,
+    embedding_table: LearningTensor,
 }
 
 impl Embedding {
     pub fn new(num_embeddings: usize, embedding_dim: usize, device: &Device) -> Self {
         let embedding_table_gradient = device.tensor(0, 0, vec![]);
         Self {
-            embedding_table: Rc::new(RefCell::new(get_embedding_table(
-                device,
-                num_embeddings,
-                embedding_dim,
-            ))),
-            embedding_table_gradient: Rc::new(RefCell::new(embedding_table_gradient)),
+            embedding_table: LearningTensor::new(
+                Rc::new(RefCell::new(get_embedding_table(
+                    device,
+                    num_embeddings,
+                    embedding_dim,
+                ))),
+                Rc::new(RefCell::new(embedding_table_gradient)),
+            ),
         }
     }
 }
@@ -36,7 +37,7 @@ impl OperatorTrait for Embedding {
         let mut enabled_gradients = vec![];
         {
             let embedding_table_gradient: &mut Tensor =
-                &mut self.embedding_table_gradient.deref().borrow_mut();
+                &mut self.embedding_table.gradient().deref().borrow_mut();
             let input: &Tensor = &inputs[0].tensor().deref().borrow();
             let a: &Tensor = back_propagated_delta;
             let b: &Tensor = input;
@@ -46,10 +47,7 @@ impl OperatorTrait for Embedding {
             op_result.expect("Ok");
         }
 
-        enabled_gradients.push(LearningTensor::new(
-            self.embedding_table.clone(),
-            self.embedding_table_gradient.clone(),
-        ));
+        enabled_gradients.push(self.embedding_table.clone());
 
         {
             let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
@@ -65,7 +63,7 @@ impl OperatorTrait for Embedding {
         inputs: &Vec<LearningTensor>,
     ) -> Result<LearningTensor, Error> {
         let output = device.learning_tensor(0, 0, vec![]);
-        let embedding_table: &Tensor = &self.embedding_table.deref().borrow();
+        let embedding_table: &Tensor = &self.embedding_table.tensor().deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         {
             let input: &Tensor = &inputs[0].tensor().deref().borrow();

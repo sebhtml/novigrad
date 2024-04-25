@@ -5,10 +5,8 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
 
 pub struct Linear {
-    weights: Rc<RefCell<Tensor>>,
-    weights_gradient: Rc<RefCell<Tensor>>,
-    biases: Rc<RefCell<Tensor>>,
-    biases_gradient: Rc<RefCell<Tensor>>,
+    weights: LearningTensor,
+    biases: LearningTensor,
 }
 
 impl Linear {
@@ -38,10 +36,14 @@ impl Linear {
         let biases_gradient = device.tensor(0, 0, vec![]);
 
         Linear {
-            weights: Rc::new(RefCell::new(weights)),
-            weights_gradient: Rc::new(RefCell::new(weights_gradient)),
-            biases: Rc::new(RefCell::new(biases)),
-            biases_gradient: Rc::new(RefCell::new(biases_gradient)),
+            weights: LearningTensor::new(
+                Rc::new(RefCell::new(weights)),
+                Rc::new(RefCell::new(weights_gradient)),
+            ),
+            biases: LearningTensor::new(
+                Rc::new(RefCell::new(biases)),
+                Rc::new(RefCell::new(biases_gradient)),
+            ),
         }
     }
 }
@@ -64,8 +66,8 @@ impl OperatorTrait for Linear {
         // use GEMM to do C = A * W^T + C  with weights and biases all together.
         {
             let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
-            let weights: &Tensor = &self.weights.deref().borrow();
-            let biases: &Tensor = &self.biases.deref().borrow();
+            let weights: &Tensor = &self.weights.tensor().deref().borrow();
+            let biases: &Tensor = &self.biases.tensor().deref().borrow();
             let a = input;
             let b = weights;
             let c = output;
@@ -98,8 +100,8 @@ impl OperatorTrait for Linear {
         let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         let mut enabled_gradients = vec![];
         {
-            let weights_gradient: &mut Tensor = &mut self.weights_gradient.deref().borrow_mut();
-            let biases_gradient: &mut Tensor = &mut self.biases_gradient.deref().borrow_mut();
+            let weights_gradient: &mut Tensor = &mut self.weights.gradient().deref().borrow_mut();
+            let biases_gradient: &mut Tensor = &mut self.biases.gradient().deref().borrow_mut();
             let input: &Tensor = &inputs[0].tensor().deref().borrow();
             let a: &Tensor = input;
             let b: &Tensor = back_propagated_delta;
@@ -111,18 +113,12 @@ impl OperatorTrait for Linear {
             biases_gradient.assign(device, back_propagated_delta);
         }
 
-        enabled_gradients.push(LearningTensor::new(
-            self.weights.clone(),
-            self.weights_gradient.clone(),
-        ));
-        enabled_gradients.push(LearningTensor::new(
-            self.biases.clone(),
-            self.biases_gradient.clone(),
-        ));
+        enabled_gradients.push(self.weights.clone());
+        enabled_gradients.push(self.biases.clone());
 
         {
             let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
-            let weights: &Tensor = &self.weights.deref().borrow();
+            let weights: &Tensor = &self.weights.tensor().deref().borrow();
             let a: &Tensor = weights;
             let b: &Tensor = back_propagated_delta;
             let c: &mut Tensor = backward_gradient;

@@ -32,7 +32,8 @@ impl OperatorTrait for Reshape {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-    ) -> Result<Vec<LearningTensor>, Error> {
+        _enabled_gradients: &mut Vec<LearningTensor>,
+    ) -> Result<(), Error> {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
         {
             let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
@@ -40,7 +41,7 @@ impl OperatorTrait for Reshape {
             backward_gradient.reshape(self.input_rows, self.input_cols)?;
         }
 
-        Ok(vec![])
+        Ok(())
     }
 
     fn forward(

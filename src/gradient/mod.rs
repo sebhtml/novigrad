@@ -24,7 +24,8 @@ pub trait OperatorTrait {
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-    ) -> Result<Vec<LearningTensor>, Error>;
+        enabled_gradients: &mut Vec<LearningTensor>,
+    ) -> Result<(), Error>;
 }
 
 pub trait Forward {

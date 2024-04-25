@@ -10,6 +10,7 @@
 
 - add method backward in LearningTensor
 - store device in LearningTensor
+- remove back_propagation function
 
 == Concat test MR ==
 

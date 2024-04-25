@@ -102,7 +102,8 @@ impl OperatorTrait for Softmax {
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-    ) -> Result<Vec<LearningTensor>, Error> {
+        _enabled_gradients: &mut Vec<LearningTensor>,
+    ) -> Result<(), Error> {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
         {
             let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
@@ -124,7 +125,7 @@ impl OperatorTrait for Softmax {
             }
         }
 
-        Ok(vec![])
+        Ok(())
     }
 
     fn forward(

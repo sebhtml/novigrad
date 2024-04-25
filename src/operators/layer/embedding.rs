@@ -30,9 +30,9 @@ impl OperatorTrait for Embedding {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-    ) -> Result<Vec<LearningTensor>, Error> {
+        enabled_gradients: &mut Vec<LearningTensor>,
+    ) -> Result<(), Error> {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
-        let mut enabled_gradients = vec![];
         {
             let embedding_table_gradient: &mut Tensor =
                 &mut self.embedding_table.gradient().deref().borrow_mut();
@@ -52,7 +52,7 @@ impl OperatorTrait for Embedding {
             backward_gradient.assign(device, back_propagated_delta);
         }
 
-        Ok(enabled_gradients)
+        Ok(())
     }
 
     fn forward(

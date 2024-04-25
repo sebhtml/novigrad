@@ -20,8 +20,13 @@ pub fn back_propagation(
         let output = record.output();
 
         // Store enabled gradients to optimize them later.
-        let operator_gradients = operator.backward(device, error_working_memory, inputs, output)?;
-        enabled_gradients.extend_from_slice(&operator_gradients);
+        operator.backward(
+            device,
+            error_working_memory,
+            inputs,
+            output,
+            &mut enabled_gradients,
+        )?;
 
         // Clip the backward gradients.
         for input in inputs {

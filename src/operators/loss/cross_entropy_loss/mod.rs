@@ -61,7 +61,8 @@ impl OperatorTrait for CrossEntropyLoss {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         _output: &LearningTensor,
-    ) -> Result<Vec<LearningTensor>, Error> {
+        _enabled_gradients: &mut Vec<LearningTensor>,
+    ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         {
             let expected: &Tensor = &inputs[0].tensor().deref().borrow();
@@ -70,7 +71,7 @@ impl OperatorTrait for CrossEntropyLoss {
             self.derive(device, expected, actual, backward_gradient)?;
         }
 
-        Ok(vec![])
+        Ok(())
     }
 
     fn forward(

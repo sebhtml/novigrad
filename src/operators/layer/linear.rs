@@ -94,9 +94,9 @@ impl OperatorTrait for Linear {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-    ) -> Result<Vec<LearningTensor>, Error> {
+        enabled_gradients: &mut Vec<LearningTensor>,
+    ) -> Result<(), Error> {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
-        let mut enabled_gradients = vec![];
         {
             let weights_gradient: &mut Tensor = &mut self.weights.gradient().deref().borrow_mut();
             let biases_gradient: &mut Tensor = &mut self.biases.gradient().deref().borrow_mut();
@@ -124,7 +124,7 @@ impl OperatorTrait for Linear {
             Tensor::matmul(device, true, true, a, b, c, true)?;
         }
 
-        Ok(enabled_gradients)
+        Ok(())
     }
 
     fn name(&self) -> &str {

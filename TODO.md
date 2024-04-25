@@ -1,20 +1,15 @@
-== LearningTensor MR (in progress) ==
-
-- 
-
-== backward method in==
-
-- store device in LearningTensor
-- add method backward in LearningTensor
-
-== New Tests MR ==
+== CUDA training MR ==
 
 - in reset(), if new len is different, do a cuda reallocation
 - use Result for return type of Device methods
 - Don't call reset inside Tensor methods
-- don't store output in tape
 - remove Tensor::set method
 - remove Tensor::get method
+
+== backward method MR ==
+
+- add method backward in LearningTensor
+- store device in LearningTensor
 
 == Concat test MR ==
 

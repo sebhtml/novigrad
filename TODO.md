@@ -1,3 +1,9 @@
+== backward method MR ==
+
+- add method backward in LearningTensor
+- store device in LearningTensor
+- remove back_propagation function
+
 == CUDA training MR ==
 
 - in reset(), if new len is different, do a cuda reallocation
@@ -5,12 +11,6 @@
 - Don't call reset inside Tensor methods
 - remove Tensor::set method
 - remove Tensor::get method
-
-== backward method MR ==
-
-- add method backward in LearningTensor
-- store device in LearningTensor
-- remove back_propagation function
 
 == Concat test MR ==
 

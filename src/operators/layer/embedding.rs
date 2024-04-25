@@ -6,15 +6,11 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 pub struct Embedding {
     embedding_table: Rc<RefCell<Tensor>>,
     embedding_table_gradient: Rc<RefCell<Tensor>>,
-    backward_gradient: Rc<RefCell<Tensor>>,
-    output: Rc<RefCell<Tensor>>,
 }
 
 impl Embedding {
     pub fn new(num_embeddings: usize, embedding_dim: usize, device: &Device) -> Self {
         let embedding_table_gradient = device.tensor(0, 0, vec![]);
-        let backward_gradient = device.tensor(0, 0, vec![]);
-        let output = device.tensor(0, 0, vec![]);
         Self {
             embedding_table: Rc::new(RefCell::new(get_embedding_table(
                 device,
@@ -22,8 +18,6 @@ impl Embedding {
                 embedding_dim,
             ))),
             embedding_table_gradient: Rc::new(RefCell::new(embedding_table_gradient)),
-            backward_gradient: Rc::new(RefCell::new(backward_gradient)),
-            output: Rc::new(RefCell::new(output)),
         }
     }
 }
@@ -37,6 +31,7 @@ impl OperatorTrait for Embedding {
         _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
+        let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
         let mut enabled_gradients = vec![];
         {
@@ -56,10 +51,12 @@ impl OperatorTrait for Embedding {
             self.embedding_table_gradient.clone(),
         ));
 
-        let backward_gradient: &mut Tensor = &mut self.backward_gradient.deref().borrow_mut();
-        backward_gradient.assign(device, back_propagated_delta);
+        {
+            let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
+            backward_gradient.assign(device, back_propagated_delta);
+        }
 
-        Ok((self.backward_gradient.clone(), enabled_gradients))
+        Ok((backward_gradient, enabled_gradients))
     }
 
     fn forward(
@@ -67,11 +64,12 @@ impl OperatorTrait for Embedding {
         device: &Device,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
     ) -> Result<Rc<RefCell<Tensor>>, Error> {
+        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         let embedding_table: &Tensor = &self.embedding_table.deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         {
             let input: &Tensor = &inputs[0].deref().borrow();
-            let output: &mut Tensor = &mut self.output.deref().borrow_mut();
+            let output: &mut Tensor = &mut output.deref().borrow_mut();
             debug_assert_eq!(input.cols(), embedding_table.rows());
             let a = input;
             let b = &embedding_table;
@@ -80,7 +78,7 @@ impl OperatorTrait for Embedding {
             Tensor::matmul(device, false, false, a, b, c, false)?;
         }
 
-        Ok(self.output.clone())
+        Ok(output)
     }
 
     fn name(&self) -> &str {

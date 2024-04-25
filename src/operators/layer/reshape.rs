@@ -34,11 +34,15 @@ impl OperatorTrait for Reshape {
         _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
+        let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
-        let mut gradient = device.tensor(0, 0, vec![]);
-        gradient.assign(device, back_propagated_delta);
-        gradient.reshape(self.input_rows, self.input_cols)?;
-        Ok((Rc::new(RefCell::new(gradient)), vec![]))
+        {
+            let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
+            backward_gradient.assign(device, back_propagated_delta);
+            backward_gradient.reshape(self.input_rows, self.input_cols)?;
+        }
+
+        Ok((backward_gradient, vec![]))
     }
 
     fn forward(
@@ -50,10 +54,13 @@ impl OperatorTrait for Reshape {
         let input: &Tensor = &inputs[0].deref().borrow();
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
-        let mut output = device.tensor(0, 0, vec![]);
-        output.assign(device, input);
-        output.reshape(self.output_rows, self.output_cols)?;
-        Ok(Rc::new(RefCell::new(output)))
+        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
+        {
+            let output: &mut Tensor = &mut output.deref().borrow_mut();
+            output.assign(device, input);
+            output.reshape(self.output_rows, self.output_cols)?;
+        }
+        Ok(output)
     }
 
     fn name(&self) -> &str {

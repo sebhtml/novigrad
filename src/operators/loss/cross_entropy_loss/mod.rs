@@ -64,12 +64,15 @@ impl OperatorTrait for CrossEntropyLoss {
         _back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         debug_assert_eq!(inputs.len(), 2);
+        let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         let expected: &Tensor = &inputs[0].deref().borrow();
         let actual: &Tensor = &inputs[1].deref().borrow();
-        let mut gradient = device.tensor(0, 0, vec![]);
-        self.derive(device, expected, actual, &mut gradient)?;
+        {
+            let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
+            self.derive(device, expected, actual, backward_gradient)?;
+        }
 
-        Ok((Rc::new(RefCell::new(gradient)), vec![]))
+        Ok((backward_gradient, vec![]))
     }
 
     fn forward(
@@ -78,11 +81,15 @@ impl OperatorTrait for CrossEntropyLoss {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
     ) -> Result<Rc<RefCell<Tensor>>, Error> {
         debug_assert_eq!(inputs.len(), 2);
+        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         let expected: &Tensor = &inputs[0].deref().borrow();
         let actual: &Tensor = &inputs[1].deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-        let output = device.tensor(1, 1, vec![loss]);
-        Ok(Rc::new(RefCell::new(output)))
+        {
+            let output: &mut Tensor = &mut output.deref().borrow_mut();
+            output.reset(1, 1, loss);
+        }
+        Ok(output)
     }
 
     fn name(&self) -> &str {

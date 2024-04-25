@@ -7,16 +7,11 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 #[derive(Clone)]
-pub struct Sigmoid {
-    output: Rc<RefCell<Tensor>>,
-}
+pub struct Sigmoid {}
 
 impl Sigmoid {
-    pub fn new(device: &Device) -> Self {
-        let output = device.tensor(0, 0, vec![]);
-        Self {
-            output: Rc::new(RefCell::new(output)),
-        }
+    pub fn new(_device: &Device) -> Self {
+        Self {}
     }
 }
 
@@ -81,30 +76,36 @@ impl OperatorTrait for Sigmoid {
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
-        let mut gradient = device.tensor(0, 0, vec![]);
+        let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         {
+            let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
             // Compute activation function derivative.
             let input: &Tensor = &inputs[0].deref().borrow();
             let output: &Tensor = &output.deref().borrow();
             let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
             self.derive(input, output, layer_f_derivative)?;
-            layer_f_derivative.element_wise_mul(device, back_propagated_delta, &mut gradient)?;
+            layer_f_derivative.element_wise_mul(
+                device,
+                back_propagated_delta,
+                backward_gradient,
+            )?;
         }
 
-        Ok((Rc::new(RefCell::new(gradient)), vec![]))
+        Ok((backward_gradient, vec![]))
     }
 
     fn forward(
         &self,
-        _device: &Device,
+        device: &Device,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
     ) -> Result<Rc<RefCell<Tensor>>, Error> {
+        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         {
             let input: &Tensor = &inputs[0].deref().borrow();
-            let output: &mut Tensor = &mut self.output.deref().borrow_mut();
+            let output: &mut Tensor = &mut output.deref().borrow_mut();
             self.activate(input, output)?;
         }
-        Ok(self.output.clone())
+        Ok(output)
     }
 
     fn name(&self) -> &str {

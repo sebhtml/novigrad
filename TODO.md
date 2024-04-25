@@ -1,9 +1,8 @@
 == CUDA training MR (in progress) ==
 
-- store output tensor in operator
-- store gradients in output tensors during back prop
-- in reset(), if new len is different, do a cuda reallocation
+- use LearningTensor
 - don't store output in tape
+- in reset(), if new len is different, do a cuda reallocation
 
 == New Tests MR ==
 

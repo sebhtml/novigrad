@@ -9,15 +9,12 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub struct Softmax {
     using_cross_entropy_loss: bool,
-    output: Rc<RefCell<Tensor>>,
 }
 
 impl Softmax {
-    pub fn new(using_cross_entropy_loss: bool, device: &Device) -> Self {
-        let output = device.tensor(0, 0, vec![]);
+    pub fn new(using_cross_entropy_loss: bool, _device: &Device) -> Self {
         Self {
             using_cross_entropy_loss,
-            output: Rc::new(RefCell::new(output)),
         }
     }
 }
@@ -110,12 +107,13 @@ impl OperatorTrait for Softmax {
         back_propagated_delta: &Rc<RefCell<Tensor>>,
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
-        let mut gradient = device.tensor(0, 0, vec![]);
+        let backward_gradient = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         {
+            let backward_gradient: &mut Tensor = &mut backward_gradient.deref().borrow_mut();
             // Compute activation function derivative.
             if self.using_cross_entropy_loss {
                 // Softmax and Cross Entropy Loss are best friends.
-                gradient.assign(device, &back_propagated_delta);
+                backward_gradient.assign(device, back_propagated_delta);
             } else {
                 let input: &Tensor = &inputs[0].deref().borrow();
                 let output: &Tensor = &output.deref().borrow();
@@ -125,25 +123,26 @@ impl OperatorTrait for Softmax {
                 layer_f_derivative.element_wise_mul(
                     device,
                     back_propagated_delta,
-                    &mut gradient,
+                    backward_gradient,
                 )?;
             }
         }
 
-        Ok((Rc::new(RefCell::new(gradient)), vec![]))
+        Ok((backward_gradient, vec![]))
     }
 
     fn forward(
         &self,
-        _device: &Device,
+        device: &Device,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
     ) -> Result<Rc<RefCell<Tensor>>, Error> {
+        let output = Rc::new(RefCell::new(device.tensor(0, 0, vec![])));
         {
             let input: &Tensor = &inputs[0].deref().borrow();
-            let output: &mut Tensor = &mut self.output.deref().borrow_mut();
+            let output: &mut Tensor = &mut output.deref().borrow_mut();
             self.activate(input, output)?;
         }
-        Ok(self.output.clone())
+        Ok(output)
     }
 
     fn name(&self) -> &str {

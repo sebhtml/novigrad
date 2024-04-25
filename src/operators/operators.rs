@@ -84,6 +84,7 @@ impl Operators {
             self.tape(),
             Rc::new(RefCell::new(Box::new(Softmax::new(
                 using_cross_entropy_loss,
+                &self.device,
             )))),
         )
     }

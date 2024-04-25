@@ -150,7 +150,12 @@ impl Network {
         while i < len {
             let input = &inputs[i];
             let output = self.forward(input)?;
-            outputs.push(output);
+            let output: &Tensor = &output.deref().borrow();
+            let cloned_output =
+                self.device
+                    .tensor(output.rows(), output.cols(), output.get_values());
+            let cloned_output = Rc::new(RefCell::new(cloned_output));
+            outputs.push(cloned_output);
             i += 1;
         }
         Ok(outputs)

@@ -9,12 +9,15 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub struct Softmax {
     using_cross_entropy_loss: bool,
+    output: Rc<RefCell<Tensor>>,
 }
 
 impl Softmax {
-    pub fn new(using_cross_entropy_loss: bool) -> Self {
+    pub fn new(using_cross_entropy_loss: bool, device: &Device) -> Self {
+        let output = device.tensor(0, 0, vec![]);
         Self {
             using_cross_entropy_loss,
+            output: Rc::new(RefCell::new(output)),
         }
     }
 }
@@ -132,13 +135,15 @@ impl OperatorTrait for Softmax {
 
     fn forward(
         &self,
-        device: &Device,
+        _device: &Device,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
     ) -> Result<Rc<RefCell<Tensor>>, Error> {
-        let input: &Tensor = &inputs[0].deref().borrow();
-        let mut output = device.tensor(0, 0, vec![]);
-        self.activate(input, &mut output)?;
-        Ok(Rc::new(RefCell::new(output)))
+        {
+            let input: &Tensor = &inputs[0].deref().borrow();
+            let output: &mut Tensor = &mut self.output.deref().borrow_mut();
+            self.activate(input, output)?;
+        }
+        Ok(self.output.clone())
     }
 
     fn name(&self) -> &str {

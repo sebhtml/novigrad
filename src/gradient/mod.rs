@@ -4,8 +4,8 @@ use crate::{devices::Device, DeltaWorkingMemory, Error, Tensor};
 
 mod tape;
 pub use tape::*;
-mod gradient;
-pub use gradient::*;
+mod learning_tensor;
+pub use learning_tensor::*;
 mod back_propagation;
 pub use back_propagation::*;
 

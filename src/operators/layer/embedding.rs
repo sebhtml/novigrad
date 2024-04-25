@@ -46,12 +46,12 @@ impl OperatorTrait for Embedding {
             c.reset(b.cols(), a.cols(), 0.0);
             let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
-
-            enabled_gradients.push(LearningTensor::new(
-                self.embedding_table.clone(),
-                self.embedding_table_gradient.clone(),
-            ));
         }
+
+        enabled_gradients.push(LearningTensor::new(
+            self.embedding_table.clone(),
+            self.embedding_table_gradient.clone(),
+        ));
 
         let backward_gradient: &mut Tensor = &mut self.backward_gradient.deref().borrow_mut();
         backward_gradient.assign(device, back_propagated_delta);

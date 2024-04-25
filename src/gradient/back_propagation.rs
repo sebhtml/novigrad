@@ -1,20 +1,16 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{
-    DeltaWorkingMemory, Device, Error, LearningTensor, Record, Tape, Tensor, TrainWorkingMemory,
-};
+use crate::{DeltaWorkingMemory, Device, Error, LearningTensor, Record, Tape, Tensor};
 
 use crate::gradient::OperatorTrait;
 
 /// Back-propagation
 pub fn back_propagation(
-    working_memory: &mut TrainWorkingMemory,
     error_working_memory: &mut DeltaWorkingMemory,
     device: &Device,
     tape: &Rc<RefCell<Tape>>,
 ) -> Result<Vec<LearningTensor>, Error> {
     let mut enabled_gradients = vec![];
-    let layer_delta = &mut working_memory.layer_delta;
     let tape: &Tape = &tape.deref().borrow();
     let records: &Vec<Record> = &tape.records();
     let layers_count = { tape.records().len() };
@@ -42,9 +38,6 @@ pub fn back_propagation(
             .borrow_mut()
             .clip(-1.0, 1.0, back_propagated_delta);
 
-        if operator_gradients.len() > 0 {
-            debug_assert_eq!(layer_delta.shape(), output.deref().borrow().shape());
-        }
         enabled_gradients.extend_from_slice(&operator_gradients);
     }
     Ok(enabled_gradients)

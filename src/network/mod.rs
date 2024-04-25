@@ -86,21 +86,13 @@ impl Network {
 
     pub fn train(
         &mut self,
-        working_memory: &mut TrainWorkingMemory,
         error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         outputs: &Vec<Rc<RefCell<Tensor>>>,
     ) -> Result<(), Error> {
         for i in 0..inputs.len() {
-            self.train_back_propagation(
-                working_memory,
-                error_working_memory,
-                epoch,
-                i,
-                &inputs[i],
-                &outputs[i],
-            )?;
+            self.train_back_propagation(error_working_memory, epoch, i, &inputs[i], &outputs[i])?;
         }
         Ok(())
     }
@@ -128,7 +120,6 @@ impl Network {
 
     fn train_back_propagation(
         &mut self,
-        working_memory: &mut TrainWorkingMemory,
         error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
@@ -142,12 +133,7 @@ impl Network {
         self.loss_function
             .forward_inputs(&vec![y.clone(), output.clone()])?;
 
-        let gradients = back_propagation(
-            working_memory,
-            error_working_memory,
-            &self.device,
-            &self.tape,
-        )?;
+        let gradients = back_propagation(error_working_memory, &self.device, &self.tape)?;
 
         self.optimizer.optimize(gradients, &self.device);
 

@@ -1,8 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{
-    DatasetDetails, DeltaWorkingMemory, Device, Error, Network, Tensor, TrainWorkingMemory,
-};
+use crate::{DatasetDetails, DeltaWorkingMemory, Device, Error, Network, Tensor};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -70,7 +68,6 @@ pub fn train_network_on_dataset(
     let architecture = dataset_details.architecture;
     let loss_function_name = dataset_details.loss_function_name;
 
-    let mut train_working_memory = TrainWorkingMemory::new(&device);
     let mut error_working_memory = DeltaWorkingMemory::new(&device);
 
     let examples: Vec<(Rc<RefCell<Tensor>>, Rc<RefCell<Tensor>>)> = examples
@@ -100,13 +97,7 @@ pub fn train_network_on_dataset(
                 break;
             }
         }
-        network.train(
-            &mut train_working_memory,
-            &mut error_working_memory,
-            epoch,
-            &inputs,
-            &outputs,
-        )?;
+        network.train(&mut error_working_memory, epoch, &inputs, &outputs)?;
     }
     let final_total_error =
         print_total_error(&mut network, &inputs, &outputs, last_total_error, epochs)?;

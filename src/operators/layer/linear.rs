@@ -96,9 +96,9 @@ impl OperatorTrait for Linear {
     ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
         let mut enabled_gradients = vec![];
-        let weights_gradient: &mut Tensor = &mut self.weights_gradient.deref().borrow_mut();
-        let biases_gradient: &mut Tensor = &mut self.biases_gradient.deref().borrow_mut();
         {
+            let weights_gradient: &mut Tensor = &mut self.weights_gradient.deref().borrow_mut();
+            let biases_gradient: &mut Tensor = &mut self.biases_gradient.deref().borrow_mut();
             let input: &Tensor = &inputs[0].deref().borrow();
             let a: &Tensor = input;
             let b: &Tensor = back_propagated_delta;
@@ -108,19 +108,19 @@ impl OperatorTrait for Linear {
             op_result.expect("Ok");
 
             biases_gradient.assign(device, back_propagated_delta);
-
-            enabled_gradients.push(LearningTensor::new(
-                self.weights.clone(),
-                self.weights_gradient.clone(),
-            ));
-            enabled_gradients.push(LearningTensor::new(
-                self.biases.clone(),
-                self.biases_gradient.clone(),
-            ));
         }
 
-        let backward_gradient: &mut Tensor = &mut self.backward_gradient.deref().borrow_mut();
+        enabled_gradients.push(LearningTensor::new(
+            self.weights.clone(),
+            self.weights_gradient.clone(),
+        ));
+        enabled_gradients.push(LearningTensor::new(
+            self.biases.clone(),
+            self.biases_gradient.clone(),
+        ));
+
         {
+            let backward_gradient: &mut Tensor = &mut self.backward_gradient.deref().borrow_mut();
             let weights: &Tensor = &self.weights.deref().borrow();
             let a: &Tensor = weights;
             let b: &Tensor = back_propagated_delta;

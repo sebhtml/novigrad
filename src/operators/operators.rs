@@ -74,7 +74,7 @@ impl Operators {
         Operator::new(
             self.device(),
             self.tape(),
-            Rc::new(RefCell::new(Box::new(Sigmoid::default()))),
+            Rc::new(RefCell::new(Box::new(Sigmoid::new(&self.device)))),
         )
     }
 

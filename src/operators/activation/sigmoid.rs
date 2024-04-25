@@ -6,8 +6,19 @@ use std::f32::consts::E;
 use std::ops::Deref;
 use std::rc::Rc;
 
-#[derive(Clone, Default)]
-pub struct Sigmoid {}
+#[derive(Clone)]
+pub struct Sigmoid {
+    output: Rc<RefCell<Tensor>>,
+}
+
+impl Sigmoid {
+    pub fn new(device: &Device) -> Self {
+        let output = device.tensor(0, 0, vec![]);
+        Self {
+            output: Rc::new(RefCell::new(output)),
+        }
+    }
+}
 
 impl ActivationFunction for Sigmoid {
     fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
@@ -85,13 +96,15 @@ impl OperatorTrait for Sigmoid {
 
     fn forward(
         &self,
-        device: &Device,
+        _device: &Device,
         inputs: &Vec<Rc<RefCell<Tensor>>>,
     ) -> Result<Rc<RefCell<Tensor>>, Error> {
-        let input: &Tensor = &inputs[0].deref().borrow();
-        let mut output = device.tensor(0, 0, vec![]);
-        self.activate(input, &mut output)?;
-        Ok(Rc::new(RefCell::new(output)))
+        {
+            let input: &Tensor = &inputs[0].deref().borrow();
+            let output: &mut Tensor = &mut self.output.deref().borrow_mut();
+            self.activate(input,  output)?;
+        }
+        Ok(self.output.clone())
     }
 
     fn name(&self) -> &str {

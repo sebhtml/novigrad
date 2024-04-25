@@ -102,7 +102,7 @@ impl OperatorTrait for Sigmoid {
         {
             let input: &Tensor = &inputs[0].deref().borrow();
             let output: &mut Tensor = &mut self.output.deref().borrow_mut();
-            self.activate(input,  output)?;
+            self.activate(input, output)?;
         }
         Ok(self.output.clone())
     }

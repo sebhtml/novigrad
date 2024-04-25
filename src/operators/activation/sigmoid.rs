@@ -1,6 +1,6 @@
 use crate::devices::Device;
 use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
-use crate::{Error, Gradient};
+use crate::{Error, LearningTensor};
 use std::cell::RefCell;
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -68,7 +68,7 @@ impl OperatorTrait for Sigmoid {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
-    ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
+    ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
         let mut gradient = device.tensor(0, 0, vec![]);
         {

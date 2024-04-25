@@ -1,7 +1,7 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    DeltaWorkingMemory, Device, Error, Gradient, Record, Tape, Tensor, TrainWorkingMemory,
+    DeltaWorkingMemory, Device, Error, LearningTensor, Record, Tape, Tensor, TrainWorkingMemory,
 };
 
 use crate::gradient::OperatorTrait;
@@ -12,7 +12,7 @@ pub fn back_propagation(
     error_working_memory: &mut DeltaWorkingMemory,
     device: &Device,
     tape: &Rc<RefCell<Tape>>,
-) -> Result<Vec<Gradient>, Error> {
+) -> Result<Vec<LearningTensor>, Error> {
     let mut enabled_gradients = vec![];
     let layer_delta = &mut working_memory.layer_delta;
     let tape: &Tape = &tape.deref().borrow();

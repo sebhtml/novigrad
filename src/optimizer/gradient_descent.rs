@@ -1,12 +1,12 @@
 use std::ops::Deref;
 
-use crate::{Device, Gradient, OptimizerTrait, Tensor};
+use crate::{Device, LearningTensor, OptimizerTrait, Tensor};
 
 #[derive(Default)]
 pub struct GradientDescent {}
 
 impl OptimizerTrait for GradientDescent {
-    fn optimize(&self, gradients: Vec<Gradient>, device: &Device) {
+    fn optimize(&self, gradients: Vec<LearningTensor>, device: &Device) {
         let learning_rate: f32 = 0.5;
         for gradient in gradients {
             let tensor: &mut Tensor = &mut gradient.tensor().deref().borrow_mut();

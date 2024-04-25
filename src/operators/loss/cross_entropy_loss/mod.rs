@@ -1,7 +1,7 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use super::LossFunction;
-use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
 
 #[derive(Clone)]
 pub struct CrossEntropyLoss {}
@@ -62,7 +62,7 @@ impl OperatorTrait for CrossEntropyLoss {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
         _back_propagated_delta: &Rc<RefCell<Tensor>>,
-    ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
+    ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &Tensor = &inputs[0].deref().borrow();
         let actual: &Tensor = &inputs[1].deref().borrow();

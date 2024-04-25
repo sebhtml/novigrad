@@ -25,7 +25,7 @@ pub trait OperatorTrait {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
-    ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error>;
+    ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error>;
 }
 
 pub trait Forward {

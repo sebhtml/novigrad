@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
 
 use super::LossFunction;
 
@@ -50,7 +50,7 @@ impl OperatorTrait for ResidualSumOfSquares {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
         _back_propagated_delta: &Rc<RefCell<Tensor>>,
-    ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
+    ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &Tensor = &inputs[0].deref().borrow();
         let actual: &Tensor = &inputs[1].deref().borrow();

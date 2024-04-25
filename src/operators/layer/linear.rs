@@ -2,7 +2,7 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
 
 pub struct Linear {
     weights: Rc<RefCell<Tensor>>,
@@ -93,7 +93,7 @@ impl OperatorTrait for Linear {
         inputs: &Vec<Rc<RefCell<Tensor>>>,
         _output: &Rc<RefCell<Tensor>>,
         back_propagated_delta: &Rc<RefCell<Tensor>>,
-    ) -> Result<(Rc<RefCell<Tensor>>, Vec<Gradient>), Error> {
+    ) -> Result<(Rc<RefCell<Tensor>>, Vec<LearningTensor>), Error> {
         let back_propagated_delta: &Tensor = &back_propagated_delta.deref().borrow();
         let mut enabled_gradients = vec![];
         let weights_gradient: &mut Tensor = &mut self.weights_gradient.deref().borrow_mut();
@@ -109,11 +109,11 @@ impl OperatorTrait for Linear {
 
             biases_gradient.assign(device, back_propagated_delta);
 
-            enabled_gradients.push(Gradient::new(
+            enabled_gradients.push(LearningTensor::new(
                 self.weights.clone(),
                 self.weights_gradient.clone(),
             ));
-            enabled_gradients.push(Gradient::new(
+            enabled_gradients.push(LearningTensor::new(
                 self.biases.clone(),
                 self.biases_gradient.clone(),
             ));

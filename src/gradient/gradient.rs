@@ -3,12 +3,12 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 use crate::Tensor;
 
 #[derive(Clone)]
-pub struct Gradient {
+pub struct LearningTensor {
     tensor: Rc<RefCell<Tensor>>,
     gradient: Rc<RefCell<Tensor>>,
 }
 
-impl Gradient {
+impl LearningTensor {
     pub fn new(tensor: Rc<RefCell<Tensor>>, gradient: Rc<RefCell<Tensor>>) -> Self {
         debug_assert_eq!(
             gradient.deref().borrow().shape(),

@@ -2,11 +2,11 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
 
 pub struct Linear {
-    weights: Rc<RefCell<Tensor>>,
-    biases: Rc<RefCell<Tensor>>,
+    weights: LearningTensor,
+    biases: LearningTensor,
 }
 
 impl Linear {
@@ -32,18 +32,31 @@ impl Linear {
         let mut biases = device.tensor(0, 0, vec![]);
         biases.reset(bias_rows, weights_rows, Default::default());
 
+        let weights_gradient = device.tensor(0, 0, vec![]);
+        let biases_gradient = device.tensor(0, 0, vec![]);
+
         Linear {
-            weights: Rc::new(RefCell::new(weights)),
-            biases: Rc::new(RefCell::new(biases)),
+            weights: LearningTensor::new(
+                Rc::new(RefCell::new(weights)),
+                Rc::new(RefCell::new(weights_gradient)),
+            ),
+            biases: LearningTensor::new(
+                Rc::new(RefCell::new(biases)),
+                Rc::new(RefCell::new(biases_gradient)),
+            ),
         }
     }
 }
 
 impl OperatorTrait for Linear {
-    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+    fn forward(
+        &self,
+        device: &Device,
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
-        let input = &inputs[0];
-        let mut output = device.tensor(0, 0, vec![]);
+        let input: &Tensor = &inputs[0].tensor().deref().borrow();
+        let output = device.learning_tensor(0, 0, vec![]);
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.
@@ -51,68 +64,67 @@ impl OperatorTrait for Linear {
         // W is transposed.
 
         // use GEMM to do C = A * W^T + C  with weights and biases all together.
-        let weights: &Tensor = &self.weights.deref().borrow();
-        let biases: &Tensor = &self.biases.deref().borrow();
-        let a = input;
-        let b = weights;
-        let c = &mut output;
-        c.assign(device, biases);
-        let op_result = Tensor::gemm(device, false, true, 1.0, a, b, 1.0, c, false);
-        match op_result {
-            Ok(_) => (),
-            Err(_) => {
-                let mut w_t = device.tensor(0, 0, vec![]);
-                b.transpose(&mut w_t);
-                println!("Incompatible shapes in matrix multiplication");
-                println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
-                debug_assert!(false);
+        {
+            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
+            let weights: &Tensor = &self.weights.tensor().deref().borrow();
+            let biases: &Tensor = &self.biases.tensor().deref().borrow();
+            let a = input;
+            let b = weights;
+            let c = output;
+            c.assign(device, biases);
+            let op_result = Tensor::gemm(device, false, true, 1.0, a, b, 1.0, c, false);
+            match op_result {
+                Ok(_) => (),
+                Err(_) => {
+                    let mut w_t = device.tensor(0, 0, vec![]);
+                    b.transpose(&mut w_t);
+                    println!("Incompatible shapes in matrix multiplication");
+                    println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
+                    debug_assert!(false);
+                }
             }
         }
 
-        Ok(Rc::new(output))
+        Ok(output)
     }
 
     fn backward(
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<Tensor>>,
-        _output: &Rc<Tensor>,
-        back_propagated_delta: &mut Tensor,
-        layer_delta: &mut Tensor,
-    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        inputs: &Vec<LearningTensor>,
+        output: &LearningTensor,
+        enabled_gradients: &mut Vec<LearningTensor>,
+    ) -> Result<(), Error> {
+        let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
         {
-            layer_delta.assign(device, back_propagated_delta);
-        }
-
-        let mut gradients = vec![];
-        {
-            let mut weights_gradient = device.tensor(0, 0, vec![]);
-            let mut biases_gradient = device.tensor(0, 0, vec![]);
-            let input = &inputs[0];
+            let weights_gradient: &mut Tensor = &mut self.weights.gradient().deref().borrow_mut();
+            let biases_gradient: &mut Tensor = &mut self.biases.gradient().deref().borrow_mut();
+            let input: &Tensor = &inputs[0].tensor().deref().borrow();
             let a: &Tensor = input;
-            let b: &Tensor = layer_delta;
-            let c: &mut Tensor = &mut weights_gradient;
+            let b: &Tensor = back_propagated_delta;
+            let c: &mut Tensor = weights_gradient;
             c.reset(b.cols(), a.cols(), 0.0);
             let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
 
-            biases_gradient.assign(device, layer_delta);
-
-            gradients.push(Gradient::new(self.weights.clone(), weights_gradient));
-            gradients.push(Gradient::new(self.biases.clone(), biases_gradient));
+            biases_gradient.assign(device, back_propagated_delta);
         }
 
+        enabled_gradients.push(self.weights.clone());
+        enabled_gradients.push(self.biases.clone());
+
         {
-            let weights: &Tensor = &self.weights.deref().borrow();
+            let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
+            let weights: &Tensor = &self.weights.tensor().deref().borrow();
             let a: &Tensor = weights;
-            let b: &Tensor = layer_delta;
-            let c: &mut Tensor = back_propagated_delta;
+            let b: &Tensor = back_propagated_delta;
+            let c: &mut Tensor = backward_gradient;
             c.reset(b.rows(), a.cols(), 0.0);
             Tensor::matmul(device, true, true, a, b, c, true)?;
         }
 
-        Ok((back_propagated_delta.clone(), gradients))
+        Ok(())
     }
 
     fn name(&self) -> &str {

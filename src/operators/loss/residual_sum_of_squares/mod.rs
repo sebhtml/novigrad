@@ -1,6 +1,6 @@
-use std::rc::Rc;
+use std::ops::Deref;
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, Gradient, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
 
 use super::LossFunction;
 
@@ -47,26 +47,36 @@ impl OperatorTrait for ResidualSumOfSquares {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<Tensor>>,
-        _output: &Rc<Tensor>,
-        back_propagated_delta: &mut Tensor,
-        _layer_delta: &mut Tensor,
-    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        inputs: &Vec<LearningTensor>,
+        _output: &LearningTensor,
+        _enabled_gradients: &mut Vec<LearningTensor>,
+    ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let expected = &inputs[0];
-        let actual = &inputs[1];
-        self.derive(device, expected, actual, back_propagated_delta)?;
+        let expected: &Tensor = &inputs[0].tensor().deref().borrow();
+        let actual: &Tensor = &inputs[1].tensor().deref().borrow();
+        {
+            let backward_gradient: &mut Tensor = &mut inputs[1].gradient().deref().borrow_mut();
+            self.derive(device, expected, actual, backward_gradient)?;
+        }
 
-        Ok((back_propagated_delta.clone(), vec![]))
+        Ok(())
     }
 
-    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
+    fn forward(
+        &self,
+        device: &Device,
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let expected = &inputs[0];
-        let actual = &inputs[1];
+        let output = device.learning_tensor(0, 0, vec![]);
+        let expected: &Tensor = &inputs[0].tensor().deref().borrow();
+        let actual: &Tensor = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-        let output = device.tensor(1, 1, vec![loss]);
-        Ok(output.into())
+        {
+            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
+            output.reset(1, 1, loss);
+        }
+        Ok(output)
     }
 
     fn name(&self) -> &str {

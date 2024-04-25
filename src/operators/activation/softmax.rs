@@ -1,8 +1,8 @@
 use crate::devices::Device;
 use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
-use crate::{Error, Gradient};
+use crate::{Error, LearningTensor};
 use std::f32::consts::E;
-use std::rc::Rc;
+use std::ops::Deref;
 
 #[derive(Clone)]
 pub struct Softmax {
@@ -10,7 +10,7 @@ pub struct Softmax {
 }
 
 impl Softmax {
-    pub fn new(using_cross_entropy_loss: bool) -> Self {
+    pub fn new(using_cross_entropy_loss: bool, _device: &Device) -> Self {
         Self {
             using_cross_entropy_loss,
         }
@@ -100,35 +100,46 @@ impl OperatorTrait for Softmax {
         &self,
         device: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<Rc<Tensor>>,
-        output: &Rc<Tensor>,
-        back_propagated_delta: &mut Tensor,
-        layer_delta: &mut Tensor,
-    ) -> Result<(Tensor, Vec<Gradient>), Error> {
+        inputs: &Vec<LearningTensor>,
+        output: &LearningTensor,
+        _enabled_gradients: &mut Vec<LearningTensor>,
+    ) -> Result<(), Error> {
+        let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
         {
+            let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
             // Compute activation function derivative.
             if self.using_cross_entropy_loss {
                 // Softmax and Cross Entropy Loss are best friends.
-                layer_delta.assign(device, &back_propagated_delta);
+                backward_gradient.assign(device, back_propagated_delta);
             } else {
-                let input = &inputs[0];
+                let input: &Tensor = &inputs[0].tensor().deref().borrow();
+                let output: &Tensor = &output.tensor().deref().borrow();
                 let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
                 self.derive(input, output, layer_f_derivative)?;
 
-                layer_f_derivative.element_wise_mul(device, back_propagated_delta, layer_delta)?;
+                layer_f_derivative.element_wise_mul(
+                    device,
+                    back_propagated_delta,
+                    backward_gradient,
+                )?;
             }
         }
 
-        back_propagated_delta.assign(device, layer_delta);
-
-        Ok((back_propagated_delta.clone(), vec![]))
+        Ok(())
     }
 
-    fn forward(&self, device: &Device, inputs: &Vec<Rc<Tensor>>) -> Result<Rc<Tensor>, Error> {
-        let input = &inputs[0];
-        let mut output = device.tensor(0, 0, vec![]);
-        self.activate(input, &mut output)?;
-        Ok(output.into())
+    fn forward(
+        &self,
+        device: &Device,
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<LearningTensor, Error> {
+        let output = device.learning_tensor(0, 0, vec![]);
+        {
+            let input: &Tensor = &inputs[0].tensor().deref().borrow();
+            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
+            self.activate(input, output)?;
+        }
+        Ok(output)
     }
 
     fn name(&self) -> &str {

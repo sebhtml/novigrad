@@ -1,8 +1,6 @@
-use std::rc::Rc;
+use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
 
-use crate::{
-    DatasetDetails, DeltaWorkingMemory, Device, Error, Network, Tensor, TrainWorkingMemory,
-};
+use crate::{DatasetDetails, DeltaWorkingMemory, Device, Error, LearningTensor, Network, Tensor};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -23,6 +21,7 @@ pub fn print_expected_output_and_actual_output(
     );
     println!("");
     for col in 0..cols {
+        // TODO is this the correct loss in the loss tensor
         let loss = match loss {
             Some(loss) => loss.get(0, col),
             _ => Default::default(),
@@ -39,8 +38,8 @@ pub fn print_expected_output_and_actual_output(
 
 fn print_total_error(
     network: &mut Network,
-    inputs: &Vec<Rc<Tensor>>,
-    outputs: &Vec<Rc<Tensor>>,
+    inputs: &Vec<LearningTensor>,
+    outputs: &Vec<LearningTensor>,
     last_total_error: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
@@ -69,12 +68,21 @@ pub fn train_network_on_dataset(
     let architecture = dataset_details.architecture;
     let loss_function_name = dataset_details.loss_function_name;
 
-    let mut train_working_memory = TrainWorkingMemory::new(&device);
     let mut error_working_memory = DeltaWorkingMemory::new(&device);
 
-    let examples: Vec<(Rc<Tensor>, Rc<Tensor>)> = examples
+    let examples: Vec<(_, _)> = examples
         .into_iter()
-        .map(|(x, y)| (Rc::new(x), Rc::new(y)))
+        .map(|(x, y)| {
+            let x = LearningTensor::new(
+                Rc::new(RefCell::new(x)),
+                Rc::new(RefCell::new(device.tensor(0, 0, vec![]))),
+            );
+            let y = LearningTensor::new(
+                Rc::new(RefCell::new(y)),
+                Rc::new(RefCell::new(device.tensor(0, 0, vec![]))),
+            );
+            (x, y)
+        })
         .collect();
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
@@ -83,6 +91,8 @@ pub fn train_network_on_dataset(
     let mut last_total_error = f32::NAN;
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
+
+    let (_, _) = print_results(&mut network, &inputs, &outputs);
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
@@ -97,25 +107,36 @@ pub fn train_network_on_dataset(
                 break;
             }
         }
-        network.train(
-            &mut train_working_memory,
-            &mut error_working_memory,
-            epoch,
-            &inputs,
-            &outputs,
-        )?;
+        network.train(&mut error_working_memory, epoch, &inputs, &outputs)?;
     }
     let final_total_error =
         print_total_error(&mut network, &inputs, &outputs, last_total_error, epochs)?;
 
-    let activation_tensors = network.predict_many(&inputs)?;
+    let (expected_argmax_values, actual_argmax_values) =
+        print_results(&mut network, &inputs, &outputs);
+
+    let output = NetworkTestOutput {
+        initial_total_error,
+        final_total_error,
+        expected_argmax_values,
+        actual_argmax_values,
+    };
+    Ok(output)
+}
+
+fn print_results(
+    network: &mut Network,
+    inputs: &Vec<LearningTensor>,
+    outputs: &Vec<LearningTensor>,
+) -> (Vec<usize>, Vec<usize>) {
+    let activation_tensors = network.predict_many(&inputs).unwrap();
 
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();
 
     for i in 0..inputs.len() {
-        let expected_output = &outputs[i];
-        let actual_output = &activation_tensors[i];
+        let expected_output: &Tensor = &outputs[i].tensor().deref().borrow();
+        let actual_output: &Tensor = &activation_tensors[i].tensor().deref().borrow();
 
         let cols = expected_output.cols();
         let mut expected_argmax = 0;
@@ -145,12 +166,5 @@ pub fn train_network_on_dataset(
             None,
         );
     }
-
-    let output = NetworkTestOutput {
-        initial_total_error,
-        final_total_error,
-        expected_argmax_values,
-        actual_argmax_values,
-    };
-    Ok(output)
+    (expected_argmax_values, actual_argmax_values)
 }

@@ -1,25 +1,17 @@
+#[cfg(feature = "cuda")]
 use rustacuda::memory::CopyDestination;
+#[cfg(feature = "cuda")]
 use rustacuda::memory::DeviceBuffer;
 
+use crate::DevBuffer;
 use crate::{
     devices::{Device, DeviceInterface},
     Error,
 };
 
-use std::cell::RefCell;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::rc::Rc;
 use std::{fmt::Display, ops::Mul};
 
-#[derive(Clone, Debug)]
-pub enum DevBuffer {
-    CpuBuffer(Vec<f32>),
-    CudaBuffer(Rc<RefCell<DeviceBuffer<f32>>>),
-}
-
-// TODO remove Clone here
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Tensor {
     rows: usize,
     cols: usize,
@@ -39,10 +31,12 @@ impl Tensor {
         debug_assert_eq!(values.len(), rows * cols);
         let values = match device {
             Device::Cpu(_) => DevBuffer::CpuBuffer(values),
+            #[cfg(feature = "cuda")]
             Device::Cuda(_) => {
+                // TODO don't unwrap
                 let mut buffer = unsafe { DeviceBuffer::uninitialized(values.len()).unwrap() };
                 buffer.copy_from(values.as_slice()).unwrap();
-                DevBuffer::CudaBuffer(Rc::new(RefCell::new(buffer)))
+                DevBuffer::CudaBuffer(buffer)
             }
         };
         Self { rows, cols, values }
@@ -160,47 +154,21 @@ impl Tensor {
     }
 
     pub fn as_ptr(&self) -> *const f32 {
-        match &self.values {
-            DevBuffer::CpuBuffer(ref values) => values.as_ptr(),
-            DevBuffer::CudaBuffer(ref values) => values.deref().borrow().deref().as_ptr(),
-        }
+        self.values.as_ptr()
     }
 
     pub fn as_mut_ptr(&mut self) -> *mut f32 {
-        match &mut self.values {
-            DevBuffer::CpuBuffer(ref mut values) => values.as_mut_ptr(),
-            DevBuffer::CudaBuffer(ref mut values) => {
-                values.deref().borrow_mut().deref_mut().as_mut_ptr()
-            }
-        }
+        self.values.as_mut_ptr()
     }
 
     // TODO Delete uses of get_values
     pub fn get_values(&self) -> Vec<f32> {
-        match &self.values {
-            DevBuffer::CpuBuffer(ref values) => values.clone(),
-            DevBuffer::CudaBuffer(ref buffer) => {
-                let buffer = buffer.deref().borrow();
-                let mut values = vec![0.0; buffer.len()];
-                // TODO don't unwrap directly.
-                buffer.copy_to(values.as_mut_slice()).unwrap();
-                values
-            }
-        }
+        self.values.get_values()
     }
 
     pub fn set_values(&mut self, new_values: Vec<f32>) {
-        match &mut self.values {
-            DevBuffer::CpuBuffer(ref mut values) => {
-                values.clear();
-                values.extend_from_slice(new_values.as_slice())
-            }
-            DevBuffer::CudaBuffer(buffer) => {
-                let mut buffer = buffer.deref().borrow_mut();
-                // TODO don't unwrap directly.
-                buffer.copy_from(new_values.as_slice()).unwrap();
-            }
-        }
+        debug_assert_eq!(new_values.len(), self.len());
+        self.values.set_values(new_values)
     }
 
     // TODO use device for element_wise_mul

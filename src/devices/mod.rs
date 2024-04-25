@@ -1,9 +1,72 @@
 mod cpu;
+#[cfg(feature = "cuda")]
+use crate::Error;
+#[cfg(feature = "cuda")]
+use rustacuda::memory::CopyDestination;
+#[cfg(feature = "cuda")]
+use rustacuda::prelude::DeviceBuffer;
+use std::{borrow::BorrowMut, cell::RefCell, rc::Rc};
+
 pub use cpu::*;
+#[cfg(feature = "cuda")]
 mod cuda;
+#[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{Error, Tensor};
+use crate::{LearningTensor, Tensor};
+
+#[derive(Debug)]
+pub enum DevBuffer {
+    CpuBuffer(Vec<f32>),
+    #[cfg(feature = "cuda")]
+    CudaBuffer(DeviceBuffer<f32>),
+}
+
+impl DevBuffer {
+    pub fn as_ptr(&self) -> *const f32 {
+        match &self {
+            DevBuffer::CpuBuffer(ref values) => values.as_ptr(),
+            #[cfg(feature = "cuda")]
+            DevBuffer::CudaBuffer(ref values) => values.as_ptr(),
+        }
+    }
+
+    pub fn as_mut_ptr(&mut self) -> *mut f32 {
+        match self.borrow_mut() {
+            DevBuffer::CpuBuffer(ref mut values) => values.as_mut_ptr(),
+            #[cfg(feature = "cuda")]
+            DevBuffer::CudaBuffer(ref mut values) => values.as_mut_ptr(),
+        }
+    }
+
+    // TODO Delete uses of get_values
+    pub fn get_values(&self) -> Vec<f32> {
+        match &self {
+            DevBuffer::CpuBuffer(ref values) => values.clone(),
+            #[cfg(feature = "cuda")]
+            DevBuffer::CudaBuffer(ref buffer) => {
+                let mut values = vec![0.0; buffer.len()];
+                // TODO don't unwrap directly.
+                buffer.copy_to(values.as_mut_slice()).unwrap();
+                values
+            }
+        }
+    }
+
+    pub fn set_values(&mut self, new_values: Vec<f32>) {
+        match self.borrow_mut() {
+            DevBuffer::CpuBuffer(ref mut values) => {
+                values.clear();
+                values.extend_from_slice(new_values.as_slice())
+            }
+            #[cfg(feature = "cuda")]
+            DevBuffer::CudaBuffer(ref mut buffer) => {
+                // TODO don't unwrap directly.
+                buffer.copy_from(new_values.as_slice()).unwrap();
+            }
+        }
+    }
+}
 
 pub trait DeviceInterface {
     ///  SGEMM  performs one of the matrix-matrix operations
@@ -54,6 +117,7 @@ pub trait DeviceInterface {
 
 pub enum Device {
     Cpu(CpuDevice),
+    #[cfg(feature = "cuda")]
     Cuda(CudaDevice),
 }
 
@@ -67,6 +131,7 @@ impl Device {
     pub fn cpu() -> Self {
         Device::Cpu(CpuDevice::default())
     }
+    #[cfg(feature = "cuda")]
     pub fn cuda() -> Result<Self, Error> {
         match CudaDevice::try_default() {
             Ok(cublas) => Ok(Device::Cuda(cublas)),
@@ -75,6 +140,13 @@ impl Device {
     }
     pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Tensor {
         Tensor::new(rows, cols, values, self)
+    }
+
+    pub fn learning_tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> LearningTensor {
+        LearningTensor::new(
+            Rc::new(RefCell::new(Self::tensor(&self, rows, cols, values))),
+            Rc::new(RefCell::new(Self::tensor(&self, 0, 0, vec![]))),
+        )
     }
 }
 
@@ -100,6 +172,7 @@ impl DeviceInterface for Device {
             Device::Cpu(device) => {
                 device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => {
                 device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
@@ -109,6 +182,7 @@ impl DeviceInterface for Device {
     fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> f32 {
         match self {
             Device::Cpu(device) => device.sdot(n, x, incx, y, incy),
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => device.sdot(n, x, incx, y, incy),
         }
     }
@@ -116,6 +190,7 @@ impl DeviceInterface for Device {
     fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
         match self {
             Device::Cpu(device) => device.scopy(n, x, incx, y, incy),
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => device.scopy(n, x, incx, y, incy),
         }
     }
@@ -123,6 +198,7 @@ impl DeviceInterface for Device {
     fn saxpy(&self, n: i32, alpha: f32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
         match self {
             Device::Cpu(device) => device.saxpy(n, alpha, x, incx, y, incy),
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => device.saxpy(n, alpha, x, incx, y, incy),
         }
     }
@@ -130,6 +206,7 @@ impl DeviceInterface for Device {
     fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) {
         match self {
             Device::Cpu(device) => device.sscal(n, alpha, x, incx),
+            #[cfg(feature = "cuda")]
             Device::Cuda(device) => device.sscal(n, alpha, x, incx),
         }
     }

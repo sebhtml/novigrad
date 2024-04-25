@@ -1,10 +1,10 @@
 mod gradient_descent;
 pub use gradient_descent::*;
 
-use crate::{Device, Gradient};
+use crate::{Device, LearningTensor};
 
 pub trait OptimizerTrait {
-    fn optimize(&self, gradients: Vec<Gradient>, device: &Device);
+    fn optimize(&self, gradients: Vec<LearningTensor>, device: &Device);
 }
 
 pub enum Optimizer {
@@ -12,7 +12,7 @@ pub enum Optimizer {
 }
 
 impl OptimizerTrait for Optimizer {
-    fn optimize(&self, gradients: Vec<Gradient>, device: &Device) {
+    fn optimize(&self, gradients: Vec<LearningTensor>, device: &Device) {
         match self {
             Optimizer::GradientDescent(object) => object.optimize(gradients, device),
         }

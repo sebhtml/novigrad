@@ -1,48 +1,43 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{DeltaWorkingMemory, Device, Error, Gradient, Record, Tape, TrainWorkingMemory};
+use crate::{DeltaWorkingMemory, Device, Error, LearningTensor, Record, Tape, Tensor};
 
 use crate::gradient::OperatorTrait;
 
 /// Back-propagation
 pub fn back_propagation(
-    working_memory: &mut TrainWorkingMemory,
     error_working_memory: &mut DeltaWorkingMemory,
     device: &Device,
     tape: &Rc<RefCell<Tape>>,
-) -> Result<Vec<Gradient>, Error> {
-    let mut gradients = vec![];
-    let layer_delta = &mut working_memory.layer_delta;
+) -> Result<Vec<LearningTensor>, Error> {
+    let mut enabled_gradients = vec![];
     let tape: &Tape = &tape.deref().borrow();
     let records: &Vec<Record> = &tape.records();
-    let layers_count = { tape.records().len() };
 
-    let back_propagated_delta = &mut working_memory.back_propagated_delta;
-    back_propagated_delta.reset(0, 0, Default::default());
-
-    for layer_index in (0..layers_count).into_iter().rev() {
-        let record = &records[layer_index];
+    for record in records.iter().rev() {
+        let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
         let inputs = record.inputs();
         let output = record.output();
-        let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
 
-        let (back_propagated_gradient, operator_gradients) = operator.backward(
+        // Store enabled gradients to optimize them later.
+        operator.backward(
             device,
             error_working_memory,
             inputs,
             output,
-            back_propagated_delta,
-            layer_delta,
+            &mut enabled_gradients,
         )?;
 
-        back_propagated_gradient.clip(-1.0, 1.0, back_propagated_delta);
-
-        if operator_gradients.len() > 0 {
-            debug_assert_eq!(layer_delta.shape(), output.shape());
-        }
-        for gradient in operator_gradients {
-            gradients.push(gradient);
+        // Clip the backward gradients.
+        for input in inputs {
+            let back_propagated_delta: &mut Tensor = &mut input.gradient().deref().borrow_mut();
+            let back_propagated_gradient = device.tensor(
+                back_propagated_delta.rows(),
+                back_propagated_delta.cols(),
+                back_propagated_delta.get_values(),
+            );
+            back_propagated_gradient.clip(-1.0, 1.0, back_propagated_delta);
         }
     }
-    Ok(gradients)
+    Ok(enabled_gradients)
 }

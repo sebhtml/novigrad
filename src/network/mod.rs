@@ -1,12 +1,12 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
 pub use train::*;
 
 use crate::{
-    back_propagation, devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tape,
-    Tensor,
+    back_propagation, devices::Device, Error, Forward, LearningTensor, Operator, Optimizer,
+    OptimizerTrait, Tape, Tensor,
 };
 
 pub struct Network {
@@ -59,10 +59,14 @@ pub struct PredictWorkingMemory {
 
 impl PredictWorkingMemory {
     pub fn new(examples_count: usize, device: &Device) -> Self {
+        let mut activation_tensors = vec![];
+        for _ in 0..examples_count {
+            activation_tensors.push(device.tensor(0, 0, vec![]))
+        }
         Self {
             previous_activation_tensor: device.tensor(0, 0, vec![]),
             activation_tensor: device.tensor(0, 0, vec![]),
-            activation_tensors: vec![device.tensor(0, 0, vec![]); examples_count],
+            activation_tensors,
         }
     }
 }
@@ -82,29 +86,21 @@ impl Network {
 
     pub fn train(
         &mut self,
-        working_memory: &mut TrainWorkingMemory,
         error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
-        inputs: &Vec<Rc<Tensor>>,
-        outputs: &Vec<Rc<Tensor>>,
+        inputs: &Vec<LearningTensor>,
+        outputs: &Vec<LearningTensor>,
     ) -> Result<(), Error> {
         for i in 0..inputs.len() {
-            self.train_back_propagation(
-                working_memory,
-                error_working_memory,
-                epoch,
-                i,
-                &inputs[i],
-                &outputs[i],
-            )?;
+            self.train_back_propagation(error_working_memory, epoch, i, &inputs[i], &outputs[i])?;
         }
         Ok(())
     }
 
     pub fn total_error(
         &mut self,
-        inputs: &Vec<Rc<Tensor>>,
-        outputs: &Vec<Rc<Tensor>>,
+        inputs: &Vec<LearningTensor>,
+        outputs: &Vec<LearningTensor>,
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
@@ -114,7 +110,7 @@ impl Network {
                 .loss_function
                 .forward_inputs(&vec![target.clone(), output.clone()])
                 .expect("Ok");
-            let example_error: &Tensor = example_error.deref();
+            let example_error: &Tensor = &example_error.tensor().deref().borrow();
             let example_error: f32 = example_error.try_into()?;
             total_error += example_error;
         }
@@ -124,12 +120,11 @@ impl Network {
 
     fn train_back_propagation(
         &mut self,
-        working_memory: &mut TrainWorkingMemory,
         error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
-        x: &Rc<Tensor>,
-        y: &Rc<Tensor>,
+        x: &LearningTensor,
+        y: &LearningTensor,
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
@@ -138,19 +133,17 @@ impl Network {
         self.loss_function
             .forward_inputs(&vec![y.clone(), output.clone()])?;
 
-        let gradients = back_propagation(
-            working_memory,
-            error_working_memory,
-            &self.device,
-            &self.tape,
-        )?;
+        let gradients = back_propagation(error_working_memory, &self.device, &self.tape)?;
 
         self.optimizer.optimize(gradients, &self.device);
 
         Ok(())
     }
 
-    pub fn predict_many(&mut self, inputs: &Vec<Rc<Tensor>>) -> Result<Vec<Rc<Tensor>>, Error> {
+    pub fn predict_many(
+        &mut self,
+        inputs: &Vec<LearningTensor>,
+    ) -> Result<Vec<LearningTensor>, Error> {
         let len = inputs.len();
         let mut outputs = vec![];
         let mut i = 0;
@@ -163,7 +156,7 @@ impl Network {
         Ok(outputs)
     }
 
-    pub fn forward(&mut self, input: &Rc<Tensor>) -> Result<Rc<Tensor>, Error> {
+    pub fn forward(&mut self, input: &LearningTensor) -> Result<LearningTensor, Error> {
         self.architecture.forward(input)
     }
 }

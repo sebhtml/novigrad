@@ -115,14 +115,8 @@ impl Tensor {
         self.set_values(self_values)
     }
 
-    fn index(&self, row: usize, col: usize) -> usize {
+    pub fn index(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
-    }
-
-    pub fn get(&self, row: usize, col: usize) -> f32 {
-        let index = self.index(row, col);
-        let self_values = self.get_values();
-        self_values[index]
     }
 
     pub fn set(&mut self, row: usize, col: usize, value: f32) {
@@ -138,6 +132,7 @@ impl Tensor {
     }
 
     pub fn transpose(&self, other: &mut Tensor) {
+        let self_values = self.get_values();
         other.reset(self.cols, self.rows, Default::default());
         let rows = self.rows;
         let cols = self.cols;
@@ -145,7 +140,7 @@ impl Tensor {
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let value = self.get(row, col);
+                let value = self_values[self.index(row, col)];
                 other.set(col, row, value);
                 col += 1;
             }
@@ -420,11 +415,12 @@ impl Tensor {
 
 impl Display for Tensor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let self_values = self.get_values();
         _ = write!(f, "Shape: {:?}", (self.rows, self.cols));
         _ = write!(f, "\n");
         for row in 0..self.rows {
             for col in 0..self.cols {
-                let value = self.get(row, col);
+                let value = self_values[self.index(row, col)];
                 if value < 0.0 {
                     _ = write!(f, " {:2.8}", value);
                 } else {
@@ -454,7 +450,10 @@ impl TryInto<f32> for &Tensor {
 
     fn try_into(self) -> Result<f32, Self::Error> {
         match self.shape() {
-            (1, 1) => Ok(self.get(0, 0)),
+            (1, 1) => {
+                let self_values = self.get_values();
+                Ok(self_values[self.index(0, 0)])
+            }
             _ => Err(Error::UnsupportedOperation),
         }
     }

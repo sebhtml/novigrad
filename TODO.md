@@ -1,6 +1,4 @@
-== CUDA training ==
-
-- cuda tests
+- enable tape recording only during training
 - use Result for return type of Device methods
 
 == New operators ==
@@ -12,7 +10,6 @@
 == Training ==
 
 - implement mini batch
-- enable tape recording only during training
 - move learning rate in dataset details
 - shuffle examples in each epoch
 

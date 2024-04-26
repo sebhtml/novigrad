@@ -44,7 +44,7 @@ impl Tensor {
 
         result.reset(left.rows, left.cols, Default::default());
         debug_assert_eq!(result.shape(), left.shape());
-        Tensor::scalar_mul(device, 0.0, result);
+        Tensor::scalar_mul(device, 0.0, result)?;
 
         let mut result_values = result.get_values();
         let left_values = left.get_values();
@@ -105,9 +105,9 @@ impl Tensor {
         row * self.cols + col
     }
 
-    pub fn assign(&mut self, device: &Device, from: &Tensor) {
+    pub fn assign(&mut self, device: &Device, from: &Tensor) -> Result<(), Error> {
         self.reset(from.rows, from.cols, 0.0);
-        Tensor::copy(device, from, self);
+        Tensor::copy(device, from, self)
     }
 
     pub fn transpose(&self, other: &mut Tensor) {
@@ -167,9 +167,9 @@ impl Tensor {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        Ok(device.sdot(n, x, incx, y, incy))
+        device.sdot(n, x, incx, y, incy)
     }
-    fn copy(device: &Device, x: &Tensor, y: &mut Tensor) {
+    fn copy(device: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
@@ -219,8 +219,7 @@ impl Tensor {
             device.sgemm(
                 false, false, n as i32, m as i32, k as i32, alpha, b, n as i32, a, k as i32, beta,
                 c, n as i32,
-            );
-            Ok(())
+            )
         } else if transa && !transb && !transpose_result {
             if a.rows != b.rows {
                 return Err(Error::IncompatibleTensorShapes);
@@ -241,9 +240,7 @@ impl Tensor {
                 beta,
                 c,
                 n as i32,
-            );
-
-            Ok(())
+            )
         } else if !transa && transb && !transpose_result {
             if a.cols != b.cols {
                 return Err(Error::IncompatibleTensorShapes);
@@ -264,9 +261,7 @@ impl Tensor {
                 beta,
                 c,
                 n as i32,
-            );
-
-            Ok(())
+            )
         } else if transa && transb && !transpose_result {
             if a.rows != b.cols {
                 return Err(Error::IncompatibleTensorShapes);
@@ -287,9 +282,7 @@ impl Tensor {
                 beta,
                 c,
                 n as i32,
-            );
-
-            Ok(())
+            )
         } else if transa && transb && transpose_result {
             if a.rows != b.cols {
                 return Err(Error::IncompatibleTensorShapes);
@@ -310,9 +303,7 @@ impl Tensor {
                 beta,
                 c,
                 m as i32,
-            );
-
-            Ok(())
+            )
         } else if transa && !transb && transpose_result {
             if a.rows != b.rows {
                 return Err(Error::IncompatibleTensorShapes);
@@ -333,9 +324,7 @@ impl Tensor {
                 beta,
                 c,
                 m as i32,
-            );
-
-            Ok(())
+            )
         } else {
             Err(Error::UnsupportedOperation)
         }
@@ -358,8 +347,7 @@ impl Tensor {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.saxpy(n, alpha, x, incx, y, incy);
-        Ok(())
+        device.saxpy(n, alpha, x, incx, y, incy)
     }
 
     // TODO use device to clip
@@ -379,7 +367,7 @@ impl Tensor {
         result.set_values(result_values)
     }
 
-    pub fn scalar_mul(device: &Device, alpha: f32, x: &mut Tensor) {
+    pub fn scalar_mul(device: &Device, alpha: f32, x: &mut Tensor) -> Result<(), Error> {
         let n = x.len() as i32;
         let incx = 1;
         device.sscal(n, alpha, x, incx)

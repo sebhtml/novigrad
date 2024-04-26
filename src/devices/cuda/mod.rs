@@ -7,7 +7,7 @@ use cudarc::{
         result::create_handle,
         sys::{
             cublasHandle_t, cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2,
-            cublasSgemmEx, cublasSscal_v2, cublasStatus_t, cudaDataType,
+            cublasSgemmEx, cublasSscal_v2, cudaDataType,
         },
     },
     driver,
@@ -32,7 +32,6 @@ impl CudaDevice {
 }
 
 impl DeviceInterface for CudaDevice {
-    // TODO return Result
     fn sgemm(
         &self,
         transa: bool,
@@ -48,7 +47,7 @@ impl DeviceInterface for CudaDevice {
         beta: f32,
         c: &mut Tensor,
         ldc: i32,
-    ) {
+    ) -> Result<(), Error> {
         let handle = self.handle;
         let transa = match transa {
             false => cublasOperation_t::CUBLAS_OP_N,
@@ -74,21 +73,27 @@ impl DeviceInterface for CudaDevice {
                 c_type, ldc,
             )
         };
-        assert_eq!(status, cublasStatus_t::CUBLAS_STATUS_SUCCESS);
+        status.result().map_err(|_| Error::UnsupportedOperation)
     }
 
-    // TODO return Result
-    fn saxpy(&self, n: i32, alpha: f32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
+    fn saxpy(
+        &self,
+        n: i32,
+        alpha: f32,
+        x: &Tensor,
+        incx: i32,
+        y: &mut Tensor,
+        incy: i32,
+    ) -> Result<(), Error> {
         let handle = self.handle;
         let alpha = &alpha as *const f32;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
         let status = unsafe { cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
-        assert_eq!(status, cublasStatus_t::CUBLAS_STATUS_SUCCESS);
+        status.result().map_err(|_| Error::UnsupportedOperation)
     }
 
-    // TODO return Result
-    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> f32 {
+    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> Result<f32, Error> {
         let handle = self.handle;
         let x = x.as_ptr();
         let y = y.as_ptr();
@@ -97,25 +102,23 @@ impl DeviceInterface for CudaDevice {
             let result = &mut result as *mut f32;
             cublasSdot_v2(handle, n, x, incx, y, incy, result)
         };
-        assert_eq!(status, cublasStatus_t::CUBLAS_STATUS_SUCCESS);
-        result
+        status.result().map_err(|_| Error::UnsupportedOperation)?;
+        Ok(result)
     }
 
-    // TODO return Result
-    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
+    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) -> Result<(), Error> {
         let handle = self.handle;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
         let status = unsafe { cublasScopy_v2(handle, n, x, incx, y, incy) };
-        assert_eq!(status, cublasStatus_t::CUBLAS_STATUS_SUCCESS);
+        status.result().map_err(|_| Error::UnsupportedOperation)
     }
 
-    // TODO return Result
-    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) {
+    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) -> Result<(), Error> {
         let handle = self.handle;
         let x = x.as_mut_ptr();
         let alpha = &alpha as *const f32;
         let status = unsafe { cublasSscal_v2(handle, n, alpha, x, incx) };
-        assert_eq!(status, cublasStatus_t::CUBLAS_STATUS_SUCCESS);
+        status.result().map_err(|_| Error::UnsupportedOperation)
     }
 }

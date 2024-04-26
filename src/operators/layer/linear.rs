@@ -71,7 +71,7 @@ impl OperatorTrait for Linear {
             let a = input;
             let b = weights;
             let c = output;
-            c.assign(device, biases);
+            c.assign(device, biases)?;
             let op_result = Tensor::gemm(device, false, true, 1.0, a, b, 1.0, c, false);
             match op_result {
                 Ok(_) => (),
@@ -108,7 +108,7 @@ impl OperatorTrait for Linear {
             let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
 
-            biases_gradient.assign(device, back_propagated_delta);
+            biases_gradient.assign(device, back_propagated_delta)?;
         }
 
         enabled_gradients.push(self.weights.clone());

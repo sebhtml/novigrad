@@ -37,7 +37,7 @@ impl OperatorTrait for Reshape {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
         {
             let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
-            backward_gradient.assign(device, back_propagated_delta);
+            backward_gradient.assign(device, back_propagated_delta)?;
             backward_gradient.reshape(self.input_rows, self.input_cols)?;
         }
 
@@ -56,7 +56,7 @@ impl OperatorTrait for Reshape {
         let output = device.learning_tensor(0, 0, vec![]);
         {
             let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
-            output.assign(device, input);
+            output.assign(device, input)?;
             output.reshape(self.output_rows, self.output_cols)?;
         }
         Ok(output)

@@ -49,7 +49,7 @@ impl OperatorTrait for Embedding {
 
         {
             let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
-            backward_gradient.assign(device, back_propagated_delta);
+            backward_gradient.assign(device, back_propagated_delta)?;
         }
 
         Ok(())

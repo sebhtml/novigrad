@@ -39,7 +39,7 @@ fn cublas_sgemm_column_major() {
         ],
     );
 
-    device.sgemm(false, false, m, n, k, 1.0, &a, m, &b, k, 1.0, &mut c, m);
+    device.sgemm(false, false, m, n, k, 1.0, &a, m, &b, k, 1.0, &mut c, m).unwrap();
 
     assert_eq!(
         &c.get_values(),

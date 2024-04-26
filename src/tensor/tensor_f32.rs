@@ -1,8 +1,3 @@
-#[cfg(feature = "cuda")]
-use rustacuda::memory::CopyDestination;
-#[cfg(feature = "cuda")]
-use rustacuda::memory::DeviceBuffer;
-
 use crate::DevBuffer;
 use crate::{
     devices::{Device, DeviceInterface},
@@ -29,16 +24,7 @@ impl PartialEq for Tensor {
 impl Tensor {
     pub fn new(rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
-        let values = match device {
-            Device::Cpu(_) => DevBuffer::CpuBuffer(values),
-            #[cfg(feature = "cuda")]
-            Device::Cuda(_) => {
-                // TODO don't unwrap
-                let mut buffer = unsafe { DeviceBuffer::uninitialized(values.len()).unwrap() };
-                buffer.copy_from(values.as_slice()).unwrap();
-                DevBuffer::CudaBuffer(buffer)
-            }
-        };
+        let values = device.buffer(values);
         Self { rows, cols, values }
     }
 
@@ -158,6 +144,9 @@ impl Tensor {
 
     pub fn set_values(&mut self, new_values: Vec<f32>) {
         debug_assert_eq!(new_values.len(), self.len());
+        if self.values.len() != self.len() {
+            self.values.resize(self.len())
+        }
         self.values.set_values(new_values)
     }
 

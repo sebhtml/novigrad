@@ -1,44 +1,39 @@
-- remove Tensor::set method
-- remove Tensor::get method
-
-== backward method MR ==
-
-- add method backward in LearningTensor
-- store device in LearningTensor
-- remove back_propagation function
-
-== CUDA training MR ==
-
-- in reset(), if new len is different, do a cuda reallocation
+- enable tape recording only during training
 - use Result for return type of Device methods
-- Don't call reset inside Tensor methods
-- support for google tpu
-- support for apple metal
-- add rc device in tensor
 
-== Concat test MR ==
+== New operators ==
 
 - implement Concat
 - implement Matmul
 - implement Add
-- add a test with mega_man and cuda
 
-== training MR ==
+== Training ==
 
 - implement mini batch
-- enable tape recording only during training
 - move learning rate in dataset details
+- shuffle examples in each epoch
 
-== Backlog ==
+== Operators ==
+
 - implement Dropout
 - implement Mask
 - implement Gelu
 - implement TransformerBlock
 
-- shuffle examples in each epoch
+== Tokens ==
+
 - bpe tokenizer
+
+== Refactoring ==
 
 - determine the value of using_cross_entropy_loss at run time
 - centralize panic! calls
-- check if it's easy to cudaMalloc and cudaMemCpy and cudaFree
+- Don't call reset inside Tensor methods
+- add rc device in tensor
+- store device in LearningTensor
+
+== Devices ==
+
 - add Blas implementation for AMD GPUs.
+- support for google tpu
+- support for apple metal

@@ -28,15 +28,21 @@ fn test_network_on_dataset(dataset: Dataset, device: Device) {
 }
 
 #[test]
-fn simple_dataset() {
-    let device = Device::default();
-    let dataset = Dataset::Simple;
-    test_network_on_dataset(dataset, device);
+fn simple_dataset_cpu() {
+    test_network_on_dataset(Dataset::Simple, Device::cpu());
 }
 
 #[test]
-fn mega_man_dataset() {
-    let device = Device::default();
-    let dataset = Dataset::MegaMan;
-    test_network_on_dataset(dataset, device);
+fn simple_dataset_cuda() {
+    test_network_on_dataset(Dataset::Simple, Device::cuda().unwrap());
+}
+
+#[test]
+fn mega_man_dataset_cpu() {
+    test_network_on_dataset(Dataset::MegaMan, Device::cpu());
+}
+
+#[test]
+fn mega_man_dataset_cuda() {
+    test_network_on_dataset(Dataset::MegaMan, Device::cuda().unwrap());
 }

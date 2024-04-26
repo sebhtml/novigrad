@@ -100,7 +100,7 @@ fn reshape_error() {
 }
 
 #[test]
-fn get() {
+fn index() {
     let device = Device::default();
     let tensor = device.tensor(
         2,
@@ -111,7 +111,8 @@ fn get() {
         ],
     );
 
-    assert_eq!(tensor.get(0, 1), 2.0);
+    let values = tensor.get_values();
+    assert_eq!(values[tensor.index(0, 1)], 2.0);
 }
 
 #[test]
@@ -148,7 +149,7 @@ fn clip() {
 }
 
 #[test]
-fn set() {
+fn set_values() {
     let device = Device::default();
     let mut tensor = device.tensor(
         2,
@@ -159,8 +160,12 @@ fn set() {
         ],
     );
 
-    tensor.set(1, 0, 99.0);
-    assert_eq!(tensor.get(1, 0), 99.0);
+    let mut values = tensor.get_values();
+    values[tensor.index(1, 0)] = 99.0;
+    tensor.set_values(values);
+
+    let values = tensor.get_values();
+    assert_eq!(values[tensor.index(1, 0)], 99.0);
 }
 
 #[test]
@@ -683,9 +688,14 @@ fn transpose() {
     let matrix = device.tensor(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     let mut matrix2 = device.tensor(0, 0, vec![]);
     matrix.transpose(&mut matrix2);
+    let matrix_values = matrix.get_values();
+    let matrix2_values = matrix2.get_values();
     for row in 0..matrix.rows() {
         for col in 0..matrix.cols() {
-            assert_eq!(matrix2.get(col, row), matrix.get(row, col));
+            assert_eq!(
+                matrix2_values[matrix2.index(col, row)],
+                matrix_values[matrix.index(row, col)]
+            );
         }
     }
 }

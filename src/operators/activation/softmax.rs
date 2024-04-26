@@ -26,14 +26,16 @@ impl ActivationFunction for Softmax {
         );
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
+        let values = product_matrix.get_values();
+        let mut result_values = result.get_values();
         let mut row = 0;
         while row < rows {
             // Find max
 
-            let mut max = product_matrix.get(row, 0);
+            let mut max = values[product_matrix.index(row, 0)];
             let mut col = 0;
             while col < cols {
-                let x = product_matrix.get(row, col);
+                let x = values[product_matrix.index(row, col)];
                 max = max.max(x);
                 col += 1;
             }
@@ -45,9 +47,9 @@ impl ActivationFunction for Softmax {
             let mut sum = 0.0;
             let mut col = 0;
             while col < cols {
-                let x = product_matrix.get(row, col);
+                let x = values[product_matrix.index(row, col)];
                 let y = E.powf(x - max);
-                result.set(row, col, y);
+                result_values[result.index(row, col)] = y;
                 sum += y;
                 col += 1;
             }
@@ -56,13 +58,14 @@ impl ActivationFunction for Softmax {
 
             let mut col = 0;
             while col < cols {
-                let x = result.get(row, col);
+                let x = result_values[result.index(row, col)];
                 let y = x / sum;
-                result.set(row, col, y);
+                result_values[result.index(row, col)] = y;
                 col += 1;
             }
             row += 1;
         }
+        result.set_values(result_values);
         Ok(())
     }
 
@@ -79,17 +82,20 @@ impl ActivationFunction for Softmax {
         );
         let rows = activation_matrix.rows();
         let cols = activation_matrix.cols();
+        let values = activation_matrix.get_values();
+        let mut result_values = result.get_values();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = activation_matrix.get(row, col);
+                let x = values[activation_matrix.index(row, col)];
                 let y = x * (1.0 - x);
-                result.set(row, col, y);
+                result_values[result.index(row, col)] = y;
                 col += 1;
             }
             row += 1;
         }
+        result.set_values(result_values);
 
         Ok(())
     }

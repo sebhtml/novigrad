@@ -28,9 +28,11 @@ impl LossFunction for CrossEntropyLoss {
         let cols = p.cols();
         let mut col = 0;
         let mut sum = 0.0;
+        let p_values = p.get_values();
+        let q_values = q.get_values();
         while col < cols {
-            let p_i = p.get(0, col);
-            let q_i = q.get(0, col) + EPSILON;
+            let p_i = p_values[p.index(0, col)];
+            let q_i = q_values[q.index(0, col)] + EPSILON;
             sum += p_i * f32::ln(q_i);
             col += 1;
         }

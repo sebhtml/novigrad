@@ -5,8 +5,8 @@ use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
 pub use train::*;
 
 use crate::{
-    back_propagation, devices::Device, Error, Forward, LearningTensor, Operator, Optimizer,
-    OptimizerTrait, Tape, Tensor,
+    devices::Device, Error, Forward, LearningTensor, Operator, Optimizer, OptimizerTrait, Tape,
+    Tensor,
 };
 
 pub struct Network {
@@ -130,10 +130,11 @@ impl Network {
 
         let output = self.forward(x)?;
 
-        self.loss_function
+        let loss = self
+            .loss_function
             .forward_inputs(&vec![y.clone(), output.clone()])?;
 
-        let gradients = back_propagation(error_working_memory, &self.device, &self.tape)?;
+        let gradients = loss.backward(error_working_memory, &self.device, &self.tape)?;
 
         self.optimizer.optimize(gradients, &self.device);
 

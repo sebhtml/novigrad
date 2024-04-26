@@ -1,3 +1,6 @@
+- remove Tensor::set method
+- remove Tensor::get method
+
 == backward method MR ==
 
 - add method backward in LearningTensor
@@ -9,8 +12,9 @@
 - in reset(), if new len is different, do a cuda reallocation
 - use Result for return type of Device methods
 - Don't call reset inside Tensor methods
-- remove Tensor::set method
-- remove Tensor::get method
+- support for google tpu
+- support for apple metal
+- add rc device in tensor
 
 == Concat test MR ==
 
@@ -20,6 +24,8 @@
 - add a test with mega_man and cuda
 
 == training MR ==
+
+- implement mini batch
 - enable tape recording only during training
 - move learning rate in dataset details
 

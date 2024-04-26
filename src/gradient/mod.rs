@@ -6,8 +6,6 @@ mod tape;
 pub use tape::*;
 mod learning_tensor;
 pub use learning_tensor::*;
-mod back_propagation;
-pub use back_propagation::*;
 
 pub trait OperatorTrait {
     fn name(&self) -> &str;

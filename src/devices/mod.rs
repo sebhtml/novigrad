@@ -82,7 +82,7 @@ impl DevBuffer {
                     let mut new_buffer = unsafe { DeviceBuffer::uninitialized(new_len).unwrap() };
                     swap(buffer, &mut new_buffer);
                 }
-            } 
+            }
         }
     }
 }
@@ -166,6 +166,19 @@ impl Device {
             Rc::new(RefCell::new(Self::tensor(&self, rows, cols, values))),
             Rc::new(RefCell::new(Self::tensor(&self, 0, 0, vec![]))),
         )
+    }
+
+    pub fn buffer(&self, values: Vec<f32>) -> DevBuffer {
+        match self {
+            Device::Cpu(_) => DevBuffer::CpuBuffer(values),
+            #[cfg(feature = "cuda")]
+            Device::Cuda(_) => {
+                // TODO don't unwrap
+                let mut buffer = unsafe { DeviceBuffer::uninitialized(values.len()).unwrap() };
+                buffer.copy_from(values.as_slice()).unwrap();
+                DevBuffer::CudaBuffer(buffer)
+            }
+        }
     }
 }
 

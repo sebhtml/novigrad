@@ -38,8 +38,10 @@ pub fn into_one_hot_encoded_rows(
         num_classes,
         vec![Default::default(); len],
     );
+    let mut result_values = result.get_values();
     for (index, token) in input_tokens.iter().enumerate() {
-        result.set(index, *token, 1.0);
+        result_values[result.index(index, *token)] = 1.0;
     }
+    result.set_values(result_values);
     result
 }

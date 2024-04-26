@@ -149,7 +149,7 @@ fn clip() {
 }
 
 #[test]
-fn set() {
+fn set_values() {
     let device = Device::default();
     let mut tensor = device.tensor(
         2,
@@ -160,7 +160,10 @@ fn set() {
         ],
     );
 
-    tensor.set(1, 0, 99.0);
+    let mut values = tensor.get_values();
+    values[tensor.index(1, 0)] = 99.0;
+    tensor.set_values(values);
+
     let values = tensor.get_values();
     assert_eq!(values[tensor.index(1, 0)], 99.0);
 }

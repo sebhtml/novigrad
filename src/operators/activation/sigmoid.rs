@@ -23,17 +23,19 @@ impl ActivationFunction for Sigmoid {
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
         let values = product_matrix.get_values();
+        let mut result_values = result.get_values();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
                 let x = values[product_matrix.index(row, col)];
                 let y = 1.0 / (1.0 + E.powf(-x));
-                result.set(row, col, y);
+                result_values[result.index(row, col)] = y;
                 col += 1;
             }
             row += 1;
         }
+        result.set_values(result_values);
         Ok(())
     }
 
@@ -51,17 +53,20 @@ impl ActivationFunction for Sigmoid {
         let rows = activation_matrix.rows();
         let cols = activation_matrix.cols();
         let values = activation_matrix.get_values();
+        let mut result_values = result.get_values();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
                 let x = values[activation_matrix.index(row, col)];
                 let y = x * (1.0 - x);
-                result.set(row, col, y);
+                result_values[result.index(row, col)] = y;
                 col += 1;
             }
             row += 1;
         }
+
+        result.set_values(result_values);
         Ok(())
     }
 }

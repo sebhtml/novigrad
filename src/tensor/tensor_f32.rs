@@ -119,13 +119,6 @@ impl Tensor {
         row * self.cols + col
     }
 
-    pub fn set(&mut self, row: usize, col: usize, value: f32) {
-        let index = self.index(row, col);
-        let mut self_values = self.get_values();
-        self_values[index] = value;
-        self.set_values(self_values)
-    }
-
     pub fn assign(&mut self, device: &Device, from: &Tensor) {
         self.reset(from.rows, from.cols, 0.0);
         Tensor::copy(device, from, self);
@@ -134,6 +127,7 @@ impl Tensor {
     pub fn transpose(&self, other: &mut Tensor) {
         let self_values = self.get_values();
         other.reset(self.cols, self.rows, Default::default());
+        let mut other_values = other.get_values();
         let rows = self.rows;
         let cols = self.cols;
         let mut row = 0;
@@ -141,11 +135,12 @@ impl Tensor {
             let mut col = 0;
             while col < cols {
                 let value = self_values[self.index(row, col)];
-                other.set(col, row, value);
+                other_values[other.index(col, row)] = value;
                 col += 1;
             }
             row += 1;
         }
+        other.set_values(other_values)
     }
 
     pub fn as_ptr(&self) -> *const f32 {

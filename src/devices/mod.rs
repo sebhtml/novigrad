@@ -5,7 +5,7 @@ use crate::Error;
 use rustacuda::memory::CopyDestination;
 #[cfg(feature = "cuda")]
 use rustacuda::prelude::DeviceBuffer;
-use std::{borrow::BorrowMut, cell::RefCell, rc::Rc};
+use std::{borrow::BorrowMut, cell::RefCell, mem::swap, rc::Rc};
 
 pub use cpu::*;
 #[cfg(feature = "cuda")]
@@ -64,6 +64,25 @@ impl DevBuffer {
                 // TODO don't unwrap directly.
                 buffer.copy_from(new_values.as_slice()).unwrap();
             }
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        match self {
+            DevBuffer::CpuBuffer(buffer) => buffer.len(),
+            DevBuffer::CudaBuffer(buffer) => buffer.len(),
+        }
+    }
+
+    pub fn resize(&mut self, new_len: usize) {
+        match self {
+            DevBuffer::CpuBuffer(buffer) => buffer.resize(new_len, Default::default()),
+            DevBuffer::CudaBuffer(buffer) => {
+                if buffer.len() != new_len {
+                    let mut new_buffer = unsafe { DeviceBuffer::uninitialized(new_len).unwrap() };
+                    swap(buffer, &mut new_buffer);
+                }
+            } 
         }
     }
 }

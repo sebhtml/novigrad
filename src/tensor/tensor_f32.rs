@@ -158,6 +158,9 @@ impl Tensor {
 
     pub fn set_values(&mut self, new_values: Vec<f32>) {
         debug_assert_eq!(new_values.len(), self.len());
+        if self.values.len() != self.len() {
+            self.values.resize(self.len())
+        }
         self.values.set_values(new_values)
     }
 

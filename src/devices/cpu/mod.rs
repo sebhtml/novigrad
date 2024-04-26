@@ -1,6 +1,6 @@
 use cblas::{Layout, Transpose};
 extern crate cblas_sys as ffi;
-use crate::Tensor;
+use crate::{Error, Tensor};
 
 use super::DeviceInterface;
 extern crate blas_src;
@@ -31,7 +31,7 @@ impl DeviceInterface for CpuDevice {
         beta: f32,
         c: &mut Tensor,
         ldc: i32,
-    ) {
+    ) -> Result<(), Error> {
         let layout = Layout::ColumnMajor;
         let transa = match transa {
             false => Transpose::None,
@@ -62,28 +62,41 @@ impl DeviceInterface for CpuDevice {
                 ldc,
             )
         }
+        Ok(())
     }
 
-    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> f32 {
+    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> Result<f32, Error> {
         let x = x.as_ptr();
         let y = y.as_ptr();
-        unsafe { ffi::cblas_sdot(n, x, incx, y, incy) }
+        let result = unsafe { ffi::cblas_sdot(n, x, incx, y, incy) };
+        Ok(result)
     }
 
-    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
+    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) -> Result<(), Error> {
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
         unsafe { ffi::cblas_scopy(n, x, incx, y, incy) }
+        Ok(())
     }
 
-    fn saxpy(&self, n: i32, alpha: f32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
+    fn saxpy(
+        &self,
+        n: i32,
+        alpha: f32,
+        x: &Tensor,
+        incx: i32,
+        y: &mut Tensor,
+        incy: i32,
+    ) -> Result<(), Error> {
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
         unsafe { ffi::cblas_saxpy(n, alpha, x, incx, y, incy) }
+        Ok(())
     }
 
-    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) {
+    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) -> Result<(), Error> {
         let x = x.as_mut_ptr();
         unsafe { ffi::cblas_sscal(n, alpha, x, incx) }
+        Ok(())
     }
 }

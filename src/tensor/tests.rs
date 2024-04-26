@@ -190,7 +190,7 @@ fn assign() {
         ],
     );
     let device = Device::cpu();
-    tensor.assign(&device, &tensor2);
+    tensor.assign(&device, &tensor2).unwrap();
     assert_eq!(tensor, tensor2);
 }
 
@@ -263,7 +263,7 @@ fn matrix_multiplication_result() {
     let mut result = device.tensor(0, 0, vec![]);
     result.reset(lhs.rows(), rhs.cols(), 0.0);
     let device = Device::cpu();
-    _ = Tensor::matmul(&device, false, false, &lhs, &rhs, &mut result, false);
+    Tensor::matmul(&device, false, false, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -312,7 +312,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     let mut result = device.tensor(0, 0, vec![]);
     result.reset(lhs.cols(), rhs.cols(), 0.0);
     let device = Device::cpu();
-    _ = Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, false);
+    Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -561,8 +561,8 @@ fn matrix_addition_result() {
 
     let mut result = device.tensor(0, 0, vec![]);
     let device = Device::cpu();
-    result.assign(&device, &rhs);
-    _ = Tensor::add(&device, &lhs, &mut result);
+    result.assign(&device, &rhs).unwrap();
+    Tensor::add(&device, &lhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -605,7 +605,7 @@ fn element_wise_mul_result() {
     );
 
     let mut result = device.tensor(0, 0, vec![]);
-    _ = lhs.element_wise_mul(device, &rhs, &mut result);
+    lhs.element_wise_mul(device, &rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -641,8 +641,8 @@ fn scalar_mul() {
 
     let mut result = device.tensor(0, 0, vec![]);
     let device = Device::cpu();
-    result.assign(&device, &lhs);
-    Tensor::scalar_mul(&device, rhs, &mut result);
+    result.assign(&device, &lhs).unwrap();
+    Tensor::scalar_mul(&device, rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -661,7 +661,7 @@ fn big_matrix_multiplication() {
     let mut result = device.tensor(0, 0, vec![]);
     result.reset(m.rows(), m.cols(), 0.0);
     let device = Device::cpu();
-    _ = Tensor::matmul(&device, false, false, &m, &m, &mut result, false);
+    Tensor::matmul(&device, false, false, &m, &m, &mut result, false).unwrap();
 }
 
 #[test]
@@ -678,8 +678,8 @@ fn big_matrix_addition() {
 
     let mut result = device.tensor(0, 0, vec![]);
     let device = Device::cpu();
-    result.assign(&device, &m);
-    _ = Tensor::add(&device, &m, &mut result);
+    result.assign(&device, &m).unwrap();
+    Tensor::add(&device, &m, &mut result).unwrap();
 }
 
 #[test]

@@ -116,7 +116,7 @@ impl OperatorTrait for Softmax {
             // Compute activation function derivative.
             if self.using_cross_entropy_loss {
                 // Softmax and Cross Entropy Loss are best friends.
-                backward_gradient.assign(device, back_propagated_delta);
+                backward_gradient.assign(device, back_propagated_delta)?;
             } else {
                 let input: &Tensor = &inputs[0].tensor().deref().borrow();
                 let output: &Tensor = &output.tensor().deref().borrow();

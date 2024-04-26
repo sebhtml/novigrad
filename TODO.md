@@ -1,5 +1,4 @@
 - enable tape recording only during training
-- use Result for return type of Device methods
 
 == New operators ==
 

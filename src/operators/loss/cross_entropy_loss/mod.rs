@@ -51,7 +51,7 @@ impl LossFunction for CrossEntropyLoss {
         actual: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        result.assign(device, actual);
+        result.assign(device, actual)?;
         Tensor::sub(device, expected, result)
     }
 }

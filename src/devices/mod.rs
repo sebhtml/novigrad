@@ -118,20 +118,28 @@ pub trait DeviceInterface {
         beta: f32,
         c: &mut Tensor,
         ldc: i32,
-    );
+    ) -> Result<(), Error>;
 
     /// SAXPY constant times a vector plus a vector.
     /// y = alpha * x + y
-    fn saxpy(&self, n: i32, alpha: f32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32);
+    fn saxpy(
+        &self,
+        n: i32,
+        alpha: f32,
+        x: &Tensor,
+        incx: i32,
+        y: &mut Tensor,
+        incy: i32,
+    ) -> Result<(), Error>;
 
     /// SDOT forms the dot product of two vectors.
-    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> f32;
+    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> Result<f32, Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
-    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32);
+    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) -> Result<(), Error>;
 
     /// SSCAL scales a vector by a constant.
-    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32);
+    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) -> Result<(), Error>;
 }
 
 pub enum Device {
@@ -199,7 +207,7 @@ impl DeviceInterface for Device {
         beta: f32,
         c: &mut Tensor,
         ldc: i32,
-    ) {
+    ) -> Result<(), Error> {
         match self {
             Device::Cpu(device) => {
                 device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -211,7 +219,7 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> f32 {
+    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> Result<f32, Error> {
         match self {
             Device::Cpu(device) => device.sdot(n, x, incx, y, incy),
             #[cfg(feature = "cuda")]
@@ -219,7 +227,7 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
+    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) -> Result<(), Error> {
         match self {
             Device::Cpu(device) => device.scopy(n, x, incx, y, incy),
             #[cfg(feature = "cuda")]
@@ -227,7 +235,15 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn saxpy(&self, n: i32, alpha: f32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) {
+    fn saxpy(
+        &self,
+        n: i32,
+        alpha: f32,
+        x: &Tensor,
+        incx: i32,
+        y: &mut Tensor,
+        incy: i32,
+    ) -> Result<(), Error> {
         match self {
             Device::Cpu(device) => device.saxpy(n, alpha, x, incx, y, incy),
             #[cfg(feature = "cuda")]
@@ -235,7 +251,7 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) {
+    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) -> Result<(), Error> {
         match self {
             Device::Cpu(device) => device.sscal(n, alpha, x, incx),
             #[cfg(feature = "cuda")]

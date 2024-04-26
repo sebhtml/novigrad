@@ -38,7 +38,7 @@ fn cblas_sgemm_column_major() {
         ],
     );
 
-    device.sgemm(false, false, m, n, k, 1.0, &a, m, &b, k, 1.0, &mut c, m);
+    device.sgemm(false, false, m, n, k, 1.0, &a, m, &b, k, 1.0, &mut c, m).unwrap();
 
     assert_eq!(
         &c.get_values(),
@@ -95,7 +95,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
         ],
     );
 
-    device.sgemm(false, false, n, m, k, 1.0, &b, n, &a, k, 1.0, &mut c, n);
+    device.sgemm(false, false, n, m, k, 1.0, &b, n, &a, k, 1.0, &mut c, n).unwrap();
 
     assert_eq!(
         &c.get_values(),

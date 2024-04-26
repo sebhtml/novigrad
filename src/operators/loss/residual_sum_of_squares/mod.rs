@@ -23,7 +23,7 @@ impl LossFunction for ResidualSumOfSquares {
             return Err(Error::IncompatibleTensorShapes);
         }
         let mut diffs = device.tensor(0, 0, vec![]);
-        diffs.assign(device, expected);
+        diffs.assign(device, expected)?;
         Tensor::sub(device, actual, &mut diffs)?;
         Tensor::dot_product(device, &diffs, &diffs)
     }
@@ -35,10 +35,9 @@ impl LossFunction for ResidualSumOfSquares {
         actual: &Tensor,
         result: &mut Tensor,
     ) -> Result<(), Error> {
-        result.assign(device, expected);
+        result.assign(device, expected)?;
         Tensor::sub(device, actual, result)?;
-        Tensor::scalar_mul(device, -2.0, result);
-        Ok(())
+        Tensor::scalar_mul(device, -2.0, result)
     }
 }
 

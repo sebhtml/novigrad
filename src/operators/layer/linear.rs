@@ -56,7 +56,7 @@ impl OperatorTrait for Linear {
     ) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input: &Tensor = &inputs[0].tensor().deref().borrow();
-        let output = device.learning_tensor(0, 0, vec![]);
+        let output = device.learning_tensor(0, 0, vec![], false);
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.

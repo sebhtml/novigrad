@@ -67,7 +67,7 @@ impl OperatorTrait for ResidualSumOfSquares {
         inputs: &Vec<LearningTensor>,
     ) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let output = device.learning_tensor(0, 0, vec![]);
+        let output = device.learning_tensor(0, 0, vec![], false);
         let expected: &Tensor = &inputs[0].tensor().deref().borrow();
         let actual: &Tensor = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;

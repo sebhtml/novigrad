@@ -103,7 +103,7 @@ impl OperatorTrait for Sigmoid {
         device: &Device,
         inputs: &Vec<LearningTensor>,
     ) -> Result<LearningTensor, Error> {
-        let output = device.learning_tensor(0, 0, vec![]);
+        let output = device.learning_tensor(0, 0, vec![], false);
         {
             let input: &Tensor = &inputs[0].tensor().deref().borrow();
             let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();

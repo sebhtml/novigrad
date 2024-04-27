@@ -60,7 +60,7 @@ impl OperatorTrait for Embedding {
         device: &Device,
         inputs: &Vec<LearningTensor>,
     ) -> Result<LearningTensor, Error> {
-        let output = device.learning_tensor(0, 0, vec![]);
+        let output = device.learning_tensor(0, 0, vec![], false);
         let embedding_table: &Tensor = &self.embedding_table.tensor().deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         {

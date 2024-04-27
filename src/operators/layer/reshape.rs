@@ -53,7 +53,7 @@ impl OperatorTrait for Reshape {
         let input: &Tensor = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
-        let output = device.learning_tensor(0, 0, vec![]);
+        let output = device.learning_tensor(0, 0, vec![], false);
         {
             let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
             output.assign(device, input)?;

@@ -34,12 +34,9 @@ impl OperatorTrait for Reshape {
         output: &LearningTensor,
     ) -> Result<(), Error> {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
-        {
-            let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
-            backward_gradient.assign(device, back_propagated_delta)?;
-            backward_gradient.reshape(self.input_rows, self.input_cols)?;
-        }
-
+        let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
+        backward_gradient.assign(device, back_propagated_delta)?;
+        backward_gradient.reshape(self.input_rows, self.input_cols)?;
         Ok(())
     }
 

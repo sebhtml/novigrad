@@ -52,11 +52,8 @@ impl OperatorTrait for ResidualSumOfSquares {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &Tensor = &inputs[0].tensor().deref().borrow();
         let actual: &Tensor = &inputs[1].tensor().deref().borrow();
-        {
-            let backward_gradient: &mut Tensor = &mut inputs[1].gradient().deref().borrow_mut();
-            self.derive(device, expected, actual, backward_gradient)?;
-        }
-
+        let backward_gradient: &mut Tensor = &mut inputs[1].gradient().deref().borrow_mut();
+        self.derive(device, expected, actual, backward_gradient)?;
         Ok(())
     }
 
@@ -70,10 +67,7 @@ impl OperatorTrait for ResidualSumOfSquares {
         let expected: &Tensor = &inputs[0].tensor().deref().borrow();
         let actual: &Tensor = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-        {
-            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
-            output.reset(1, 1, loss);
-        }
+        output.tensor().deref().borrow_mut().reset(1, 1, loss);
         Ok(output)
     }
 

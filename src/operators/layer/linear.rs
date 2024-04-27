@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::ops::Deref;
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -27,24 +27,12 @@ impl Linear {
         for index in 0..weights.len() {
             weights[index] = rng.sample(uniform);
         }
-        let weights = device.tensor(weights_rows, weights_cols, weights);
+        let weights = device.learning_tensor(weights_rows, weights_cols, weights, true);
 
-        let mut biases = device.tensor(0, 0, vec![]);
-        biases.reset(bias_rows, weights_rows, Default::default());
+        let biases_len = bias_rows * weights_rows;
+        let biases = device.learning_tensor(bias_rows, weights_rows, vec![0.0; biases_len], true);
 
-        let weights_gradient = device.tensor(0, 0, vec![]);
-        let biases_gradient = device.tensor(0, 0, vec![]);
-
-        Linear {
-            weights: LearningTensor::new(
-                Rc::new(RefCell::new(weights)),
-                Rc::new(RefCell::new(weights_gradient)),
-            ),
-            biases: LearningTensor::new(
-                Rc::new(RefCell::new(biases)),
-                Rc::new(RefCell::new(biases_gradient)),
-            ),
-        }
+        Linear { weights, biases }
     }
 }
 

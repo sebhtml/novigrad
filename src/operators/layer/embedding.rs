@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::ops::Deref;
 
 use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
 use rand::{distributions::Uniform, thread_rng, Rng};
@@ -9,16 +9,8 @@ pub struct Embedding {
 
 impl Embedding {
     pub fn new(num_embeddings: usize, embedding_dim: usize, device: &Device) -> Self {
-        let embedding_table_gradient = device.tensor(0, 0, vec![]);
         Self {
-            embedding_table: LearningTensor::new(
-                Rc::new(RefCell::new(get_embedding_table(
-                    device,
-                    num_embeddings,
-                    embedding_dim,
-                ))),
-                Rc::new(RefCell::new(embedding_table_gradient)),
-            ),
+            embedding_table: get_embedding_table(device, num_embeddings, embedding_dim),
         }
     }
 }
@@ -82,7 +74,11 @@ impl OperatorTrait for Embedding {
     }
 }
 
-fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> Tensor {
+fn get_embedding_table(
+    device: &Device,
+    num_embeddings: usize,
+    embedding_dim: usize,
+) -> LearningTensor {
     let mut rng = thread_rng();
     let mut embeddings_table: Vec<f32> = Vec::new();
     let left = 0.0;
@@ -99,5 +95,5 @@ fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: us
         embeddings_table.append(&mut token_embeddings);
         token += 1;
     }
-    device.tensor(num_embeddings, embedding_dim, embeddings_table)
+    device.learning_tensor(num_embeddings, embedding_dim, embeddings_table, true)
 }

@@ -1,8 +1,12 @@
+- in LearningTensor, gradient is None if requires_grad is false
 - enable tape recording only during training
 
 == New operators ==
 
 - implement Concat
+
+- revisit initialization of weights and biases in Linear
+- revisit initialization of embedding_table in Embedding
 - implement Matmul
 - implement Add
 

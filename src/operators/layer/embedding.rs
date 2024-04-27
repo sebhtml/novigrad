@@ -23,23 +23,19 @@ impl OperatorTrait for Embedding {
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
     ) -> Result<(), Error> {
-        let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
-        {
-            let embedding_table_gradient: &mut Tensor =
-                &mut self.embedding_table.gradient().deref().borrow_mut();
-            let input: &Tensor = &inputs[0].tensor().deref().borrow();
-            let a: &Tensor = back_propagated_delta;
-            let b: &Tensor = input;
-            let c: &mut Tensor = embedding_table_gradient;
-            c.reset(b.cols(), a.cols(), 0.0);
-            let op_result = Tensor::matmul(device, true, false, a, b, c, true);
-            op_result.expect("Ok");
-        }
+        let output_gradient: &Tensor = &output.gradient().deref().borrow();
+        let embedding_table_gradient: &mut Tensor =
+            &mut self.embedding_table.gradient().deref().borrow_mut();
+        let input: &Tensor = &inputs[0].tensor().deref().borrow();
+        let a: &Tensor = output_gradient;
+        let b: &Tensor = input;
+        let c: &mut Tensor = embedding_table_gradient;
+        c.reset(b.cols(), a.cols(), 0.0);
+        let op_result = Tensor::matmul(device, true, false, a, b, c, true);
+        op_result.expect("Ok");
 
-        {
-            let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
-            backward_gradient.assign(device, back_propagated_delta)?;
-        }
+        let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
+        backward_gradient.assign(device, output_gradient)?;
 
         Ok(())
     }
@@ -49,16 +45,17 @@ impl OperatorTrait for Embedding {
         device: &Device,
         inputs: &Vec<LearningTensor>,
     ) -> Result<LearningTensor, Error> {
-        let output = device.learning_tensor(0, 0, vec![], false);
-        let embedding_table: &Tensor = &self.embedding_table.tensor().deref().borrow();
+        let input: &Tensor = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
+        let embedding_table: &Tensor = &self.embedding_table.tensor().deref().borrow();
+        debug_assert_eq!(input.cols(), embedding_table.rows());
+
+        let output = device.learning_tensor(0, 0, vec![], false);
+
         {
-            let input: &Tensor = &inputs[0].tensor().deref().borrow();
-            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
-            debug_assert_eq!(input.cols(), embedding_table.rows());
             let a = input;
             let b = &embedding_table;
-            let c = output;
+            let c = &mut output.tensor().deref().borrow_mut();
             c.reset(a.rows(), b.cols(), 0.0);
             Tensor::matmul(device, false, false, a, b, c, false)?;
         }

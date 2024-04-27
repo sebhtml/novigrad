@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
+use std::{ops::Deref, rc::Rc};
 
 use crate::{DatasetDetails, DeltaWorkingMemory, Device, Error, LearningTensor, Network, Tensor};
 
@@ -76,21 +76,6 @@ pub fn train_network_on_dataset(
     let loss_function_name = dataset_details.loss_function_name;
 
     let mut error_working_memory = DeltaWorkingMemory::new(&device);
-
-    let examples: Vec<(_, _)> = examples
-        .into_iter()
-        .map(|(x, y)| {
-            let x = LearningTensor::new(
-                Rc::new(RefCell::new(x)),
-                Rc::new(RefCell::new(device.tensor(0, 0, vec![]))),
-            );
-            let y = LearningTensor::new(
-                Rc::new(RefCell::new(y)),
-                Rc::new(RefCell::new(device.tensor(0, 0, vec![]))),
-            );
-            (x, y)
-        })
-        .collect();
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
     let mut network = Network::new(architecture, loss_function_name);

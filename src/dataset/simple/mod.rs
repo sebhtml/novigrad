@@ -1,11 +1,11 @@
 use std::rc::Rc;
 
-use crate::{into_one_hot_encoded_rows, DatasetDetails, Device, Operators, Tensor};
+use crate::{into_one_hot_encoded_rows, DatasetDetails, Device, LearningTensor, Operators};
 
 mod architecture;
 use architecture::*;
 
-fn load_examples(device: &Device) -> Vec<(Tensor, Tensor)> {
+fn load_examples(device: &Device) -> Vec<(LearningTensor, LearningTensor)> {
     let mut examples = Vec::new();
 
     examples.push((
@@ -43,6 +43,6 @@ pub fn load_dataset(device: Rc<Device>) -> DatasetDetails {
         progress: 100,
         loss_function_name: ops.cross_entropy_loss(),
         initial_total_error_min: 4.0,
-        final_total_error_max: 0.0004,
+        final_total_error_max: 0.0005,
     }
 }

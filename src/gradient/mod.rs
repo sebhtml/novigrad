@@ -22,7 +22,6 @@ pub trait OperatorTrait {
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-        enabled_gradients: &mut Vec<LearningTensor>,
     ) -> Result<(), Error>;
 }
 

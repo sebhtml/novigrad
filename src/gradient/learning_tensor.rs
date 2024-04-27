@@ -26,7 +26,6 @@ impl LearningTensor {
         device: &Device,
         tape: &Rc<RefCell<Tape>>,
     ) -> Result<Vec<LearningTensor>, Error> {
-        let mut enabled_gradients = vec![];
         let tape: &Tape = &tape.deref().borrow();
         let records: &Vec<Record> = &tape.records();
 
@@ -36,13 +35,7 @@ impl LearningTensor {
             let output = record.output();
 
             // Store enabled gradients to optimize them later.
-            operator.backward(
-                device,
-                error_working_memory,
-                inputs,
-                output,
-                &mut enabled_gradients,
-            )?;
+            operator.backward(device, error_working_memory, inputs, output)?;
 
             // Clip the backward gradients.
             for input in inputs {
@@ -55,6 +48,6 @@ impl LearningTensor {
                 back_propagated_gradient.clip(-1.0, 1.0, back_propagated_delta);
             }
         }
-        Ok(enabled_gradients)
+        Ok(device.tensors_with_requires_grad())
     }
 }

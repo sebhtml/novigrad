@@ -5,7 +5,12 @@ use crate::Error;
 use rustacuda::memory::CopyDestination;
 #[cfg(feature = "cuda")]
 use rustacuda::prelude::DeviceBuffer;
-use std::{borrow::BorrowMut, cell::RefCell, mem::swap, rc::Rc};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    cell::RefCell,
+    mem::swap,
+    rc::Rc,
+};
 
 pub use cpu::*;
 #[cfg(feature = "cuda")]
@@ -142,7 +147,12 @@ pub trait DeviceInterface {
     fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) -> Result<(), Error>;
 }
 
-pub enum Device {
+pub struct Device {
+    tensors_with_requires_grad: RefCell<Vec<LearningTensor>>,
+    device: DeviceEnum,
+}
+
+pub enum DeviceEnum {
     Cpu(CpuDevice),
     #[cfg(feature = "cuda")]
     Cuda(CudaDevice),
@@ -155,32 +165,56 @@ impl Default for Device {
 }
 
 impl Device {
-    pub fn cpu() -> Self {
-        Device::Cpu(CpuDevice::default())
+    pub fn new(device: DeviceEnum) -> Self {
+        Self {
+            tensors_with_requires_grad: vec![].into(),
+            device,
+        }
     }
+    pub fn cpu() -> Self {
+        Self::new(DeviceEnum::Cpu(CpuDevice::default()))
+    }
+
     #[cfg(feature = "cuda")]
     pub fn cuda() -> Result<Self, Error> {
         match CudaDevice::try_default() {
-            Ok(cublas) => Ok(Device::Cuda(cublas)),
+            Ok(cublas) => Ok(Self::new(DeviceEnum::Cuda(cublas))),
             Err(error) => Err(error),
         }
     }
+
     pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Tensor {
         Tensor::new(rows, cols, values, self)
     }
 
-    pub fn learning_tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> LearningTensor {
-        LearningTensor::new(
+    pub fn learning_tensor(
+        &self,
+        rows: usize,
+        cols: usize,
+        values: Vec<f32>,
+        requires_grad: bool,
+    ) -> LearningTensor {
+        let tensor = LearningTensor::new(
             Rc::new(RefCell::new(Self::tensor(&self, rows, cols, values))),
             Rc::new(RefCell::new(Self::tensor(&self, 0, 0, vec![]))),
-        )
+        );
+        if requires_grad {
+            self.tensors_with_requires_grad
+                .borrow_mut()
+                .push(tensor.clone())
+        }
+        tensor
+    }
+
+    pub fn tensors_with_requires_grad(&self) -> Vec<LearningTensor> {
+        self.tensors_with_requires_grad.borrow().clone()
     }
 
     pub fn buffer(&self, values: Vec<f32>) -> DevBuffer {
-        match self {
-            Device::Cpu(_) => DevBuffer::CpuBuffer(values),
+        match self.device {
+            DeviceEnum::Cpu(_) => DevBuffer::CpuBuffer(values),
             #[cfg(feature = "cuda")]
-            Device::Cuda(_) => {
+            DeviceEnum::Cuda(_) => {
                 // TODO don't unwrap
                 let mut buffer = unsafe { DeviceBuffer::uninitialized(values.len()).unwrap() };
                 buffer.copy_from(values.as_slice()).unwrap();
@@ -208,30 +242,30 @@ impl DeviceInterface for Device {
         c: &mut Tensor,
         ldc: i32,
     ) -> Result<(), Error> {
-        match self {
-            Device::Cpu(device) => {
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => {
                 device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
             #[cfg(feature = "cuda")]
-            Device::Cuda(device) => {
+            DeviceEnum::Cuda(device) => {
                 device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
             }
         }
     }
 
     fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> Result<f32, Error> {
-        match self {
-            Device::Cpu(device) => device.sdot(n, x, incx, y, incy),
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => device.sdot(n, x, incx, y, incy),
             #[cfg(feature = "cuda")]
-            Device::Cuda(device) => device.sdot(n, x, incx, y, incy),
+            DeviceEnum::Cuda(device) => device.sdot(n, x, incx, y, incy),
         }
     }
 
     fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) -> Result<(), Error> {
-        match self {
-            Device::Cpu(device) => device.scopy(n, x, incx, y, incy),
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => device.scopy(n, x, incx, y, incy),
             #[cfg(feature = "cuda")]
-            Device::Cuda(device) => device.scopy(n, x, incx, y, incy),
+            DeviceEnum::Cuda(device) => device.scopy(n, x, incx, y, incy),
         }
     }
 
@@ -244,18 +278,18 @@ impl DeviceInterface for Device {
         y: &mut Tensor,
         incy: i32,
     ) -> Result<(), Error> {
-        match self {
-            Device::Cpu(device) => device.saxpy(n, alpha, x, incx, y, incy),
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => device.saxpy(n, alpha, x, incx, y, incy),
             #[cfg(feature = "cuda")]
-            Device::Cuda(device) => device.saxpy(n, alpha, x, incx, y, incy),
+            DeviceEnum::Cuda(device) => device.saxpy(n, alpha, x, incx, y, incy),
         }
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) -> Result<(), Error> {
-        match self {
-            Device::Cpu(device) => device.sscal(n, alpha, x, incx),
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => device.sscal(n, alpha, x, incx),
             #[cfg(feature = "cuda")]
-            Device::Cuda(device) => device.sscal(n, alpha, x, incx),
+            DeviceEnum::Cuda(device) => device.sscal(n, alpha, x, incx),
         }
     }
 }

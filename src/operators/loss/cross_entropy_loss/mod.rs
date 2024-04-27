@@ -63,16 +63,12 @@ impl OperatorTrait for CrossEntropyLoss {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         _output: &LearningTensor,
-        _enabled_gradients: &mut Vec<LearningTensor>,
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
-        {
-            let expected: &Tensor = &inputs[0].tensor().deref().borrow();
-            let actual: &Tensor = &inputs[1].tensor().deref().borrow();
-            let backward_gradient: &mut Tensor = &mut inputs[1].gradient().deref().borrow_mut();
-            self.derive(device, expected, actual, backward_gradient)?;
-        }
-
+        let expected: &Tensor = &inputs[0].tensor().deref().borrow();
+        let actual: &Tensor = &inputs[1].tensor().deref().borrow();
+        let backward_gradient: &mut Tensor = &mut inputs[1].gradient().deref().borrow_mut();
+        self.derive(device, expected, actual, backward_gradient)?;
         Ok(())
     }
 
@@ -82,14 +78,13 @@ impl OperatorTrait for CrossEntropyLoss {
         inputs: &Vec<LearningTensor>,
     ) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let output = device.learning_tensor(0, 0, vec![]);
+        let output = device.learning_tensor(0, 0, vec![], false);
         let expected: &Tensor = &inputs[0].tensor().deref().borrow();
         let actual: &Tensor = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-        {
-            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
-            output.reset(1, 1, loss);
-        }
+
+        output.tensor().deref().borrow_mut().reset(1, 1, loss);
+
         Ok(output)
     }
 

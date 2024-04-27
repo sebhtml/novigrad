@@ -78,23 +78,15 @@ impl OperatorTrait for Sigmoid {
         error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-        _enabled_gradients: &mut Vec<LearningTensor>,
     ) -> Result<(), Error> {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
-        {
-            let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
-            // Compute activation function derivative.
-            let input: &Tensor = &inputs[0].tensor().deref().borrow();
-            let output: &Tensor = &output.tensor().deref().borrow();
-            let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
-            self.derive(input, output, layer_f_derivative)?;
-            layer_f_derivative.element_wise_mul(
-                device,
-                back_propagated_delta,
-                backward_gradient,
-            )?;
-        }
-
+        let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
+        // Compute activation function derivative.
+        let input: &Tensor = &inputs[0].tensor().deref().borrow();
+        let output: &Tensor = &output.tensor().deref().borrow();
+        let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
+        self.derive(input, output, layer_f_derivative)?;
+        layer_f_derivative.element_wise_mul(device, back_propagated_delta, backward_gradient)?;
         Ok(())
     }
 
@@ -103,9 +95,9 @@ impl OperatorTrait for Sigmoid {
         device: &Device,
         inputs: &Vec<LearningTensor>,
     ) -> Result<LearningTensor, Error> {
-        let output = device.learning_tensor(0, 0, vec![]);
+        let input: &Tensor = &inputs[0].tensor().deref().borrow();
+        let output = device.learning_tensor(0, 0, vec![], false);
         {
-            let input: &Tensor = &inputs[0].tensor().deref().borrow();
             let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
             self.activate(input, output)?;
         }

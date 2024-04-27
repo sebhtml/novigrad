@@ -22,7 +22,6 @@ impl OperatorTrait for Embedding {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-        enabled_gradients: &mut Vec<LearningTensor>,
     ) -> Result<(), Error> {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
         {
@@ -36,8 +35,6 @@ impl OperatorTrait for Embedding {
             let op_result = Tensor::matmul(device, true, false, a, b, c, true);
             op_result.expect("Ok");
         }
-
-        enabled_gradients.push(self.embedding_table.clone());
 
         {
             let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();

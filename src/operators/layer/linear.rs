@@ -82,7 +82,6 @@ impl OperatorTrait for Linear {
         _error_working_memory: &mut DeltaWorkingMemory,
         inputs: &Vec<LearningTensor>,
         output: &LearningTensor,
-        enabled_gradients: &mut Vec<LearningTensor>,
     ) -> Result<(), Error> {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
         {
@@ -98,9 +97,6 @@ impl OperatorTrait for Linear {
 
             biases_gradient.assign(device, back_propagated_delta)?;
         }
-
-        enabled_gradients.push(self.weights.clone());
-        enabled_gradients.push(self.biases.clone());
 
         {
             let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();

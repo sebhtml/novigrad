@@ -206,6 +206,10 @@ impl Device {
         tensor
     }
 
+    pub fn tensors_with_requires_grad(&self) -> Vec<LearningTensor> {
+        self.tensors_with_requires_grad.borrow().clone()
+    }
+
     pub fn buffer(&self, values: Vec<f32>) -> DevBuffer {
         match self.device {
             DeviceEnum::Cpu(_) => DevBuffer::CpuBuffer(values),

@@ -1,22 +1,23 @@
-- in LearningTensor, gradient is None if requires_grad is false
-- enable tape recording only during training
-
 == New operators ==
 
 - implement Concat
-
-- revisit initialization of weights and biases in Linear
-- revisit initialization of embedding_table in Embedding
 - implement Matmul
 - implement Add
 
+== Initialization ==
+
+- revisit initialization of weights and biases in Linear
+- revisit initialization of embedding_table in Embedding
+
 == Training ==
 
+- in LearningTensor, gradient is None if requires_grad is false
+- enable tape recording only during training
 - implement mini batch
 - move learning rate in dataset details
 - shuffle examples in each epoch
 
-== Operators ==
+== New operators (part 2) ==
 
 - implement Dropout
 - implement Mask

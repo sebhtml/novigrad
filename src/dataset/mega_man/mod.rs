@@ -2,7 +2,8 @@ use std::fs;
 use std::rc::Rc;
 
 mod architecture;
-use crate::{into_one_hot_encoded_rows, Device, Operators, Tensor};
+use crate::tokenizers::Tokenizer;
+use crate::{into_one_hot_encoded_rows, AsciiTokenizer, Device, Operators, Tensor};
 use crate::{DatasetDetails, Error};
 use architecture::*;
 
@@ -13,12 +14,8 @@ fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let file_path = "Mega_Man.txt";
     let contents = fs::read_to_string(file_path).map_err(|_| Error::UnsupportedOperation)?;
     // TODO use bpe tokenizer.
-    let tokens: Vec<usize> = contents
-        .as_bytes()
-        .to_owned()
-        .into_iter()
-        .map(|token| token as usize)
-        .collect();
+    let tokenizer = AsciiTokenizer::default();
+    let tokens: Vec<usize> = tokenizer.encode(&contents);
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
     let max_number_of_examples = 10;

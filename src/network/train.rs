@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{DatasetDetails, Error, Network, Tensor, TensorF32};
+use crate::{AsciiTokenizer, DatasetDetails, Error, Network, Tensor, TensorF32, Tokenizer};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -13,8 +13,23 @@ pub fn print_expected_output_and_actual_output(
     let cols = expected_output.cols();
     let last_row = actual_output.rows() - 1;
 
+    let tokenizer = AsciiTokenizer::default();
+    let input_tokens = [];
+    let expected_output_token = [expected_argmax];
+    let actual_output_token = [actual_argmax];
+
     println!("----");
     println!("Example {}", example);
+    println!("  input: {}", tokenizer.decode(&input_tokens));
+    println!(
+        "  expected_output: {}",
+        tokenizer.decode(&expected_output_token)
+    );
+    println!(
+        "  actual_output: {}",
+        tokenizer.decode(&actual_output_token)
+    );
+
     println!(
         "expected_argmax {}, actual_argmax {}",
         expected_argmax, actual_argmax

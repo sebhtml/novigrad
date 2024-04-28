@@ -1,4 +1,5 @@
-- add tokenizer with encode and decode
+- mot argmax to a function
+- implement decode in AsciiTokenizer
 
 == New operators ==
 

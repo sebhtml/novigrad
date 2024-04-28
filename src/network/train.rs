@@ -140,11 +140,9 @@ fn print_results(
     let mut actual_argmax_values = Vec::new();
 
     for i in 0..inputs.len() {
+        // TODO add a separate function that compute argmaxes instead of computing them in here.
         let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
-        let actual_output: &TensorF32 = &activation_tensors[i].tensor().deref().borrow();
-
         let expected_values = expected_output.get_values()?;
-        let actual_values = actual_output.get_values()?;
         let cols = expected_output.cols();
         let mut expected_argmax = 0;
         for col in 0..cols {
@@ -155,11 +153,14 @@ fn print_results(
             }
         }
 
-        let last_row = actual_output.rows() - 1;
+        // TODO add a separate function that compute argmaxes instead of computing them in here.
+        let actual_output: &TensorF32 = &activation_tensors[i].tensor().deref().borrow();
+        let actual_values = actual_output.get_values()?;
+        let cols = actual_output.cols();
         let mut actual_argmax = 0;
         for col in 0..cols {
-            if actual_values[actual_output.index(last_row, col)]
-                > actual_values[actual_output.index(last_row, actual_argmax)]
+            if actual_values[actual_output.index(0, col)]
+                > actual_values[actual_output.index(0, actual_argmax)]
             {
                 actual_argmax = col;
             }
@@ -178,6 +179,5 @@ fn print_results(
         )?;
     }
 
-    // TODO add a separate function that compute argmaxes instead of computing them in here.
     Ok((expected_argmax_values, actual_argmax_values))
 }

@@ -1,10 +1,10 @@
 use std::ops::Deref;
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, TensorF32};
+use crate::{devices::Device, DeltaWorkingMemory, Error, OperatorTrait, Tensor, TensorF32};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
-    embedding_table: LearningTensor,
+    embedding_table: Tensor,
 }
 
 impl Embedding {
@@ -20,8 +20,8 @@ impl OperatorTrait for Embedding {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &[LearningTensor],
-        output: &LearningTensor,
+        inputs: &[Tensor],
+        output: &Tensor,
     ) -> Result<(), Error> {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let embedding_table_gradient: &mut TensorF32 =
@@ -34,7 +34,7 @@ impl OperatorTrait for Embedding {
         TensorF32::matmul(device, true, false, a, b, c, true)
     }
 
-    fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
+    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         let embedding_table: &TensorF32 = &self.embedding_table.tensor().deref().borrow();
@@ -58,11 +58,7 @@ impl OperatorTrait for Embedding {
     }
 }
 
-fn get_embedding_table(
-    device: &Device,
-    num_embeddings: usize,
-    embedding_dim: usize,
-) -> LearningTensor {
+fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> Tensor {
     let mut rng = thread_rng();
     let mut embeddings_table: Vec<f32> = Vec::new();
     let left = 0.0;

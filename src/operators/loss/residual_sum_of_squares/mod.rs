@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, TensorF32};
+use crate::{devices::Device, DeltaWorkingMemory, Error, OperatorTrait, Tensor, TensorF32};
 
 use super::LossFunction;
 
@@ -51,8 +51,8 @@ impl OperatorTrait for ResidualSumOfSquares {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &[LearningTensor],
-        _output: &LearningTensor,
+        inputs: &[Tensor],
+        _output: &Tensor,
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
@@ -62,7 +62,7 @@ impl OperatorTrait for ResidualSumOfSquares {
         Ok(())
     }
 
-    fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
+    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output = device.learning_tensor(0, 0, vec![], false);
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();

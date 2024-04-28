@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, TensorF32};
+use crate::{devices::Device, DeltaWorkingMemory, Error, OperatorTrait, Tensor, TensorF32};
 
 pub struct Reshape {
     input_rows: usize,
@@ -30,8 +30,8 @@ impl OperatorTrait for Reshape {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &[LearningTensor],
-        output: &LearningTensor,
+        inputs: &[Tensor],
+        output: &Tensor,
     ) -> Result<(), Error> {
         let back_propagated_delta: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
@@ -40,7 +40,7 @@ impl OperatorTrait for Reshape {
         Ok(())
     }
 
-    fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
+    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(input.rows(), self.input_rows);

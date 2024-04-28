@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{Device, Error, Forward, LearningTensor, Operator, Operators, Tape};
+use crate::{Device, Error, Forward, Operator, Operators, Tape, Tensor};
 
 pub struct Architecture {
     embedding: Operator,
@@ -21,7 +21,7 @@ impl Architecture {
 }
 
 impl Forward for Architecture {
-    fn forward(&self, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let state_0 = self.embedding.forward(inputs)?;
         let state_1 = self.reshape.forward(&[state_0])?;
         let state_2 = self.linear.forward(&[state_1])?;

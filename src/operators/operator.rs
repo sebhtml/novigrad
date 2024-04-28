@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Forward, LearningTensor, OperatorTrait, Tape};
+use crate::{Device, Error, Forward, OperatorTrait, Tape, Tensor};
 
 pub struct Operator {
     device: Rc<Device>,
@@ -9,7 +9,7 @@ pub struct Operator {
 }
 
 impl Forward for Operator {
-    fn forward(&self, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let variant = &*self.variant.deref().borrow();
         let output = variant.forward(self.device.deref(), inputs)?;
 

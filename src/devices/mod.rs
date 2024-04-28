@@ -18,7 +18,7 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{LearningTensor, TensorF32};
+use crate::{Tensor, TensorF32};
 
 #[derive(Debug)]
 pub enum DevBuffer {
@@ -162,7 +162,7 @@ pub trait DeviceInterface {
 }
 
 pub struct Device {
-    tensors_with_requires_grad: RefCell<Vec<LearningTensor>>,
+    tensors_with_requires_grad: RefCell<Vec<Tensor>>,
     device: DeviceEnum,
 }
 
@@ -207,8 +207,8 @@ impl Device {
         cols: usize,
         values: Vec<f32>,
         requires_grad: bool,
-    ) -> LearningTensor {
-        let tensor = LearningTensor::new(
+    ) -> Tensor {
+        let tensor = Tensor::new(
             Rc::new(RefCell::new(Self::tensor(&self, rows, cols, values))),
             Rc::new(RefCell::new(Self::tensor(&self, 0, 0, vec![]))),
         );
@@ -220,7 +220,7 @@ impl Device {
         tensor
     }
 
-    pub fn tensors_with_requires_grad(&self) -> Vec<LearningTensor> {
+    pub fn tensors_with_requires_grad(&self) -> Vec<Tensor> {
         self.tensors_with_requires_grad.borrow().clone()
     }
 

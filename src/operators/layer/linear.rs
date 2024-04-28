@@ -2,11 +2,11 @@ use std::ops::Deref;
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, TensorF32};
+use crate::{devices::Device, DeltaWorkingMemory, Error, OperatorTrait, Tensor, TensorF32};
 
 pub struct Linear {
-    weights: LearningTensor,
-    biases: LearningTensor,
+    weights: Tensor,
+    biases: Tensor,
 }
 
 impl Linear {
@@ -37,7 +37,7 @@ impl Linear {
 }
 
 impl OperatorTrait for Linear {
-    fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
+    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output = device.learning_tensor(0, 0, vec![], false);
@@ -76,8 +76,8 @@ impl OperatorTrait for Linear {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &[LearningTensor],
-        output: &LearningTensor,
+        inputs: &[Tensor],
+        output: &Tensor,
     ) -> Result<(), Error> {
         let back_propagated_delta: &TensorF32 = &output.gradient().deref().borrow();
         {

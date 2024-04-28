@@ -1,11 +1,11 @@
 use std::rc::Rc;
 
-use crate::{into_one_hot_encoded_rows, DatasetDetails, Device, Error, LearningTensor, Operators};
+use crate::{into_one_hot_encoded_rows, DatasetDetails, Device, Error, Operators, Tensor};
 
 mod architecture;
 use architecture::*;
 
-fn load_examples(device: &Device) -> Result<Vec<(LearningTensor, LearningTensor)>, Error> {
+fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let mut examples = Vec::new();
 
     examples.push((

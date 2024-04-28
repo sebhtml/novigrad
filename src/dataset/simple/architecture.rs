@@ -1,4 +1,4 @@
-use crate::{Device, Error, Forward, LearningTensor, Operator, Operators, Tape};
+use crate::{Device, Error, Forward, Operator, Operators, Tape, Tensor};
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Architecture {
@@ -28,8 +28,8 @@ impl Architecture {
 }
 
 impl Forward for Architecture {
-    fn forward(&self, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
-        let state_0: LearningTensor = self.embedding.forward(inputs)?;
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+        let state_0: Tensor = self.embedding.forward(inputs)?;
         let state_1 = self.linear_0.forward(&[state_0])?;
         let state_2 = self.sigmoid_0.forward(&[state_1])?;
         let state_3 = self.reshape.forward(&[state_2])?;

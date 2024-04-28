@@ -1,8 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{
-    DatasetDetails, DeltaWorkingMemory, Device, Error, LearningTensor, Network, TensorF32,
-};
+use crate::{DatasetDetails, DeltaWorkingMemory, Device, Error, Network, Tensor, TensorF32};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -48,8 +46,8 @@ pub fn print_expected_output_and_actual_output(
 
 fn print_total_error(
     network: &mut Network,
-    inputs: &Vec<LearningTensor>,
-    outputs: &Vec<LearningTensor>,
+    inputs: &Vec<Tensor>,
+    outputs: &Vec<Tensor>,
     last_total_error: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
@@ -120,8 +118,8 @@ pub fn train_network_on_dataset(
 
 fn print_results(
     network: &mut Network,
-    inputs: &Vec<LearningTensor>,
-    outputs: &Vec<LearningTensor>,
+    inputs: &Vec<Tensor>,
+    outputs: &Vec<Tensor>,
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {
     let activation_tensors = network.predict_many(&inputs).unwrap();
 

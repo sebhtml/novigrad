@@ -3,12 +3,12 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 use crate::{DeltaWorkingMemory, Device, Error, OperatorTrait, Record, Tape, TensorF32};
 
 #[derive(Clone)]
-pub struct LearningTensor {
+pub struct Tensor {
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
 }
 
-impl LearningTensor {
+impl Tensor {
     pub fn new(tensor: Rc<RefCell<TensorF32>>, gradient: Rc<RefCell<TensorF32>>) -> Self {
         Self { tensor, gradient }
     }
@@ -25,7 +25,7 @@ impl LearningTensor {
         error_working_memory: &mut DeltaWorkingMemory,
         device: &Device,
         tape: &Rc<RefCell<Tape>>,
-    ) -> Result<Vec<LearningTensor>, Error> {
+    ) -> Result<Vec<Tensor>, Error> {
         let tape: &Tape = &tape.deref().borrow();
         let records: &Vec<Record> = &tape.records();
 

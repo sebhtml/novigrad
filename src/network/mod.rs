@@ -5,8 +5,7 @@ use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
 pub use train::*;
 
 use crate::{
-    devices::Device, Error, Forward, LearningTensor, Operator, Optimizer, OptimizerTrait, Tape,
-    TensorF32,
+    devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tape, Tensor, TensorF32,
 };
 
 pub struct Network {
@@ -88,8 +87,8 @@ impl Network {
         &mut self,
         error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
-        inputs: &Vec<LearningTensor>,
-        outputs: &Vec<LearningTensor>,
+        inputs: &Vec<Tensor>,
+        outputs: &Vec<Tensor>,
     ) -> Result<(), Error> {
         for i in 0..inputs.len() {
             self.train_back_propagation(error_working_memory, epoch, i, &inputs[i], &outputs[i])?;
@@ -97,11 +96,7 @@ impl Network {
         Ok(())
     }
 
-    pub fn total_error(
-        &mut self,
-        inputs: &[LearningTensor],
-        outputs: &[LearningTensor],
-    ) -> Result<f32, Error> {
+    pub fn total_error(&mut self, inputs: &[Tensor], outputs: &[Tensor]) -> Result<f32, Error> {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
             let output = self.forward(&[inputs[i].clone()])?;
@@ -122,8 +117,8 @@ impl Network {
         error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
-        x: &LearningTensor,
-        y: &LearningTensor,
+        x: &Tensor,
+        y: &Tensor,
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
@@ -136,10 +131,7 @@ impl Network {
         self.optimizer.optimize(gradients, &self.device)
     }
 
-    pub fn predict_many(
-        &mut self,
-        inputs: &[LearningTensor],
-    ) -> Result<Vec<LearningTensor>, Error> {
+    pub fn predict_many(&mut self, inputs: &[Tensor]) -> Result<Vec<Tensor>, Error> {
         let len = inputs.len();
         let mut outputs = vec![];
         let mut i = 0;
@@ -154,7 +146,7 @@ impl Network {
 }
 
 impl Forward for Network {
-    fn forward(&self, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         self.architecture.forward(inputs)
     }
 

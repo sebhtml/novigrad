@@ -11,10 +11,10 @@ pub fn print_expected_output_and_actual_output(
     actual_output: &TensorF32,
     expected_argmax: usize,
     actual_argmax: usize,
-    loss: Option<&TensorF32>,
+    loss: f32,
 ) -> Result<(), Error> {
+    let rows = expected_output.rows();
     let cols = expected_output.cols();
-    let last_row = actual_output.rows() - 1;
 
     let tokenizer = AsciiTokenizer::default();
     let input_tokens = get_row_argmaxes(input)?;
@@ -23,6 +23,7 @@ pub fn print_expected_output_and_actual_output(
 
     println!("----");
     println!("Example {}", example);
+    println!("Loss {}", loss);
 
     println!("  input_tokens: {:?}", &input_tokens);
     println!("  input_text: {}", tokenizer.decode(&input_tokens));
@@ -42,24 +43,18 @@ pub fn print_expected_output_and_actual_output(
     let expected_values = expected_output.get_values()?;
     let actual_values = actual_output.get_values()?;
     println!("");
-    for col in 0..cols {
-        // TODO is this the correct loss in the loss tensor
-        let loss = match loss {
-            Some(loss) => {
-                let values = loss.get_values()?;
-                values[loss.index(0, col)]
-            }
-            _ => Default::default(),
-        };
-        println!(
-            "index {}  expected {}  actual {}  loss {}",
-            col,
-            // TODO last_row should not be a thing
-            expected_values[expected_output.index(0, col)],
-            actual_values[actual_output.index(last_row, col)],
-            loss
-        );
+
+    for row in 0..rows {
+        for col in 0..cols {
+            println!(
+                "index {}  expected {}  actual {}",
+                col,
+                expected_values[expected_output.index(row, col)],
+                actual_values[actual_output.index(row, col)],
+            );
+        }
     }
+
     Ok(())
 }
 
@@ -70,7 +65,7 @@ fn print_total_error(
     last_total_error: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
-    let total_error = network.total_error(inputs, outputs)?;
+    let total_error = network.total_loss(inputs, outputs)?;
     let change = (total_error - last_total_error) / last_total_error;
     println!(
         "Epoch {} Total_error {}, change: {}",
@@ -144,6 +139,7 @@ fn print_results(
     for i in 0..inputs.len() {
         let input = &inputs[i];
         let actual_output = network.forward(&[input.clone()])?;
+        let loss = network.example_loss(&actual_output, &outputs[i])?;
 
         let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
@@ -162,7 +158,7 @@ fn print_results(
             actual_output,
             expected_argmax,
             actual_argmax,
-            None,
+            loss,
         )?;
     }
 

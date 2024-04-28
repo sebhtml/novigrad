@@ -28,16 +28,16 @@ impl Architecture {
 }
 
 impl Forward for Architecture {
-    fn forward(&mut self, x: &LearningTensor) -> Result<LearningTensor, Error> {
-        let x = self.embedding.forward(&x)?;
-        let x = self.linear_0.forward(&x)?;
-        let x = self.sigmoid_0.forward(&x)?;
-        let x = self.reshape.forward(&x)?;
-        let x = self.linear_1.forward(&x)?;
-        let x = self.sigmoid_1.forward(&x)?;
-        let x = self.linear_2.forward(&x)?;
-        let x = self.softmax.forward(&x)?;
-        Ok(x)
+    fn forward(&self, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
+        let state_0: LearningTensor = self.embedding.forward(inputs)?;
+        let state_1 = self.linear_0.forward(&[state_0])?;
+        let state_2 = self.sigmoid_0.forward(&[state_1])?;
+        let state_3 = self.reshape.forward(&[state_2])?;
+        let state_4 = self.linear_1.forward(&[state_3])?;
+        let state_5 = self.sigmoid_1.forward(&[state_4])?;
+        let state_6 = self.linear_2.forward(&[state_5])?;
+        let state_7 = self.softmax.forward(&[state_6])?;
+        Ok(state_7)
     }
 
     fn device(&self) -> Rc<Device> {

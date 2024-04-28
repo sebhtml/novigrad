@@ -99,16 +99,16 @@ impl Network {
 
     pub fn total_error(
         &mut self,
-        inputs: &Vec<LearningTensor>,
-        outputs: &Vec<LearningTensor>,
+        inputs: &[LearningTensor],
+        outputs: &[LearningTensor],
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
-            let output = self.forward(&inputs[i])?;
+            let output = self.forward(&[inputs[i].clone()])?;
             let target = &outputs[i];
             let example_error = self
                 .loss_function
-                .forward_inputs(&vec![target.clone(), output.clone()])?;
+                .forward(&[target.clone(), output.clone()])?;
             let example_error: &Tensor = &example_error.tensor().deref().borrow();
             let example_error: f32 = example_error.try_into()?;
             total_error += example_error;
@@ -127,11 +127,9 @@ impl Network {
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
-        let output = self.forward(x)?;
+        let output = self.forward(&[x.clone()])?;
 
-        let loss = self
-            .loss_function
-            .forward_inputs(&vec![y.clone(), output.clone()])?;
+        let loss = self.loss_function.forward(&[y.clone(), output.clone()])?;
 
         let gradients = loss.backward(error_working_memory, &self.device, &self.tape)?;
 
@@ -140,21 +138,31 @@ impl Network {
 
     pub fn predict_many(
         &mut self,
-        inputs: &Vec<LearningTensor>,
+        inputs: &[LearningTensor],
     ) -> Result<Vec<LearningTensor>, Error> {
         let len = inputs.len();
         let mut outputs = vec![];
         let mut i = 0;
         while i < len {
             let input = &inputs[i];
-            let output = self.forward(input)?;
+            let output = self.forward(&[input.clone()])?;
             outputs.push(output);
             i += 1;
         }
         Ok(outputs)
     }
+}
 
-    pub fn forward(&mut self, input: &LearningTensor) -> Result<LearningTensor, Error> {
-        self.architecture.forward(input)
+impl Forward for Network {
+    fn forward(&self, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
+        self.architecture.forward(inputs)
+    }
+
+    fn device(&self) -> Rc<Device> {
+        self.device.clone()
+    }
+
+    fn tape(&self) -> Rc<RefCell<Tape>> {
+        self.tape.clone()
     }
 }

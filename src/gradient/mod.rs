@@ -10,23 +10,20 @@ pub use learning_tensor::*;
 pub trait OperatorTrait {
     fn name(&self) -> &str;
 
-    fn forward(
-        &self,
-        device: &Device,
-        inputs: &Vec<LearningTensor>,
-    ) -> Result<LearningTensor, Error>;
+    fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error>;
 
     fn backward(
         &self,
         device: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<LearningTensor>,
+        inputs: &[LearningTensor],
         output: &LearningTensor,
     ) -> Result<(), Error>;
 }
 
 pub trait Forward {
-    fn forward(&mut self, input: &LearningTensor) -> Result<LearningTensor, Error>;
+    fn forward(&self, inputs: &[LearningTensor]) -> Result<LearningTensor, Error>;
+
     fn device(&self) -> Rc<Device>;
     fn tape(&self) -> Rc<RefCell<Tape>>;
 }

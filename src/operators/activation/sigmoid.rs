@@ -76,7 +76,7 @@ impl OperatorTrait for Sigmoid {
         &self,
         device: &Device,
         error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<LearningTensor>,
+        inputs: &[LearningTensor],
         output: &LearningTensor,
     ) -> Result<(), Error> {
         let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
@@ -90,11 +90,7 @@ impl OperatorTrait for Sigmoid {
         Ok(())
     }
 
-    fn forward(
-        &self,
-        device: &Device,
-        inputs: &Vec<LearningTensor>,
-    ) -> Result<LearningTensor, Error> {
+    fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
         let input: &Tensor = &inputs[0].tensor().deref().borrow();
         let output = device.learning_tensor(0, 0, vec![], false);
         {

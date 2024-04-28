@@ -20,7 +20,7 @@ impl OperatorTrait for Embedding {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<LearningTensor>,
+        inputs: &[LearningTensor],
         output: &LearningTensor,
     ) -> Result<(), Error> {
         let output_gradient: &Tensor = &output.gradient().deref().borrow();
@@ -34,11 +34,7 @@ impl OperatorTrait for Embedding {
         Tensor::matmul(device, true, false, a, b, c, true)
     }
 
-    fn forward(
-        &self,
-        device: &Device,
-        inputs: &Vec<LearningTensor>,
-    ) -> Result<LearningTensor, Error> {
+    fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
         let input: &Tensor = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         let embedding_table: &Tensor = &self.embedding_table.tensor().deref().borrow();

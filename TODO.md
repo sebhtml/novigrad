@@ -1,4 +1,3 @@
-- todo novigrad pass &[Tensor,]
 - add tokenizer with encode and decode
 
 == New operators ==
@@ -6,6 +5,8 @@
 - implement Concat
 - implement Matmul
 - implement Add
+
+- get rid of TrainWorkingMemory and DeltaWorkingMemory
 
 == Initialization ==
 

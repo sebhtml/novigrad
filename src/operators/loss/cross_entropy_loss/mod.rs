@@ -61,7 +61,7 @@ impl OperatorTrait for CrossEntropyLoss {
         &self,
         device: &Device,
         _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<LearningTensor>,
+        inputs: &[LearningTensor],
         _output: &LearningTensor,
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
@@ -72,11 +72,7 @@ impl OperatorTrait for CrossEntropyLoss {
         Ok(())
     }
 
-    fn forward(
-        &self,
-        device: &Device,
-        inputs: &Vec<LearningTensor>,
-    ) -> Result<LearningTensor, Error> {
+    fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output = device.learning_tensor(0, 0, vec![], false);
         let expected: &Tensor = &inputs[0].tensor().deref().borrow();

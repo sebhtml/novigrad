@@ -2,16 +2,16 @@ use std::fs;
 use std::rc::Rc;
 
 mod architecture;
-use crate::DatasetDetails;
 use crate::{into_one_hot_encoded_rows, Device, LearningTensor, Operators};
+use crate::{DatasetDetails, Error};
 use architecture::*;
 
-fn load_examples(device: &Device) -> Vec<(LearningTensor, LearningTensor)> {
+fn load_examples(device: &Device) -> Result<Vec<(LearningTensor, LearningTensor)>, Error> {
     let num_classes = 256;
     let context_size = 32;
     let mut examples = Vec::new();
     let file_path = "Mega_Man.txt";
-    let contents = fs::read_to_string(file_path).expect("contents");
+    let contents = fs::read_to_string(file_path).map_err(|_| Error::UnsupportedOperation)?;
     // TODO use bpe tokenizer.
     let tokens: Vec<usize> = contents
         .as_bytes()
@@ -25,9 +25,9 @@ fn load_examples(device: &Device) -> Vec<(LearningTensor, LearningTensor)> {
     while i + context_size < tokens.len() && i < max_number_of_examples {
         let next_token_index = i + context_size;
         let input_tokens = &tokens[i..next_token_index];
-        let one_hot_encoded_tokens = into_one_hot_encoded_rows(device, input_tokens, num_classes);
+        let one_hot_encoded_tokens = into_one_hot_encoded_rows(device, input_tokens, num_classes)?;
         let next_token = &tokens[next_token_index..next_token_index + 1];
-        let output_multiclass = into_one_hot_encoded_rows(device, next_token, num_classes);
+        let output_multiclass = into_one_hot_encoded_rows(device, next_token, num_classes)?;
 
         examples.push((
             //
@@ -36,13 +36,13 @@ fn load_examples(device: &Device) -> Vec<(LearningTensor, LearningTensor)> {
         ));
         i += 1;
     }
-    examples
+    Ok(examples)
 }
 
-pub fn load_dataset(device: Rc<Device>) -> DatasetDetails {
-    let examples = load_examples(&device);
+pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
+    let examples = load_examples(&device)?;
     let ops = Operators::new(device);
-    DatasetDetails {
+    let details = DatasetDetails {
         examples,
         architecture: Box::new(Architecture::new(&ops)),
         epochs: 300,
@@ -50,5 +50,6 @@ pub fn load_dataset(device: Rc<Device>) -> DatasetDetails {
         loss_function_name: ops.cross_entropy_loss(),
         initial_total_error_min: 50.0,
         final_total_error_max: 0.002,
-    }
+    };
+    Ok(details)
 }

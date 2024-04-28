@@ -108,8 +108,7 @@ impl Network {
             let target = &outputs[i];
             let example_error = self
                 .loss_function
-                .forward_inputs(&vec![target.clone(), output.clone()])
-                .expect("Ok");
+                .forward_inputs(&vec![target.clone(), output.clone()])?;
             let example_error: &Tensor = &example_error.tensor().deref().borrow();
             let example_error: f32 = example_error.try_into()?;
             total_error += example_error;
@@ -136,9 +135,7 @@ impl Network {
 
         let gradients = loss.backward(error_working_memory, &self.device, &self.tape)?;
 
-        self.optimizer.optimize(gradients, &self.device);
-
-        Ok(())
+        self.optimizer.optimize(gradients, &self.device)
     }
 
     pub fn predict_many(

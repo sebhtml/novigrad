@@ -1,3 +1,6 @@
+- todo novigrad pass &[Tensor,]
+- add tokenizer with encode and decode
+
 == New operators ==
 
 - implement Concat
@@ -31,7 +34,6 @@
 == Refactoring ==
 
 - determine the value of using_cross_entropy_loss at run time
-- centralize panic! calls
 - Don't call reset inside Tensor methods
 - add rc device in tensor
 - store device in LearningTensor

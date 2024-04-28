@@ -44,16 +44,16 @@ impl DevBuffer {
         }
     }
 
-    // TODO Delete uses of get_values
-    pub fn get_values(&self) -> Vec<f32> {
+    pub fn get_values(&self) -> Result<Vec<f32>, Error> {
         match &self {
-            DevBuffer::CpuBuffer(ref values) => values.clone(),
+            DevBuffer::CpuBuffer(ref values) => Ok(values.clone()),
             #[cfg(feature = "cuda")]
             DevBuffer::CudaBuffer(ref buffer) => {
                 let mut values = vec![0.0; buffer.len()];
-                // TODO don't unwrap directly.
-                buffer.copy_to(values.as_mut_slice()).unwrap();
-                values
+                match buffer.copy_to(values.as_mut_slice()) {
+                    Ok(_) => Ok(values),
+                    _ => Err(Error::UnsupportedOperation),
+                }
             }
         }
     }

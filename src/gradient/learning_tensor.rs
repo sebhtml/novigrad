@@ -43,9 +43,9 @@ impl LearningTensor {
                 let back_propagated_gradient = device.tensor(
                     back_propagated_delta.rows(),
                     back_propagated_delta.cols(),
-                    back_propagated_delta.get_values(),
+                    back_propagated_delta.get_values()?,
                 );
-                back_propagated_gradient.clip(-1.0, 1.0, back_propagated_delta);
+                back_propagated_gradient.clip(-1.0, 1.0, back_propagated_delta)?;
             }
         }
         Ok(device.tensors_with_requires_grad())

@@ -42,13 +42,13 @@ impl Tensor {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reset(left.rows, left.cols, Default::default());
+        result.reset(left.rows, left.cols, Default::default())?;
         debug_assert_eq!(result.shape(), left.shape());
         Tensor::scalar_mul(device, 0.0, result)?;
 
-        let mut result_values = result.get_values();
-        let left_values = left.get_values();
-        let right_values = right.get_values();
+        let mut result_values = result.get_values()?;
+        let left_values = left.get_values()?;
+        let right_values = right.get_values()?;
 
         let result_ptr = result_values.as_mut_ptr();
         let left_ptr = left_values.as_ptr();
@@ -91,14 +91,15 @@ impl Tensor {
         (self.rows, self.cols)
     }
 
-    pub fn reset(&mut self, new_rows: usize, new_cols: usize, value: f32) {
+    pub fn reset(&mut self, new_rows: usize, new_cols: usize, value: f32) -> Result<(), Error> {
         self.rows = new_rows;
         self.cols = new_cols;
         let values = self.rows * self.cols;
-        let mut self_values = self.get_values();
+        let mut self_values = self.get_values()?;
         self_values.clear();
         self_values.resize(values, value);
-        self.set_values(self_values)
+        self.set_values(self_values);
+        Ok(())
     }
 
     pub fn index(&self, row: usize, col: usize) -> usize {
@@ -106,14 +107,14 @@ impl Tensor {
     }
 
     pub fn assign(&mut self, device: &Device, from: &Tensor) -> Result<(), Error> {
-        self.reset(from.rows, from.cols, 0.0);
+        self.reset(from.rows, from.cols, 0.0)?;
         Tensor::copy(device, from, self)
     }
 
-    pub fn transpose(&self, other: &mut Tensor) {
-        let self_values = self.get_values();
-        other.reset(self.cols, self.rows, Default::default());
-        let mut other_values = other.get_values();
+    pub fn transpose(&self, other: &mut Tensor) -> Result<(), Error> {
+        let self_values = self.get_values()?;
+        other.reset(self.cols, self.rows, Default::default())?;
+        let mut other_values = other.get_values()?;
         let rows = self.rows;
         let cols = self.cols;
         let mut row = 0;
@@ -126,7 +127,8 @@ impl Tensor {
             }
             row += 1;
         }
-        other.set_values(other_values)
+        other.set_values(other_values);
+        Ok(())
     }
 
     pub fn as_ptr(&self) -> *const f32 {
@@ -137,8 +139,7 @@ impl Tensor {
         self.values.as_mut_ptr()
     }
 
-    // TODO Delete uses of get_values
-    pub fn get_values(&self) -> Vec<f32> {
+    pub fn get_values(&self) -> Result<Vec<f32>, Error> {
         self.values.get_values()
     }
 
@@ -351,12 +352,12 @@ impl Tensor {
     }
 
     // TODO use device to clip
-    pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) {
-        result.reset(self.rows, self.cols, Default::default());
+    pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) -> Result<(), Error> {
+        result.reset(self.rows, self.cols, Default::default())?;
         let len = self.len();
         let mut index = 0;
-        let self_values = self.get_values();
-        let mut result_values = result.get_values();
+        let self_values = self.get_values()?;
+        let mut result_values = result.get_values()?;
         while index < len {
             let mut value = self_values[index];
             value = value.max(min);
@@ -364,7 +365,8 @@ impl Tensor {
             result_values[index] = value;
             index += 1;
         }
-        result.set_values(result_values)
+        result.set_values(result_values);
+        Ok(())
     }
 
     pub fn scalar_mul(device: &Device, alpha: f32, x: &mut Tensor) -> Result<(), Error> {
@@ -387,7 +389,7 @@ impl Tensor {
 
 impl Display for Tensor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let self_values = self.get_values();
+        let self_values = self.get_values().map_err(|_| std::fmt::Error)?;
         _ = write!(f, "Shape: {:?}", (self.rows, self.cols));
         _ = write!(f, "\n");
         for row in 0..self.rows {
@@ -423,7 +425,7 @@ impl TryInto<f32> for &Tensor {
     fn try_into(self) -> Result<f32, Self::Error> {
         match self.shape() {
             (1, 1) => {
-                let self_values = self.get_values();
+                let self_values = self.get_values()?;
                 Ok(self_values[self.index(0, 0)])
             }
             _ => Err(Error::UnsupportedOperation),

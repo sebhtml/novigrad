@@ -23,11 +23,11 @@ impl ActivationFunction for Softmax {
             product_matrix.rows(),
             product_matrix.cols(),
             Default::default(),
-        );
+        )?;
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
-        let values = product_matrix.get_values();
-        let mut result_values = result.get_values();
+        let values = product_matrix.get_values()?;
+        let mut result_values = result.get_values()?;
         let mut row = 0;
         while row < rows {
             // Find max
@@ -79,11 +79,11 @@ impl ActivationFunction for Softmax {
             activation_matrix.rows(),
             activation_matrix.cols(),
             Default::default(),
-        );
+        )?;
         let rows = activation_matrix.rows();
         let cols = activation_matrix.cols();
-        let values = activation_matrix.get_values();
-        let mut result_values = result.get_values();
+        let values = activation_matrix.get_values()?;
+        let mut result_values = result.get_values()?;
         let mut row = 0;
         while row < rows {
             let mut col = 0;

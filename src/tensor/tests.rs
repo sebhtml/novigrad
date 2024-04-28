@@ -50,7 +50,7 @@ fn multiplication_shape_compatibility() {
     );
 
     let mut result = device.tensor(0, 0, vec![]);
-    result.reset(lhs.rows(), rhs.cols(), 0.0);
+    result.reset(lhs.rows(), rhs.cols(), 0.0).unwrap();
     let device = Device::cpu();
     let error = Tensor::matmul(&device, false, false, &lhs, &rhs, &mut result, false);
     assert_eq!(error, Err(Error::IncompatibleTensorShapes))
@@ -79,7 +79,7 @@ fn reshape_result() {
         ],
     );
 
-    lhs.reshape(1, 8).expect("Ok");
+    lhs.reshape(1, 8).unwrap();
     assert_eq!(lhs, expected);
 }
 
@@ -111,7 +111,7 @@ fn index() {
         ],
     );
 
-    let values = tensor.get_values();
+    let values = tensor.get_values().unwrap();
     assert_eq!(values[tensor.index(0, 1)], 2.0);
 }
 
@@ -132,7 +132,9 @@ fn clip() {
         ],
     );
     let mut clipped = device.tensor(0, 0, vec![]);
-    tensor.clip(0.0 + epsilon, 1.0 - epsilon, &mut clipped);
+    tensor
+        .clip(0.0 + epsilon, 1.0 - epsilon, &mut clipped)
+        .unwrap();
 
     let expected = device.tensor(
         1,
@@ -160,11 +162,11 @@ fn set_values() {
         ],
     );
 
-    let mut values = tensor.get_values();
+    let mut values = tensor.get_values().unwrap();
     values[tensor.index(1, 0)] = 99.0;
     tensor.set_values(values);
 
-    let values = tensor.get_values();
+    let values = tensor.get_values().unwrap();
     assert_eq!(values[tensor.index(1, 0)], 99.0);
 }
 
@@ -208,7 +210,7 @@ fn reset() {
             1.0, //
         ],
     );
-    tensor.reset(2, 1, Default::default());
+    tensor.reset(2, 1, Default::default()).unwrap();
     let expected = device.tensor(
         2,
         1,
@@ -261,7 +263,7 @@ fn matrix_multiplication_result() {
     );
 
     let mut result = device.tensor(0, 0, vec![]);
-    result.reset(lhs.rows(), rhs.cols(), 0.0);
+    result.reset(lhs.rows(), rhs.cols(), 0.0).unwrap();
     let device = Device::cpu();
     Tensor::matmul(&device, false, false, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
@@ -284,7 +286,7 @@ fn transposed_lhs_matrix_multiplication_result() {
         ],
     );
     let mut lhs = device.tensor(0, 0, vec![]);
-    lhs2.transpose(&mut lhs);
+    lhs2.transpose(&mut lhs).unwrap();
     let rhs = device.tensor(
         2,
         3,
@@ -310,7 +312,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     );
 
     let mut result = device.tensor(0, 0, vec![]);
-    result.reset(lhs.cols(), rhs.cols(), 0.0);
+    result.reset(lhs.cols(), rhs.cols(), 0.0).unwrap();
     let device = Device::cpu();
     Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
@@ -341,7 +343,7 @@ fn transposed_rhs_matrix_multiplication_result() {
         ],
     );
     let mut rhs = device.tensor(0, 0, vec![]);
-    rhs2.transpose(&mut rhs);
+    rhs2.transpose(&mut rhs).unwrap();
     let expected_result = device.tensor(
         3,
         3,
@@ -359,9 +361,9 @@ fn transposed_rhs_matrix_multiplication_result() {
     );
 
     let mut result = device.tensor(0, 0, vec![]);
-    result.reset(lhs.rows(), rhs.rows(), 0.0);
+    result.reset(lhs.rows(), rhs.rows(), 0.0).unwrap();
     let device = Device::cpu();
-    Tensor::matmul(&device, false, true, &lhs, &rhs, &mut result, false).expect("Ok");
+    Tensor::matmul(&device, false, true, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -378,7 +380,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
         ],
     );
     let mut lhs = device.tensor(0, 0, vec![]);
-    lhs2.transpose(&mut lhs);
+    lhs2.transpose(&mut lhs).unwrap();
     let rhs2 = device.tensor(
         2,
         3,
@@ -388,7 +390,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
         ],
     );
     let mut rhs = device.tensor(0, 0, vec![]);
-    rhs2.transpose(&mut rhs);
+    rhs2.transpose(&mut rhs).unwrap();
     let expected_result = device.tensor(
         3,
         3,
@@ -406,9 +408,9 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     );
 
     let mut result = device.tensor(0, 0, vec![]);
-    result.reset(lhs.cols(), rhs.rows(), 0.0);
+    result.reset(lhs.cols(), rhs.rows(), 0.0).unwrap();
     let device = Device::cpu();
-    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, false).expect("Ok");
+    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -426,7 +428,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
         ],
     );
     let mut lhs = device.tensor(0, 0, vec![]);
-    lhs2.transpose(&mut lhs);
+    lhs2.transpose(&mut lhs).unwrap();
 
     let rhs2 = device.tensor(
         2,
@@ -438,7 +440,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     );
 
     let mut rhs = device.tensor(0, 0, vec![]);
-    rhs2.transpose(&mut rhs);
+    rhs2.transpose(&mut rhs).unwrap();
 
     let expected_result2 = device.tensor(
         4,
@@ -459,12 +461,12 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
         ],
     );
     let mut expected_result = device.tensor(0, 0, vec![]);
-    expected_result2.transpose(&mut expected_result);
+    expected_result2.transpose(&mut expected_result).unwrap();
 
     let mut result = device.tensor(0, 0, vec![]);
-    result.reset(rhs.rows(), lhs.cols(), 0.0);
+    result.reset(rhs.rows(), lhs.cols(), 0.0).unwrap();
     let device = Device::cpu();
-    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, true).expect("Ok");
+    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -482,7 +484,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
         ],
     );
     let mut lhs = device.tensor(0, 0, vec![]);
-    lhs2.transpose(&mut lhs);
+    lhs2.transpose(&mut lhs).unwrap();
 
     let rhs = device.tensor(
         2,
@@ -512,12 +514,12 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
         ],
     );
     let mut expected_result = device.tensor(0, 0, vec![]);
-    expected_result2.transpose(&mut expected_result);
+    expected_result2.transpose(&mut expected_result).unwrap();
 
     let mut result = device.tensor(0, 0, vec![]);
-    result.reset(rhs.cols(), lhs.cols(), 0.0);
+    result.reset(rhs.cols(), lhs.cols(), 0.0).unwrap();
     let device = Device::cpu();
-    Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, true).expect("Ok");
+    Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -659,7 +661,7 @@ fn big_matrix_multiplication() {
     let m = device.tensor(rows, cols, values);
 
     let mut result = device.tensor(0, 0, vec![]);
-    result.reset(m.rows(), m.cols(), 0.0);
+    result.reset(m.rows(), m.cols(), 0.0).unwrap();
     let device = Device::cpu();
     Tensor::matmul(&device, false, false, &m, &m, &mut result, false).unwrap();
 }
@@ -687,9 +689,9 @@ fn transpose() {
     let device = Device::default();
     let matrix = device.tensor(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     let mut matrix2 = device.tensor(0, 0, vec![]);
-    matrix.transpose(&mut matrix2);
-    let matrix_values = matrix.get_values();
-    let matrix2_values = matrix2.get_values();
+    matrix.transpose(&mut matrix2).unwrap();
+    let matrix_values = matrix.get_values().unwrap();
+    let matrix2_values = matrix2.get_values().unwrap();
     for row in 0..matrix.rows() {
         for col in 0..matrix.cols() {
             assert_eq!(

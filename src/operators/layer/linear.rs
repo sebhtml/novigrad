@@ -65,7 +65,7 @@ impl OperatorTrait for Linear {
                 Ok(_) => (),
                 Err(_) => {
                     let mut w_t = device.tensor(0, 0, vec![]);
-                    b.transpose(&mut w_t);
+                    b.transpose(&mut w_t)?;
                     println!("Incompatible shapes in matrix multiplication");
                     println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
                     debug_assert!(false);
@@ -91,9 +91,8 @@ impl OperatorTrait for Linear {
             let a: &Tensor = input;
             let b: &Tensor = back_propagated_delta;
             let c: &mut Tensor = weights_gradient;
-            c.reset(b.cols(), a.cols(), 0.0);
-            let op_result = Tensor::matmul(device, true, false, a, b, c, true);
-            op_result.expect("Ok");
+            c.reset(b.cols(), a.cols(), 0.0)?;
+            Tensor::matmul(device, true, false, a, b, c, true)?;
 
             biases_gradient.assign(device, back_propagated_delta)?;
         }
@@ -104,7 +103,7 @@ impl OperatorTrait for Linear {
             let a: &Tensor = weights;
             let b: &Tensor = back_propagated_delta;
             let c: &mut Tensor = backward_gradient;
-            c.reset(b.rows(), a.cols(), 0.0);
+            c.reset(b.rows(), a.cols(), 0.0)?;
             Tensor::matmul(device, true, true, a, b, c, true)?;
         }
 

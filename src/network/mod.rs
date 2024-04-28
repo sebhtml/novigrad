@@ -6,7 +6,7 @@ pub use train::*;
 
 use crate::{
     devices::Device, Error, Forward, LearningTensor, Operator, Optimizer, OptimizerTrait, Tape,
-    Tensor,
+    TensorF32,
 };
 
 pub struct Network {
@@ -18,12 +18,12 @@ pub struct Network {
 }
 
 pub struct TrainWorkingMemory {
-    pub layer_output: Tensor,
-    pub next_layer_delta: Tensor,
-    pub back_propagated_delta: Tensor,
-    pub layer_delta: Tensor,
-    pub previous_activation_tensor: Tensor,
-    pub tmp: Tensor,
+    pub layer_output: TensorF32,
+    pub next_layer_delta: TensorF32,
+    pub back_propagated_delta: TensorF32,
+    pub layer_delta: TensorF32,
+    pub previous_activation_tensor: TensorF32,
+    pub tmp: TensorF32,
 }
 
 impl TrainWorkingMemory {
@@ -40,7 +40,7 @@ impl TrainWorkingMemory {
 }
 
 pub struct DeltaWorkingMemory {
-    pub layer_f_derivative: Tensor,
+    pub layer_f_derivative: TensorF32,
 }
 
 impl DeltaWorkingMemory {
@@ -52,9 +52,9 @@ impl DeltaWorkingMemory {
 }
 
 pub struct PredictWorkingMemory {
-    pub previous_activation_tensor: Tensor,
-    pub activation_tensor: Tensor,
-    pub activation_tensors: Vec<Tensor>,
+    pub previous_activation_tensor: TensorF32,
+    pub activation_tensor: TensorF32,
+    pub activation_tensors: Vec<TensorF32>,
 }
 
 impl PredictWorkingMemory {
@@ -109,7 +109,7 @@ impl Network {
             let example_error = self
                 .loss_function
                 .forward(&[target.clone(), output.clone()])?;
-            let example_error: &Tensor = &example_error.tensor().deref().borrow();
+            let example_error: &TensorF32 = &example_error.tensor().deref().borrow();
             let example_error: f32 = example_error.try_into()?;
             total_error += example_error;
         }

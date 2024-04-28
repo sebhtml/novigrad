@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use super::LossFunction;
-use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
+use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, TensorF32};
 
 #[derive(Clone)]
 pub struct CrossEntropyLoss {}
@@ -16,7 +16,12 @@ const EPSILON: f32 = 1e-8;
 
 impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(&self, _device: &Device, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
+    fn evaluate(
+        &self,
+        _device: &Device,
+        expected: &TensorF32,
+        actual: &TensorF32,
+    ) -> Result<f32, Error> {
         debug_assert_eq!(actual.shape(), expected.shape());
         let p = expected;
         let q = actual;
@@ -47,12 +52,12 @@ impl LossFunction for CrossEntropyLoss {
     fn derive(
         &self,
         device: &Device,
-        expected: &Tensor,
-        actual: &Tensor,
-        result: &mut Tensor,
+        expected: &TensorF32,
+        actual: &TensorF32,
+        result: &mut TensorF32,
     ) -> Result<(), Error> {
         result.assign(device, actual)?;
-        Tensor::sub(device, expected, result)
+        TensorF32::sub(device, expected, result)
     }
 }
 
@@ -65,9 +70,9 @@ impl OperatorTrait for CrossEntropyLoss {
         _output: &LearningTensor,
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let expected: &Tensor = &inputs[0].tensor().deref().borrow();
-        let actual: &Tensor = &inputs[1].tensor().deref().borrow();
-        let backward_gradient: &mut Tensor = &mut inputs[1].gradient().deref().borrow_mut();
+        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
+        let backward_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
         self.derive(device, expected, actual, backward_gradient)?;
         Ok(())
     }
@@ -75,8 +80,8 @@ impl OperatorTrait for CrossEntropyLoss {
     fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output = device.learning_tensor(0, 0, vec![], false);
-        let expected: &Tensor = &inputs[0].tensor().deref().borrow();
-        let actual: &Tensor = &inputs[1].tensor().deref().borrow();
+        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
         output.tensor().deref().borrow_mut().reset(1, 1, loss)?;
         Ok(output)

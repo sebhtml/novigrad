@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, Tensor};
+use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, TensorF32};
 use crate::{Error, LearningTensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -14,7 +14,7 @@ impl Sigmoid {
 }
 
 impl ActivationFunction for Sigmoid {
-    fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error> {
+    fn activate(&self, product_matrix: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
         result.reset(
             product_matrix.rows(),
             product_matrix.cols(),
@@ -41,9 +41,9 @@ impl ActivationFunction for Sigmoid {
 
     fn derive(
         &self,
-        _product_matrix: &Tensor,
-        activation_matrix: &Tensor,
-        result: &mut Tensor,
+        _product_matrix: &TensorF32,
+        activation_matrix: &TensorF32,
+        result: &mut TensorF32,
     ) -> Result<(), Error> {
         result.reset(
             activation_matrix.rows(),
@@ -79,11 +79,11 @@ impl OperatorTrait for Sigmoid {
         inputs: &[LearningTensor],
         output: &LearningTensor,
     ) -> Result<(), Error> {
-        let back_propagated_delta: &Tensor = &output.gradient().deref().borrow();
-        let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
+        let back_propagated_delta: &TensorF32 = &output.gradient().deref().borrow();
+        let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
         // Compute activation function derivative.
-        let input: &Tensor = &inputs[0].tensor().deref().borrow();
-        let output: &Tensor = &output.tensor().deref().borrow();
+        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let output: &TensorF32 = &output.tensor().deref().borrow();
         let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
         self.derive(input, output, layer_f_derivative)?;
         layer_f_derivative.element_wise_mul(device, back_propagated_delta, backward_gradient)?;
@@ -91,10 +91,10 @@ impl OperatorTrait for Sigmoid {
     }
 
     fn forward(&self, device: &Device, inputs: &[LearningTensor]) -> Result<LearningTensor, Error> {
-        let input: &Tensor = &inputs[0].tensor().deref().borrow();
+        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output = device.learning_tensor(0, 0, vec![], false);
         {
-            let output: &mut Tensor = &mut output.tensor().deref().borrow_mut();
+            let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
             self.activate(input, output)?;
         }
         Ok(output)

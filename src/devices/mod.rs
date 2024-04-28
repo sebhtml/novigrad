@@ -18,7 +18,7 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{LearningTensor, Tensor};
+use crate::{LearningTensor, TensorF32};
 
 #[derive(Debug)]
 pub enum DevBuffer {
@@ -116,12 +116,12 @@ pub trait DeviceInterface {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &Tensor,
+        a: &TensorF32,
         lda: i32,
-        b: &Tensor,
+        b: &TensorF32,
         ldb: i32,
         beta: f32,
-        c: &mut Tensor,
+        c: &mut TensorF32,
         ldc: i32,
     ) -> Result<(), Error>;
 
@@ -131,20 +131,34 @@ pub trait DeviceInterface {
         &self,
         n: i32,
         alpha: f32,
-        x: &Tensor,
+        x: &TensorF32,
         incx: i32,
-        y: &mut Tensor,
+        y: &mut TensorF32,
         incy: i32,
     ) -> Result<(), Error>;
 
     /// SDOT forms the dot product of two vectors.
-    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> Result<f32, Error>;
+    fn sdot(
+        &self,
+        n: i32,
+        x: &TensorF32,
+        incx: i32,
+        y: &TensorF32,
+        incy: i32,
+    ) -> Result<f32, Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
-    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) -> Result<(), Error>;
+    fn scopy(
+        &self,
+        n: i32,
+        x: &TensorF32,
+        incx: i32,
+        y: &mut TensorF32,
+        incy: i32,
+    ) -> Result<(), Error>;
 
     /// SSCAL scales a vector by a constant.
-    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) -> Result<(), Error>;
+    fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error>;
 }
 
 pub struct Device {
@@ -183,8 +197,8 @@ impl Device {
         }
     }
 
-    pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Tensor {
-        Tensor::new(rows, cols, values, self)
+    pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> TensorF32 {
+        TensorF32::new(rows, cols, values, self)
     }
 
     pub fn learning_tensor(
@@ -234,12 +248,12 @@ impl DeviceInterface for Device {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &Tensor,
+        a: &TensorF32,
         lda: i32,
-        b: &Tensor,
+        b: &TensorF32,
         ldb: i32,
         beta: f32,
-        c: &mut Tensor,
+        c: &mut TensorF32,
         ldc: i32,
     ) -> Result<(), Error> {
         match self.device.borrow() {
@@ -253,7 +267,14 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> Result<f32, Error> {
+    fn sdot(
+        &self,
+        n: i32,
+        x: &TensorF32,
+        incx: i32,
+        y: &TensorF32,
+        incy: i32,
+    ) -> Result<f32, Error> {
         match self.device.borrow() {
             DeviceEnum::Cpu(device) => device.sdot(n, x, incx, y, incy),
             #[cfg(feature = "cuda")]
@@ -261,7 +282,14 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) -> Result<(), Error> {
+    fn scopy(
+        &self,
+        n: i32,
+        x: &TensorF32,
+        incx: i32,
+        y: &mut TensorF32,
+        incy: i32,
+    ) -> Result<(), Error> {
         match self.device.borrow() {
             DeviceEnum::Cpu(device) => device.scopy(n, x, incx, y, incy),
             #[cfg(feature = "cuda")]
@@ -273,9 +301,9 @@ impl DeviceInterface for Device {
         &self,
         n: i32,
         alpha: f32,
-        x: &Tensor,
+        x: &TensorF32,
         incx: i32,
-        y: &mut Tensor,
+        y: &mut TensorF32,
         incy: i32,
     ) -> Result<(), Error> {
         match self.device.borrow() {
@@ -285,7 +313,7 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) -> Result<(), Error> {
+    fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error> {
         match self.device.borrow() {
             DeviceEnum::Cpu(device) => device.sscal(n, alpha, x, incx),
             #[cfg(feature = "cuda")]

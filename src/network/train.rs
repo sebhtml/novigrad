@@ -1,14 +1,16 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{DatasetDetails, DeltaWorkingMemory, Device, Error, LearningTensor, Network, Tensor};
+use crate::{
+    DatasetDetails, DeltaWorkingMemory, Device, Error, LearningTensor, Network, TensorF32,
+};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
-    expected_output: &Tensor,
-    actual_output: &Tensor,
+    expected_output: &TensorF32,
+    actual_output: &TensorF32,
     expected_argmax: usize,
     actual_argmax: usize,
-    loss: Option<&Tensor>,
+    loss: Option<&TensorF32>,
 ) -> Result<(), Error> {
     let cols = expected_output.cols();
     let last_row = actual_output.rows() - 1;
@@ -127,8 +129,8 @@ fn print_results(
     let mut actual_argmax_values = Vec::new();
 
     for i in 0..inputs.len() {
-        let expected_output: &Tensor = &outputs[i].tensor().deref().borrow();
-        let actual_output: &Tensor = &activation_tensors[i].tensor().deref().borrow();
+        let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
+        let actual_output: &TensorF32 = &activation_tensors[i].tensor().deref().borrow();
 
         let expected_values = expected_output.get_values()?;
         let actual_values = actual_output.get_values()?;

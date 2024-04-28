@@ -14,7 +14,6 @@
 - in LearningTensor, gradient is None if requires_grad is false
 - enable tape recording only during training
 - implement mini batch
-- move learning rate in dataset details
 - shuffle examples in each epoch
 
 == New operators (part 2) ==

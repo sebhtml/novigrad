@@ -14,6 +14,7 @@ pub struct DatasetDetails {
     pub examples: Vec<(Tensor, Tensor)>,
     pub architecture: Box<dyn Forward>,
     pub loss_function_name: Operator,
+    pub learning_rate: f32,
     pub epochs: usize,
     pub progress: usize,
     pub initial_total_error_min: f32,

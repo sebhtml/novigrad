@@ -6,7 +6,7 @@
 - implement Matmul
 - implement Add
 
-- get rid of TrainWorkingMemory and DeltaWorkingMemory
+- get rid of TrainWorkingMemory
 
 == Initialization ==
 
@@ -37,6 +37,7 @@
 - determine the value of using_cross_entropy_loss at run time
 - Don't call reset inside Tensor methods
 - add rc device in tensor
+- remove device argument in OperatorTrait
 - store device in LearningTensor
 
 == Devices ==

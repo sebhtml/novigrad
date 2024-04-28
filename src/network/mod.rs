@@ -38,18 +38,6 @@ impl TrainWorkingMemory {
     }
 }
 
-pub struct DeltaWorkingMemory {
-    pub layer_f_derivative: TensorF32,
-}
-
-impl DeltaWorkingMemory {
-    pub fn new(device: &Device) -> Self {
-        Self {
-            layer_f_derivative: device.tensor(0, 0, vec![]),
-        }
-    }
-}
-
 pub struct PredictWorkingMemory {
     pub previous_activation_tensor: TensorF32,
     pub activation_tensor: TensorF32,
@@ -85,13 +73,12 @@ impl Network {
 
     pub fn train(
         &mut self,
-        error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
         inputs: &Vec<Tensor>,
         outputs: &Vec<Tensor>,
     ) -> Result<(), Error> {
         for i in 0..inputs.len() {
-            self.train_back_propagation(error_working_memory, epoch, i, &inputs[i], &outputs[i])?;
+            self.train_back_propagation(epoch, i, &inputs[i], &outputs[i])?;
         }
         Ok(())
     }
@@ -114,7 +101,6 @@ impl Network {
 
     fn train_back_propagation(
         &mut self,
-        error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
         x: &Tensor,
@@ -126,7 +112,7 @@ impl Network {
 
         let loss = self.loss_function.forward(&[y.clone(), output.clone()])?;
 
-        let gradients = loss.backward(error_working_memory, &self.device, &self.tape)?;
+        let gradients = loss.backward(&self.device, &self.tape)?;
 
         self.optimizer.optimize(gradients, &self.device)
     }

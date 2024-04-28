@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use super::LossFunction;
-use crate::{devices::Device, DeltaWorkingMemory, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
 #[derive(Clone)]
 pub struct CrossEntropyLoss {}
@@ -62,13 +62,7 @@ impl LossFunction for CrossEntropyLoss {
 }
 
 impl OperatorTrait for CrossEntropyLoss {
-    fn backward(
-        &self,
-        device: &Device,
-        _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &[Tensor],
-        _output: &Tensor,
-    ) -> Result<(), Error> {
+    fn backward(&self, device: &Device, inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();

@@ -1,6 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{DatasetDetails, DeltaWorkingMemory, Device, Error, Network, Tensor, TensorF32};
+use crate::{DatasetDetails, Error, Network, Tensor, TensorF32};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
@@ -69,14 +69,12 @@ pub struct NetworkTestOutput {
 
 pub fn train_network_on_dataset(
     dataset_details: DatasetDetails,
-    device: Rc<Device>,
 ) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
     let examples = dataset_details.examples;
     let architecture = dataset_details.architecture;
     let loss_function_name = dataset_details.loss_function_name;
 
-    let mut error_working_memory = DeltaWorkingMemory::new(&device);
     let inputs = examples.iter().map(|x| x.clone().0).collect();
     let outputs = examples.iter().map(|x| x.clone().1).collect();
     let mut network = Network::new(architecture, loss_function_name);
@@ -99,7 +97,7 @@ pub fn train_network_on_dataset(
                 break;
             }
         }
-        network.train(&mut error_working_memory, epoch, &inputs, &outputs)?;
+        network.train(epoch, &inputs, &outputs)?;
     }
     let final_total_error =
         print_total_error(&mut network, &inputs, &outputs, last_total_error, epochs)?;

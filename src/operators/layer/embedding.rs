@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
@@ -16,13 +16,7 @@ impl Embedding {
 }
 
 impl OperatorTrait for Embedding {
-    fn backward(
-        &self,
-        device: &Device,
-        _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &[Tensor],
-        output: &Tensor,
-    ) -> Result<(), Error> {
+    fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let embedding_table_gradient: &mut TensorF32 =
             &mut self.embedding_table.gradient().deref().borrow_mut();

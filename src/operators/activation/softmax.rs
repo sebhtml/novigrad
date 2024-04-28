@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, DeltaWorkingMemory, OperatorTrait, TensorF32};
+use crate::{ActivationFunction, OperatorTrait, TensorF32};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -102,13 +102,7 @@ impl ActivationFunction for Softmax {
 }
 
 impl OperatorTrait for Softmax {
-    fn backward(
-        &self,
-        device: &Device,
-        error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &[Tensor],
-        output: &Tensor,
-    ) -> Result<(), Error> {
+    fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let back_propagated_delta: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
         // Compute activation function derivative.
@@ -118,8 +112,8 @@ impl OperatorTrait for Softmax {
         } else {
             let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let output: &TensorF32 = &output.tensor().deref().borrow();
-            let layer_f_derivative = &mut error_working_memory.layer_f_derivative;
-            self.derive(input, output, layer_f_derivative)?;
+            let mut layer_f_derivative = device.tensor(0, 0, vec![]);
+            self.derive(input, output, &mut layer_f_derivative)?;
 
             layer_f_derivative.element_wise_mul(
                 device,

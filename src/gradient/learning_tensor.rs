@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{DeltaWorkingMemory, Device, Error, OperatorTrait, Record, Tape, TensorF32};
+use crate::{Device, Error, OperatorTrait, Record, Tape, TensorF32};
 
 #[derive(Clone)]
 pub struct Tensor {
@@ -22,7 +22,6 @@ impl Tensor {
     /// Back-propagation
     pub fn backward(
         &self,
-        error_working_memory: &mut DeltaWorkingMemory,
         device: &Device,
         tape: &Rc<RefCell<Tape>>,
     ) -> Result<Vec<Tensor>, Error> {
@@ -35,7 +34,7 @@ impl Tensor {
             let output = record.output();
 
             // Store enabled gradients to optimize them later.
-            operator.backward(device, error_working_memory, inputs, output)?;
+            operator.backward(device, inputs, output)?;
 
             // Clip the backward gradients.
             for input in inputs {

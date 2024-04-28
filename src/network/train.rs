@@ -140,33 +140,14 @@ fn print_results(
     let mut actual_argmax_values = Vec::new();
 
     for i in 0..inputs.len() {
-        // TODO add a separate function that compute argmaxes instead of computing them in here.
-        let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
-        let expected_values = expected_output.get_values()?;
-        let cols = expected_output.cols();
-        let mut expected_argmax = 0;
-        for col in 0..cols {
-            if expected_values[expected_output.index(0, col)]
-                > expected_values[expected_output.index(0, expected_argmax)]
-            {
-                expected_argmax = col;
-            }
-        }
-
-        // TODO add a separate function that compute argmaxes instead of computing them in here.
-        let actual_output: &TensorF32 = &activation_tensors[i].tensor().deref().borrow();
-        let actual_values = actual_output.get_values()?;
-        let cols = actual_output.cols();
-        let mut actual_argmax = 0;
-        for col in 0..cols {
-            if actual_values[actual_output.index(0, col)]
-                > actual_values[actual_output.index(0, actual_argmax)]
-            {
-                actual_argmax = col;
-            }
-        }
-
+        let expected_output: &TensorF32 = &activation_tensors[i].tensor().deref().borrow();
+        let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
+        let expected_argmax = expected_output_argmaxes[0];
         expected_argmax_values.push(expected_argmax);
+
+        let actual_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
+        let actual_output_argmaxes = get_row_argmaxes(actual_output)?;
+        let actual_argmax = actual_output_argmaxes[0];
         actual_argmax_values.push(actual_argmax);
 
         print_expected_output_and_actual_output(
@@ -180,4 +161,22 @@ fn print_results(
     }
 
     Ok((expected_argmax_values, actual_argmax_values))
+}
+
+fn get_row_argmaxes(tensor: &TensorF32) -> Result<Vec<usize>, Error> {
+    let values = tensor.get_values()?;
+    let cols = tensor.cols();
+    let mut argmaxes = vec![];
+    for row in 0..tensor.rows() {
+        let mut argmax_col = 0;
+        for col in 0..cols {
+            let acc = values[tensor.index(row, argmax_col)];
+            let item = values[tensor.index(row, col)];
+            if item > acc {
+                argmax_col = col;
+            }
+        }
+        argmaxes.push(argmax_col);
+    }
+    Ok(argmaxes)
 }

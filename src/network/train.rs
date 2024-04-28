@@ -90,8 +90,7 @@ pub fn train_network_on_dataset(
     for epoch in 0..epochs {
         if epoch % progress == 0 {
             let total_error =
-                print_total_error(&mut network, &inputs, &outputs, last_total_error, epoch)
-                    .expect("Ok");
+                print_total_error(&mut network, &inputs, &outputs, last_total_error, epoch)?;
             if epoch == 0 {
                 initial_total_error = total_error;
             }

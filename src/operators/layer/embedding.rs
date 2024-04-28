@@ -31,9 +31,7 @@ impl OperatorTrait for Embedding {
         let b: &Tensor = input;
         let c: &mut Tensor = embedding_table_gradient;
         c.reset(b.cols(), a.cols(), 0.0)?;
-        let op_result = Tensor::matmul(device, true, false, a, b, c, true);
-        op_result.expect("Ok");
-        Ok(())
+        Tensor::matmul(device, true, false, a, b, c, true)
     }
 
     fn forward(

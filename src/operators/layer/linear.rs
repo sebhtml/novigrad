@@ -92,8 +92,7 @@ impl OperatorTrait for Linear {
             let b: &Tensor = back_propagated_delta;
             let c: &mut Tensor = weights_gradient;
             c.reset(b.cols(), a.cols(), 0.0)?;
-            let op_result = Tensor::matmul(device, true, false, a, b, c, true);
-            op_result.expect("Ok");
+            Tensor::matmul(device, true, false, a, b, c, true)?;
 
             biases_gradient.assign(device, back_propagated_delta)?;
         }

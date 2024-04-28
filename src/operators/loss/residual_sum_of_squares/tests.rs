@@ -12,13 +12,14 @@ fn derive() {
     let loss_function = ResidualSumOfSquares::default();
     let device = Device::cpu();
     let mut actual_derived_loss = device.tensor(0, 0, vec![]);
-    let op_result = loss_function.derive(
-        &device,
-        &expected_tensor,
-        &actual_tensor,
-        &mut actual_derived_loss,
-    );
-    op_result.expect("Ok");
+    loss_function
+        .derive(
+            &device,
+            &expected_tensor,
+            &actual_tensor,
+            &mut actual_derived_loss,
+        )
+        .unwrap();
     assert_eq!(actual_derived_loss, expected_derived_loss);
 }
 

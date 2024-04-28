@@ -2,8 +2,8 @@ use std::fs;
 use std::rc::Rc;
 
 mod architecture;
-use crate::{DatasetDetails, Error};
 use crate::{into_one_hot_encoded_rows, Device, LearningTensor, Operators};
+use crate::{DatasetDetails, Error};
 use architecture::*;
 
 fn load_examples(device: &Device) -> Result<Vec<(LearningTensor, LearningTensor)>, Error> {
@@ -11,7 +11,7 @@ fn load_examples(device: &Device) -> Result<Vec<(LearningTensor, LearningTensor)
     let context_size = 32;
     let mut examples = Vec::new();
     let file_path = "Mega_Man.txt";
-    let contents = fs::read_to_string(file_path).expect("contents");
+    let contents = fs::read_to_string(file_path).map_err(|_| Error::UnsupportedOperation)?;
     // TODO use bpe tokenizer.
     let tokens: Vec<usize> = contents
         .as_bytes()

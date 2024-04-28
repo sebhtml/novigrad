@@ -79,7 +79,7 @@ fn reshape_result() {
         ],
     );
 
-    lhs.reshape(1, 8).expect("Ok");
+    lhs.reshape(1, 8).unwrap();
     assert_eq!(lhs, expected);
 }
 
@@ -132,7 +132,9 @@ fn clip() {
         ],
     );
     let mut clipped = device.tensor(0, 0, vec![]);
-    tensor.clip(0.0 + epsilon, 1.0 - epsilon, &mut clipped).unwrap();
+    tensor
+        .clip(0.0 + epsilon, 1.0 - epsilon, &mut clipped)
+        .unwrap();
 
     let expected = device.tensor(
         1,
@@ -361,7 +363,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     let mut result = device.tensor(0, 0, vec![]);
     result.reset(lhs.rows(), rhs.rows(), 0.0).unwrap();
     let device = Device::cpu();
-    Tensor::matmul(&device, false, true, &lhs, &rhs, &mut result, false).expect("Ok");
+    Tensor::matmul(&device, false, true, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -408,7 +410,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let mut result = device.tensor(0, 0, vec![]);
     result.reset(lhs.cols(), rhs.rows(), 0.0).unwrap();
     let device = Device::cpu();
-    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, false).expect("Ok");
+    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -464,7 +466,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let mut result = device.tensor(0, 0, vec![]);
     result.reset(rhs.rows(), lhs.cols(), 0.0).unwrap();
     let device = Device::cpu();
-    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, true).expect("Ok");
+    Tensor::matmul(&device, true, true, &lhs, &rhs, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -517,7 +519,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let mut result = device.tensor(0, 0, vec![]);
     result.reset(rhs.cols(), lhs.cols(), 0.0).unwrap();
     let device = Device::cpu();
-    Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, true).expect("Ok");
+    Tensor::matmul(&device, true, false, &lhs, &rhs, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 

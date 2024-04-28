@@ -29,11 +29,11 @@ fn load_examples(device: &Device) -> Result<Vec<(LearningTensor, LearningTensor)
             (one_hot_encoded_input, one_hot_encoded_output)
         })
         .try_fold(vec![], |mut acc, item| match item {
-            (Ok(a), Ok(b))   => {
+            (Ok(a), Ok(b)) => {
                 acc.push((a, b));
                 Ok(acc)
             }
-            _ => Err(Error::UnsupportedOperation)
+            _ => Err(Error::UnsupportedOperation),
         });
 
     examples

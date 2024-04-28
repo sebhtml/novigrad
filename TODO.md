@@ -1,5 +1,3 @@
-- add tokenizer with encode and decode
-
 == New operators ==
 
 - implement Concat

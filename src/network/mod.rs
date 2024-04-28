@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
@@ -41,16 +41,25 @@ impl Network {
         Ok(())
     }
 
-    pub fn total_error(&mut self, inputs: &[Tensor], outputs: &[Tensor]) -> Result<f32, Error> {
+    pub fn example_loss(
+        &self,
+        actual_output: &Tensor,
+        expected_output: &Tensor,
+    ) -> Result<f32, Error> {
+        let example_loss = self
+            .loss_function
+            .forward(&[expected_output.clone(), actual_output.clone()])?;
+        let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
+        let example_loss: f32 = example_loss.try_into()?;
+        Ok(example_loss)
+    }
+
+    pub fn total_loss(&self, inputs: &[Tensor], outputs: &[Tensor]) -> Result<f32, Error> {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
             let output = self.forward(&[inputs[i].clone()])?;
-            let target = &outputs[i];
-            let example_error = self
-                .loss_function
-                .forward(&[target.clone(), output.clone()])?;
-            let example_error: &TensorF32 = &example_error.tensor().deref().borrow();
-            let example_error: f32 = example_error.try_into()?;
+            let expected_output = &outputs[i];
+            let example_error = self.example_loss(&output, expected_output)?;
             total_error += example_error;
         }
 
@@ -73,19 +82,6 @@ impl Network {
         let gradients = loss.backward(&self.device, &self.tape)?;
 
         self.optimizer.optimize(gradients, &self.device)
-    }
-
-    pub fn predict_many(&mut self, inputs: &[Tensor]) -> Result<Vec<Tensor>, Error> {
-        let len = inputs.len();
-        let mut outputs = vec![];
-        let mut i = 0;
-        while i < len {
-            let input = &inputs[i];
-            let output = self.forward(&[input.clone()])?;
-            outputs.push(output);
-            i += 1;
-        }
-        Ok(outputs)
     }
 }
 

@@ -44,7 +44,7 @@ fn cublas_sgemm_column_major() {
         .unwrap();
 
     assert_eq!(
-        &c.get_values(),
+        &c.get_values().unwrap(),
         &vec![
             //
             40.0, 90.0, //
@@ -60,7 +60,10 @@ fn cuda_tensor() {
     use crate::Device;
     let device = Device::cuda().unwrap();
     let tensor = device.tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
-    assert_eq!(tensor.get_values(), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0,]);
+    assert_eq!(
+        tensor.get_values().unwrap(),
+        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0,]
+    );
 }
 
 #[test]
@@ -69,5 +72,8 @@ fn cuda_set_value() {
     let device = Device::cuda().unwrap();
     let mut tensor = device.tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     tensor.set_values(vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
-    assert_eq!(tensor.get_values(), vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0,]);
+    assert_eq!(
+        tensor.get_values().unwrap(),
+        vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0,]
+    );
 }

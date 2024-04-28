@@ -9,7 +9,7 @@ pub fn print_expected_output_and_actual_output(
     expected_argmax: usize,
     actual_argmax: usize,
     loss: Option<&Tensor>,
-) {
+) -> Result<(), Error> {
     let cols = expected_output.cols();
     let last_row = actual_output.rows() - 1;
 
@@ -20,14 +20,14 @@ pub fn print_expected_output_and_actual_output(
         expected_argmax, actual_argmax
     );
 
-    let expected_values = expected_output.get_values();
-    let actual_values = actual_output.get_values();
+    let expected_values = expected_output.get_values()?;
+    let actual_values = actual_output.get_values()?;
     println!("");
     for col in 0..cols {
         // TODO is this the correct loss in the loss tensor
         let loss = match loss {
             Some(loss) => {
-                let values = loss.get_values();
+                let values = loss.get_values()?;
                 values[loss.index(0, col)]
             }
             _ => Default::default(),
@@ -41,6 +41,7 @@ pub fn print_expected_output_and_actual_output(
             loss
         );
     }
+    Ok(())
 }
 
 fn print_total_error(
@@ -84,7 +85,7 @@ pub fn train_network_on_dataset(
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
 
-    let (_, _) = print_results(&mut network, &inputs, &outputs);
+    let (_, _) = print_results(&mut network, &inputs, &outputs)?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
@@ -105,7 +106,7 @@ pub fn train_network_on_dataset(
         print_total_error(&mut network, &inputs, &outputs, last_total_error, epochs)?;
 
     let (expected_argmax_values, actual_argmax_values) =
-        print_results(&mut network, &inputs, &outputs);
+        print_results(&mut network, &inputs, &outputs)?;
 
     let output = NetworkTestOutput {
         initial_total_error,
@@ -120,7 +121,7 @@ fn print_results(
     network: &mut Network,
     inputs: &Vec<LearningTensor>,
     outputs: &Vec<LearningTensor>,
-) -> (Vec<usize>, Vec<usize>) {
+) -> Result<(Vec<usize>, Vec<usize>), Error> {
     let activation_tensors = network.predict_many(&inputs).unwrap();
 
     let mut expected_argmax_values = Vec::new();
@@ -130,8 +131,8 @@ fn print_results(
         let expected_output: &Tensor = &outputs[i].tensor().deref().borrow();
         let actual_output: &Tensor = &activation_tensors[i].tensor().deref().borrow();
 
-        let expected_values = expected_output.get_values();
-        let actual_values = actual_output.get_values();
+        let expected_values = expected_output.get_values()?;
+        let actual_values = actual_output.get_values()?;
         let cols = expected_output.cols();
         let mut expected_argmax = 0;
         for col in 0..cols {
@@ -162,7 +163,9 @@ fn print_results(
             expected_argmax,
             actual_argmax,
             None,
-        );
+        )?;
     }
-    (expected_argmax_values, actual_argmax_values)
+
+    // TODO add a separate function that compute argmaxes instead of computing them in here.
+    Ok((expected_argmax_values, actual_argmax_values))
 }

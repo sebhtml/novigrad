@@ -67,7 +67,7 @@ impl OperatorTrait for ResidualSumOfSquares {
         let expected: &Tensor = &inputs[0].tensor().deref().borrow();
         let actual: &Tensor = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-        output.tensor().deref().borrow_mut().reset(1, 1, loss);
+        output.tensor().deref().borrow_mut().reset(1, 1, loss)?;
         Ok(output)
     }
 

@@ -30,13 +30,9 @@ impl OperatorTrait for Embedding {
         let a: &Tensor = output_gradient;
         let b: &Tensor = input;
         let c: &mut Tensor = embedding_table_gradient;
-        c.reset(b.cols(), a.cols(), 0.0);
+        c.reset(b.cols(), a.cols(), 0.0)?;
         let op_result = Tensor::matmul(device, true, false, a, b, c, true);
         op_result.expect("Ok");
-
-        let backward_gradient: &mut Tensor = &mut inputs[0].gradient().deref().borrow_mut();
-        backward_gradient.assign(device, output_gradient)?;
-
         Ok(())
     }
 
@@ -56,7 +52,7 @@ impl OperatorTrait for Embedding {
             let a = input;
             let b = &embedding_table;
             let c = &mut output.tensor().deref().borrow_mut();
-            c.reset(a.rows(), b.cols(), 0.0);
+            c.reset(a.rows(), b.cols(), 0.0)?;
             Tensor::matmul(device, false, false, a, b, c, false)?;
         }
 

@@ -158,6 +158,9 @@ impl Network {
     }
 
     pub fn forward(&mut self, input: &LearningTensor) -> Result<LearningTensor, Error> {
-        self.architecture.forward(input)
+        let output = self.architecture.forward(input);
+        println!("input: {}", input.tensor().deref().borrow());
+        println!("output: {}", output.clone().unwrap().tensor().deref().borrow());
+        output
     }
 }

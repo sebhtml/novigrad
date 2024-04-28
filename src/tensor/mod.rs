@@ -5,7 +5,7 @@ pub use tensor_f32::*;
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Error {
     IncompatibleTensorShapes,
     UnsupportedOperation,

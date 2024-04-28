@@ -1,11 +1,11 @@
 use std::rc::Rc;
 
-use crate::{into_one_hot_encoded_rows, DatasetDetails, Device, LearningTensor, Operators};
+use crate::{into_one_hot_encoded_rows, DatasetDetails, Device, Error, LearningTensor, Operators};
 
 mod architecture;
 use architecture::*;
 
-fn load_examples(device: &Device) -> Vec<(LearningTensor, LearningTensor)> {
+fn load_examples(device: &Device) -> Result<Vec<(LearningTensor, LearningTensor)>, Error> {
     let mut examples = Vec::new();
 
     examples.push((
@@ -28,15 +28,21 @@ fn load_examples(device: &Device) -> Vec<(LearningTensor, LearningTensor)> {
             let one_hot_encoded_output = into_one_hot_encoded_rows(device, &example.1, num_classes);
             (one_hot_encoded_input, one_hot_encoded_output)
         })
-        .collect();
+        .try_fold(vec![], |mut acc, item| match item {
+            (Ok(a), Ok(b))   => {
+                acc.push((a, b));
+                Ok(acc)
+            }
+            _ => Err(Error::UnsupportedOperation)
+        });
 
     examples
 }
 
-pub fn load_dataset(device: Rc<Device>) -> DatasetDetails {
-    let examples = load_examples(&device);
+pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
+    let examples = load_examples(&device)?;
     let ops = Operators::new(device);
-    DatasetDetails {
+    let details = DatasetDetails {
         examples,
         architecture: Box::new(Architecture::new(&ops)),
         epochs: 1000,
@@ -44,5 +50,6 @@ pub fn load_dataset(device: Rc<Device>) -> DatasetDetails {
         loss_function_name: ops.cross_entropy_loss(),
         initial_total_error_min: 4.0,
         final_total_error_max: 0.0005,
-    }
+    };
+    Ok(details)
 }

@@ -28,8 +28,8 @@ impl LossFunction for CrossEntropyLoss {
         let cols = p.cols();
         let mut col = 0;
         let mut sum = 0.0;
-        let p_values = p.get_values();
-        let q_values = q.get_values();
+        let p_values = p.get_values()?;
+        let q_values = q.get_values()?;
         while col < cols {
             let p_i = p_values[p.index(0, col)];
             let q_i = q_values[q.index(0, col)] + EPSILON;
@@ -82,9 +82,7 @@ impl OperatorTrait for CrossEntropyLoss {
         let expected: &Tensor = &inputs[0].tensor().deref().borrow();
         let actual: &Tensor = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-
-        output.tensor().deref().borrow_mut().reset(1, 1, loss);
-
+        output.tensor().deref().borrow_mut().reset(1, 1, loss)?;
         Ok(output)
     }
 

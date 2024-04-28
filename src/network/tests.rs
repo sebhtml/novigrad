@@ -13,7 +13,7 @@ fn test_network_on_dataset(dataset: Dataset, device: Device) {
     let dataset_details = load_dataset(dataset, device.clone()).unwrap();
     let initial_total_error_min = dataset_details.initial_total_error_min;
     let final_total_error_max = dataset_details.final_total_error_max;
-    let training_output = train_network_on_dataset(dataset_details, device).unwrap();
+    let training_output = train_network_on_dataset(dataset_details).unwrap();
     assert_gt!(training_output.initial_total_error, initial_total_error_min);
     assert_lt!(training_output.final_total_error, final_total_error_max);
     for i in 0..training_output.expected_argmax_values.len() {

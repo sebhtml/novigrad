@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{devices::Device, DeltaWorkingMemory, Error, LearningTensor, OperatorTrait, Tensor};
+use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
 use super::LossFunction;
 
@@ -18,54 +18,49 @@ impl Default for ResidualSumOfSquares {
 
 impl LossFunction for ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
-    fn evaluate(&self, device: &Device, expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
+    fn evaluate(
+        &self,
+        device: &Device,
+        expected: &TensorF32,
+        actual: &TensorF32,
+    ) -> Result<f32, Error> {
         if expected.shape() != actual.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
         let mut diffs = device.tensor(0, 0, vec![]);
         diffs.assign(device, expected)?;
-        Tensor::sub(device, actual, &mut diffs)?;
-        Tensor::dot_product(device, &diffs, &diffs)
+        TensorF32::sub(device, actual, &mut diffs)?;
+        TensorF32::dot_product(device, &diffs, &diffs)
     }
 
     fn derive(
         &self,
         device: &Device,
-        expected: &Tensor,
-        actual: &Tensor,
-        result: &mut Tensor,
+        expected: &TensorF32,
+        actual: &TensorF32,
+        result: &mut TensorF32,
     ) -> Result<(), Error> {
         result.assign(device, expected)?;
-        Tensor::sub(device, actual, result)?;
-        Tensor::scalar_mul(device, -2.0, result)
+        TensorF32::sub(device, actual, result)?;
+        TensorF32::scalar_mul(device, -2.0, result)
     }
 }
 
 impl OperatorTrait for ResidualSumOfSquares {
-    fn backward(
-        &self,
-        device: &Device,
-        _error_working_memory: &mut DeltaWorkingMemory,
-        inputs: &Vec<LearningTensor>,
-        _output: &LearningTensor,
-    ) -> Result<(), Error> {
+    fn backward(&self, device: &Device, inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let expected: &Tensor = &inputs[0].tensor().deref().borrow();
-        let actual: &Tensor = &inputs[1].tensor().deref().borrow();
-        let backward_gradient: &mut Tensor = &mut inputs[1].gradient().deref().borrow_mut();
+        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
+        let backward_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
         self.derive(device, expected, actual, backward_gradient)?;
         Ok(())
     }
 
-    fn forward(
-        &self,
-        device: &Device,
-        inputs: &Vec<LearningTensor>,
-    ) -> Result<LearningTensor, Error> {
+    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output = device.learning_tensor(0, 0, vec![], false);
-        let expected: &Tensor = &inputs[0].tensor().deref().borrow();
-        let actual: &Tensor = &inputs[1].tensor().deref().borrow();
+        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
         output.tensor().deref().borrow_mut().reset(1, 1, loss)?;
         Ok(output)

@@ -3,7 +3,7 @@ mod simple;
 
 use std::rc::Rc;
 
-use crate::{Device, Error, Forward, LearningTensor, Operator};
+use crate::{Device, Error, Forward, Operator, Tensor};
 
 pub enum Dataset {
     Simple,
@@ -11,7 +11,7 @@ pub enum Dataset {
 }
 
 pub struct DatasetDetails {
-    pub examples: Vec<(LearningTensor, LearningTensor)>,
+    pub examples: Vec<(Tensor, Tensor)>,
     pub architecture: Box<dyn Forward>,
     pub loss_function_name: Operator,
     pub epochs: usize,
@@ -31,7 +31,7 @@ pub fn into_one_hot_encoded_rows(
     device: &Device,
     input_tokens: &[usize],
     num_classes: usize,
-) -> Result<LearningTensor, Error> {
+) -> Result<Tensor, Error> {
     let len = input_tokens.len() * num_classes;
     // TODO avoid allocating a Tensor and a LearningTensor., gradient  should be a Option in LearningTensor
     let result = device.tensor(

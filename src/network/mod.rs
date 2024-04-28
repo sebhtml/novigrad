@@ -5,8 +5,7 @@ use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
 pub use train::*;
 
 use crate::{
-    devices::Device, Error, Forward, LearningTensor, Operator, Optimizer, OptimizerTrait, Tape,
-    Tensor,
+    devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tape, Tensor, TensorF32,
 };
 
 pub struct Network {
@@ -15,60 +14,6 @@ pub struct Network {
     device: Rc<Device>,
     optimizer: Optimizer,
     tape: Rc<RefCell<Tape>>,
-}
-
-pub struct TrainWorkingMemory {
-    pub layer_output: Tensor,
-    pub next_layer_delta: Tensor,
-    pub back_propagated_delta: Tensor,
-    pub layer_delta: Tensor,
-    pub previous_activation_tensor: Tensor,
-    pub tmp: Tensor,
-}
-
-impl TrainWorkingMemory {
-    pub fn new(device: &Device) -> Self {
-        Self {
-            layer_output: device.tensor(0, 0, vec![]),
-            next_layer_delta: device.tensor(0, 0, vec![]),
-            back_propagated_delta: device.tensor(0, 0, vec![]),
-            layer_delta: device.tensor(0, 0, vec![]),
-            previous_activation_tensor: device.tensor(0, 0, vec![]),
-            tmp: device.tensor(0, 0, vec![]),
-        }
-    }
-}
-
-pub struct DeltaWorkingMemory {
-    pub layer_f_derivative: Tensor,
-}
-
-impl DeltaWorkingMemory {
-    pub fn new(device: &Device) -> Self {
-        Self {
-            layer_f_derivative: device.tensor(0, 0, vec![]),
-        }
-    }
-}
-
-pub struct PredictWorkingMemory {
-    pub previous_activation_tensor: Tensor,
-    pub activation_tensor: Tensor,
-    pub activation_tensors: Vec<Tensor>,
-}
-
-impl PredictWorkingMemory {
-    pub fn new(examples_count: usize, device: &Device) -> Self {
-        let mut activation_tensors = vec![];
-        for _ in 0..examples_count {
-            activation_tensors.push(device.tensor(0, 0, vec![]))
-        }
-        Self {
-            previous_activation_tensor: device.tensor(0, 0, vec![]),
-            activation_tensor: device.tensor(0, 0, vec![]),
-            activation_tensors,
-        }
-    }
 }
 
 impl Network {
@@ -86,30 +31,25 @@ impl Network {
 
     pub fn train(
         &mut self,
-        error_working_memory: &mut DeltaWorkingMemory,
         epoch: usize,
-        inputs: &Vec<LearningTensor>,
-        outputs: &Vec<LearningTensor>,
+        inputs: &Vec<Tensor>,
+        outputs: &Vec<Tensor>,
     ) -> Result<(), Error> {
         for i in 0..inputs.len() {
-            self.train_back_propagation(error_working_memory, epoch, i, &inputs[i], &outputs[i])?;
+            self.train_back_propagation(epoch, i, &inputs[i], &outputs[i])?;
         }
         Ok(())
     }
 
-    pub fn total_error(
-        &mut self,
-        inputs: &Vec<LearningTensor>,
-        outputs: &Vec<LearningTensor>,
-    ) -> Result<f32, Error> {
+    pub fn total_error(&mut self, inputs: &[Tensor], outputs: &[Tensor]) -> Result<f32, Error> {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
-            let output = self.forward(&inputs[i])?;
+            let output = self.forward(&[inputs[i].clone()])?;
             let target = &outputs[i];
             let example_error = self
                 .loss_function
-                .forward_inputs(&vec![target.clone(), output.clone()])?;
-            let example_error: &Tensor = &example_error.tensor().deref().borrow();
+                .forward(&[target.clone(), output.clone()])?;
+            let example_error: &TensorF32 = &example_error.tensor().deref().borrow();
             let example_error: f32 = example_error.try_into()?;
             total_error += example_error;
         }
@@ -119,42 +59,46 @@ impl Network {
 
     fn train_back_propagation(
         &mut self,
-        error_working_memory: &mut DeltaWorkingMemory,
         _epoch: usize,
         _example_index: usize,
-        x: &LearningTensor,
-        y: &LearningTensor,
+        x: &Tensor,
+        y: &Tensor,
     ) -> Result<(), Error> {
         self.tape.deref().borrow_mut().clear();
 
-        let output = self.forward(x)?;
+        let output = self.forward(&[x.clone()])?;
 
-        let loss = self
-            .loss_function
-            .forward_inputs(&vec![y.clone(), output.clone()])?;
+        let loss = self.loss_function.forward(&[y.clone(), output.clone()])?;
 
-        let gradients = loss.backward(error_working_memory, &self.device, &self.tape)?;
+        let gradients = loss.backward(&self.device, &self.tape)?;
 
         self.optimizer.optimize(gradients, &self.device)
     }
 
-    pub fn predict_many(
-        &mut self,
-        inputs: &Vec<LearningTensor>,
-    ) -> Result<Vec<LearningTensor>, Error> {
+    pub fn predict_many(&mut self, inputs: &[Tensor]) -> Result<Vec<Tensor>, Error> {
         let len = inputs.len();
         let mut outputs = vec![];
         let mut i = 0;
         while i < len {
             let input = &inputs[i];
-            let output = self.forward(input)?;
+            let output = self.forward(&[input.clone()])?;
             outputs.push(output);
             i += 1;
         }
         Ok(outputs)
     }
+}
 
-    pub fn forward(&mut self, input: &LearningTensor) -> Result<LearningTensor, Error> {
-        self.architecture.forward(input)
+impl Forward for Network {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+        self.architecture.forward(inputs)
+    }
+
+    fn device(&self) -> Rc<Device> {
+        self.device.clone()
+    }
+
+    fn tape(&self) -> Rc<RefCell<Tape>> {
+        self.tape.clone()
     }
 }

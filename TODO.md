@@ -1,4 +1,3 @@
-- todo novigrad pass &[Tensor,]
 - add tokenizer with encode and decode
 
 == New operators ==
@@ -36,6 +35,7 @@
 - determine the value of using_cross_entropy_loss at run time
 - Don't call reset inside Tensor methods
 - add rc device in tensor
+- remove device argument in OperatorTrait
 - store device in LearningTensor
 
 == Devices ==

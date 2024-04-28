@@ -4,14 +4,14 @@ pub use sigmoid::*;
 mod softmax;
 pub use softmax::*;
 
-use crate::Tensor;
+use crate::TensorF32;
 
 pub trait ActivationFunction {
-    fn activate(&self, product_matrix: &Tensor, result: &mut Tensor) -> Result<(), Error>;
+    fn activate(&self, product_matrix: &TensorF32, result: &mut TensorF32) -> Result<(), Error>;
     fn derive(
         &self,
-        product_matrix: &Tensor,
-        activation_matrix: &Tensor,
-        result: &mut Tensor,
+        product_matrix: &TensorF32,
+        activation_matrix: &TensorF32,
+        result: &mut TensorF32,
     ) -> Result<(), Error>;
 }

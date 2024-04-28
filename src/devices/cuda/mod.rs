@@ -13,7 +13,7 @@ use cudarc::{
     driver,
 };
 
-use crate::{DeviceInterface, Error, Tensor};
+use crate::{DeviceInterface, Error, TensorF32};
 
 pub struct CudaDevice {
     handle: cublasHandle_t,
@@ -40,12 +40,12 @@ impl DeviceInterface for CudaDevice {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &Tensor,
+        a: &TensorF32,
         lda: i32,
-        b: &Tensor,
+        b: &TensorF32,
         ldb: i32,
         beta: f32,
-        c: &mut Tensor,
+        c: &mut TensorF32,
         ldc: i32,
     ) -> Result<(), Error> {
         let handle = self.handle;
@@ -80,9 +80,9 @@ impl DeviceInterface for CudaDevice {
         &self,
         n: i32,
         alpha: f32,
-        x: &Tensor,
+        x: &TensorF32,
         incx: i32,
-        y: &mut Tensor,
+        y: &mut TensorF32,
         incy: i32,
     ) -> Result<(), Error> {
         let handle = self.handle;
@@ -93,7 +93,14 @@ impl DeviceInterface for CudaDevice {
         status.result().map_err(|_| Error::UnsupportedOperation)
     }
 
-    fn sdot(&self, n: i32, x: &Tensor, incx: i32, y: &Tensor, incy: i32) -> Result<f32, Error> {
+    fn sdot(
+        &self,
+        n: i32,
+        x: &TensorF32,
+        incx: i32,
+        y: &TensorF32,
+        incy: i32,
+    ) -> Result<f32, Error> {
         let handle = self.handle;
         let x = x.as_ptr();
         let y = y.as_ptr();
@@ -106,7 +113,14 @@ impl DeviceInterface for CudaDevice {
         Ok(result)
     }
 
-    fn scopy(&self, n: i32, x: &Tensor, incx: i32, y: &mut Tensor, incy: i32) -> Result<(), Error> {
+    fn scopy(
+        &self,
+        n: i32,
+        x: &TensorF32,
+        incx: i32,
+        y: &mut TensorF32,
+        incy: i32,
+    ) -> Result<(), Error> {
         let handle = self.handle;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
@@ -114,7 +128,7 @@ impl DeviceInterface for CudaDevice {
         status.result().map_err(|_| Error::UnsupportedOperation)
     }
 
-    fn sscal(&self, n: i32, alpha: f32, x: &mut Tensor, incx: i32) -> Result<(), Error> {
+    fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error> {
         let handle = self.handle;
         let x = x.as_mut_ptr();
         let alpha = &alpha as *const f32;

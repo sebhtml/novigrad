@@ -7,13 +7,13 @@ use crate::{
 use std::{fmt::Display, ops::Mul};
 
 #[derive(Debug)]
-pub struct Tensor {
+pub struct TensorF32 {
     rows: usize,
     cols: usize,
     values: DevBuffer,
 }
 
-impl PartialEq for Tensor {
+impl PartialEq for TensorF32 {
     fn eq(&self, other: &Self) -> bool {
         self.rows() == other.rows()
             && self.cols() == other.cols()
@@ -21,7 +21,7 @@ impl PartialEq for Tensor {
     }
 }
 
-impl Tensor {
+impl TensorF32 {
     pub fn new(rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
         let values = device.buffer(values);
@@ -31,8 +31,8 @@ impl Tensor {
     fn operation<Operation>(
         &self,
         device: &Device,
-        right: &Tensor,
-        result: &mut Tensor,
+        right: &TensorF32,
+        result: &mut TensorF32,
     ) -> Result<(), Error>
     where
         Operation: F32Operation,
@@ -44,7 +44,7 @@ impl Tensor {
 
         result.reset(left.rows, left.cols, Default::default())?;
         debug_assert_eq!(result.shape(), left.shape());
-        Tensor::scalar_mul(device, 0.0, result)?;
+        TensorF32::scalar_mul(device, 0.0, result)?;
 
         let mut result_values = result.get_values()?;
         let left_values = left.get_values()?;
@@ -106,12 +106,12 @@ impl Tensor {
         row * self.cols + col
     }
 
-    pub fn assign(&mut self, device: &Device, from: &Tensor) -> Result<(), Error> {
+    pub fn assign(&mut self, device: &Device, from: &TensorF32) -> Result<(), Error> {
         self.reset(from.rows, from.cols, 0.0)?;
-        Tensor::copy(device, from, self)
+        TensorF32::copy(device, from, self)
     }
 
-    pub fn transpose(&self, other: &mut Tensor) -> Result<(), Error> {
+    pub fn transpose(&self, other: &mut TensorF32) -> Result<(), Error> {
         let self_values = self.get_values()?;
         other.reset(self.cols, self.rows, Default::default())?;
         let mut other_values = other.get_values()?;
@@ -155,13 +155,13 @@ impl Tensor {
     pub fn element_wise_mul(
         &self,
         device: &Device,
-        right: &Tensor,
-        result: &mut Tensor,
+        right: &TensorF32,
+        result: &mut TensorF32,
     ) -> Result<(), Error> {
         self.operation::<F32Mul>(device, right, result)
     }
 
-    pub fn dot_product(device: &Device, x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    pub fn dot_product(device: &Device, x: &TensorF32, y: &TensorF32) -> Result<f32, Error> {
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -170,7 +170,7 @@ impl Tensor {
         let incy = 1;
         device.sdot(n, x, incx, y, incy)
     }
-    fn copy(device: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    fn copy(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
@@ -181,14 +181,14 @@ impl Tensor {
         device: &Device,
         transa: bool,
         transb: bool,
-        a: &Tensor,
-        b: &Tensor,
-        c: &mut Tensor,
+        a: &TensorF32,
+        b: &TensorF32,
+        c: &mut TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
         let alpha = 1.0;
         let beta = 0.0;
-        Tensor::gemm(
+        TensorF32::gemm(
             device,
             transa,
             transb,
@@ -206,10 +206,10 @@ impl Tensor {
         transa: bool,
         transb: bool,
         alpha: f32,
-        a: &Tensor,
-        b: &Tensor,
+        a: &TensorF32,
+        b: &TensorF32,
         beta: f32,
-        c: &mut Tensor,
+        c: &mut TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
         if !transa && !transb && !transpose_result {
@@ -331,17 +331,22 @@ impl Tensor {
         }
     }
 
-    pub fn sub(device: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn sub(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let alpha = -1.0;
         Self::saxpy(device, alpha, x, y)
     }
 
-    pub fn add(device: &Device, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn add(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let alpha = 1.0;
         Self::saxpy(device, alpha, x, y)
     }
 
-    pub fn saxpy(device: &Device, alpha: f32, x: &Tensor, y: &mut Tensor) -> Result<(), Error> {
+    pub fn saxpy(
+        device: &Device,
+        alpha: f32,
+        x: &TensorF32,
+        y: &mut TensorF32,
+    ) -> Result<(), Error> {
         if x.len() != y.len() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -352,7 +357,7 @@ impl Tensor {
     }
 
     // TODO use device to clip
-    pub fn clip(&self, min: f32, max: f32, result: &mut Tensor) -> Result<(), Error> {
+    pub fn clip(&self, min: f32, max: f32, result: &mut TensorF32) -> Result<(), Error> {
         result.reset(self.rows, self.cols, Default::default())?;
         let len = self.len();
         let mut index = 0;
@@ -369,7 +374,7 @@ impl Tensor {
         Ok(())
     }
 
-    pub fn scalar_mul(device: &Device, alpha: f32, x: &mut Tensor) -> Result<(), Error> {
+    pub fn scalar_mul(device: &Device, alpha: f32, x: &mut TensorF32) -> Result<(), Error> {
         let n = x.len() as i32;
         let incx = 1;
         device.sscal(n, alpha, x, incx)
@@ -387,7 +392,7 @@ impl Tensor {
     }
 }
 
-impl Display for Tensor {
+impl Display for TensorF32 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let self_values = self.get_values().map_err(|_| std::fmt::Error)?;
         _ = write!(f, "Shape: {:?}", (self.rows, self.cols));
@@ -419,7 +424,7 @@ impl F32Operation for F32Mul {
     }
 }
 
-impl TryInto<f32> for &Tensor {
+impl TryInto<f32> for &TensorF32 {
     type Error = Error;
 
     fn try_into(self) -> Result<f32, Self::Error> {

@@ -6,8 +6,6 @@
 - implement Matmul
 - implement Add
 
-- get rid of TrainWorkingMemory
-
 == Initialization ==
 
 - revisit initialization of weights and biases in Linear

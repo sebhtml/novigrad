@@ -16,48 +16,6 @@ pub struct Network {
     tape: Rc<RefCell<Tape>>,
 }
 
-pub struct TrainWorkingMemory {
-    pub layer_output: TensorF32,
-    pub next_layer_delta: TensorF32,
-    pub back_propagated_delta: TensorF32,
-    pub layer_delta: TensorF32,
-    pub previous_activation_tensor: TensorF32,
-    pub tmp: TensorF32,
-}
-
-impl TrainWorkingMemory {
-    pub fn new(device: &Device) -> Self {
-        Self {
-            layer_output: device.tensor(0, 0, vec![]),
-            next_layer_delta: device.tensor(0, 0, vec![]),
-            back_propagated_delta: device.tensor(0, 0, vec![]),
-            layer_delta: device.tensor(0, 0, vec![]),
-            previous_activation_tensor: device.tensor(0, 0, vec![]),
-            tmp: device.tensor(0, 0, vec![]),
-        }
-    }
-}
-
-pub struct PredictWorkingMemory {
-    pub previous_activation_tensor: TensorF32,
-    pub activation_tensor: TensorF32,
-    pub activation_tensors: Vec<TensorF32>,
-}
-
-impl PredictWorkingMemory {
-    pub fn new(examples_count: usize, device: &Device) -> Self {
-        let mut activation_tensors = vec![];
-        for _ in 0..examples_count {
-            activation_tensors.push(device.tensor(0, 0, vec![]))
-        }
-        Self {
-            previous_activation_tensor: device.tensor(0, 0, vec![]),
-            activation_tensor: device.tensor(0, 0, vec![]),
-            activation_tensors,
-        }
-    }
-}
-
 impl Network {
     pub fn new(architecture: Box<dyn Forward>, loss_function: Operator) -> Self {
         let device = architecture.device();

@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::{cell::RefCell, ops::Deref, rc::Rc, vec};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
@@ -73,19 +73,6 @@ impl Network {
         let gradients = loss.backward(&self.device, &self.tape)?;
 
         self.optimizer.optimize(gradients, &self.device)
-    }
-
-    pub fn predict_many(&mut self, inputs: &[Tensor]) -> Result<Vec<Tensor>, Error> {
-        let len = inputs.len();
-        let mut outputs = vec![];
-        let mut i = 0;
-        while i < len {
-            let input = &inputs[i];
-            let output = self.forward(&[input.clone()])?;
-            outputs.push(output);
-            i += 1;
-        }
-        Ok(outputs)
     }
 }
 

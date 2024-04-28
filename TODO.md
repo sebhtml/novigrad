@@ -1,6 +1,3 @@
-- TODO add a separate function that compute argmaxes instead of computing them in here.
-- implement decode in AsciiTokenizer
-
 == New operators ==
 
 - implement Concat

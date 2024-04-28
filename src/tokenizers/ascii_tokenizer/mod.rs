@@ -4,7 +4,7 @@ use crate::Tokenizer;
 pub struct AsciiTokenizer {}
 
 impl Tokenizer for AsciiTokenizer {
-    fn encode(&self, text: &String) -> Vec<usize> {
+    fn encode(&self, text: &str) -> Vec<usize> {
         text.as_bytes()
             .to_owned()
             .into_iter()
@@ -12,7 +12,11 @@ impl Tokenizer for AsciiTokenizer {
             .collect()
     }
 
-    fn decode(&self, _tokens: &[usize]) -> String {
-        "".into()
+    fn decode(&self, tokens: &[usize]) -> String {
+        tokens
+            .iter()
+            .map(|token| String::from(*token as u8 as char))
+            .collect::<Vec<_>>()
+            .join("")
     }
 }

@@ -15,13 +15,13 @@ pub struct Architecture {
 impl Architecture {
     pub fn new(ops: &Operators) -> Self {
         Self {
-            embedding: ops.embedding(16, 32),
-            linear_0: ops.linear(16, 32, 6),
+            embedding: ops.embedding(256, 32),
+            linear_0: ops.linear(256, 32, 6),
             sigmoid_0: ops.sigmoid(),
-            reshape: ops.reshape(6, 16, 1, 6 * 16),
-            linear_1: ops.linear(32, 6 * 16, 1),
+            reshape: ops.reshape(6, 256, 1, 6 * 256),
+            linear_1: ops.linear(32, 6 * 256, 1),
             sigmoid_1: ops.sigmoid(),
-            linear_2: ops.linear(16, 32, 1),
+            linear_2: ops.linear(256, 32, 1),
             softmax: ops.softmax(true),
         }
     }

@@ -1,9 +1,12 @@
 use std::ops::Deref;
 
-use crate::{AsciiTokenizer, DatasetDetails, Error, Network, Tensor, TensorF32, Tokenizer};
+use crate::{
+    AsciiTokenizer, DatasetDetails, Error, Forward, Network, Tensor, TensorF32, Tokenizer,
+};
 
 pub fn print_expected_output_and_actual_output(
     example: usize,
+    input: &TensorF32,
     expected_output: &TensorF32,
     actual_output: &TensorF32,
     expected_argmax: usize,
@@ -14,25 +17,26 @@ pub fn print_expected_output_and_actual_output(
     let last_row = actual_output.rows() - 1;
 
     let tokenizer = AsciiTokenizer::default();
-    let input_tokens = [];
+    let input_tokens = get_row_argmaxes(input)?;
     let expected_output_token = [expected_argmax];
     let actual_output_token = [actual_argmax];
 
     println!("----");
     println!("Example {}", example);
-    println!("  input: {}", tokenizer.decode(&input_tokens));
+
+    println!("  input_tokens: {:?}", &input_tokens);
+    println!("  input_text: {}", tokenizer.decode(&input_tokens));
+
+    println!("  expected_output_token: {:?}", &expected_output_token);
     println!(
-        "  expected_output: {}",
+        "  expected_output_text: {}",
         tokenizer.decode(&expected_output_token)
     );
-    println!(
-        "  actual_output: {}",
-        tokenizer.decode(&actual_output_token)
-    );
 
+    println!("  actual_output_token: {:?}", &actual_output_token);
     println!(
-        "expected_argmax {}, actual_argmax {}",
-        expected_argmax, actual_argmax
+        "  actual_output_text: {}",
+        tokenizer.decode(&actual_output_token)
     );
 
     let expected_values = expected_output.get_values()?;
@@ -90,8 +94,8 @@ pub fn train_network_on_dataset(
     let architecture = dataset_details.architecture;
     let loss_function_name = dataset_details.loss_function_name;
 
-    let inputs = examples.iter().map(|x| x.clone().0).collect();
-    let outputs = examples.iter().map(|x| x.clone().1).collect();
+    let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
+    let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
     let mut network = Network::new(architecture, loss_function_name);
 
     let mut last_total_error = f32::NAN;
@@ -131,27 +135,29 @@ pub fn train_network_on_dataset(
 
 fn print_results(
     network: &mut Network,
-    inputs: &Vec<Tensor>,
-    outputs: &Vec<Tensor>,
+    inputs: &[Tensor],
+    outputs: &[Tensor],
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {
-    let activation_tensors = network.predict_many(&inputs).unwrap();
-
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();
 
     for i in 0..inputs.len() {
-        let expected_output: &TensorF32 = &activation_tensors[i].tensor().deref().borrow();
+        let input = &inputs[i];
+        let actual_output = network.forward(&[input.clone()])?;
+
+        let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
         let expected_argmax = expected_output_argmaxes[0];
         expected_argmax_values.push(expected_argmax);
 
-        let actual_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
+        let actual_output: &TensorF32 = &actual_output.tensor().deref().borrow();
         let actual_output_argmaxes = get_row_argmaxes(actual_output)?;
         let actual_argmax = actual_output_argmaxes[0];
         actual_argmax_values.push(actual_argmax);
 
         print_expected_output_and_actual_output(
             i,
+            &input.tensor().deref().borrow(),
             expected_output,
             actual_output,
             expected_argmax,

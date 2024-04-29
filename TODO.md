@@ -1,3 +1,6 @@
+- in operators, never call reset
+- Don't call reset inside Tensor methods
+
 == New operators ==
 
 - implement Concat
@@ -11,7 +14,6 @@
 
 == Training ==
 
-- in LearningTensor, gradient is None if requires_grad is false
 - enable tape recording only during training
 - implement mini batch
 - shuffle examples in each epoch
@@ -30,7 +32,6 @@
 == Refactoring ==
 
 - determine the value of using_cross_entropy_loss at run time
-- Don't call reset inside Tensor methods
 - add rc device in tensor
 - remove device argument in OperatorTrait
 - store device in LearningTensor

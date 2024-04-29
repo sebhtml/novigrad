@@ -602,7 +602,7 @@ fn element_wise_mul_result() {
         ],
     );
 
-    let mut result = device.tensor(0, 0, vec![]);
+    let mut result = device.tensor(3, 2, vec![0.0; 6]);
     lhs.element_wise_mul(device, &rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }

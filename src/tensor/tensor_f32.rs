@@ -42,7 +42,6 @@ impl TensorF32 {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reset(left.rows, left.cols, Default::default())?;
         debug_assert_eq!(result.shape(), left.shape());
         TensorF32::scalar_mul(device, 0.0, result)?;
 

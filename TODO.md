@@ -1,5 +1,4 @@
-- in operators, never call reset
-- Don't call reset inside Tensor methods
+- bpe tokenizer
 
 == New operators ==
 
@@ -24,10 +23,6 @@
 - implement Mask
 - implement Gelu
 - implement TransformerBlock
-
-== Tokens ==
-
-- bpe tokenizer
 
 == Refactoring ==
 

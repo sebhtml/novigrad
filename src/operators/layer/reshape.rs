@@ -27,9 +27,9 @@ impl Reshape {
 
 impl OperatorTrait for Reshape {
     fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let back_propagated_delta: &TensorF32 = &output.gradient().deref().borrow();
+        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-        TensorF32::copy(device, back_propagated_delta, backward_gradient)?;
+        TensorF32::copy(device, output_gradient, backward_gradient)?;
         backward_gradient.reshape(self.input_rows, self.input_cols)?;
         Ok(())
     }

@@ -38,14 +38,13 @@ impl Tensor {
 
             // Clip the backward gradients.
             for input in inputs {
-                let back_propagated_delta: &mut TensorF32 =
-                    &mut input.gradient().deref().borrow_mut();
+                let backward_gradient: &mut TensorF32 = &mut input.gradient().deref().borrow_mut();
                 let back_propagated_gradient = device.tensor(
-                    back_propagated_delta.rows(),
-                    back_propagated_delta.cols(),
-                    back_propagated_delta.get_values()?,
+                    backward_gradient.rows(),
+                    backward_gradient.cols(),
+                    backward_gradient.get_values()?,
                 );
-                back_propagated_gradient.clip(-1.0, 1.0, back_propagated_delta)?;
+                back_propagated_gradient.clip(-1.0, 1.0, backward_gradient)?;
             }
         }
         Ok(device.tensors_with_requires_grad())

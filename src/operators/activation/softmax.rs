@@ -93,12 +93,12 @@ impl ActivationFunction for Softmax {
 
 impl OperatorTrait for Softmax {
     fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let back_propagated_delta: &TensorF32 = &output.gradient().deref().borrow();
+        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
         // Compute activation function derivative.
         if self.using_cross_entropy_loss {
             // Softmax and Cross Entropy Loss are best friends.
-            TensorF32::copy(device, back_propagated_delta, backward_gradient)?;
+            TensorF32::copy(device, output_gradient, backward_gradient)?;
         } else {
             let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let output: &TensorF32 = &output.tensor().deref().borrow();
@@ -108,11 +108,7 @@ impl OperatorTrait for Softmax {
             let mut layer_f_derivative = device.tensor(rows, cols, vec![0.0; len]);
             self.derive(input, output, &mut layer_f_derivative)?;
 
-            layer_f_derivative.element_wise_mul(
-                device,
-                back_propagated_delta,
-                backward_gradient,
-            )?;
+            layer_f_derivative.element_wise_mul(device, output_gradient, backward_gradient)?;
         }
 
         Ok(())

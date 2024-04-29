@@ -63,7 +63,7 @@ impl ActivationFunction for Sigmoid {
 
 impl OperatorTrait for Sigmoid {
     fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let back_propagated_delta: &TensorF32 = &output.gradient().deref().borrow();
+        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
         // Compute activation function derivative.
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
@@ -73,7 +73,7 @@ impl OperatorTrait for Sigmoid {
         let len = rows * cols;
         let mut layer_f_derivative = device.tensor(rows, cols, vec![0.0; len]);
         self.derive(input, output, &mut layer_f_derivative)?;
-        layer_f_derivative.element_wise_mul(device, back_propagated_delta, backward_gradient)?;
+        layer_f_derivative.element_wise_mul(device, output_gradient, backward_gradient)?;
         Ok(())
     }
 

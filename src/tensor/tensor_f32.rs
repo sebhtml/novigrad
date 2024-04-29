@@ -107,7 +107,6 @@ impl TensorF32 {
     }
 
     pub fn assign(&mut self, device: &Device, from: &TensorF32) -> Result<(), Error> {
-        self.reset(from.rows, from.cols, 0.0)?;
         TensorF32::copy(device, from, self)
     }
 

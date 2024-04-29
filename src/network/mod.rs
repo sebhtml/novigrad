@@ -87,13 +87,8 @@ impl Network {
             .optimize(&gradients, &self.device, learning_rate)?;
 
         for gradient in gradients {
-            let rows = gradient.gradient().deref().borrow().rows();
-            let cols = gradient.gradient().deref().borrow().cols();
-            gradient
-                .gradient()
-                .deref()
-                .borrow_mut()
-                .reset(rows, cols, 0.0)?;
+            let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
+            TensorF32::scalar_mul(&self.device, 0.0, gradient)?;
         }
         Ok(())
     }

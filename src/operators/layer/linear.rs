@@ -76,25 +76,25 @@ impl OperatorTrait for Linear {
     }
 
     fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let back_propagated_delta: &TensorF32 = &output.gradient().deref().borrow();
+        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         {
             let weights_gradient: &mut TensorF32 =
                 &mut self.weights.gradient().deref().borrow_mut();
             let biases_gradient: &mut TensorF32 = &mut self.biases.gradient().deref().borrow_mut();
             let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let a: &TensorF32 = input;
-            let b: &TensorF32 = back_propagated_delta;
+            let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = weights_gradient;
             TensorF32::gemm(device, true, false, 1.0, a, b, 1.0, c, true)?;
 
-            biases_gradient.assign(device, back_propagated_delta)?;
+            TensorF32::add(device, output_gradient, biases_gradient)?;
         }
 
         {
             let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             let weights: &TensorF32 = &self.weights.tensor().deref().borrow();
             let a: &TensorF32 = weights;
-            let b: &TensorF32 = back_propagated_delta;
+            let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = backward_gradient;
             TensorF32::gemm(device, true, true, 1.0, a, b, 1.0, c, true)?;
         }

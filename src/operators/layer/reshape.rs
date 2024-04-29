@@ -39,7 +39,10 @@ impl OperatorTrait for Reshape {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(input.rows(), self.input_rows);
         debug_assert_eq!(input.cols(), self.input_cols);
-        let output = device.learning_tensor(0, 0, vec![], false);
+        let rows = input.rows();
+        let cols = input.cols();
+        let len = rows * cols;
+        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
             output.assign(device, input)?;

@@ -15,11 +15,6 @@ impl Sigmoid {
 
 impl ActivationFunction for Sigmoid {
     fn activate(&self, product_matrix: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
-        result.reset(
-            product_matrix.rows(),
-            product_matrix.cols(),
-            Default::default(),
-        )?;
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
         let values = product_matrix.get_values()?;
@@ -86,7 +81,10 @@ impl OperatorTrait for Sigmoid {
 
     fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output = device.learning_tensor(0, 0, vec![], false);
+        let rows = input.rows();
+        let cols = input.cols();
+        let len = rows * cols;
+        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
             self.activate(input, output)?;

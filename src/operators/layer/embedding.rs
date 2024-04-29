@@ -34,13 +34,15 @@ impl OperatorTrait for Embedding {
         let embedding_table: &TensorF32 = &self.embedding_table.tensor().deref().borrow();
         debug_assert_eq!(input.cols(), embedding_table.rows());
 
-        let output = device.learning_tensor(0, 0, vec![], false);
+        let a = input;
+        let b = &embedding_table;
+        let rows = a.rows();
+        let cols = b.cols();
+        let len = rows * cols;
+        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
 
         {
-            let a = input;
-            let b = &embedding_table;
             let c = &mut output.tensor().deref().borrow_mut();
-            c.reset(a.rows(), b.cols(), 0.0)?;
             TensorF32::matmul(device, false, false, a, b, c, false)?;
         }
 

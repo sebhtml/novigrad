@@ -133,7 +133,11 @@ fn clip() {
             0.5, 0.7, //
         ],
     );
-    let mut clipped = device.tensor(0, 0, vec![]);
+
+    let rows = tensor.rows();
+    let cols = tensor.cols();
+    let len = rows * cols;
+    let mut clipped = device.tensor(rows, cols, vec![0.0; len]);
     tensor
         .clip(0.0 + epsilon, 1.0 - epsilon, &mut clipped)
         .unwrap();
@@ -176,11 +180,12 @@ fn set_values() {
 fn assign() {
     let device = Device::default();
     let mut tensor = device.tensor(
-        2,
-        2,
+        3,
+        3,
         vec![
-            1.0, 2.0, //
-            3.0, 4.0, //
+            1.0, 2.0, 3.0, //
+            4.0, 5.0, 6.0, //
+            7.0, 8.0, 9.0, //
         ],
     );
 
@@ -549,7 +554,10 @@ fn matrix_addition_result() {
         ],
     );
 
-    let mut result = device.tensor(0, 0, vec![]);
+    let rows = rhs.rows();
+    let cols = rhs.cols();
+    let len = rows * cols;
+    let mut result = device.tensor(rows, cols, vec![0.0; len]);
     let device = Device::cpu();
     result.assign(&device, &rhs).unwrap();
     TensorF32::add(&device, &lhs, &mut result).unwrap();
@@ -629,7 +637,7 @@ fn scalar_mul() {
         ],
     );
 
-    let mut result = device.tensor(0, 0, vec![]);
+    let mut result = device.tensor(3, 2, vec![0.0; 6]);
     let device = Device::cpu();
     result.assign(&device, &lhs).unwrap();
     TensorF32::scalar_mul(&device, rhs, &mut result).unwrap();
@@ -668,7 +676,7 @@ fn big_matrix_addition() {
     }
     let m = device.tensor(rows, cols, values);
 
-    let mut result = device.tensor(0, 0, vec![]);
+    let mut result = device.tensor(rows, cols, vec![0.0; rows * cols]);
     let device = Device::cpu();
     result.assign(&device, &m).unwrap();
     TensorF32::add(&device, &m, &mut result).unwrap();

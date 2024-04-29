@@ -358,7 +358,6 @@ impl TensorF32 {
 
     // TODO use device to clip
     pub fn clip(&self, min: f32, max: f32, result: &mut TensorF32) -> Result<(), Error> {
-        result.reset(self.rows, self.cols, Default::default())?;
         let len = self.len();
         let mut index = 0;
         let self_values = self.get_values()?;

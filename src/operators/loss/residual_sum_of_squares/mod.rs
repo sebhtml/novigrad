@@ -27,7 +27,10 @@ impl LossFunction for ResidualSumOfSquares {
         if expected.shape() != actual.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        let mut diffs = device.tensor(0, 0, vec![]);
+        let rows = expected.rows();
+        let cols = expected.cols();
+        let len = rows * cols;
+        let mut diffs = device.tensor(rows, cols, vec![0.0; len]);
         diffs.assign(device, expected)?;
         TensorF32::sub(device, actual, &mut diffs)?;
         TensorF32::dot_product(device, &diffs, &diffs)

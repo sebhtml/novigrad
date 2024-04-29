@@ -58,7 +58,7 @@ impl OperatorTrait for Linear {
             let a = input;
             let b = weights;
             let c = output;
-            c.assign(device, biases)?;
+            TensorF32::copy(device, biases, c)?;
             let op_result = TensorF32::gemm(device, false, true, 1.0, a, b, 1.0, c, false);
             match op_result {
                 Ok(_) => (),

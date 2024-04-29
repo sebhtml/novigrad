@@ -56,7 +56,7 @@ impl LossFunction for CrossEntropyLoss {
         actual: &TensorF32,
         result: &mut TensorF32,
     ) -> Result<(), Error> {
-        result.assign(device, actual)?;
+        TensorF32::copy(device, actual, result)?;
         TensorF32::sub(device, expected, result)
     }
 }

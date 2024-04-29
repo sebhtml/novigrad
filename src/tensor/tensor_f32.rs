@@ -94,10 +94,6 @@ impl TensorF32 {
         row * self.cols + col
     }
 
-    pub fn assign(&mut self, device: &Device, from: &TensorF32) -> Result<(), Error> {
-        TensorF32::copy(device, from, self)
-    }
-
     pub fn transpose(&self, other: &mut TensorF32) -> Result<(), Error> {
         let self_values = self.get_values()?;
         let mut other_values = other.get_values()?;
@@ -156,7 +152,8 @@ impl TensorF32 {
         let incy = 1;
         device.sdot(n, x, incx, y, incy)
     }
-    fn copy(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+
+    pub fn copy(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;

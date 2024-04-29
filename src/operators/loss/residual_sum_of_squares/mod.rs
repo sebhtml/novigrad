@@ -31,7 +31,7 @@ impl LossFunction for ResidualSumOfSquares {
         let cols = expected.cols();
         let len = rows * cols;
         let mut diffs = device.tensor(rows, cols, vec![0.0; len]);
-        diffs.assign(device, expected)?;
+        TensorF32::copy(device, expected, &mut diffs)?;
         TensorF32::sub(device, actual, &mut diffs)?;
         TensorF32::dot_product(device, &diffs, &diffs)
     }
@@ -43,7 +43,7 @@ impl LossFunction for ResidualSumOfSquares {
         actual: &TensorF32,
         result: &mut TensorF32,
     ) -> Result<(), Error> {
-        result.assign(device, expected)?;
+        TensorF32::copy(device, expected, result)?;
         TensorF32::sub(device, actual, result)?;
         TensorF32::scalar_mul(device, -2.0, result)
     }

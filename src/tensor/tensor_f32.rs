@@ -90,17 +90,6 @@ impl TensorF32 {
         (self.rows, self.cols)
     }
 
-    pub fn reset(&mut self, new_rows: usize, new_cols: usize, value: f32) -> Result<(), Error> {
-        self.rows = new_rows;
-        self.cols = new_cols;
-        let values = self.rows * self.cols;
-        let mut self_values = self.get_values()?;
-        self_values.clear();
-        self_values.resize(values, value);
-        self.set_values(self_values);
-        Ok(())
-    }
-
     pub fn index(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
     }

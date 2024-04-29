@@ -111,7 +111,6 @@ impl TensorF32 {
 
     pub fn transpose(&self, other: &mut TensorF32) -> Result<(), Error> {
         let self_values = self.get_values()?;
-        other.reset(self.cols, self.rows, Default::default())?;
         let mut other_values = other.get_values()?;
         let rows = self.rows;
         let cols = self.cols;

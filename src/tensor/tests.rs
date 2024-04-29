@@ -268,7 +268,7 @@ fn transposed_lhs_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let mut lhs = device.tensor(0, 0, vec![]);
+    let mut lhs = device.tensor(2, 3, vec![0.0; 6]);
     lhs2.transpose(&mut lhs).unwrap();
     let rhs = device.tensor(
         2,
@@ -327,7 +327,7 @@ fn transposed_rhs_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let mut rhs = device.tensor(0, 0, vec![]);
+    let mut rhs = device.tensor(3, 2, vec![0.0; 6]);
     rhs2.transpose(&mut rhs).unwrap();
     let expected_result = device.tensor(
         3,
@@ -366,7 +366,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let mut lhs = device.tensor(0, 0, vec![]);
+    let mut lhs = device.tensor(2, 3, vec![0.0; 6]);
     lhs2.transpose(&mut lhs).unwrap();
     let rhs2 = device.tensor(
         2,
@@ -376,7 +376,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let mut rhs = device.tensor(0, 0, vec![]);
+    let mut rhs = device.tensor(3, 2, vec![0.0; 6]);
     rhs2.transpose(&mut rhs).unwrap();
     let expected_result = device.tensor(
         3,
@@ -416,7 +416,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
             7.0, 8.0,
         ],
     );
-    let mut lhs = device.tensor(0, 0, vec![]);
+    let mut lhs = device.tensor(2, 4, vec![0.0; 8]);
     lhs2.transpose(&mut lhs).unwrap();
 
     let rhs2 = device.tensor(
@@ -428,7 +428,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
         ],
     );
 
-    let mut rhs = device.tensor(0, 0, vec![]);
+    let mut rhs = device.tensor(3, 2, vec![0.0; 6]);
     rhs2.transpose(&mut rhs).unwrap();
 
     let expected_result2 = device.tensor(
@@ -449,7 +449,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
             7.0 * 13.0 + 8.0 * 16.0, //
         ],
     );
-    let mut expected_result = device.tensor(0, 0, vec![]);
+    let mut expected_result = device.tensor(3, 4, vec![0.0; 12]);
     expected_result2.transpose(&mut expected_result).unwrap();
 
     let rows = rhs.rows();
@@ -474,7 +474,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
             7.0, 8.0, //
         ],
     );
-    let mut lhs = device.tensor(0, 0, vec![]);
+    let mut lhs = device.tensor(2, 4, vec![0.0; 8]);
     lhs2.transpose(&mut lhs).unwrap();
 
     let rhs = device.tensor(
@@ -504,7 +504,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
             7.0 * 13.0 + 8.0 * 16.0, //
         ],
     );
-    let mut expected_result = device.tensor(0, 0, vec![]);
+    let mut expected_result = device.tensor(3, 4, vec![0.0; 12]);
     expected_result2.transpose(&mut expected_result).unwrap();
 
     let rows = rhs.cols();
@@ -686,7 +686,7 @@ fn big_matrix_addition() {
 fn transpose() {
     let device = Device::default();
     let matrix = device.tensor(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
-    let mut matrix2 = device.tensor(0, 0, vec![]);
+    let mut matrix2 = device.tensor(2, 3, vec![0.0; 6]);
     matrix.transpose(&mut matrix2).unwrap();
     let matrix_values = matrix.get_values().unwrap();
     let matrix2_values = matrix2.get_values().unwrap();

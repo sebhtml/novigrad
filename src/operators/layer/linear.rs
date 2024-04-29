@@ -63,7 +63,7 @@ impl OperatorTrait for Linear {
             match op_result {
                 Ok(_) => (),
                 Err(_) => {
-                    let mut w_t = device.tensor(0, 0, vec![]);
+                    let mut w_t = device.tensor(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
                     b.transpose(&mut w_t)?;
                     println!("Incompatible shapes in matrix multiplication");
                     println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);

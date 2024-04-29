@@ -27,8 +27,11 @@ impl LossFunction for ResidualSumOfSquares {
         if expected.shape() != actual.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
-        let mut diffs = device.tensor(0, 0, vec![]);
-        diffs.assign(device, expected)?;
+        let rows = expected.rows();
+        let cols = expected.cols();
+        let len = rows * cols;
+        let mut diffs = device.tensor(rows, cols, vec![0.0; len]);
+        TensorF32::copy(device, expected, &mut diffs)?;
         TensorF32::sub(device, actual, &mut diffs)?;
         TensorF32::dot_product(device, &diffs, &diffs)
     }
@@ -40,7 +43,7 @@ impl LossFunction for ResidualSumOfSquares {
         actual: &TensorF32,
         result: &mut TensorF32,
     ) -> Result<(), Error> {
-        result.assign(device, expected)?;
+        TensorF32::copy(device, expected, result)?;
         TensorF32::sub(device, actual, result)?;
         TensorF32::scalar_mul(device, -2.0, result)
     }
@@ -58,11 +61,10 @@ impl OperatorTrait for ResidualSumOfSquares {
 
     fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let output = device.learning_tensor(0, 0, vec![], false);
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-        output.tensor().deref().borrow_mut().reset(1, 1, loss)?;
+        let output = device.learning_tensor(1, 1, vec![loss], false);
         Ok(output)
     }
 

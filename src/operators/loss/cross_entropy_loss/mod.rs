@@ -56,7 +56,7 @@ impl LossFunction for CrossEntropyLoss {
         actual: &TensorF32,
         result: &mut TensorF32,
     ) -> Result<(), Error> {
-        result.assign(device, actual)?;
+        TensorF32::copy(device, actual, result)?;
         TensorF32::sub(device, expected, result)
     }
 }
@@ -73,11 +73,10 @@ impl OperatorTrait for CrossEntropyLoss {
 
     fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let output = device.learning_tensor(0, 0, vec![], false);
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-        output.tensor().deref().borrow_mut().reset(1, 1, loss)?;
+        let output = device.learning_tensor(1, 1, vec![loss], false);
         Ok(output)
     }
 

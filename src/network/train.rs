@@ -86,6 +86,7 @@ pub fn train_network_on_dataset(
 ) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
     let examples = dataset_details.examples;
+    let learning_rate = dataset_details.learning_rate;
     let architecture = dataset_details.architecture;
     let loss_function_name = dataset_details.loss_function_name;
 
@@ -111,7 +112,7 @@ pub fn train_network_on_dataset(
                 break;
             }
         }
-        network.train(epoch, &inputs, &outputs)?;
+        network.train(learning_rate, epoch, &inputs, &outputs)?;
     }
     let final_total_error =
         print_total_error(&mut network, &inputs, &outputs, last_total_error, epochs)?;

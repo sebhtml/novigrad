@@ -208,9 +208,15 @@ impl Device {
         values: Vec<f32>,
         requires_grad: bool,
     ) -> Tensor {
+        let len = rows * cols;
         let tensor = Tensor::new(
             Rc::new(RefCell::new(Self::tensor(&self, rows, cols, values))),
-            Rc::new(RefCell::new(Self::tensor(&self, 0, 0, vec![]))),
+            Rc::new(RefCell::new(Self::tensor(
+                &self,
+                rows,
+                cols,
+                vec![0.0; len],
+            ))),
         );
         if requires_grad {
             self.tensors_with_requires_grad

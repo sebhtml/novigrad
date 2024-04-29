@@ -6,8 +6,12 @@ use crate::{Device, Error, OptimizerTrait, Tensor, TensorF32};
 pub struct GradientDescent {}
 
 impl OptimizerTrait for GradientDescent {
-    fn optimize(&self, gradients: Vec<Tensor>, device: &Device) -> Result<(), Error> {
-        let learning_rate: f32 = 0.5;
+    fn optimize(
+        &self,
+        gradients: &[Tensor],
+        device: &Device,
+        learning_rate: f32,
+    ) -> Result<(), Error> {
         for gradient in gradients {
             let tensor: &mut TensorF32 = &mut gradient.tensor().deref().borrow_mut();
             let gradient: &TensorF32 = &gradient.gradient().deref().borrow();

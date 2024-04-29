@@ -1,3 +1,5 @@
+- bpe tokenizer
+
 == New operators ==
 
 - implement Concat
@@ -11,10 +13,8 @@
 
 == Training ==
 
-- in LearningTensor, gradient is None if requires_grad is false
 - enable tape recording only during training
 - implement mini batch
-- move learning rate in dataset details
 - shuffle examples in each epoch
 
 == New operators (part 2) ==
@@ -24,14 +24,9 @@
 - implement Gelu
 - implement TransformerBlock
 
-== Tokens ==
-
-- bpe tokenizer
-
 == Refactoring ==
 
 - determine the value of using_cross_entropy_loss at run time
-- Don't call reset inside Tensor methods
 - add rc device in tensor
 - remove device argument in OperatorTrait
 - store device in LearningTensor

@@ -11,7 +11,7 @@ fn derive() {
         device.tensor(1, 8, vec![-6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0]);
     let loss_function = ResidualSumOfSquares::default();
     let device = Device::cpu();
-    let mut actual_derived_loss = device.tensor(0, 0, vec![]);
+    let mut actual_derived_loss = device.tensor(1, 8, vec![0.0; 8]);
     loss_function
         .derive(
             &device,

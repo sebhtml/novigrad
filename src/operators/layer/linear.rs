@@ -40,7 +40,11 @@ impl OperatorTrait for Linear {
     fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output = device.learning_tensor(0, 0, vec![], false);
+        let biases: &TensorF32 = &self.biases.tensor().deref().borrow();
+        let rows = biases.rows();
+        let cols = biases.cols();
+        let len = rows * cols;
+        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.
@@ -51,16 +55,15 @@ impl OperatorTrait for Linear {
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
             let weights: &TensorF32 = &self.weights.tensor().deref().borrow();
-            let biases: &TensorF32 = &self.biases.tensor().deref().borrow();
             let a = input;
             let b = weights;
             let c = output;
-            c.assign(device, biases)?;
+            TensorF32::copy(device, biases, c)?;
             let op_result = TensorF32::gemm(device, false, true, 1.0, a, b, 1.0, c, false);
             match op_result {
                 Ok(_) => (),
                 Err(_) => {
-                    let mut w_t = device.tensor(0, 0, vec![]);
+                    let mut w_t = device.tensor(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
                     b.transpose(&mut w_t)?;
                     println!("Incompatible shapes in matrix multiplication");
                     println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
@@ -73,29 +76,27 @@ impl OperatorTrait for Linear {
     }
 
     fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let back_propagated_delta: &TensorF32 = &output.gradient().deref().borrow();
+        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         {
             let weights_gradient: &mut TensorF32 =
                 &mut self.weights.gradient().deref().borrow_mut();
             let biases_gradient: &mut TensorF32 = &mut self.biases.gradient().deref().borrow_mut();
             let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let a: &TensorF32 = input;
-            let b: &TensorF32 = back_propagated_delta;
+            let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = weights_gradient;
-            c.reset(b.cols(), a.cols(), 0.0)?;
-            TensorF32::matmul(device, true, false, a, b, c, true)?;
+            TensorF32::gemm(device, true, false, 1.0, a, b, 1.0, c, true)?;
 
-            biases_gradient.assign(device, back_propagated_delta)?;
+            TensorF32::add(device, output_gradient, biases_gradient)?;
         }
 
         {
             let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             let weights: &TensorF32 = &self.weights.tensor().deref().borrow();
             let a: &TensorF32 = weights;
-            let b: &TensorF32 = back_propagated_delta;
+            let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = backward_gradient;
-            c.reset(b.rows(), a.cols(), 0.0)?;
-            TensorF32::matmul(device, true, true, a, b, c, true)?;
+            TensorF32::gemm(device, true, true, 1.0, a, b, 1.0, c, true)?;
         }
 
         Ok(())

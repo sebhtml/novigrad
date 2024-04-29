@@ -42,7 +42,6 @@ impl TensorF32 {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        result.reset(left.rows, left.cols, Default::default())?;
         debug_assert_eq!(result.shape(), left.shape());
         TensorF32::scalar_mul(device, 0.0, result)?;
 
@@ -91,29 +90,12 @@ impl TensorF32 {
         (self.rows, self.cols)
     }
 
-    pub fn reset(&mut self, new_rows: usize, new_cols: usize, value: f32) -> Result<(), Error> {
-        self.rows = new_rows;
-        self.cols = new_cols;
-        let values = self.rows * self.cols;
-        let mut self_values = self.get_values()?;
-        self_values.clear();
-        self_values.resize(values, value);
-        self.set_values(self_values);
-        Ok(())
-    }
-
     pub fn index(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
     }
 
-    pub fn assign(&mut self, device: &Device, from: &TensorF32) -> Result<(), Error> {
-        self.reset(from.rows, from.cols, 0.0)?;
-        TensorF32::copy(device, from, self)
-    }
-
     pub fn transpose(&self, other: &mut TensorF32) -> Result<(), Error> {
         let self_values = self.get_values()?;
-        other.reset(self.cols, self.rows, Default::default())?;
         let mut other_values = other.get_values()?;
         let rows = self.rows;
         let cols = self.cols;
@@ -170,7 +152,8 @@ impl TensorF32 {
         let incy = 1;
         device.sdot(n, x, incx, y, incy)
     }
-    fn copy(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+
+    pub fn copy(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
@@ -358,7 +341,6 @@ impl TensorF32 {
 
     // TODO use device to clip
     pub fn clip(&self, min: f32, max: f32, result: &mut TensorF32) -> Result<(), Error> {
-        result.reset(self.rows, self.cols, Default::default())?;
         let len = self.len();
         let mut index = 0;
         let self_values = self.get_values()?;

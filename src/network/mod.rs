@@ -31,12 +31,13 @@ impl Network {
 
     pub fn train(
         &mut self,
+        learning_rate: f32,
         epoch: usize,
         inputs: &Vec<Tensor>,
         outputs: &Vec<Tensor>,
     ) -> Result<(), Error> {
         for i in 0..inputs.len() {
-            self.train_back_propagation(epoch, i, &inputs[i], &outputs[i])?;
+            self.train_back_propagation(learning_rate, epoch, i, &inputs[i], &outputs[i])?;
         }
         Ok(())
     }
@@ -68,6 +69,7 @@ impl Network {
 
     fn train_back_propagation(
         &mut self,
+        learning_rate: f32,
         _epoch: usize,
         _example_index: usize,
         x: &Tensor,
@@ -81,7 +83,14 @@ impl Network {
 
         let gradients = loss.backward(&self.device, &self.tape)?;
 
-        self.optimizer.optimize(gradients, &self.device)
+        self.optimizer
+            .optimize(&gradients, &self.device, learning_rate)?;
+
+        for gradient in gradients {
+            let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
+            TensorF32::scalar_mul(&self.device, 0.0, gradient)?;
+        }
+        Ok(())
     }
 }
 

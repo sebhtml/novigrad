@@ -47,6 +47,7 @@ pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
         loss_function_name: ops.cross_entropy_loss(),
         initial_total_error_min: 50.0,
         final_total_error_max: 0.002,
+        learning_rate: 0.5,
     };
     Ok(details)
 }

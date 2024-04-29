@@ -24,8 +24,7 @@ impl OperatorTrait for Embedding {
         let a: &TensorF32 = output_gradient;
         let b: &TensorF32 = input;
         let c: &mut TensorF32 = embedding_table_gradient;
-        c.reset(b.cols(), a.cols(), 0.0)?;
-        TensorF32::matmul(device, true, false, a, b, c, true)
+        TensorF32::gemm(device, true, false, 1.0, a, b, 1.0, c, true)
     }
 
     fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
@@ -34,13 +33,15 @@ impl OperatorTrait for Embedding {
         let embedding_table: &TensorF32 = &self.embedding_table.tensor().deref().borrow();
         debug_assert_eq!(input.cols(), embedding_table.rows());
 
-        let output = device.learning_tensor(0, 0, vec![], false);
+        let a = input;
+        let b = &embedding_table;
+        let rows = a.rows();
+        let cols = b.cols();
+        let len = rows * cols;
+        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
 
         {
-            let a = input;
-            let b = &embedding_table;
             let c = &mut output.tensor().deref().borrow_mut();
-            c.reset(a.rows(), b.cols(), 0.0)?;
             TensorF32::matmul(device, false, false, a, b, c, false)?;
         }
 

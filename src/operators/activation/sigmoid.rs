@@ -40,11 +40,6 @@ impl ActivationFunction for Sigmoid {
         activation_matrix: &TensorF32,
         result: &mut TensorF32,
     ) -> Result<(), Error> {
-        result.reset(
-            activation_matrix.rows(),
-            activation_matrix.cols(),
-            Default::default(),
-        )?;
         let rows = activation_matrix.rows();
         let cols = activation_matrix.cols();
         let values = activation_matrix.get_values()?;
@@ -73,7 +68,10 @@ impl OperatorTrait for Sigmoid {
         // Compute activation function derivative.
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output: &TensorF32 = &output.tensor().deref().borrow();
-        let mut layer_f_derivative = device.tensor(0, 0, vec![]);
+        let rows = input.rows();
+        let cols = input.cols();
+        let len = rows * cols;
+        let mut layer_f_derivative = device.tensor(rows, cols, vec![0.0; len]);
         self.derive(input, output, &mut layer_f_derivative)?;
         layer_f_derivative.element_wise_mul(device, back_propagated_delta, backward_gradient)?;
         Ok(())

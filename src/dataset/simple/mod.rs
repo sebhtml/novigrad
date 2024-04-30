@@ -9,7 +9,7 @@ mod architecture;
 use architecture::*;
 
 fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
-    let tokenizer = AsciiTokenizer::default();
+    let mut tokenizer = AsciiTokenizer::default();
 
     let examples: Vec<_> = ["quizzed", "fuzzing"]
         .iter()

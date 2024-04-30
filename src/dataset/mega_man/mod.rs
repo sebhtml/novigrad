@@ -14,7 +14,7 @@ fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let file_path = "Mega_Man.txt";
     let contents = fs::read_to_string(file_path).map_err(|_| Error::UnsupportedOperation)?;
     // TODO use bpe tokenizer.
-    let tokenizer = AsciiTokenizer::default();
+    let mut tokenizer = AsciiTokenizer::default();
     let tokens: Vec<usize> = tokenizer.encode(&contents);
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;

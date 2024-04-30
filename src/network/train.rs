@@ -26,18 +26,18 @@ pub fn print_expected_output_and_actual_output(
     println!("Loss {}", loss);
 
     println!("  input_tokens: {:?}", &input_tokens);
-    println!("  input_text: {}", tokenizer.decode(&input_tokens));
+    println!("  input_text: {}", tokenizer.decode(&input_tokens)?);
 
     println!("  expected_output_token: {:?}", &expected_output_token);
     println!(
         "  expected_output_text: {}",
-        tokenizer.decode(&expected_output_token)
+        tokenizer.decode(&expected_output_token)?
     );
 
     println!("  actual_output_token: {:?}", &actual_output_token);
     println!(
         "  actual_output_text: {}",
-        tokenizer.decode(&actual_output_token)
+        tokenizer.decode(&actual_output_token)?
     );
 
     let expected_values = expected_output.get_values()?;

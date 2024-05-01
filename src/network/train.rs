@@ -1,10 +1,11 @@
 use std::ops::Deref;
 
 use crate::{
-    AsciiTokenizer, DatasetDetails, Error, Forward, Network, Tensor, TensorF32, Tokenizer,
+    DatasetDetails, Error, Forward, Network, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 pub fn print_expected_output_and_actual_output(
+    tokenizer: &mut Tokenizer,
     example: usize,
     input: &TensorF32,
     expected_output: &TensorF32,
@@ -16,7 +17,6 @@ pub fn print_expected_output_and_actual_output(
     let rows = expected_output.rows();
     let cols = expected_output.cols();
 
-    let tokenizer = AsciiTokenizer::default();
     let input_tokens = get_row_argmaxes(input)?;
     let expected_output_token = [expected_argmax];
     let actual_output_token = [actual_argmax];
@@ -26,18 +26,18 @@ pub fn print_expected_output_and_actual_output(
     println!("Loss {}", loss);
 
     println!("  input_tokens: {:?}", &input_tokens);
-    println!("  input_text: {}", tokenizer.decode(&input_tokens));
+    println!("  input_text: {}", tokenizer.decode(&input_tokens)?);
 
     println!("  expected_output_token: {:?}", &expected_output_token);
     println!(
         "  expected_output_text: {}",
-        tokenizer.decode(&expected_output_token)
+        tokenizer.decode(&expected_output_token)?
     );
 
     println!("  actual_output_token: {:?}", &actual_output_token);
     println!(
         "  actual_output_text: {}",
-        tokenizer.decode(&actual_output_token)
+        tokenizer.decode(&actual_output_token)?
     );
 
     let expected_values = expected_output.get_values()?;
@@ -85,20 +85,21 @@ pub fn train_network_on_dataset(
     dataset_details: DatasetDetails,
 ) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
-    let examples = dataset_details.examples;
+    let examples = &dataset_details.examples;
     let learning_rate = dataset_details.learning_rate;
     let architecture = dataset_details.architecture;
-    let loss_function_name = dataset_details.loss_function_name;
+    let loss_function = dataset_details.loss_function_name;
+    let mut tokenizer = dataset_details.tokenizer;
 
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
-    let mut network = Network::new(architecture, loss_function_name);
+    let mut network = Network::new(architecture, loss_function);
 
     let mut last_total_error = f32::NAN;
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
 
-    let (_, _) = print_results(&mut network, &inputs, &outputs)?;
+    let (_, _) = print_results(&mut tokenizer, &mut network, &inputs, &outputs)?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
@@ -118,7 +119,7 @@ pub fn train_network_on_dataset(
         print_total_error(&mut network, &inputs, &outputs, last_total_error, epochs)?;
 
     let (expected_argmax_values, actual_argmax_values) =
-        print_results(&mut network, &inputs, &outputs)?;
+        print_results(&mut tokenizer, &mut network, &inputs, &outputs)?;
 
     let output = NetworkTestOutput {
         initial_total_error,
@@ -130,6 +131,7 @@ pub fn train_network_on_dataset(
 }
 
 fn print_results(
+    tokenizer: &mut Tokenizer,
     network: &mut Network,
     inputs: &[Tensor],
     outputs: &[Tensor],
@@ -153,6 +155,7 @@ fn print_results(
         actual_argmax_values.push(actual_argmax);
 
         print_expected_output_and_actual_output(
+            tokenizer,
             i,
             &input.tensor().deref().borrow(),
             expected_output,

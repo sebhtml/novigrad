@@ -244,7 +244,6 @@ impl Device {
     }
 }
 
-// TODO add an argument &self to allow to choose between CBlas and CuBlas and the AMD one too.
 impl DeviceInterface for Device {
     fn sgemm(
         &self,

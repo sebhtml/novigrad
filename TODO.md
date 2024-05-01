@@ -1,10 +1,14 @@
-- bpe tokenizer
-
 == New operators ==
 
 - implement Concat
 - implement Matmul
 - implement Add
+
+- avoid re-allocating output tensors every time
+- decouple tensor and device
+- don't backward if last
+- replace Box dyn by enum
+- put txt file in a data directory (check rust documentation)
 
 == Initialization ==
 

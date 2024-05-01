@@ -38,11 +38,6 @@ fn simple_dataset_cuda() {
 }
 
 #[test]
-fn mega_man_dataset_cpu() {
-    test_network_on_dataset(Dataset::MegaMan, Device::cpu());
-}
-
-#[test]
 fn mega_man_dataset_cuda() {
     test_network_on_dataset(Dataset::MegaMan, Device::cuda().unwrap());
 }

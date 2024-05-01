@@ -16,7 +16,6 @@
 
 == Others ==
 
-- implement Concat
 - implement Add
 
 - avoid re-allocating output tensors every time
@@ -33,12 +32,25 @@
 - implement mini batch
 - shuffle examples in each epoch
 
-== New operators (part 2) ==
+== Multi-Head Attention ==
+
+- implement Concat
+- implement MultiHeadAttention
+
+== Dropout ==
 
 - implement Dropout
 - implement Gelu
-- implement MultiHeadAttention
+
+== Transformer ==
+
+- implement FeedForward
+- implement AddAndNorm
 - implement Transformer
+
+== Positional encoding ==
+
+- implement positional encoding
 
 == Refactoring ==
 

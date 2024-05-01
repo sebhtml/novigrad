@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs};
 
-use crate::{BytePairEncoding, Tokenizer};
+use crate::{BytePairEncoding, TokenizerTrait};
 
 #[test]
 fn decode() {

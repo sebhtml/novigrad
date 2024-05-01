@@ -1,9 +1,9 @@
-use crate::{Error, Tokenizer};
+use crate::{Error, TokenizerTrait};
 
 #[derive(Default)]
 pub struct AsciiTokenizer {}
 
-impl Tokenizer for AsciiTokenizer {
+impl TokenizerTrait for AsciiTokenizer {
     fn encode(&mut self, text: &str) -> Vec<usize> {
         text.as_bytes()
             .to_owned()

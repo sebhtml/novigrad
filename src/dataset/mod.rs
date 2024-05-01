@@ -3,7 +3,7 @@ mod simple;
 
 use std::rc::Rc;
 
-use crate::{Device, Error, Forward, Operator, Tensor};
+use crate::{Device, Error, Forward, Operator, Tensor, Tokenizer};
 
 pub enum Dataset {
     Simple,
@@ -11,6 +11,7 @@ pub enum Dataset {
 }
 
 pub struct DatasetDetails {
+    pub tokenizer: Tokenizer,
     pub examples: Vec<(Tensor, Tensor)>,
     pub architecture: Box<dyn Forward>,
     pub loss_function_name: Operator,

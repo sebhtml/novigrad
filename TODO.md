@@ -1,6 +1,3 @@
-- bpe tokenizer
-
-
 == New operators ==
 
 - implement Concat

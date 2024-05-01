@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, collections::HashMap, mem::swap};
 
-use crate::{Error, Tokenizer};
+use crate::{Error, TokenizerTrait};
 
 #[cfg(test)]
 mod tests;
@@ -35,7 +35,7 @@ fn get_pair(tokens: &[usize], i: usize) -> Option<(usize, usize)> {
     return Some(pair);
 }
 
-impl Tokenizer for BytePairEncoding {
+impl TokenizerTrait for BytePairEncoding {
     fn encode(&mut self, text: &str) -> Vec<usize> {
         let mut tokens = vec![];
         let mut tokens_tmp = vec![];

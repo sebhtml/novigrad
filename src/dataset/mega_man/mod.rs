@@ -2,19 +2,20 @@ use std::fs;
 use std::rc::Rc;
 
 mod architecture;
-use crate::tokenizers::Tokenizer;
-use crate::{into_one_hot_encoded_rows, AsciiTokenizer, Device, Operators, Tensor};
+use crate::tokenizers::TokenizerTrait;
+use crate::{into_one_hot_encoded_rows, Device, Operators, Tensor, Tokenizer};
 use crate::{DatasetDetails, Error};
 use architecture::*;
 
-fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
+fn load_examples(
+    device: &Device,
+    tokenizer: &mut Tokenizer,
+) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let num_classes = 256;
     let context_size = 32;
     let mut examples = Vec::new();
     let file_path = "Mega_Man.txt";
     let contents = fs::read_to_string(file_path).map_err(|_| Error::UnsupportedOperation)?;
-    // TODO use bpe tokenizer.
-    let mut tokenizer = AsciiTokenizer::default();
     let tokens: Vec<usize> = tokenizer.encode(&contents);
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
@@ -37,9 +38,11 @@ fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
 }
 
 pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
-    let examples = load_examples(&device)?;
+    let mut tokenizer = Tokenizer::ascii_tokenizer();
+    let examples = load_examples(&device, &mut tokenizer)?;
     let ops = Operators::new(device);
     let details = DatasetDetails {
+        tokenizer,
         examples,
         architecture: Box::new(Architecture::new(&ops)),
         epochs: 300,

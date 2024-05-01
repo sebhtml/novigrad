@@ -1,16 +1,17 @@
 use std::rc::Rc;
 
 use crate::{
-    into_one_hot_encoded_rows, AsciiTokenizer, DatasetDetails, Device, Error, Operators, Tensor,
-    Tokenizer,
+    into_one_hot_encoded_rows, DatasetDetails, Device, Error, Operators, Tensor, Tokenizer,
+    TokenizerTrait,
 };
 
 mod architecture;
 use architecture::*;
 
-fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
-    let mut tokenizer = AsciiTokenizer::default();
-
+fn load_examples(
+    device: &Device,
+    tokenizer: &mut Tokenizer,
+) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let examples: Vec<_> = ["quizzed", "fuzzing"]
         .iter()
         .map(|text| {
@@ -41,9 +42,11 @@ fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
 }
 
 pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
-    let examples = load_examples(&device)?;
+    let mut tokenizer = Tokenizer::ascii_tokenizer();
+    let examples = load_examples(&device, &mut tokenizer)?;
     let ops = Operators::new(device);
     let details = DatasetDetails {
+        tokenizer,
         examples,
         architecture: Box::new(Architecture::new(&ops)),
         epochs: 1000,

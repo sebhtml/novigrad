@@ -1,13 +1,25 @@
-== New operators ==
-
-- implement Concat
-- implement Matmul
-- implement Add
+== Fixes ==
 
 - print number of parameters optimized by optimizer
-- avoid re-allocating output tensors every time
 - decouple tensor and device
 - don't backward if last
+- don't use Reshape in Megaman
+- enable tape recording only during training
+
+== Attention ==
+
+- implement Matmul
+- implement Mask
+- implement Scale
+- implement Attention
+- use Attention in megaman
+
+== Others ==
+
+- implement Concat
+- implement Add
+
+- avoid re-allocating output tensors every time
 - replace Box dyn by enum
 - put txt file in a data directory (check rust documentation)
 
@@ -18,16 +30,15 @@
 
 == Training ==
 
-- enable tape recording only during training
 - implement mini batch
 - shuffle examples in each epoch
 
 == New operators (part 2) ==
 
 - implement Dropout
-- implement Mask
 - implement Gelu
-- implement TransformerBlock
+- implement MultiHeadAttention
+- implement Transformer
 
 == Refactoring ==
 

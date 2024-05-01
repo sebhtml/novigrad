@@ -1,11 +1,3 @@
-== Fixes ==
-
-- print number of parameters optimized by optimizer
-- decouple tensor and device
-- don't backward if last
-- don't use Reshape in Megaman
-- enable tape recording only during training
-
 == Attention ==
 
 - implement Matmul
@@ -13,6 +5,14 @@
 - implement Scale
 - implement Attention
 - use Attention in megaman
+
+== Fixes ==
+
+- don't use Reshape in Megaman
+- print number of parameters optimized by optimizer
+- decouple tensor and device
+- don't backward if last
+- enable tape recording only during training
 
 == Others ==
 

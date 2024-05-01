@@ -4,6 +4,7 @@
 - implement Matmul
 - implement Add
 
+- print number of parameters optimized by optimizer
 - avoid re-allocating output tensors every time
 - decouple tensor and device
 - don't backward if last

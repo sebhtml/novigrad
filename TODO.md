@@ -4,6 +4,7 @@
 - implement Matmul
 - implement Add
 
+- avoid re-allocating output tensors every time
 - decouple tensor and device
 - don't backward if last
 - replace Box dyn by enum

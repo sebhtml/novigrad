@@ -10,11 +10,11 @@ pub struct Architecture {
 }
 
 impl Architecture {
-    pub fn new(ops: &Operators) -> Self {
+    pub fn new(ops: &Operators, vocab_size: usize) -> Self {
         Self {
-            embedding: ops.embedding(256, 384),
+            embedding: ops.embedding(vocab_size, 384),
             reshape: ops.reshape(32, 384, 1, 32 * 384),
-            linear: ops.linear(256, 32 * 384, 1),
+            linear: ops.linear(vocab_size, 32 * 384, 1),
             softmax: ops.softmax(true),
         }
     }

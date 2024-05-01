@@ -25,7 +25,7 @@ fn deterministic_tokens_length() {
     let text = fs::read_to_string(file_path).unwrap();
     let mut tokenizer = BytePairEncoding::default();
     let tokens = tokenizer.encode(&text);
-    assert_eq!(tokens.len(), 44413,);
+    assert_eq!(tokens.len(), 44513,);
 }
 
 #[test]

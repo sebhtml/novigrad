@@ -1,4 +1,4 @@
-use std::{collections::HashMap, mem::swap};
+use std::{collections::BTreeMap, collections::HashMap, mem::swap};
 
 use crate::{Error, Tokenizer};
 
@@ -58,10 +58,11 @@ impl Tokenizer for BytePairEncoding {
         }
 
         // Encode token pairs into tokens
+        let mut token_pair_counters = BTreeMap::<(usize, usize), usize>::default();
         let mut has_repeated_pair = true;
         while has_repeated_pair {
             // Count pairs
-            let mut token_pair_counters = HashMap::<(usize, usize), usize>::default();
+            token_pair_counters.clear();
             let mut i = 0;
             while i < tokens.len() {
                 match get_pair(&tokens, i) {

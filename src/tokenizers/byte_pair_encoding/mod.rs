@@ -5,10 +5,6 @@ use crate::{Error, Tokenizer};
 #[cfg(test)]
 mod tests;
 
-// TODO remove SHADOW_TOKEN
-const SHADOW_TOKEN: usize = 0;
-const FIRST_TOKEN: usize = SHADOW_TOKEN + 1;
-
 pub struct BytePairEncoding {
     // TODO add maximum vocabulary size.
     byte_to_token: HashMap<u8, usize>,
@@ -28,30 +24,22 @@ impl Default for BytePairEncoding {
     }
 }
 
-fn get_pair(tokens: &[usize], i: usize, len: usize) -> Option<((usize, usize), usize)> {
-    if tokens[i + 0] == SHADOW_TOKEN {
+fn get_pair(tokens: &[usize], i: usize) -> Option<(usize, usize)> {
+    if i + 1 >= tokens.len() {
         return None;
     }
 
-    let mut j = 0;
-
-    if i + 1 + j >= len {
-        return None;
-    }
-
-    while i + 1 + j < len && tokens[i + 1 + j] == SHADOW_TOKEN {
-        j += 1;
-    }
     let token_1 = tokens[i + 0];
-    let token_2 = tokens[i + 1 + j];
+    let token_2 = tokens[i + 1];
     let pair = (token_1, token_2);
-    return Some((pair, j));
+    return Some(pair);
 }
 
 impl Tokenizer for BytePairEncoding {
     fn encode(&mut self, text: &str) -> Vec<usize> {
         let mut tokens = vec![];
-        let mut next_token = FIRST_TOKEN;
+        let mut tokens_tmp = vec![];
+        let mut next_token = 0;
 
         let mut allocate_token = || -> usize {
             let token = next_token;
@@ -70,17 +58,16 @@ impl Tokenizer for BytePairEncoding {
         }
 
         // Encode token pairs into tokens
-        let mut last_shadow_token_counter = usize::MAX;
-        while last_shadow_token_counter > 0 {
-            last_shadow_token_counter = 0;
+        let mut last_tokens_len = usize::MAX;
+        while tokens.len() < last_tokens_len {
+            last_tokens_len = tokens.len();
 
             // Count pairs
             let mut token_pair_counters = HashMap::<(usize, usize), usize>::default();
             let mut i = 0;
-            let len = tokens.len();
-            while i < len {
-                match get_pair(&tokens, i, len) {
-                    Some((pair, _)) => {
+            while i < tokens.len() {
+                match get_pair(&tokens, i) {
+                    Some(pair) => {
                         token_pair_counters
                             .entry(pair)
                             .and_modify(|counter| *counter += 1)
@@ -95,43 +82,50 @@ impl Tokenizer for BytePairEncoding {
                 .filter(|item| item.1 > &1)
                 .map(|item| item.1)
                 .max();
-            let pair = max
+
+            let expected_pair = max
                 .map(|max| token_pair_counters.iter().find(|item| item.1 == max))
                 .flatten()
                 .map(|item| item.0);
-            match pair {
+
+            println!("expected_pair {:?} with counter {:?}", expected_pair, max);
+            match expected_pair {
                 Some(expected_pair) => {
+                    tokens_tmp.clear();
                     let mut i = 0;
-                    while i < len - 1 {
-                        match get_pair(&tokens, i, len) {
-                            Some((pair, j)) => {
-                                //println!("Replacing pair {:?}", pair);
+                    while i < tokens.len() {
+                        match get_pair(&tokens, i) {
+                            Some(pair) => {
                                 if &pair == expected_pair {
                                     let token = allocate_token();
-                                    tokens[i + 0] = token;
-                                    tokens[i + 1 + j] = SHADOW_TOKEN;
+                                    tokens_tmp.push(token);
                                     self.token_pair_to_token.insert(pair, token);
                                     self.token_to_token_pair.insert(token, pair);
-                                    last_shadow_token_counter += 1;
-                                    i += 1 + j + 1;
+                                    i += 1 + 1;
                                 } else {
-                                    i += 1;
+                                    tokens_tmp.push(pair.0);
+                                    tokens_tmp.push(pair.1);
+                                    i += 1 + 1;
                                 }
                             }
                             _ => {
+                                tokens_tmp.push(tokens[i]);
                                 i += 1;
                             }
                         }
                     }
+                    println!(
+                        "Tokens before: {}, after: {}",
+                        tokens.len(),
+                        tokens_tmp.len()
+                    );
+                    swap(&mut tokens, &mut tokens_tmp);
                 }
                 _ => {}
             }
         }
 
         tokens
-            .into_iter()
-            .filter(|item| *item != SHADOW_TOKEN)
-            .collect()
     }
 
     fn decode(&self, tokens: &[usize]) -> Result<String, Error> {

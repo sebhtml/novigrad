@@ -3,7 +3,7 @@ use std::{collections::HashMap, fs};
 use crate::{BytePairEncoding, Tokenizer};
 
 #[test]
-fn encode_and_decode() {
+fn decode() {
     let file_path = "Mega_Man.txt";
     let text = fs::read_to_string(file_path).unwrap();
     let mut tokenizer = BytePairEncoding::default();

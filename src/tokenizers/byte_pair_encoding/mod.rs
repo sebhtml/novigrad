@@ -58,10 +58,8 @@ impl Tokenizer for BytePairEncoding {
         }
 
         // Encode token pairs into tokens
-        let mut last_tokens_len = usize::MAX;
-        while tokens.len() < last_tokens_len {
-            last_tokens_len = tokens.len();
-
+        let mut has_repeated_pair = true;
+        while has_repeated_pair {
             // Count pairs
             let mut token_pair_counters = HashMap::<(usize, usize), usize>::default();
             let mut i = 0;
@@ -88,7 +86,7 @@ impl Tokenizer for BytePairEncoding {
                 .flatten()
                 .map(|item| item.0);
 
-            println!("expected_pair {:?} with counter {:?}", expected_pair, max);
+            has_repeated_pair = expected_pair.is_some();
             match expected_pair {
                 Some(expected_pair) => {
                     tokens_tmp.clear();
@@ -103,9 +101,8 @@ impl Tokenizer for BytePairEncoding {
                                     self.token_to_token_pair.insert(token, pair);
                                     i += 1 + 1;
                                 } else {
-                                    tokens_tmp.push(pair.0);
-                                    tokens_tmp.push(pair.1);
-                                    i += 1 + 1;
+                                    tokens_tmp.push(tokens[i]);
+                                    i += 1;
                                 }
                             }
                             _ => {
@@ -114,11 +111,6 @@ impl Tokenizer for BytePairEncoding {
                             }
                         }
                     }
-                    println!(
-                        "Tokens before: {}, after: {}",
-                        tokens.len(),
-                        tokens_tmp.len()
-                    );
                     swap(&mut tokens, &mut tokens_tmp);
                 }
                 _ => {}

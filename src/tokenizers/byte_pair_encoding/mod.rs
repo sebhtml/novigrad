@@ -128,7 +128,8 @@ impl TokenizerTrait for BytePairEncoding {
         let mut a_token_was_found = true;
         while a_token_was_found {
             tokens_tmp.clear();
-            for token in tokens {
+            a_token_was_found = false;
+            for token in tokens2.iter() {
                 match self.token_to_token_pair.get(token) {
                     Some((token_1, token_2)) => {
                         tokens_tmp.push(*token_1);
@@ -137,7 +138,6 @@ impl TokenizerTrait for BytePairEncoding {
                     }
                     _ => {
                         tokens_tmp.push(*token);
-                        a_token_was_found = false;
                     }
                 }
             }
@@ -147,10 +147,7 @@ impl TokenizerTrait for BytePairEncoding {
         // Decode tokens to bytes
         let mut output = vec![];
         for token in tokens2 {
-            let byte = self
-                .token_to_byte
-                .get(&token)
-                .ok_or(Error::UnsupportedOperation)?;
+            let byte = self.token_to_byte.get(&token).unwrap_or(&('?' as u8));
             output.push(*byte);
         }
         String::from_utf8(output).map_err(|_| Error::UnsupportedOperation)

@@ -23,7 +23,8 @@ impl MatMul {
             match op_result {
                 Ok(_) => (),
                 Err(_) => {
-                    let mut b_t = device.tensor(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
+                    let mut b_t =
+                        device.tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
                     b.transpose(&mut b_t)?;
                     println!("Incompatible shapes in matrix multiplication");
                     println!("Between A {:?} and B^T {:?}", a.shape(), b_t.shape(),);
@@ -67,7 +68,7 @@ impl OperatorTrait for MatMul {
         let rows = input_0.rows();
         let cols = input_1.rows();
         let len = rows * cols;
-        let mut output = device.learning_tensor(rows, cols, vec![0.0; len], false);
+        let mut output = device.tensor(rows, cols, vec![0.0; len], false);
         MatMul::forward(device, inputs, &mut output)?;
         Ok(output)
     }

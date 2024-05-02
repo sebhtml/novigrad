@@ -5,13 +5,13 @@ use super::ResidualSumOfSquares;
 #[test]
 fn derive() {
     let device = Device::default();
-    let expected_tensor = device.tensor(1, 8, vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]);
-    let actual_tensor = device.tensor(1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]);
+    let expected_tensor = device.tensor_f32(1, 8, vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]);
+    let actual_tensor = device.tensor_f32(1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]);
     let expected_derived_loss =
-        device.tensor(1, 8, vec![-6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0]);
+        device.tensor_f32(1, 8, vec![-6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0]);
     let loss_function = ResidualSumOfSquares::default();
     let device = Device::cpu();
-    let mut actual_derived_loss = device.tensor(1, 8, vec![0.0; 8]);
+    let mut actual_derived_loss = device.tensor_f32(1, 8, vec![0.0; 8]);
     loss_function
         .derive(
             &device,
@@ -26,8 +26,8 @@ fn derive() {
 #[test]
 fn evaluate() {
     let device = Device::default();
-    let expected_tensor = device.tensor(1, 8, vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]);
-    let actual_tensor = device.tensor(1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]);
+    let expected_tensor = device.tensor_f32(1, 8, vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]);
+    let actual_tensor = device.tensor_f32(1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]);
     let loss_function = ResidualSumOfSquares::default();
     let device = Device::cpu();
     assert_eq!(

@@ -15,7 +15,7 @@ impl Architecture {
     pub fn new(ops: &Operators, vocab_size: usize) -> Self {
         let device = ops.device();
         Self {
-            parameters: device.learning_tensor(384, 384, vec![0.0; 384 * 384], true),
+            parameters: device.tensor(384, 384, vec![0.0; 384 * 384], true),
             embedding: ops.embedding(vocab_size, 384),
             matmul: ops.matmul(),
             reshape: ops.reshape(32, 384, 1, 32 * 384),

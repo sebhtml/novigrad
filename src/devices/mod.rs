@@ -197,11 +197,11 @@ impl Device {
         }
     }
 
-    pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> TensorF32 {
+    pub fn tensor_f32(&self, rows: usize, cols: usize, values: Vec<f32>) -> TensorF32 {
         TensorF32::new(rows, cols, values, self)
     }
 
-    pub fn learning_tensor(
+    pub fn tensor(
         &self,
         rows: usize,
         cols: usize,
@@ -210,8 +210,8 @@ impl Device {
     ) -> Tensor {
         let len = rows * cols;
         let tensor = Tensor::new(
-            Rc::new(RefCell::new(Self::tensor(&self, rows, cols, values))),
-            Rc::new(RefCell::new(Self::tensor(
+            Rc::new(RefCell::new(Self::tensor_f32(&self, rows, cols, values))),
+            Rc::new(RefCell::new(Self::tensor_f32(
                 &self,
                 rows,
                 cols,

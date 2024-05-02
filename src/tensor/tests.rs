@@ -12,7 +12,7 @@ fn new() {
     // When a matrix is built
     // Then it has the appropriate shape
 
-    let matrix = device.tensor(
+    let matrix = device.tensor_f32(
         4,
         3,
         vec![
@@ -32,7 +32,7 @@ fn multiplication_shape_compatibility() {
     // When a matrix multiplication is done
     // Then there is an error
 
-    let lhs = device.tensor(
+    let lhs = device.tensor_f32(
         1,
         1,
         vec![
@@ -40,7 +40,7 @@ fn multiplication_shape_compatibility() {
         ],
     );
 
-    let rhs = device.tensor(
+    let rhs = device.tensor_f32(
         2,
         1,
         vec![
@@ -52,7 +52,7 @@ fn multiplication_shape_compatibility() {
     let rows = lhs.rows();
     let cols = rhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     let error = TensorF32::matmul(&device, false, false, &lhs, &rhs, &mut result, false);
     assert_eq!(error, Err(Error::IncompatibleTensorShapes))
 }
@@ -60,7 +60,7 @@ fn multiplication_shape_compatibility() {
 #[test]
 fn reshape_result() {
     let device = Device::default();
-    let mut lhs = device.tensor(
+    let mut lhs = device.tensor_f32(
         2,
         4,
         vec![
@@ -69,7 +69,7 @@ fn reshape_result() {
         ],
     );
 
-    let expected = device.tensor(
+    let expected = device.tensor_f32(
         1,
         8,
         vec![
@@ -87,7 +87,7 @@ fn reshape_result() {
 #[test]
 fn reshape_error() {
     let device = Device::default();
-    let mut lhs = device.tensor(
+    let mut lhs = device.tensor_f32(
         2,
         4,
         vec![
@@ -103,7 +103,7 @@ fn reshape_error() {
 #[test]
 fn index() {
     let device = Device::default();
-    let tensor = device.tensor(
+    let tensor = device.tensor_f32(
         2,
         2,
         vec![
@@ -124,7 +124,7 @@ fn clip() {
     // Then the clipped tensor contains clipped values
 
     let epsilon = 1e-8;
-    let tensor = device.tensor(
+    let tensor = device.tensor_f32(
         1,
         4,
         vec![
@@ -136,12 +136,12 @@ fn clip() {
     let rows = tensor.rows();
     let cols = tensor.cols();
     let len = rows * cols;
-    let mut clipped = device.tensor(rows, cols, vec![0.0; len]);
+    let mut clipped = device.tensor_f32(rows, cols, vec![0.0; len]);
     tensor
         .clip(0.0 + epsilon, 1.0 - epsilon, &mut clipped)
         .unwrap();
 
-    let expected = device.tensor(
+    let expected = device.tensor_f32(
         1,
         4,
         vec![
@@ -158,7 +158,7 @@ fn clip() {
 #[test]
 fn set_values() {
     let device = Device::default();
-    let mut tensor = device.tensor(
+    let mut tensor = device.tensor_f32(
         2,
         2,
         vec![
@@ -178,7 +178,7 @@ fn set_values() {
 #[test]
 fn assign() {
     let device = Device::default();
-    let mut tensor = device.tensor(
+    let mut tensor = device.tensor_f32(
         3,
         3,
         vec![
@@ -188,7 +188,7 @@ fn assign() {
         ],
     );
 
-    let tensor2 = device.tensor(
+    let tensor2 = device.tensor_f32(
         3,
         3,
         vec![
@@ -208,7 +208,7 @@ fn matrix_multiplication_result() {
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor(
+    let lhs = device.tensor_f32(
         3,
         2,
         vec![
@@ -217,7 +217,7 @@ fn matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs = device.tensor(
+    let rhs = device.tensor_f32(
         2,
         3,
         vec![
@@ -225,7 +225,7 @@ fn matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let expected_result = device.tensor(
+    let expected_result = device.tensor_f32(
         3,
         3,
         vec![
@@ -244,7 +244,7 @@ fn matrix_multiplication_result() {
     let rows = lhs.rows();
     let cols = rhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     TensorF32::matmul(&device, false, false, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
@@ -256,7 +256,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs2 = device.tensor(
+    let lhs2 = device.tensor_f32(
         3,
         2,
         vec![
@@ -265,9 +265,9 @@ fn transposed_lhs_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let mut lhs = device.tensor(2, 3, vec![0.0; 6]);
+    let mut lhs = device.tensor_f32(2, 3, vec![0.0; 6]);
     lhs2.transpose(&mut lhs).unwrap();
-    let rhs = device.tensor(
+    let rhs = device.tensor_f32(
         2,
         3,
         vec![
@@ -275,7 +275,7 @@ fn transposed_lhs_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let expected_result = device.tensor(
+    let expected_result = device.tensor_f32(
         3,
         3,
         vec![
@@ -294,7 +294,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     let rows = lhs.cols();
     let cols = rhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     TensorF32::matmul(&device, true, false, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
@@ -306,7 +306,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor(
+    let lhs = device.tensor_f32(
         3,
         2,
         vec![
@@ -315,7 +315,7 @@ fn transposed_rhs_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs2 = device.tensor(
+    let rhs2 = device.tensor_f32(
         2,
         3,
         vec![
@@ -323,9 +323,9 @@ fn transposed_rhs_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let mut rhs = device.tensor(3, 2, vec![0.0; 6]);
+    let mut rhs = device.tensor_f32(3, 2, vec![0.0; 6]);
     rhs2.transpose(&mut rhs).unwrap();
-    let expected_result = device.tensor(
+    let expected_result = device.tensor_f32(
         3,
         3,
         vec![
@@ -344,7 +344,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     let rows = lhs.rows();
     let cols = rhs.rows();
     let len = rows * cols;
-    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     TensorF32::matmul(&device, false, true, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
@@ -352,7 +352,7 @@ fn transposed_rhs_matrix_multiplication_result() {
 #[test]
 fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let device = Device::default();
-    let lhs2 = device.tensor(
+    let lhs2 = device.tensor_f32(
         3,
         2,
         vec![
@@ -361,9 +361,9 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let mut lhs = device.tensor(2, 3, vec![0.0; 6]);
+    let mut lhs = device.tensor_f32(2, 3, vec![0.0; 6]);
     lhs2.transpose(&mut lhs).unwrap();
-    let rhs2 = device.tensor(
+    let rhs2 = device.tensor_f32(
         2,
         3,
         vec![
@@ -371,9 +371,9 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let mut rhs = device.tensor(3, 2, vec![0.0; 6]);
+    let mut rhs = device.tensor_f32(3, 2, vec![0.0; 6]);
     rhs2.transpose(&mut rhs).unwrap();
-    let expected_result = device.tensor(
+    let expected_result = device.tensor_f32(
         3,
         3,
         vec![
@@ -392,7 +392,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let rows = lhs.cols();
     let cols = rhs.rows();
     let len = rows * cols;
-    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     TensorF32::matmul(&device, true, true, &lhs, &rhs, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
@@ -400,7 +400,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
 #[test]
 fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let device = Device::default();
-    let lhs2 = device.tensor(
+    let lhs2 = device.tensor_f32(
         4,
         2,
         vec![
@@ -410,10 +410,10 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
             7.0, 8.0,
         ],
     );
-    let mut lhs = device.tensor(2, 4, vec![0.0; 8]);
+    let mut lhs = device.tensor_f32(2, 4, vec![0.0; 8]);
     lhs2.transpose(&mut lhs).unwrap();
 
-    let rhs2 = device.tensor(
+    let rhs2 = device.tensor_f32(
         2,
         3,
         vec![
@@ -422,10 +422,10 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
         ],
     );
 
-    let mut rhs = device.tensor(3, 2, vec![0.0; 6]);
+    let mut rhs = device.tensor_f32(3, 2, vec![0.0; 6]);
     rhs2.transpose(&mut rhs).unwrap();
 
-    let expected_result2 = device.tensor(
+    let expected_result2 = device.tensor_f32(
         4,
         3,
         vec![
@@ -443,13 +443,13 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
             7.0 * 13.0 + 8.0 * 16.0, //
         ],
     );
-    let mut expected_result = device.tensor(3, 4, vec![0.0; 12]);
+    let mut expected_result = device.tensor_f32(3, 4, vec![0.0; 12]);
     expected_result2.transpose(&mut expected_result).unwrap();
 
     let rows = rhs.rows();
     let cols = lhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     TensorF32::matmul(&device, true, true, &lhs, &rhs, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
@@ -457,7 +457,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
 #[test]
 fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let device = Device::default();
-    let lhs2 = device.tensor(
+    let lhs2 = device.tensor_f32(
         4,
         2,
         vec![
@@ -467,10 +467,10 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
             7.0, 8.0, //
         ],
     );
-    let mut lhs = device.tensor(2, 4, vec![0.0; 8]);
+    let mut lhs = device.tensor_f32(2, 4, vec![0.0; 8]);
     lhs2.transpose(&mut lhs).unwrap();
 
-    let rhs = device.tensor(
+    let rhs = device.tensor_f32(
         2,
         3,
         vec![
@@ -479,7 +479,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
         ],
     );
 
-    let expected_result2 = device.tensor(
+    let expected_result2 = device.tensor_f32(
         4,
         3,
         vec![
@@ -497,13 +497,13 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
             7.0 * 13.0 + 8.0 * 16.0, //
         ],
     );
-    let mut expected_result = device.tensor(3, 4, vec![0.0; 12]);
+    let mut expected_result = device.tensor_f32(3, 4, vec![0.0; 12]);
     expected_result2.transpose(&mut expected_result).unwrap();
 
     let rows = rhs.cols();
     let cols = lhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     TensorF32::matmul(&device, true, false, &lhs, &rhs, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
@@ -515,7 +515,7 @@ fn matrix_addition_result() {
     // When the addition lhs + rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor(
+    let lhs = device.tensor_f32(
         3,
         2,
         vec![
@@ -524,7 +524,7 @@ fn matrix_addition_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs: TensorF32 = device.tensor(
+    let rhs: TensorF32 = device.tensor_f32(
         3,
         2,
         vec![
@@ -533,7 +533,7 @@ fn matrix_addition_result() {
             13.0, 16.0, //
         ],
     );
-    let expected_result = device.tensor(
+    let expected_result = device.tensor_f32(
         3,
         2,
         vec![
@@ -549,7 +549,7 @@ fn matrix_addition_result() {
     let rows = rhs.rows();
     let cols = rhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     TensorF32::copy(&device, &rhs, &mut result).unwrap();
     TensorF32::add(&device, &lhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
@@ -562,7 +562,7 @@ fn element_wise_mul_result() {
     // When the element-wise multiplication is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor(
+    let lhs = device.tensor_f32(
         3,
         2,
         vec![
@@ -571,7 +571,7 @@ fn element_wise_mul_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs: TensorF32 = device.tensor(
+    let rhs: TensorF32 = device.tensor_f32(
         3,
         2,
         vec![
@@ -580,7 +580,7 @@ fn element_wise_mul_result() {
             13.0, 16.0, //
         ],
     );
-    let expected_result = device.tensor(
+    let expected_result = device.tensor_f32(
         3,
         2,
         vec![
@@ -593,7 +593,7 @@ fn element_wise_mul_result() {
         ],
     );
 
-    let mut result = device.tensor(3, 2, vec![0.0; 6]);
+    let mut result = device.tensor_f32(3, 2, vec![0.0; 6]);
     lhs.element_wise_mul(device, &rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
@@ -605,7 +605,7 @@ fn scalar_mul() {
     // When scalar multiplication is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor(
+    let lhs = device.tensor_f32(
         3,
         2,
         vec![
@@ -615,7 +615,7 @@ fn scalar_mul() {
         ],
     );
     let rhs = -2.0;
-    let expected_result = device.tensor(
+    let expected_result = device.tensor_f32(
         3,
         2,
         vec![
@@ -628,7 +628,7 @@ fn scalar_mul() {
         ],
     );
 
-    let mut result = device.tensor(3, 2, vec![0.0; 6]);
+    let mut result = device.tensor_f32(3, 2, vec![0.0; 6]);
     TensorF32::copy(&device, &lhs, &mut result).unwrap();
     TensorF32::scalar_mul(&device, rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
@@ -644,12 +644,12 @@ fn big_matrix_multiplication() {
     for index in 0..values.len() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
-    let m = device.tensor(rows, cols, values);
+    let m = device.tensor_f32(rows, cols, values);
 
     let rows = m.rows();
     let cols = m.cols();
     let len = rows * cols;
-    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     TensorF32::matmul(&device, false, false, &m, &m, &mut result, false).unwrap();
 }
 
@@ -663,9 +663,9 @@ fn big_matrix_addition() {
     for index in 0..values.len() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
-    let m = device.tensor(rows, cols, values);
+    let m = device.tensor_f32(rows, cols, values);
 
-    let mut result = device.tensor(rows, cols, vec![0.0; rows * cols]);
+    let mut result = device.tensor_f32(rows, cols, vec![0.0; rows * cols]);
     TensorF32::copy(&device, &m, &mut result).unwrap();
     TensorF32::add(&device, &m, &mut result).unwrap();
 }
@@ -673,8 +673,8 @@ fn big_matrix_addition() {
 #[test]
 fn transpose() {
     let device = Device::default();
-    let matrix = device.tensor(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
-    let mut matrix2 = device.tensor(2, 3, vec![0.0; 6]);
+    let matrix = device.tensor_f32(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    let mut matrix2 = device.tensor_f32(2, 3, vec![0.0; 6]);
     matrix.transpose(&mut matrix2).unwrap();
     let matrix_values = matrix.get_values().unwrap();
     let matrix2_values = matrix2.get_values().unwrap();

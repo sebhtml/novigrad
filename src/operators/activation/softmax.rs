@@ -105,7 +105,7 @@ impl OperatorTrait for Softmax {
             let rows = input.rows();
             let cols = input.cols();
             let len = rows * cols;
-            let mut layer_f_derivative = device.tensor(rows, cols, vec![0.0; len]);
+            let mut layer_f_derivative = device.tensor_f32(rows, cols, vec![0.0; len]);
             self.derive(input, output, &mut layer_f_derivative)?;
 
             layer_f_derivative.element_wise_mul(device, output_gradient, backward_gradient)?;
@@ -119,7 +119,7 @@ impl OperatorTrait for Softmax {
         let rows = input.rows();
         let cols = input.cols();
         let len = rows * cols;
-        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
+        let output = device.tensor(rows, cols, vec![0.0; len], false);
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
             self.activate(input, output)?;

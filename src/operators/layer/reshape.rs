@@ -42,7 +42,7 @@ impl OperatorTrait for Reshape {
         let rows = input.rows();
         let cols = input.cols();
         let len = rows * cols;
-        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
+        let output = device.tensor(rows, cols, vec![0.0; len], false);
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
             TensorF32::copy(device, input, output)?;

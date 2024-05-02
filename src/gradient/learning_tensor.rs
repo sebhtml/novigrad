@@ -39,7 +39,7 @@ impl Tensor {
             // Clip the backward gradients.
             for input in inputs {
                 let backward_gradient: &mut TensorF32 = &mut input.gradient().deref().borrow_mut();
-                let back_propagated_gradient = device.tensor(
+                let back_propagated_gradient = device.tensor_f32(
                     backward_gradient.rows(),
                     backward_gradient.cols(),
                     backward_gradient.get_values()?,

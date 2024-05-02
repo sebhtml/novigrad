@@ -7,6 +7,7 @@
 
 == Fixes ==
 
+- use variables in mega_man architecture
 - put load_dataset in a polymorphic enum
 - print number of parameters optimized by optimizer
 - decouple tensor and device

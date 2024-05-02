@@ -8,10 +8,8 @@ impl MatMul {
     pub fn new() -> Self {
         MatMul {}
     }
-}
 
-impl OperatorTrait for MatMul {
-    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
@@ -39,6 +37,12 @@ impl OperatorTrait for MatMul {
         }
 
         Ok(output)
+    }
+}
+
+impl OperatorTrait for MatMul {
+    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+        MatMul::forward(device, inputs)
     }
 
     fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {

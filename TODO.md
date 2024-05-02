@@ -1,6 +1,5 @@
 == Attention ==
 
-- implement Matmul
 - implement Mask
 - implement Scale
 - implement Attention
@@ -8,11 +7,13 @@
 
 == Fixes ==
 
-- don't use Reshape in Megaman
+- use MatMul::forward in Embedding and in Linear
+- use MatMul::backward in Embedding and in Linear
 - print number of parameters optimized by optimizer
 - decouple tensor and device
 - don't backward if last
 - enable tape recording only during training
+- don't use Reshape in Megaman
 
 == Others ==
 

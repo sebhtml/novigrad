@@ -9,14 +9,10 @@ impl MatMul {
         MatMul {}
     }
 
-    fn forward(device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(device: &Device, inputs: &[Tensor], output: &mut Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
-        let rows = input_0.rows();
-        let cols = input_1.rows();
-        let len = rows * cols;
-        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
 
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
@@ -36,13 +32,20 @@ impl MatMul {
             }
         }
 
-        Ok(output)
+        Ok(())
     }
 }
 
 impl OperatorTrait for MatMul {
     fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        MatMul::forward(device, inputs)
+        let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
+        let rows = input_0.rows();
+        let cols = input_1.rows();
+        let len = rows * cols;
+        let mut output = device.learning_tensor(rows, cols, vec![0.0; len], false);
+        MatMul::forward(device, inputs, &mut output)?;
+        Ok(output)
     }
 
     fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {

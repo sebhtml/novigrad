@@ -39,11 +39,17 @@ fn load_examples(
 }
 
 pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
-    //let vocab_size = 34816; // 32768 + 2048
-    //let mut tokenizer = Tokenizer::byte_pair_encoding();
-    // TODO
-    let vocab_size = 256;
-    let mut tokenizer = Tokenizer::ascii_tokenizer();
+    let use_bpe = true;
+    let (vocab_size, mut tokenizer) = if use_bpe {
+        let vocab_size = 34816; // 32768 + 2048
+        let tokenizer = Tokenizer::byte_pair_encoding();
+        (vocab_size, tokenizer)
+    } else {
+        let vocab_size = 256;
+        let tokenizer = Tokenizer::ascii_tokenizer();
+        (vocab_size, tokenizer)
+    };
+
     let examples = load_examples(&device, vocab_size, &mut tokenizer)?;
     let ops = Operators::new(device);
     let details = DatasetDetails {

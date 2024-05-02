@@ -7,6 +7,7 @@
 
 == Fixes ==
 
+- put load_dataset in a polymorphic enum
 - print number of parameters optimized by optimizer
 - decouple tensor and device
 - don't backward if last

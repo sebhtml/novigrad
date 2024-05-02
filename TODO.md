@@ -1,14 +1,12 @@
 == Attention ==
 
-- implement Mask
 - implement Scale
+- implement Mask
 - implement Attention
 - use Attention in megaman
 
 == Fixes ==
 
-- use MatMul::forward in Embedding and in Linear
-- use MatMul::backward in Embedding and in Linear
 - print number of parameters optimized by optimizer
 - decouple tensor and device
 - don't backward if last
@@ -19,8 +17,7 @@
 
 - implement Add
 
-- avoid re-allocating output tensors every time
-- replace Box dyn by enum
+- avoid re-allocating output tensors every time (allocate them in Architecture)
 - put txt file in a data directory (check rust documentation)
 
 == Initialization ==
@@ -59,6 +56,9 @@
 - add rc device in tensor
 - remove device argument in OperatorTrait
 - store device in LearningTensor
+- use MatMul::forward in Embedding and in Linear
+- use MatMul::backward in Embedding and in Linear
+- replace Box dyn by enum
 
 == Devices ==
 

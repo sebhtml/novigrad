@@ -29,17 +29,20 @@ impl LossFunction for CrossEntropyLoss {
             return Err(Error::IncompatibleTensorShapes);
         }
         let rows = p.rows();
-        debug_assert_eq!(rows, 1);
         let cols = p.cols();
+        let mut row = 0;
         let mut col = 0;
         let mut sum = 0.0;
         let p_values = p.get_values()?;
         let q_values = q.get_values()?;
-        while col < cols {
-            let p_i = p_values[p.index(0, col)];
-            let q_i = q_values[q.index(0, col)] + EPSILON;
-            sum += p_i * f32::ln(q_i);
-            col += 1;
+        while row < rows {
+            while col < cols {
+                let p_i = p_values[p.index(row, col)];
+                let q_i = q_values[q.index(row, col)] + EPSILON;
+                sum += p_i * f32::ln(q_i);
+                col += 1;
+            }
+            row += 1;
         }
         debug_assert!(sum.is_finite());
         Ok(-sum)

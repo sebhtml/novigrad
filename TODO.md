@@ -1,13 +1,25 @@
-== New operators ==
+== Attention ==
 
-- implement Concat
-- implement Matmul
-- implement Add
+- implement Scale
+- implement Mask
+- implement Attention
+- use Attention in megaman
 
-- avoid re-allocating output tensors every time
+== Fixes ==
+
+- use variables in mega_man architecture
+- put load_dataset in a polymorphic enum
+- print number of parameters optimized by optimizer
 - decouple tensor and device
 - don't backward if last
-- replace Box dyn by enum
+- enable tape recording only during training
+- don't use Reshape in Megaman
+
+== Others ==
+
+- implement Add
+
+- avoid re-allocating output tensors every time (allocate them in Architecture)
 - put txt file in a data directory (check rust documentation)
 
 == Initialization ==
@@ -17,16 +29,28 @@
 
 == Training ==
 
-- enable tape recording only during training
 - implement mini batch
 - shuffle examples in each epoch
 
-== New operators (part 2) ==
+== Multi-Head Attention ==
+
+- implement Concat
+- implement MultiHeadAttention
+
+== Dropout ==
 
 - implement Dropout
-- implement Mask
 - implement Gelu
-- implement TransformerBlock
+
+== Transformer ==
+
+- implement FeedForward
+- implement AddAndNorm
+- implement Transformer
+
+== Positional encoding ==
+
+- implement positional encoding
 
 == Refactoring ==
 
@@ -34,6 +58,9 @@
 - add rc device in tensor
 - remove device argument in OperatorTrait
 - store device in LearningTensor
+- use MatMul::forward in Embedding and in Linear
+- use MatMul::backward in Embedding and in Linear
+- replace Box dyn by enum
 
 == Devices ==
 

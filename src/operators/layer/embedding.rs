@@ -9,9 +9,19 @@ pub struct Embedding {
 
 impl Embedding {
     pub fn new(num_embeddings: usize, embedding_dim: usize, device: &Device) -> Self {
-        Self {
-            embedding_table: get_embedding_table(device, num_embeddings, embedding_dim),
-        }
+        let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim);
+        let len = embedding_table.len();
+        let mut transposed = device.tensor(embedding_dim, num_embeddings, vec![0.0; len]);
+        // TODO don't unwrap directly
+        embedding_table.transpose(&mut transposed).unwrap();
+        // TODO don't unwrap directly
+        let embedding_table = device.learning_tensor(
+            transposed.rows(),
+            transposed.cols(),
+            transposed.get_values().unwrap(),
+            true,
+        );
+        Self { embedding_table }
     }
 }
 
@@ -31,18 +41,18 @@ impl OperatorTrait for Embedding {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         let embedding_table: &TensorF32 = &self.embedding_table.tensor().deref().borrow();
-        debug_assert_eq!(input.cols(), embedding_table.rows());
+        debug_assert_eq!(input.cols(), embedding_table.cols());
 
         let a = input;
         let b = &embedding_table;
         let rows = a.rows();
-        let cols = b.cols();
+        let cols = b.rows();
         let len = rows * cols;
         let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
 
         {
             let c = &mut output.tensor().deref().borrow_mut();
-            TensorF32::matmul(device, false, false, a, b, c, false)?;
+            TensorF32::matmul(device, false, true, a, b, c, false)?;
         }
 
         Ok(output)
@@ -53,7 +63,7 @@ impl OperatorTrait for Embedding {
     }
 }
 
-fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> Tensor {
+fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> TensorF32 {
     let mut rng = thread_rng();
     let mut embeddings_table: Vec<f32> = Vec::new();
     let left = 0.0;
@@ -70,5 +80,5 @@ fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: us
         embeddings_table.append(&mut token_embeddings);
         token += 1;
     }
-    device.learning_tensor(num_embeddings, embedding_dim, embeddings_table, true)
+    device.tensor(num_embeddings, embedding_dim, embeddings_table)
 }

@@ -1,8 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    CrossEntropyLoss, Device, Embedding, Linear, Operator, Reshape, ResidualSumOfSquares, Sigmoid,
-    Softmax, Tape,
+    CrossEntropyLoss, Device, Embedding, Linear, MatMul, Operator, Reshape, ResidualSumOfSquares,
+    Sigmoid, Softmax, Tape,
 };
 
 pub struct Operators {
@@ -35,6 +35,14 @@ impl Operators {
                 embedding_dim,
                 &self.device,
             )))),
+        )
+    }
+
+    pub fn matmul(&self) -> Operator {
+        Operator::new(
+            self.device(),
+            self.tape(),
+            Rc::new(RefCell::new(Box::new(MatMul::new()))),
         )
     }
 

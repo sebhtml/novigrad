@@ -1,7 +1,5 @@
 == Fixes ==
 
-- preallocate outputs in architectures
-- avoid re-allocating output tensors every time (allocate them in Architecture)
 - does it work without gradient clipping ?
 - remove parameters from struct architecture
 - print number of parameters optimized by optimizer

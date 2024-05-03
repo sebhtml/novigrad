@@ -49,13 +49,6 @@ impl Architecture {
 
 impl Forward for Architecture {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        /*
-        output shape: (32, 384)
-        output shape: (32, 384)
-        output shape: (1, 12288)
-        output shape: (1, 34816)
-        output shape: (1, 34816)
-                 */
         let state_0 = self.embedding.forward(inputs)?;
         let state_0b = self.matmul.forward(&[state_0, self.parameters.clone()])?;
         let state_1 = self.reshape.forward(&[state_0b])?;

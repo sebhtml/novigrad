@@ -19,6 +19,15 @@ impl Tensor {
         &self.gradient
     }
 
+    pub fn shape(&self) -> (usize, usize) {
+        self.tensor.deref().borrow().shape()
+    }
+
+    pub fn resize(&self, rows: usize, cols: usize) {
+        self.tensor.deref().borrow_mut().resize(rows, cols);
+        self.gradient.deref().borrow_mut().resize(rows, cols);
+    }
+
     /// Back-propagation
     pub fn backward(
         &self,

@@ -125,6 +125,16 @@ impl TensorF32 {
         self.values.get_values()
     }
 
+    pub fn resize(&mut self, rows: usize, cols: usize) {
+        if rows == self.rows && cols == self.cols {
+            return;
+        }
+        self.rows = rows;
+        self.cols = cols;
+        let len = rows * cols;
+        self.set_values(vec![0.0; len]);
+    }
+
     pub fn set_values(&mut self, new_values: Vec<f32>) {
         debug_assert_eq!(new_values.len(), self.len());
         if self.values.len() != self.len() {

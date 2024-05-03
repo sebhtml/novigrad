@@ -40,17 +40,6 @@ impl Architecture {
 
 impl Forward for Architecture {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        /*
-        output shape: (6, 384)
-        output shape: (6, 384)
-        output shape: (6, 384)
-        output shape: (1, 2304)
-        output shape: (1, 384)
-        output shape: (1, 384)
-        output shape: (1, 256)
-        output shape: (1, 256)
-
-         */
         let state_0: Tensor = self.embedding.forward(inputs)?;
         let state_1 = self.linear_0.forward(&[state_0])?;
         let state_2 = self.sigmoid_0.forward(&[state_1])?;

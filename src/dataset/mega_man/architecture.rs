@@ -3,6 +3,12 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{Device, Error, Forward, Operator, Operators, Tape, Tensor};
 
 pub struct Architecture {
+    batch_size: usize,
+    sequence_length: usize,
+    vocab_size: usize,
+    num_embeddings: usize,
+    embedding_dim: usize,
+    num_heads: usize,
     parameters: Tensor,
     embedding: Operator,
     matmul: Operator,
@@ -12,16 +18,42 @@ pub struct Architecture {
 }
 
 impl Architecture {
-    pub fn new(ops: &Operators, vocab_size: usize) -> Self {
+    pub fn new(ops: &Operators) -> Self {
+        let batch_size = 1;
+        let sequence_length = 32;
+        let vocab_size = 34816; // 32768 + 2048
+        let num_embeddings = vocab_size;
+        let embedding_dim = 384;
+        let num_heads = 0;
         let device = ops.device();
         Self {
-            parameters: device.tensor(384, 384, vec![0.0; 384 * 384], true),
-            embedding: ops.embedding(vocab_size, 384),
+            batch_size,
+            sequence_length,
+            vocab_size,
+            num_embeddings,
+            embedding_dim,
+            num_heads,
+            parameters: device.tensor(
+                embedding_dim,
+                embedding_dim,
+                vec![0.0; embedding_dim * embedding_dim],
+                true,
+            ),
+            embedding: ops.embedding(vocab_size, embedding_dim),
             matmul: ops.matmul(),
-            reshape: ops.reshape(32, 384, 1, 32 * 384),
-            linear: ops.linear(vocab_size, 32 * 384, 1),
+            reshape: ops.reshape(
+                sequence_length,
+                embedding_dim,
+                1,
+                sequence_length * embedding_dim,
+            ),
+            linear: ops.linear(vocab_size, sequence_length * embedding_dim, 1),
             softmax: ops.softmax(true),
         }
+    }
+
+    pub fn vocab_size(&self) -> usize {
+        self.vocab_size
     }
 }
 

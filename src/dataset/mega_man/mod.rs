@@ -39,23 +39,20 @@ fn load_examples(
 }
 
 pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
-    let use_bpe = true;
-    let (vocab_size, mut tokenizer) = if use_bpe {
-        let vocab_size = 34816; // 32768 + 2048
-        let tokenizer = Tokenizer::byte_pair_encoding();
-        (vocab_size, tokenizer)
+    let ops = Operators::new(device.clone());
+    let architecture = Architecture::new(&ops);
+    let vocab_size = architecture.vocab_size();
+    let mut tokenizer = if vocab_size == 256 {
+        Tokenizer::ascii_tokenizer()
     } else {
-        let vocab_size = 256;
-        let tokenizer = Tokenizer::ascii_tokenizer();
-        (vocab_size, tokenizer)
+        Tokenizer::byte_pair_encoding()
     };
 
     let examples = load_examples(&device, vocab_size, &mut tokenizer)?;
-    let ops = Operators::new(device);
     let details = DatasetDetails {
         tokenizer,
         examples,
-        architecture: Box::new(Architecture::new(&ops, vocab_size)),
+        architecture: Box::new(architecture),
         epochs: 300,
         progress: 100,
         loss_function_name: ops.cross_entropy_loss(),

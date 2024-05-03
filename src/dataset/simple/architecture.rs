@@ -19,9 +19,9 @@ impl Architecture {
             linear_0: ops.linear(256, 32, 6),
             sigmoid_0: ops.sigmoid(),
             reshape: ops.reshape(6, 256, 1, 6 * 256),
-            linear_1: ops.linear(32, 6 * 256, 1),
+            linear_1: ops.linear(256, 6 * 256, 1),
             sigmoid_1: ops.sigmoid(),
-            linear_2: ops.linear(256, 32, 1),
+            linear_2: ops.linear(256, 256, 1),
             softmax: ops.softmax(true),
         }
     }
@@ -29,6 +29,16 @@ impl Architecture {
 
 impl Forward for Architecture {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+        /*
+        state_0 shape (6, 32)
+        state_1 shape (6, 256)
+        state_2 shape (6, 256)
+        state_3 shape (1, 1536)
+        state_4 shape (1, 256)
+        state_5 shape (1, 256)
+        state_6 shape (1, 256)
+        state_7 shape (1, 256)
+         */
         let state_0: Tensor = self.embedding.forward(inputs)?;
         let state_1 = self.linear_0.forward(&[state_0])?;
         let state_2 = self.sigmoid_0.forward(&[state_1])?;

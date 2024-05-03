@@ -1,5 +1,6 @@
 == Fixes ==
 
+- avoid allocating tensors in forward
 - does it work without gradient clipping ?
 - remove parameters from struct architecture
 - print number of parameters optimized by optimizer

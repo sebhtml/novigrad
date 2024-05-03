@@ -7,6 +7,7 @@ use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 pub struct Linear {
     weights: Tensor,
     biases: Tensor,
+    output: Tensor,
 }
 
 impl Linear {
@@ -32,7 +33,13 @@ impl Linear {
         let biases_len = bias_rows * weights_rows;
         let biases = device.tensor(bias_rows, weights_rows, vec![0.0; biases_len], true);
 
-        Linear { weights, biases }
+        let output = device.tensor(0, 0, vec![], false);
+
+        Linear {
+            weights,
+            biases,
+            output,
+        }
     }
 }
 
@@ -43,8 +50,7 @@ impl OperatorTrait for Linear {
         let biases: &TensorF32 = &self.biases.tensor().deref().borrow();
         let rows = biases.rows();
         let cols = biases.cols();
-        let len = rows * cols;
-        let output = device.tensor(rows, cols, vec![0.0; len], false);
+        self.output.resize(rows, cols);
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.
@@ -53,7 +59,7 @@ impl OperatorTrait for Linear {
 
         // use GEMM to do C = A * W^T + C  with weights and biases all together.
         {
-            let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
+            let output: &mut TensorF32 = &mut self.output.tensor().deref().borrow_mut();
             let weights: &TensorF32 = &self.weights.tensor().deref().borrow();
             let a = input;
             let b = weights;
@@ -73,7 +79,7 @@ impl OperatorTrait for Linear {
             }
         }
 
-        Ok(output)
+        Ok(self.output.clone())
     }
 
     fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {

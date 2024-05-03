@@ -3,12 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{Device, Error, Forward, Operator, Operators, Tape, Tensor};
 
 pub struct Architecture {
-    batch_size: usize,
-    sequence_length: usize,
     vocab_size: usize,
-    num_embeddings: usize,
-    embedding_dim: usize,
-    num_heads: usize,
     parameters: Tensor,
     embedding: Operator,
     matmul: Operator,
@@ -19,27 +14,22 @@ pub struct Architecture {
 
 impl Architecture {
     pub fn new(ops: &Operators) -> Self {
-        let batch_size = 1;
+        let _batch_size = 1;
         let sequence_length = 32;
         let vocab_size = 34816; // 32768 + 2048
         let num_embeddings = vocab_size;
         let embedding_dim = 384;
-        let num_heads = 0;
+        let _num_heads = 0;
         let device = ops.device();
         Self {
-            batch_size,
-            sequence_length,
             vocab_size,
-            num_embeddings,
-            embedding_dim,
-            num_heads,
             parameters: device.tensor(
                 embedding_dim,
                 embedding_dim,
                 vec![0.0; embedding_dim * embedding_dim],
                 true,
             ),
-            embedding: ops.embedding(vocab_size, embedding_dim),
+            embedding: ops.embedding(num_embeddings, embedding_dim),
             matmul: ops.matmul(),
             reshape: ops.reshape(
                 sequence_length,
@@ -60,12 +50,12 @@ impl Architecture {
 impl Forward for Architecture {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         /*
-        state_0 shape (32, 384)
-        state_0b shape (32, 384)
-        state_1 shape (1, 12288)
-        state_2 shape (1, 34816)
-        state_3 shape (1, 34816)
-         */
+        output shape: (32, 384)
+        output shape: (32, 384)
+        output shape: (1, 12288)
+        output shape: (1, 34816)
+        output shape: (1, 34816)
+                 */
         let state_0 = self.embedding.forward(inputs)?;
         let state_0b = self.matmul.forward(&[state_0, self.parameters.clone()])?;
         let state_1 = self.reshape.forward(&[state_0b])?;

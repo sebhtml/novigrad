@@ -14,14 +14,25 @@ pub struct Architecture {
 
 impl Architecture {
     pub fn new(ops: &Operators) -> Self {
+        let _batch_size = 1;
+        let sequence_length = 6;
+        let vocab_size = 256;
+        let num_embeddings = vocab_size;
+        let embedding_dim = 384;
+        let _num_heads = 0;
         Self {
-            embedding: ops.embedding(256, 32),
-            linear_0: ops.linear(256, 32, 6),
+            embedding: ops.embedding(num_embeddings, embedding_dim),
+            linear_0: ops.linear(embedding_dim, embedding_dim, sequence_length),
             sigmoid_0: ops.sigmoid(),
-            reshape: ops.reshape(6, 256, 1, 6 * 256),
-            linear_1: ops.linear(256, 6 * 256, 1),
+            reshape: ops.reshape(
+                sequence_length,
+                embedding_dim,
+                1,
+                sequence_length * embedding_dim,
+            ),
+            linear_1: ops.linear(embedding_dim, sequence_length * embedding_dim, 1),
             sigmoid_1: ops.sigmoid(),
-            linear_2: ops.linear(256, 256, 1),
+            linear_2: ops.linear(vocab_size, embedding_dim, 1),
             softmax: ops.softmax(true),
         }
     }
@@ -30,14 +41,15 @@ impl Architecture {
 impl Forward for Architecture {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         /*
-        state_0 shape (6, 32)
-        state_1 shape (6, 256)
-        state_2 shape (6, 256)
-        state_3 shape (1, 1536)
-        state_4 shape (1, 256)
-        state_5 shape (1, 256)
-        state_6 shape (1, 256)
-        state_7 shape (1, 256)
+        output shape: (6, 384)
+        output shape: (6, 384)
+        output shape: (6, 384)
+        output shape: (1, 2304)
+        output shape: (1, 384)
+        output shape: (1, 384)
+        output shape: (1, 256)
+        output shape: (1, 256)
+
          */
         let state_0: Tensor = self.embedding.forward(inputs)?;
         let state_1 = self.linear_0.forward(&[state_0])?;

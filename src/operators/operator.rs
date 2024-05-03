@@ -19,6 +19,12 @@ impl Forward for Operator {
             output.clone(),
         );
 
+        /*
+        println!(
+            "output shape: {:?}",
+            output.tensor().deref().borrow().shape()
+        );
+         */
         Ok(output)
     }
 

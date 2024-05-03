@@ -96,7 +96,10 @@ impl Network {
 
 impl Forward for Network {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        self.architecture.forward(inputs)
+        //println!("---BEGIN---");
+        let output = self.architecture.forward(inputs);
+        //println!("---END---");
+        output
     }
 
     fn device(&self) -> Rc<Device> {

@@ -2,7 +2,7 @@
                                                                                                                                                               
 - avoid allocating tensors in forward
 - allocate outputs in architecture
-- add a unified forward tape
+
 - print number of parameters optimized by optimizer
 - does it work without gradient clipping ?
 
@@ -30,6 +30,7 @@
 
 == Parallel Execution ==
 
+- add a unified forward tape
 - implement parallel execution of certain branches in parallel using a execution_group_id
 
 == Datasets ==

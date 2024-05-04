@@ -5,7 +5,6 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
     embedding_table: Tensor,
-    output: Tensor,
 }
 
 impl Embedding {
@@ -22,11 +21,8 @@ impl Embedding {
             transposed.get_values().unwrap(),
             true,
         );
-        let output = device.tensor(0, 0, vec![], false);
-        Self {
-            embedding_table,
-            output,
-        }
+
+        Self { embedding_table }
     }
 }
 
@@ -52,14 +48,15 @@ impl OperatorTrait for Embedding {
         let b = &embedding_table;
         let rows = a.rows();
         let cols = b.rows();
-        self.output.resize(rows, cols);
+        let len = rows * cols;
+        let output = device.tensor(rows, cols, vec![0.0; len], false);
 
         {
-            let c = &mut self.output.tensor().deref().borrow_mut();
+            let c = &mut output.tensor().deref().borrow_mut();
             TensorF32::matmul(device, false, true, a, b, c, false)?;
         }
 
-        Ok(self.output.clone())
+        Ok(output)
     }
 
     fn name(&self) -> &str {

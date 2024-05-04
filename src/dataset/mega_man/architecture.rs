@@ -16,7 +16,7 @@ impl Architecture {
     pub fn new(ops: &Operators) -> Self {
         let _batch_size = 1;
         let sequence_length = 32;
-        let vocab_size = 34816; // 32768 + 2048
+        let vocab_size = 256; // 34816; // 32768 + 2048
         let num_embeddings = vocab_size;
         let embedding_dim = 384;
         let _num_heads = 0;

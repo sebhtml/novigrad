@@ -5,7 +5,7 @@ use crate::{Device, Error, OperatorTrait, TensorF32};
 #[derive(Clone)]
 pub struct Tensor {
     operator: Rc<dyn OperatorTrait>,
-    inputs: Rc<RefCell<Vec<Tensor>>>,
+    inputs: Vec<Tensor>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
 }
@@ -19,26 +19,17 @@ impl Tensor {
     ) -> Self {
         Self {
             operator,
-            inputs: Rc::new(RefCell::new(inputs.to_owned())),
+            inputs: inputs.to_owned(),
             tensor,
             gradient,
         }
-    }
-
-    pub fn set_operator(&mut self, operator: Rc<dyn OperatorTrait>) {
-        self.operator = operator;
     }
 
     pub fn operator(&self) -> &Rc<dyn OperatorTrait> {
         &self.operator
     }
 
-    pub fn set_inputs(&self, inputs: &[Tensor]) {
-        let self_input: &mut Vec<Tensor> = &mut self.inputs.deref().borrow_mut();
-        *self_input = inputs.to_owned();
-    }
-
-    pub fn inputs(&self) -> &Rc<RefCell<Vec<Tensor>>> {
+    pub fn inputs(&self) -> &Vec<Tensor> {
         &self.inputs
     }
 
@@ -64,11 +55,8 @@ impl Tensor {
         let mut stack = LinkedList::new();
         stack.push_back(self.clone());
         while let Some(element) = stack.pop_back() {
-            {
-                let inputs: &[Tensor] = &element.inputs().deref().borrow();
-                for input in inputs {
-                    stack.push_back(input.clone());
-                }
+            for input in element.inputs() {
+                stack.push_back(input.clone());
             }
             tape.push(element);
         }
@@ -78,12 +66,11 @@ impl Tensor {
     pub fn print_tape(tape: &[Tensor]) {
         println!("Tape");
         for (i, element) in tape.iter().enumerate() {
-            let inputs: &[Tensor] = &element.inputs().deref().borrow();
             println!(
                 "index {}  operator {}  inputs {}",
                 i,
                 element.operator().name(),
-                inputs.len(),
+                element.inputs().len()
             );
         }
     }
@@ -98,7 +85,7 @@ impl Tensor {
         */
         for output in tape.iter().rev() {
             let operator = output.operator().deref();
-            let inputs: &[Tensor] = &output.inputs().deref().borrow();
+            let inputs = output.inputs();
             if inputs.is_empty() {
                 continue;
             }

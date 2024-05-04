@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Identity, OperatorTrait, TensorF32};
+use crate::{ActivationFunction, OperatorTrait, TensorF32};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -9,7 +9,7 @@ use std::rc::Rc;
 pub struct Sigmoid {}
 
 impl Sigmoid {
-    pub fn new(device: &Device) -> Self {
+    pub fn new(_device: &Device) -> Self {
         Self {}
     }
 }
@@ -82,24 +82,20 @@ impl OperatorTrait for Sigmoid {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let rows = input.rows();
         let cols = input.cols();
-
-        ///////////
-
-        // TODO put in struct
-        let output = device.tensor(Rc::new(self.clone()), &vec![], 0, 0, vec![], false);
-        //let mut operator = Self { output };
-        //operator.output.set_operator(Rc::new(operator.clone()));
-        //operator
-
-        ///////////
-        output.resize(rows, cols);
-        output.set_inputs(inputs);
-
+        let len = rows * cols;
+        let output = device.tensor(
+            Rc::new(self.clone()),
+            inputs,
+            rows,
+            cols,
+            vec![0.0; len],
+            false,
+        );
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
             self.activate(input, output)?;
         }
-        Ok(output.clone())
+        Ok(output)
     }
 
     fn name(&self) -> &str {

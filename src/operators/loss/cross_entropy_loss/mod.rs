@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
 use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
@@ -79,14 +79,7 @@ impl OperatorTrait for CrossEntropyLoss {
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-        let output = device.tensor(
-            Rc::new(RefCell::new(Box::new(self.clone()))),
-            inputs,
-            1,
-            1,
-            vec![loss],
-            false,
-        );
+        let output = device.tensor(Rc::new(self.clone()), inputs, 1, 1, vec![loss], false);
         Ok(output)
     }
 

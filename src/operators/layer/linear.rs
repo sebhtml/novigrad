@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{ops::Deref, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -29,7 +29,7 @@ impl Linear {
             weights[index] = rng.sample(uniform);
         }
         let weights = device.tensor(
-            Rc::new(RefCell::new(Box::new(Identity::default()))),
+            Rc::new(Identity::default()),
             &vec![],
             weights_rows,
             weights_cols,
@@ -39,7 +39,7 @@ impl Linear {
 
         let biases_len = bias_rows * weights_rows;
         let biases = device.tensor(
-            Rc::new(RefCell::new(Box::new(Identity::default()))),
+            Rc::new(Identity::default()),
             &vec![],
             bias_rows,
             weights_rows,
@@ -60,7 +60,7 @@ impl OperatorTrait for Linear {
         let cols = biases.cols();
         let len = rows * cols;
         let output = device.tensor(
-            Rc::new(RefCell::new(Box::new(self.clone()))),
+            Rc::new(self.clone()),
             inputs,
             rows,
             cols,

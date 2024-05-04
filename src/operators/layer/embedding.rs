@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{ops::Deref, rc::Rc};
 
 use crate::{devices::Device, Error, Identity, OperatorTrait, Tensor, TensorF32};
 use rand::{distributions::Uniform, thread_rng, Rng};
@@ -17,7 +17,7 @@ impl Embedding {
         embedding_table.transpose(&mut transposed).unwrap();
         // TODO don't unwrap directly
         let embedding_table = device.tensor(
-            Rc::new(RefCell::new(Box::new(Identity::default()))),
+            Rc::new(Identity::default()),
             &vec![],
             transposed.rows(),
             transposed.cols(),
@@ -53,7 +53,7 @@ impl OperatorTrait for Embedding {
         let cols = b.rows();
         let len = rows * cols;
         let output = device.tensor(
-            Rc::new(RefCell::new(Box::new(self.clone()))),
+            Rc::new(self.clone()),
             inputs,
             rows,
             cols,

@@ -1,10 +1,3 @@
-== Fixes ==
-                                                                                                                                                              
-- avoid allocating tensors in forward
-- allocate outputs in architecture
-
-- print number of parameters optimized by optimizer
-- does it work without gradient clipping ?
 
 == Attention ==
 
@@ -12,6 +5,13 @@
 - implement Mask
 - implement Attention
 - use Attention in megaman
+
+== Fixes ==
+                                                                                                                                                              
+- print number of parameters optimized by optimizer
+- does it work without gradient clipping ?
+- avoid allocating tensors in forward
+- allocate outputs in architecture
 
 == Fixes ==
 

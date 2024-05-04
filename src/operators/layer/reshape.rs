@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{ops::Deref, rc::Rc};
 
 use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
@@ -44,7 +44,7 @@ impl OperatorTrait for Reshape {
         let cols = input.cols();
         let len = rows * cols;
         let output = device.tensor(
-            Rc::new(RefCell::new(Box::new(self.clone()))),
+            Rc::new(self.clone()),
             inputs,
             rows,
             cols,

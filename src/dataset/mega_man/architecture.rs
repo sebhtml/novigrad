@@ -24,7 +24,7 @@ impl Architecture {
         Self {
             vocab_size,
             parameters: device.tensor(
-                Rc::new(RefCell::new(Box::new(Identity::default()))),
+                Rc::new(Identity::default()),
                 &vec![],
                 embedding_dim,
                 embedding_dim,

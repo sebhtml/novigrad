@@ -203,7 +203,7 @@ impl Device {
 
     pub fn tensor(
         &self,
-        operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
+        operator: Rc<dyn OperatorTrait>,
         inputs: &[Tensor],
         rows: usize,
         cols: usize,

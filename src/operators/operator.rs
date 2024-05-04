@@ -13,18 +13,11 @@ impl Forward for Operator {
         let variant = &*self.variant.deref().borrow();
         let output = variant.forward(self.device.deref(), inputs)?;
 
-        self.tape.deref().borrow_mut().push(
-            self.variant.clone(),
-            inputs.to_owned(),
-            output.clone(),
-        );
+        self.tape
+            .deref()
+            .borrow_mut()
+            .push(self.variant.clone(), output.clone());
 
-        /*
-        println!(
-            "output shape: {:?}",
-            output.tensor().deref().borrow().shape()
-        );
-         */
         Ok(output)
     }
 

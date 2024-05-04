@@ -54,8 +54,8 @@ impl Tensor {
 
         for record in records.iter().rev() {
             let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
-            let inputs = record.inputs();
             let output = record.output();
+            let inputs = output.inputs();
 
             // Store enabled gradients to optimize them later.
             operator.backward(device, inputs, output)?;

@@ -68,7 +68,7 @@ impl OperatorTrait for MatMul {
         let rows = input_0.rows();
         let cols = input_1.rows();
         let len = rows * cols;
-        let mut output = device.tensor(rows, cols, vec![0.0; len], false);
+        let mut output = device.tensor(inputs, rows, cols, vec![0.0; len], false);
         MatMul::forward(device, inputs, &mut output)?;
         Ok(output)
     }

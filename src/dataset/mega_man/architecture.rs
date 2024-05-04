@@ -24,6 +24,7 @@ impl Architecture {
         Self {
             vocab_size,
             parameters: device.tensor(
+                &vec![],
                 embedding_dim,
                 embedding_dim,
                 vec![0.0; embedding_dim * embedding_dim],

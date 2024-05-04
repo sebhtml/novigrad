@@ -46,5 +46,11 @@ pub fn into_one_hot_encoded_rows(
     for (index, token) in input_tokens.iter().enumerate() {
         result_values[result.index(index, *token)] = 1.0;
     }
-    Ok(device.tensor(input_tokens.len(), num_classes, result_values, false))
+    Ok(device.tensor(
+        &vec![],
+        input_tokens.len(),
+        num_classes,
+        result_values,
+        false,
+    ))
 }

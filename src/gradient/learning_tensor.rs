@@ -4,17 +4,32 @@ use crate::{Device, Error, OperatorTrait, Record, Tape, TensorF32};
 
 #[derive(Clone)]
 pub struct Tensor {
+    inputs: Vec<Tensor>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
 }
 
 impl Tensor {
-    pub fn new(tensor: Rc<RefCell<TensorF32>>, gradient: Rc<RefCell<TensorF32>>) -> Self {
-        Self { tensor, gradient }
+    pub fn new(
+        inputs: &[Tensor],
+        tensor: Rc<RefCell<TensorF32>>,
+        gradient: Rc<RefCell<TensorF32>>,
+    ) -> Self {
+        Self {
+            inputs: inputs.to_owned(),
+            tensor,
+            gradient,
+        }
     }
+
+    pub fn inputs(&self) -> &Vec<Tensor> {
+        &self.inputs
+    }
+
     pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {
         &self.tensor
     }
+
     pub fn gradient(&self) -> &Rc<RefCell<TensorF32>> {
         &self.gradient
     }

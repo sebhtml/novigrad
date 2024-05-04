@@ -203,6 +203,7 @@ impl Device {
 
     pub fn tensor(
         &self,
+        inputs: &[Tensor],
         rows: usize,
         cols: usize,
         values: Vec<f32>,
@@ -210,6 +211,7 @@ impl Device {
     ) -> Tensor {
         let len = rows * cols;
         let tensor = Tensor::new(
+            inputs,
             Rc::new(RefCell::new(Self::tensor_f32(&self, rows, cols, values))),
             Rc::new(RefCell::new(Self::tensor_f32(
                 &self,

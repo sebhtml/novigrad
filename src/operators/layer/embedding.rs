@@ -16,6 +16,7 @@ impl Embedding {
         embedding_table.transpose(&mut transposed).unwrap();
         // TODO don't unwrap directly
         let embedding_table = device.tensor(
+            &vec![],
             transposed.rows(),
             transposed.cols(),
             transposed.get_values().unwrap(),
@@ -49,7 +50,7 @@ impl OperatorTrait for Embedding {
         let rows = a.rows();
         let cols = b.rows();
         let len = rows * cols;
-        let output = device.tensor(rows, cols, vec![0.0; len], false);
+        let output = device.tensor(inputs, rows, cols, vec![0.0; len], false);
 
         {
             let c = &mut output.tensor().deref().borrow_mut();

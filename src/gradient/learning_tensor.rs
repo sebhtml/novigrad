@@ -55,6 +55,9 @@ impl Tensor {
         let mut stack = LinkedList::new();
         stack.push_back(self.clone());
         while let Some(element) = stack.pop_back() {
+            if element.inputs.is_empty() {
+                continue;
+            }
             for input in element.inputs() {
                 stack.push_back(input.clone());
             }
@@ -86,9 +89,6 @@ impl Tensor {
         for output in tape.iter().rev() {
             let operator = output.operator().deref();
             let inputs = output.inputs();
-            if inputs.is_empty() {
-                continue;
-            }
 
             // Store enabled gradients to optimize them later.
             operator.backward(device, inputs, output)?;

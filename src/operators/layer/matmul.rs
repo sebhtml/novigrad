@@ -1,7 +1,8 @@
-use std::ops::Deref;
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
+#[derive(Clone)]
 pub struct MatMul {}
 
 impl MatMul {
@@ -68,7 +69,14 @@ impl OperatorTrait for MatMul {
         let rows = input_0.rows();
         let cols = input_1.rows();
         let len = rows * cols;
-        let mut output = device.tensor(inputs, rows, cols, vec![0.0; len], false);
+        let mut output = device.tensor(
+            Rc::new(RefCell::new(Box::new(self.clone()))),
+            inputs,
+            rows,
+            cols,
+            vec![0.0; len],
+            false,
+        );
         MatMul::forward(device, inputs, &mut output)?;
         Ok(output)
     }

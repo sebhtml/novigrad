@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{Device, Error, Forward, Operator, Operators, Tape, Tensor};
+use crate::{Device, Error, Forward, Identity, Operator, Operators, Tape, Tensor};
 
 pub struct Architecture {
     vocab_size: usize,
@@ -24,6 +24,7 @@ impl Architecture {
         Self {
             vocab_size,
             parameters: device.tensor(
+                Rc::new(RefCell::new(Box::new(Identity::default()))),
                 &vec![],
                 embedding_dim,
                 embedding_dim,

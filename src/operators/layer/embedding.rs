@@ -1,8 +1,9 @@
-use std::ops::Deref;
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, Identity, OperatorTrait, Tensor, TensorF32};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
+#[derive(Clone)]
 pub struct Embedding {
     embedding_table: Tensor,
 }
@@ -16,6 +17,7 @@ impl Embedding {
         embedding_table.transpose(&mut transposed).unwrap();
         // TODO don't unwrap directly
         let embedding_table = device.tensor(
+            Rc::new(RefCell::new(Box::new(Identity::default()))),
             &vec![],
             transposed.rows(),
             transposed.cols(),
@@ -50,7 +52,14 @@ impl OperatorTrait for Embedding {
         let rows = a.rows();
         let cols = b.rows();
         let len = rows * cols;
-        let output = device.tensor(inputs, rows, cols, vec![0.0; len], false);
+        let output = device.tensor(
+            Rc::new(RefCell::new(Box::new(self.clone()))),
+            inputs,
+            rows,
+            cols,
+            vec![0.0; len],
+            false,
+        );
 
         {
             let c = &mut output.tensor().deref().borrow_mut();

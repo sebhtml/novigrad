@@ -1,9 +1,10 @@
-use std::ops::Deref;
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, Identity, OperatorTrait, Tensor, TensorF32};
 
+#[derive(Clone)]
 pub struct Linear {
     weights: Tensor,
     biases: Tensor,
@@ -27,10 +28,18 @@ impl Linear {
         for index in 0..weights.len() {
             weights[index] = rng.sample(uniform);
         }
-        let weights = device.tensor(&vec![], weights_rows, weights_cols, weights, true);
+        let weights = device.tensor(
+            Rc::new(RefCell::new(Box::new(Identity::default()))),
+            &vec![],
+            weights_rows,
+            weights_cols,
+            weights,
+            true,
+        );
 
         let biases_len = bias_rows * weights_rows;
         let biases = device.tensor(
+            Rc::new(RefCell::new(Box::new(Identity::default()))),
             &vec![],
             bias_rows,
             weights_rows,
@@ -50,7 +59,14 @@ impl OperatorTrait for Linear {
         let rows = biases.rows();
         let cols = biases.cols();
         let len = rows * cols;
-        let output = device.tensor(inputs, rows, cols, vec![0.0; len], false);
+        let output = device.tensor(
+            Rc::new(RefCell::new(Box::new(self.clone()))),
+            inputs,
+            rows,
+            cols,
+            vec![0.0; len],
+            false,
+        );
 
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B

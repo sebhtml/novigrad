@@ -1,9 +1,9 @@
 mod mega_man;
 mod simple;
 
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
-use crate::{Device, Error, Forward, Operator, Tensor, Tokenizer};
+use crate::{Device, Error, Forward, Identity, Operator, Tensor, Tokenizer};
 
 pub enum Dataset {
     Simple,
@@ -47,6 +47,7 @@ pub fn into_one_hot_encoded_rows(
         result_values[result.index(index, *token)] = 1.0;
     }
     Ok(device.tensor(
+        Rc::new(RefCell::new(Box::new(Identity::default()))),
         &vec![],
         input_tokens.len(),
         num_classes,

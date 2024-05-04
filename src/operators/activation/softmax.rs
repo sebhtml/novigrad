@@ -1,8 +1,10 @@
 use crate::devices::Device;
 use crate::{ActivationFunction, OperatorTrait, TensorF32};
 use crate::{Error, Tensor};
+use std::cell::RefCell;
 use std::f32::consts::E;
 use std::ops::Deref;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Softmax {
@@ -119,7 +121,14 @@ impl OperatorTrait for Softmax {
         let rows = input.rows();
         let cols = input.cols();
         let len = rows * cols;
-        let output = device.tensor(inputs, rows, cols, vec![0.0; len], false);
+        let output = device.tensor(
+            Rc::new(RefCell::new(Box::new(self.clone()))),
+            inputs,
+            rows,
+            cols,
+            vec![0.0; len],
+            false,
+        );
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
             self.activate(input, output)?;

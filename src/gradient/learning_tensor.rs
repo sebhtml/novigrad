@@ -4,6 +4,7 @@ use crate::{Device, Error, OperatorTrait, Record, Tape, TensorF32};
 
 #[derive(Clone)]
 pub struct Tensor {
+    operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
     inputs: Vec<Tensor>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
@@ -11,15 +12,21 @@ pub struct Tensor {
 
 impl Tensor {
     pub fn new(
+        operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
         inputs: &[Tensor],
         tensor: Rc<RefCell<TensorF32>>,
         gradient: Rc<RefCell<TensorF32>>,
     ) -> Self {
         Self {
+            operator,
             inputs: inputs.to_owned(),
             tensor,
             gradient,
         }
+    }
+
+    pub fn operator(&self) -> &Rc<RefCell<Box<dyn OperatorTrait>>> {
+        &self.operator
     }
 
     pub fn inputs(&self) -> &Vec<Tensor> {

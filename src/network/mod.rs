@@ -1,11 +1,11 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{ops::Deref, rc::Rc};
 pub use train::*;
 
 use crate::{
-    devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tape, Tensor, TensorF32,
+    devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tensor, TensorF32,
 };
 
 pub struct Network {
@@ -13,18 +13,15 @@ pub struct Network {
     loss_function: Operator,
     device: Rc<Device>,
     optimizer: Optimizer,
-    tape: Rc<RefCell<Tape>>,
 }
 
 impl Network {
     pub fn new(architecture: Box<dyn Forward>, loss_function: Operator) -> Self {
         let device = architecture.device();
-        let tape = architecture.tape();
         Self {
             architecture,
             loss_function,
             device,
-            tape,
             optimizer: Default::default(),
         }
     }
@@ -75,13 +72,11 @@ impl Network {
         x: &Tensor,
         y: &Tensor,
     ) -> Result<(), Error> {
-        self.tape.deref().borrow_mut().clear();
-
         let output = self.forward(&[x.clone()])?;
 
         let loss = self.loss_function.forward(&[y.clone(), output.clone()])?;
 
-        let gradients = loss.backward(&self.device, &self.tape)?;
+        let gradients = loss.backward(&self.device)?;
 
         self.optimizer
             .optimize(&gradients, &self.device, learning_rate)?;
@@ -104,9 +99,5 @@ impl Forward for Network {
 
     fn device(&self) -> Rc<Device> {
         self.device.clone()
-    }
-
-    fn tape(&self) -> Rc<RefCell<Tape>> {
-        self.tape.clone()
     }
 }

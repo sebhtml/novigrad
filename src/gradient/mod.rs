@@ -1,9 +1,7 @@
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use crate::{devices::Device, Error};
 
-mod tape;
-pub use tape::*;
 mod learning_tensor;
 pub use learning_tensor::*;
 
@@ -17,7 +15,5 @@ pub trait OperatorTrait {
 
 pub trait Forward {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error>;
-
     fn device(&self) -> Rc<Device>;
-    fn tape(&self) -> Rc<RefCell<Tape>>;
 }

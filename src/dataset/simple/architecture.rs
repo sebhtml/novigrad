@@ -1,5 +1,5 @@
-use crate::{Device, Error, Forward, Operator, Operators, Tape, Tensor};
-use std::{cell::RefCell, rc::Rc};
+use crate::{Device, Error, Forward, Operator, Operators, Tensor};
+use std::rc::Rc;
 
 pub struct Architecture {
     embedding: Operator,
@@ -53,9 +53,5 @@ impl Forward for Architecture {
 
     fn device(&self) -> Rc<Device> {
         self.embedding.device()
-    }
-
-    fn tape(&self) -> Rc<RefCell<Tape>> {
-        self.embedding.tape()
     }
 }

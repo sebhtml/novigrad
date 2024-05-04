@@ -1,6 +1,6 @@
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
-use crate::{Device, Error, Forward, Identity, Operator, Operators, Tape, Tensor};
+use crate::{Device, Error, Forward, Identity, Operator, Operators, Tensor};
 
 pub struct Architecture {
     vocab_size: usize,
@@ -61,9 +61,5 @@ impl Forward for Architecture {
 
     fn device(&self) -> Rc<Device> {
         self.embedding.device()
-    }
-
-    fn tape(&self) -> Rc<RefCell<Tape>> {
-        self.embedding.tape()
     }
 }

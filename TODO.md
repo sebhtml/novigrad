@@ -1,3 +1,5 @@
+- remove device argument in OperatorTrait
+- store device in LearningTensor
 
 == Attention ==
 
@@ -64,9 +66,6 @@
 
 - remove tensor f32 matmul
 - determine the value of using_cross_entropy_loss at run time
-- add rc device in tensor
-- remove device argument in OperatorTrait
-- store device in LearningTensor
 
 == Devices ==
 

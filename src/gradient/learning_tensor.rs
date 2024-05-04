@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
-use crate::{Device, Error, OperatorTrait, Tape, TensorF32};
+use crate::{Device, Error, OperatorTrait, TensorF32};
 
 #[derive(Clone)]
 pub struct Tensor {
@@ -76,25 +76,14 @@ impl Tensor {
     }
 
     /// Back-propagation
-    pub fn backward(
-        &self,
-        device: &Device,
-        tape: &Rc<RefCell<Tape>>,
-    ) -> Result<Vec<Tensor>, Error> {
-        let tape: &Tape = &tape.deref().borrow();
-        let tape1: Vec<Tensor> = tape
-            .records()
-            .into_iter()
-            .map(|x| x.output().clone())
-            .collect();
-        let tape2 = self.get_tape();
+    pub fn backward(&self, device: &Device) -> Result<Vec<Tensor>, Error> {
+        let tape = self.get_tape();
 
         /*
             println!("----");
-            Self::print_tape(&tape1);
-            Self::print_tape(&tape2);
+            Self::print_tape(&tape);
         */
-        for output in tape2.iter().rev() {
+        for output in tape.iter().rev() {
             let operator = output.operator().deref();
             let inputs = output.inputs();
             if inputs.is_empty() {

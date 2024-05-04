@@ -1,3 +1,4 @@
+- avoid allocating tensors in forward
 - remove device argument in OperatorTrait
 - store device in LearningTensor
 
@@ -12,8 +13,6 @@
                                                                                                                                                               
 - print number of parameters optimized by optimizer
 - does it work without gradient clipping ?
-- avoid allocating tensors in forward
-- allocate outputs in architecture
 
 == Fixes ==
 

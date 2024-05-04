@@ -5,8 +5,8 @@ use crate::{
     TokenizerTrait,
 };
 
-mod architecture;
-use architecture::*;
+mod model;
+use model::*;
 
 fn load_examples(
     device: &Device,
@@ -48,7 +48,7 @@ pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
     let details = DatasetDetails {
         tokenizer,
         examples,
-        architecture: Box::new(Architecture::new(&ops)),
+        architecture: Box::new(Model::new(&ops)),
         epochs: 1000,
         progress: 100,
         loss_function_name: ops.cross_entropy_loss(),

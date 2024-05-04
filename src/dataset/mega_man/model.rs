@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::{Device, Error, Forward, Identity, Operator, Operators, Tensor};
 
-pub struct Architecture {
+pub struct Model {
     vocab_size: usize,
     parameters: Tensor,
     embedding: Operator,
@@ -12,7 +12,7 @@ pub struct Architecture {
     softmax: Operator,
 }
 
-impl Architecture {
+impl Model {
     pub fn new(ops: &Operators) -> Self {
         let _batch_size = 1;
         let sequence_length = 32;
@@ -50,7 +50,7 @@ impl Architecture {
     }
 }
 
-impl Forward for Architecture {
+impl Forward for Model {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let state_0 = self.embedding.forward(inputs)?;
         let state_0b = self.matmul.forward(&[state_0, self.parameters.clone()])?;

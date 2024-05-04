@@ -1,7 +1,7 @@
 use crate::{Device, Error, Forward, Operator, Operators, Tensor};
 use std::rc::Rc;
 
-pub struct Architecture {
+pub struct Model {
     embedding: Operator,
     linear_0: Operator,
     sigmoid_0: Operator,
@@ -12,7 +12,7 @@ pub struct Architecture {
     softmax: Operator,
 }
 
-impl Architecture {
+impl Model {
     pub fn new(ops: &Operators) -> Self {
         let _batch_size = 1;
         let sequence_length = 6;
@@ -38,7 +38,7 @@ impl Architecture {
     }
 }
 
-impl Forward for Architecture {
+impl Forward for Model {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let state_0: Tensor = self.embedding.forward(inputs)?;
         let state_1 = self.linear_0.forward(&[state_0])?;

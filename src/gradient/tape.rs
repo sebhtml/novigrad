@@ -1,19 +1,12 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{OperatorTrait, Tensor};
+use crate::Tensor;
 
 pub struct Record {
-    operator: Rc<RefCell<Box<dyn OperatorTrait>>>,
     output: Tensor,
 }
 
 impl Record {
-    pub fn new(operator: Rc<RefCell<Box<dyn OperatorTrait>>>, output: Tensor) -> Self {
-        Self { operator, output }
-    }
-
-    pub fn operator(&self) -> &Rc<RefCell<Box<dyn OperatorTrait>>> {
-        &self.operator
+    pub fn new(output: Tensor) -> Self {
+        Self { output }
     }
 
     pub fn output(&self) -> &Tensor {
@@ -34,8 +27,8 @@ impl Default for Tape {
 }
 
 impl Tape {
-    pub fn push(&mut self, operator: Rc<RefCell<Box<dyn OperatorTrait>>>, output: Tensor) {
-        self.records.push(Record::new(operator, output))
+    pub fn push(&mut self, output: Tensor) {
+        self.records.push(Record::new(output))
     }
 
     pub fn records(&self) -> &Vec<Record> {
@@ -44,18 +37,5 @@ impl Tape {
 
     pub fn clear(&mut self) {
         self.records.clear();
-    }
-
-    pub fn print_records(&self) {
-        println!("Tape records: {}", self.records.len());
-        for record in self.records.iter() {
-            let operator = &record.operator;
-
-            let operator_name = (*operator).borrow().name().to_owned();
-            println!(
-                "Tape is recording a record: operator: {}  output: {}",
-                operator_name, 1
-            );
-        }
     }
 }

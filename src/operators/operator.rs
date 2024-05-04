@@ -13,10 +13,7 @@ impl Forward for Operator {
         let variant = &*self.variant.deref().borrow();
         let output = variant.forward(self.device.deref(), inputs)?;
 
-        self.tape
-            .deref()
-            .borrow_mut()
-            .push(self.variant.clone(), output.clone());
+        self.tape.deref().borrow_mut().push(output.clone());
 
         Ok(output)
     }

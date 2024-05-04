@@ -60,8 +60,8 @@ impl Tensor {
         let records: &Vec<Record> = &tape.records();
 
         for record in records.iter().rev() {
-            let operator: &Box<dyn OperatorTrait> = &record.operator().deref().borrow();
             let output = record.output();
+            let operator = output.operator().deref().borrow();
             let inputs = output.inputs();
 
             // Store enabled gradients to optimize them later.

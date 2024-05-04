@@ -3,7 +3,7 @@ mod simple;
 
 use std::rc::Rc;
 
-use crate::{Device, Error, Forward, Operator, Tensor, Tokenizer};
+use crate::{Device, Error, Forward, Identity, Operator, Tensor, Tokenizer};
 
 pub enum Dataset {
     Simple,
@@ -37,7 +37,7 @@ pub fn into_one_hot_encoded_rows(
     debug_assert!(num_classes >= *input_tokens.iter().max().unwrap());
     let len = input_tokens.len() * num_classes;
     // TODO avoid allocating a Tensor and a LearningTensor., gradient  should be a Option in LearningTensor
-    let result = device.tensor(
+    let result = device.tensor_f32(
         input_tokens.len(),
         num_classes,
         vec![Default::default(); len],
@@ -46,5 +46,12 @@ pub fn into_one_hot_encoded_rows(
     for (index, token) in input_tokens.iter().enumerate() {
         result_values[result.index(index, *token)] = 1.0;
     }
-    Ok(device.learning_tensor(input_tokens.len(), num_classes, result_values, false))
+    Ok(device.tensor(
+        Rc::new(Identity::default()),
+        &vec![],
+        input_tokens.len(),
+        num_classes,
+        result_values,
+        false,
+    ))
 }

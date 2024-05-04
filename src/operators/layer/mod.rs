@@ -6,3 +6,5 @@ mod reshape;
 pub use reshape::*;
 mod matmul;
 pub use matmul::*;
+mod identity;
+pub use identity::*;

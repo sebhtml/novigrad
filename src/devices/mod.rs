@@ -18,7 +18,7 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{Tensor, TensorF32};
+use crate::{OperatorTrait, Tensor, TensorF32};
 
 #[derive(Debug)]
 pub enum DevBuffer {
@@ -197,12 +197,14 @@ impl Device {
         }
     }
 
-    pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> TensorF32 {
+    pub fn tensor_f32(&self, rows: usize, cols: usize, values: Vec<f32>) -> TensorF32 {
         TensorF32::new(rows, cols, values, self)
     }
 
-    pub fn learning_tensor(
+    pub fn tensor(
         &self,
+        operator: Rc<dyn OperatorTrait>,
+        inputs: &[Tensor],
         rows: usize,
         cols: usize,
         values: Vec<f32>,
@@ -210,8 +212,10 @@ impl Device {
     ) -> Tensor {
         let len = rows * cols;
         let tensor = Tensor::new(
-            Rc::new(RefCell::new(Self::tensor(&self, rows, cols, values))),
-            Rc::new(RefCell::new(Self::tensor(
+            operator,
+            inputs,
+            Rc::new(RefCell::new(Self::tensor_f32(&self, rows, cols, values))),
+            Rc::new(RefCell::new(Self::tensor_f32(
                 &self,
                 rows,
                 cols,

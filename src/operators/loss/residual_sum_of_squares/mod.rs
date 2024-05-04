@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, rc::Rc};
 
 use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
@@ -30,7 +30,7 @@ impl LossFunction for ResidualSumOfSquares {
         let rows = expected.rows();
         let cols = expected.cols();
         let len = rows * cols;
-        let mut diffs = device.tensor(rows, cols, vec![0.0; len]);
+        let mut diffs = device.tensor_f32(rows, cols, vec![0.0; len]);
         TensorF32::copy(device, expected, &mut diffs)?;
         TensorF32::sub(device, actual, &mut diffs)?;
         TensorF32::dot_product(device, &diffs, &diffs)
@@ -64,7 +64,7 @@ impl OperatorTrait for ResidualSumOfSquares {
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(device, expected, actual)?;
-        let output = device.learning_tensor(1, 1, vec![loss], false);
+        let output = device.tensor(Rc::new(self.clone()), inputs, 1, 1, vec![loss], false);
         Ok(output)
     }
 

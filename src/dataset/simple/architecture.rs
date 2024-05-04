@@ -1,5 +1,5 @@
-use crate::{Device, Error, Forward, Operator, Operators, Tape, Tensor};
-use std::{cell::RefCell, rc::Rc};
+use crate::{Device, Error, Forward, Operator, Operators, Tensor};
+use std::rc::Rc;
 
 pub struct Architecture {
     embedding: Operator,
@@ -14,14 +14,25 @@ pub struct Architecture {
 
 impl Architecture {
     pub fn new(ops: &Operators) -> Self {
+        let _batch_size = 1;
+        let sequence_length = 6;
+        let vocab_size = 256;
+        let num_embeddings = vocab_size;
+        let embedding_dim = 384;
+        let _num_heads = 0;
         Self {
-            embedding: ops.embedding(256, 32),
-            linear_0: ops.linear(256, 32, 6),
+            embedding: ops.embedding(num_embeddings, embedding_dim),
+            linear_0: ops.linear(embedding_dim, embedding_dim, sequence_length),
             sigmoid_0: ops.sigmoid(),
-            reshape: ops.reshape(6, 256, 1, 6 * 256),
-            linear_1: ops.linear(32, 6 * 256, 1),
+            reshape: ops.reshape(
+                sequence_length,
+                embedding_dim,
+                1,
+                sequence_length * embedding_dim,
+            ),
+            linear_1: ops.linear(embedding_dim, sequence_length * embedding_dim, 1),
             sigmoid_1: ops.sigmoid(),
-            linear_2: ops.linear(256, 32, 1),
+            linear_2: ops.linear(vocab_size, embedding_dim, 1),
             softmax: ops.softmax(true),
         }
     }
@@ -42,9 +53,5 @@ impl Forward for Architecture {
 
     fn device(&self) -> Rc<Device> {
         self.embedding.device()
-    }
-
-    fn tape(&self) -> Rc<RefCell<Tape>> {
-        self.embedding.tape()
     }
 }

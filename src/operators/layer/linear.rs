@@ -1,9 +1,10 @@
-use std::ops::Deref;
+use std::{ops::Deref, rc::Rc};
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, Identity, OperatorTrait, Tensor, TensorF32};
 
+#[derive(Clone)]
 pub struct Linear {
     weights: Tensor,
     biases: Tensor,
@@ -27,10 +28,24 @@ impl Linear {
         for index in 0..weights.len() {
             weights[index] = rng.sample(uniform);
         }
-        let weights = device.learning_tensor(weights_rows, weights_cols, weights, true);
+        let weights = device.tensor(
+            Rc::new(Identity::default()),
+            &vec![],
+            weights_rows,
+            weights_cols,
+            weights,
+            true,
+        );
 
         let biases_len = bias_rows * weights_rows;
-        let biases = device.learning_tensor(bias_rows, weights_rows, vec![0.0; biases_len], true);
+        let biases = device.tensor(
+            Rc::new(Identity::default()),
+            &vec![],
+            bias_rows,
+            weights_rows,
+            vec![0.0; biases_len],
+            true,
+        );
 
         Linear { weights, biases }
     }
@@ -44,7 +59,15 @@ impl OperatorTrait for Linear {
         let rows = biases.rows();
         let cols = biases.cols();
         let len = rows * cols;
-        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
+        let output = device.tensor(
+            Rc::new(self.clone()),
+            inputs,
+            rows,
+            cols,
+            vec![0.0; len],
+            false,
+        );
+
         // Use the same convention that is used in tensorflow:
         // Y = X @ W^T + B
         // Weights is on the right.
@@ -63,7 +86,8 @@ impl OperatorTrait for Linear {
             match op_result {
                 Ok(_) => (),
                 Err(_) => {
-                    let mut w_t = device.tensor(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
+                    let mut w_t =
+                        device.tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
                     b.transpose(&mut w_t)?;
                     println!("Incompatible shapes in matrix multiplication");
                     println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);

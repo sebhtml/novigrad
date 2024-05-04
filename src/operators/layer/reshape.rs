@@ -1,7 +1,8 @@
-use std::ops::Deref;
+use std::{ops::Deref, rc::Rc};
 
 use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
+#[derive(Clone)]
 pub struct Reshape {
     input_rows: usize,
     input_cols: usize,
@@ -42,7 +43,14 @@ impl OperatorTrait for Reshape {
         let rows = input.rows();
         let cols = input.cols();
         let len = rows * cols;
-        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
+        let output = device.tensor(
+            Rc::new(self.clone()),
+            inputs,
+            rows,
+            cols,
+            vec![0.0; len],
+            false,
+        );
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
             TensorF32::copy(device, input, output)?;

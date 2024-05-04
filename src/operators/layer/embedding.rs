@@ -1,8 +1,9 @@
-use std::ops::Deref;
+use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, Identity, OperatorTrait, Tensor, TensorF32};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
+#[derive(Clone)]
 pub struct Embedding {
     embedding_table: Tensor,
 }
@@ -11,16 +12,19 @@ impl Embedding {
     pub fn new(num_embeddings: usize, embedding_dim: usize, device: &Device) -> Self {
         let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim);
         let len = embedding_table.len();
-        let mut transposed = device.tensor(embedding_dim, num_embeddings, vec![0.0; len]);
+        let mut transposed = device.tensor_f32(embedding_dim, num_embeddings, vec![0.0; len]);
         // TODO don't unwrap directly
         embedding_table.transpose(&mut transposed).unwrap();
         // TODO don't unwrap directly
-        let embedding_table = device.learning_tensor(
+        let embedding_table = device.tensor(
+            Rc::new(Identity::default()),
+            &vec![],
             transposed.rows(),
             transposed.cols(),
             transposed.get_values().unwrap(),
             true,
         );
+
         Self { embedding_table }
     }
 }
@@ -48,7 +52,14 @@ impl OperatorTrait for Embedding {
         let rows = a.rows();
         let cols = b.rows();
         let len = rows * cols;
-        let output = device.learning_tensor(rows, cols, vec![0.0; len], false);
+        let output = device.tensor(
+            Rc::new(self.clone()),
+            inputs,
+            rows,
+            cols,
+            vec![0.0; len],
+            false,
+        );
 
         {
             let c = &mut output.tensor().deref().borrow_mut();
@@ -80,5 +91,5 @@ fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: us
         embeddings_table.append(&mut token_embeddings);
         token += 1;
     }
-    device.tensor(num_embeddings, embedding_dim, embeddings_table)
+    device.tensor_f32(num_embeddings, embedding_dim, embeddings_table)
 }

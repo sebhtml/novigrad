@@ -1,6 +1,6 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
-use crate::{Device, Error, OperatorTrait, Record, Tape, TensorF32};
+use crate::{Device, Error, OperatorTrait, Tape, TensorF32};
 
 #[derive(Clone)]
 pub struct Tensor {
@@ -50,6 +50,31 @@ impl Tensor {
         self.gradient.deref().borrow_mut().resize(rows, cols);
     }
 
+    pub fn get_tape(&self) -> Vec<Tensor> {
+        let mut tape = vec![];
+        let mut stack = LinkedList::new();
+        stack.push_back(self.clone());
+        while let Some(element) = stack.pop_back() {
+            for input in element.inputs() {
+                stack.push_back(input.clone());
+            }
+            tape.push(element);
+        }
+        tape.into_iter().rev().collect()
+    }
+
+    pub fn print_tape(tape: &[Tensor]) {
+        println!("Tape");
+        for (i, element) in tape.iter().enumerate() {
+            println!(
+                "index {}  operator {}  inputs {}",
+                i,
+                element.operator().name(),
+                element.inputs().len()
+            );
+        }
+    }
+
     /// Back-propagation
     pub fn backward(
         &self,
@@ -57,12 +82,24 @@ impl Tensor {
         tape: &Rc<RefCell<Tape>>,
     ) -> Result<Vec<Tensor>, Error> {
         let tape: &Tape = &tape.deref().borrow();
-        let records: &Vec<Record> = &tape.records();
+        let tape1: Vec<Tensor> = tape
+            .records()
+            .into_iter()
+            .map(|x| x.output().clone())
+            .collect();
+        let tape2 = self.get_tape();
 
-        for record in records.iter().rev() {
-            let output = record.output();
+        /*
+            println!("----");
+            Self::print_tape(&tape1);
+            Self::print_tape(&tape2);
+        */
+        for output in tape2.iter().rev() {
             let operator = output.operator().deref();
             let inputs = output.inputs();
+            if inputs.is_empty() {
+                continue;
+            }
 
             // Store enabled gradients to optimize them later.
             operator.backward(device, inputs, output)?;

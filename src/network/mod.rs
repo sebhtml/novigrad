@@ -68,7 +68,7 @@ impl Network {
         let gradients: &[Tensor] = &self.device.tensors_with_requires_grad().deref().borrow();
         for gradient in gradients {
             let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
-            TensorF32::scalar_mul(&self.device, 0.0, gradient)?;
+            TensorF32::scalar_mul(0.0, gradient)?;
         }
         Ok(())
     }
@@ -90,8 +90,7 @@ impl Network {
         let gradients = loss.backward(&self.device)?;
         let gradients: &[Tensor] = &gradients.deref().borrow();
 
-        self.optimizer
-            .optimize(&gradients, &self.device, learning_rate)?;
+        self.optimizer.optimize(&gradients, learning_rate)?;
 
         Ok(())
     }

@@ -1,4 +1,7 @@
-- avoid allocating tensors in forward
+- Device in Operator
+- Device in LearningTensor
+- decouple tensor and device
+- impl Drop for TensorF32
 - remove device argument in OperatorTrait
 - store device in LearningTensor
 
@@ -16,7 +19,6 @@
 
 == Fixes ==
 
-- decouple tensor and device
 - don't backward if last
 - enable backward tape recording only during training
 
@@ -31,7 +33,6 @@
 
 == Parallel Execution ==
 
-- add a unified forward tape
 - implement parallel execution of certain branches in parallel using a execution_group_id
 
 == Datasets ==

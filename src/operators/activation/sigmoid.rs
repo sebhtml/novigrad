@@ -74,7 +74,7 @@ impl OperatorTrait for Sigmoid {
         let len = rows * cols;
         let mut layer_f_derivative = device.tensor_f32(rows, cols, vec![0.0; len]);
         self.derive(input, output, &mut layer_f_derivative)?;
-        layer_f_derivative.element_wise_mul(device, output_gradient, backward_gradient)?;
+        layer_f_derivative.element_wise_mul(output_gradient, backward_gradient)?;
         Ok(())
     }
 

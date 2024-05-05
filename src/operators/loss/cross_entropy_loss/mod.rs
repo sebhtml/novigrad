@@ -54,13 +54,12 @@ impl LossFunction for CrossEntropyLoss {
     /// output of the softmax function - expected output (one-hot encoded)
     fn derive(
         &self,
-        device: &Device,
         expected: &TensorF32,
         actual: &TensorF32,
         result: &mut TensorF32,
     ) -> Result<(), Error> {
-        TensorF32::copy(device, actual, result)?;
-        TensorF32::sub(device, expected, result)
+        TensorF32::copy(actual, result)?;
+        TensorF32::sub(expected, result)
     }
 }
 
@@ -70,7 +69,7 @@ impl OperatorTrait for CrossEntropyLoss {
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
-        self.derive(device, expected, actual, backward_gradient)?;
+        self.derive(expected, actual, backward_gradient)?;
         Ok(())
     }
 

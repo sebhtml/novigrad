@@ -31,7 +31,7 @@ impl OperatorTrait for Identity {
         );
         {
             let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
-            TensorF32::copy(device, input, output)?;
+            TensorF32::copy(input, output)?;
         }
         Ok(output)
     }
@@ -44,7 +44,7 @@ impl OperatorTrait for Identity {
     ) -> Result<(), Error> {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-        TensorF32::copy(device, output_gradient, backward_gradient)?;
+        TensorF32::copy(output_gradient, backward_gradient)?;
         Ok(())
     }
 }

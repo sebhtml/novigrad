@@ -81,8 +81,8 @@ impl OperatorTrait for Linear {
             let a = input;
             let b = weights;
             let c = output;
-            TensorF32::copy(device, biases, c)?;
-            let op_result = TensorF32::gemm(device, false, true, 1.0, a, b, 1.0, c, false);
+            TensorF32::copy(biases, c)?;
+            let op_result = TensorF32::gemm(false, true, 1.0, a, b, 1.0, c, false);
             match op_result {
                 Ok(_) => (),
                 Err(_) => {
@@ -109,9 +109,9 @@ impl OperatorTrait for Linear {
             let a: &TensorF32 = input;
             let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = weights_gradient;
-            TensorF32::gemm(device, true, false, 1.0, a, b, 1.0, c, true)?;
+            TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)?;
 
-            TensorF32::add(device, output_gradient, biases_gradient)?;
+            TensorF32::add(output_gradient, biases_gradient)?;
         }
 
         {
@@ -120,7 +120,7 @@ impl OperatorTrait for Linear {
             let a: &TensorF32 = weights;
             let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = backward_gradient;
-            TensorF32::gemm(device, true, true, 1.0, a, b, 1.0, c, true)?;
+            TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
         }
 
         Ok(())

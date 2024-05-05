@@ -162,12 +162,13 @@ pub trait DeviceInterface {
     fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Device {
     tensors_with_requires_grad: Rc<RefCell<Vec<Tensor>>>,
     device: Rc<DeviceEnum>,
 }
 
+#[derive(Debug)]
 pub enum DeviceEnum {
     Cpu(CpuDevice),
     #[cfg(feature = "cuda")]

@@ -20,7 +20,7 @@ impl MatMul {
             let a = input_0;
             let b = input_1;
             let c = output;
-            let op_result = TensorF32::gemm(device, false, true, 1.0, a, b, 1.0, c, false);
+            let op_result = TensorF32::gemm(false, true, 1.0, a, b, 1.0, c, false);
             match op_result {
                 Ok(_) => (),
                 Err(_) => {
@@ -46,7 +46,7 @@ impl MatMul {
             let a: &TensorF32 = input_0;
             let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = input_1_gradient;
-            TensorF32::gemm(device, true, false, 1.0, a, b, 1.0, c, true)?;
+            TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)?;
         }
 
         {
@@ -55,7 +55,7 @@ impl MatMul {
             let a: &TensorF32 = input_1;
             let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = input_0_gradient;
-            TensorF32::gemm(device, true, true, 1.0, a, b, 1.0, c, true)?;
+            TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
         }
 
         Ok(())

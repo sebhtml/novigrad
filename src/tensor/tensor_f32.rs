@@ -8,6 +8,7 @@ use std::{fmt::Display, ops::Mul};
 
 #[derive(Debug)]
 pub struct TensorF32 {
+    device: Device,
     rows: usize,
     cols: usize,
     values: DevBuffer,
@@ -25,15 +26,15 @@ impl TensorF32 {
     pub fn new(rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
         let values = device.buffer(values);
-        Self { rows, cols, values }
+        Self {
+            device: device.clone(),
+            rows,
+            cols,
+            values,
+        }
     }
 
-    fn operation<Operation>(
-        &self,
-        device: &Device,
-        right: &TensorF32,
-        result: &mut TensorF32,
-    ) -> Result<(), Error>
+    fn operation<Operation>(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error>
     where
         Operation: F32Operation,
     {
@@ -43,7 +44,7 @@ impl TensorF32 {
         }
 
         debug_assert_eq!(result.shape(), left.shape());
-        TensorF32::scalar_mul(device, 0.0, result)?;
+        TensorF32::scalar_mul(0.0, result)?;
 
         let mut result_values = result.get_values()?;
         let left_values = left.get_values()?;
@@ -144,16 +145,12 @@ impl TensorF32 {
     }
 
     // TODO use device for element_wise_mul
-    pub fn element_wise_mul(
-        &self,
-        device: &Device,
-        right: &TensorF32,
-        result: &mut TensorF32,
-    ) -> Result<(), Error> {
-        self.operation::<F32Mul>(device, right, result)
+    pub fn element_wise_mul(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+        self.operation::<F32Mul>(right, result)
     }
 
-    pub fn dot_product(device: &Device, x: &TensorF32, y: &TensorF32) -> Result<f32, Error> {
+    pub fn dot_product(x: &TensorF32, y: &TensorF32) -> Result<f32, Error> {
+        let device = &x.device;
         if x.shape() != y.shape() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -163,7 +160,8 @@ impl TensorF32 {
         device.sdot(n, x, incx, y, incy)
     }
 
-    pub fn copy(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+    pub fn copy(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+        let device = &x.device;
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
@@ -171,7 +169,6 @@ impl TensorF32 {
     }
 
     pub fn matmul(
-        device: &Device,
         transa: bool,
         transb: bool,
         a: &TensorF32,
@@ -181,21 +178,10 @@ impl TensorF32 {
     ) -> Result<(), Error> {
         let alpha = 1.0;
         let beta = 0.0;
-        TensorF32::gemm(
-            device,
-            transa,
-            transb,
-            alpha,
-            a,
-            b,
-            beta,
-            c,
-            transpose_result,
-        )
+        TensorF32::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)
     }
 
     pub fn gemm(
-        device: &Device,
         transa: bool,
         transb: bool,
         alpha: f32,
@@ -205,6 +191,7 @@ impl TensorF32 {
         c: &mut TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
+        let device = &a.device;
         if !transa && !transb && !transpose_result {
             if a.cols != b.rows {
                 return Err(Error::IncompatibleTensorShapes);
@@ -324,22 +311,18 @@ impl TensorF32 {
         }
     }
 
-    pub fn sub(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+    pub fn sub(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let alpha = -1.0;
-        Self::saxpy(device, alpha, x, y)
+        Self::saxpy(alpha, x, y)
     }
 
-    pub fn add(device: &Device, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+    pub fn add(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let alpha = 1.0;
-        Self::saxpy(device, alpha, x, y)
+        Self::saxpy(alpha, x, y)
     }
 
-    pub fn saxpy(
-        device: &Device,
-        alpha: f32,
-        x: &TensorF32,
-        y: &mut TensorF32,
-    ) -> Result<(), Error> {
+    pub fn saxpy(alpha: f32, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+        let device = &x.device;
         if x.len() != y.len() {
             return Err(Error::IncompatibleTensorShapes);
         }
@@ -366,10 +349,10 @@ impl TensorF32 {
         Ok(())
     }
 
-    pub fn scalar_mul(device: &Device, alpha: f32, x: &mut TensorF32) -> Result<(), Error> {
+    pub fn scalar_mul(alpha: f32, x: &mut TensorF32) -> Result<(), Error> {
         let n = x.len() as i32;
         let incx = 1;
-        device.sscal(n, alpha, x, incx)
+        x.device.clone().sscal(n, alpha, x, incx)
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {

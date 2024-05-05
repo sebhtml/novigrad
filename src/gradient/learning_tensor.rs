@@ -1,8 +1,8 @@
+use crate::{Device, Error, OperatorTrait, TensorF32};
+use core::fmt::Debug;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
-use crate::{Device, Error, OperatorTrait, TensorF32};
-
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Tensor {
     operator: Rc<dyn OperatorTrait>,
     inputs: Vec<Tensor>,

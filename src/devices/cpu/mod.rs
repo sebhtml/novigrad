@@ -7,6 +7,7 @@ extern crate blas_src;
 
 mod tests;
 
+#[derive(Debug)]
 pub struct CpuDevice {}
 
 impl Default for CpuDevice {

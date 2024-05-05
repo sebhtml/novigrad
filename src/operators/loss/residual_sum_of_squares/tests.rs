@@ -13,12 +13,7 @@ fn derive() {
     let device = Device::cpu();
     let mut actual_derived_loss = device.tensor_f32(1, 8, vec![0.0; 8]);
     loss_function
-        .derive(
-            &device,
-            &expected_tensor,
-            &actual_tensor,
-            &mut actual_derived_loss,
-        )
+        .derive(&expected_tensor, &actual_tensor, &mut actual_derived_loss)
         .unwrap();
     assert_eq!(actual_derived_loss, expected_derived_loss);
 }

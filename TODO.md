@@ -10,7 +10,8 @@
 - use Attention in megaman
 
 == Fixes ==
-                                                                                                                                                              
+
+- implement realize() in the forward pass
 - print number of parameters optimized by optimizer
 - does it work without gradient clipping ?
 

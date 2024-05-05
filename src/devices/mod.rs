@@ -1,13 +1,9 @@
 mod cpu;
-#[cfg(feature = "cuda")]
 use crate::Error;
-#[cfg(feature = "cuda")]
-use rustacuda::memory::CopyDestination;
-#[cfg(feature = "cuda")]
-use rustacuda::prelude::DeviceBuffer;
 use std::{
-    borrow::{Borrow, BorrowMut},
+    borrow::Borrow,
     cell::RefCell,
+    collections::{HashMap, LinkedList},
     mem::swap,
     ops::Deref,
     rc::Rc,
@@ -20,78 +16,8 @@ mod cuda;
 pub use cuda::*;
 
 use crate::{OperatorTrait, Tensor, TensorF32};
-
-#[derive(Debug)]
-pub enum DevBuffer {
-    CpuBuffer(Vec<f32>),
-    #[cfg(feature = "cuda")]
-    CudaBuffer(DeviceBuffer<f32>),
-}
-
-impl DevBuffer {
-    pub fn as_ptr(&self) -> *const f32 {
-        match &self {
-            DevBuffer::CpuBuffer(ref values) => values.as_ptr(),
-            #[cfg(feature = "cuda")]
-            DevBuffer::CudaBuffer(ref values) => values.as_ptr(),
-        }
-    }
-
-    pub fn as_mut_ptr(&mut self) -> *mut f32 {
-        match self.borrow_mut() {
-            DevBuffer::CpuBuffer(ref mut values) => values.as_mut_ptr(),
-            #[cfg(feature = "cuda")]
-            DevBuffer::CudaBuffer(ref mut values) => values.as_mut_ptr(),
-        }
-    }
-
-    pub fn get_values(&self) -> Result<Vec<f32>, Error> {
-        match &self {
-            DevBuffer::CpuBuffer(ref values) => Ok(values.clone()),
-            #[cfg(feature = "cuda")]
-            DevBuffer::CudaBuffer(ref buffer) => {
-                let mut values = vec![0.0; buffer.len()];
-                match buffer.copy_to(values.as_mut_slice()) {
-                    Ok(_) => Ok(values),
-                    _ => Err(Error::UnsupportedOperation),
-                }
-            }
-        }
-    }
-
-    pub fn set_values(&mut self, new_values: Vec<f32>) {
-        match self.borrow_mut() {
-            DevBuffer::CpuBuffer(ref mut values) => {
-                values.clear();
-                values.extend_from_slice(new_values.as_slice())
-            }
-            #[cfg(feature = "cuda")]
-            DevBuffer::CudaBuffer(ref mut buffer) => {
-                // TODO don't unwrap directly.
-                buffer.copy_from(new_values.as_slice()).unwrap();
-            }
-        }
-    }
-
-    pub fn len(&self) -> usize {
-        match self {
-            DevBuffer::CpuBuffer(buffer) => buffer.len(),
-            DevBuffer::CudaBuffer(buffer) => buffer.len(),
-        }
-    }
-
-    pub fn resize(&mut self, new_len: usize) {
-        match self {
-            DevBuffer::CpuBuffer(buffer) => buffer.resize(new_len, Default::default()),
-            DevBuffer::CudaBuffer(buffer) => {
-                if buffer.len() != new_len {
-                    let mut new_buffer = unsafe { DeviceBuffer::uninitialized(new_len).unwrap() };
-                    swap(buffer, &mut new_buffer);
-                }
-            }
-        }
-    }
-}
+mod buffer;
+pub use buffer::*;
 
 pub trait DeviceInterface {
     ///  SGEMM  performs one of the matrix-matrix operations
@@ -166,6 +92,7 @@ pub trait DeviceInterface {
 pub struct Device {
     tensors_with_requires_grad: Rc<RefCell<Vec<Tensor>>>,
     device: Rc<DeviceEnum>,
+    available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevBuffer>>>>,
 }
 
 #[derive(Debug)]
@@ -186,10 +113,22 @@ impl Device {
         Self {
             tensors_with_requires_grad: Rc::new(RefCell::new(vec![])),
             device: Rc::new(device),
+            available_buffers: Default::default(),
         }
     }
+
     pub fn cpu() -> Self {
         Self::new(DeviceEnum::Cpu(CpuDevice::default()))
+    }
+
+    pub fn recycle(&self, len: usize, buffer: &mut DevBuffer) {
+        let mut recycled_buffer = DevBuffer::new(self, 0);
+        swap(&mut recycled_buffer, buffer);
+
+        let available_buffers: &mut HashMap<_, _> =
+            &mut self.available_buffers.deref().borrow_mut();
+        let entry = available_buffers.entry(len);
+        entry.or_default().push_back(recycled_buffer)
     }
 
     #[cfg(feature = "cuda")]
@@ -248,16 +187,20 @@ impl Device {
         Ok(())
     }
 
-    pub fn buffer(&self, values: Vec<f32>) -> DevBuffer {
-        match self.device.deref() {
-            DeviceEnum::Cpu(_) => DevBuffer::CpuBuffer(values),
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(_) => {
-                // TODO don't unwrap
-                let mut buffer = unsafe { DeviceBuffer::uninitialized(values.len()).unwrap() };
-                buffer.copy_from(values.as_slice()).unwrap();
-                DevBuffer::CudaBuffer(buffer)
+    pub fn buffer(&self, len: usize) -> DevBuffer {
+        let recycled = self
+            .available_buffers
+            .deref()
+            .borrow_mut()
+            .get_mut(&len)
+            .map(|x| x.pop_back())
+            .flatten();
+        match recycled {
+            Some(buffer) => {
+                //println!("Recycled buffer with length {}", len);
+                buffer
             }
+            None => DevBuffer::new(self, len),
         }
     }
 }

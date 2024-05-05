@@ -1,8 +1,6 @@
 use std::ops::Deref;
 
-use crate::{
-    DatasetDetails, Error, Network, OperatorTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
-};
+use crate::{DatasetDetails, Error, Network, Tensor, TensorF32, Tokenizer, TokenizerTrait};
 
 pub fn print_expected_output_and_actual_output(
     tokenizer: &mut Tokenizer,
@@ -142,7 +140,7 @@ fn print_results(
 
     for i in 0..inputs.len() {
         let input = &inputs[i];
-        let actual_output = network.forward(&[input.clone()])?;
+        let actual_output = network.model().forward(&[input.clone()])?;
         let loss = network.example_loss(&actual_output, &outputs[i])?;
 
         let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();

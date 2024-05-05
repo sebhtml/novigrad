@@ -27,6 +27,10 @@ impl Network {
         }
     }
 
+    pub fn model(&self) -> &Box<dyn OperatorTrait> {
+        &self.model
+    }
+
     pub fn train(
         &mut self,
         learning_rate: f32,
@@ -56,7 +60,7 @@ impl Network {
     pub fn total_loss(&self, inputs: &[Tensor], outputs: &[Tensor]) -> Result<f32, Error> {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
-            let output = self.forward(&[inputs[i].clone()])?;
+            let output = self.model.forward(&[inputs[i].clone()])?;
             let expected_output = &outputs[i];
             let example_error = self.example_loss(&output, expected_output)?;
             total_error += example_error;
@@ -75,7 +79,7 @@ impl Network {
     ) -> Result<(), Error> {
         self.device.zero_grad()?;
 
-        let output = self.forward(&[x.clone()])?;
+        let output = self.model.forward(&[x.clone()])?;
 
         let loss = self.loss_function.forward(&[y.clone(), output.clone()])?;
 
@@ -85,22 +89,5 @@ impl Network {
         self.optimizer.optimize(&gradients, learning_rate)?;
 
         Ok(())
-    }
-}
-
-impl OperatorTrait for Network {
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        //println!("---BEGIN---");
-        let output = self.model.as_ref().forward(inputs);
-        //println!("---END---");
-        output
-    }
-
-    fn name(&self) -> &str {
-        "Network"
-    }
-
-    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::UnsupportedOperation)
     }
 }

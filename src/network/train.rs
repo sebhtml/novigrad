@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-use crate::{DatasetDetails, Error, Network, Tensor, TensorF32, Tokenizer, TokenizerTrait};
+use crate::{
+    DatasetDetails, Error, GradientDescent, Network, OperatorTrait, OptimizerTrait, Tensor,
+    TensorF32, Tokenizer, TokenizerTrait,
+};
 
 pub fn print_expected_output_and_actual_output(
     tokenizer: &mut Tokenizer,
@@ -57,13 +60,14 @@ pub fn print_expected_output_and_actual_output(
 }
 
 fn print_total_error(
-    network: &mut Network,
+    model: &Box<dyn OperatorTrait>,
+    loss_function: &Box<dyn OperatorTrait>,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
     last_total_error: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
-    let total_error = network.total_loss(inputs, outputs)?;
+    let total_error = Network::total_loss(model, loss_function, inputs, outputs)?;
     let change = (total_error - last_total_error) / last_total_error;
     println!(
         "Epoch {} Total_error {}, change: {}",
@@ -85,25 +89,30 @@ pub fn train_network_on_dataset(
     let mut initial_total_error = f32::NAN;
     let examples = &dataset_details.examples;
     let learning_rate = dataset_details.learning_rate;
-    let architecture = dataset_details.model;
+    let model = dataset_details.model;
     let loss_function = dataset_details.loss_function_name;
     let mut tokenizer = dataset_details.tokenizer;
     let device = dataset_details.device;
-
+    let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::default());
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
-    let mut network = Network::new(architecture, loss_function, &device);
 
     let mut last_total_error = f32::NAN;
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
 
-    let (_, _) = print_results(&mut tokenizer, &mut network, &inputs, &outputs)?;
+    let (_, _) = print_results(&model, &loss_function, &mut tokenizer, &inputs, &outputs)?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
-            let total_error =
-                print_total_error(&mut network, &inputs, &outputs, last_total_error, epoch)?;
+            let total_error = print_total_error(
+                &model,
+                &loss_function,
+                &inputs,
+                &outputs,
+                last_total_error,
+                epoch,
+            )?;
             if epoch == 0 {
                 initial_total_error = total_error;
             }
@@ -112,13 +121,28 @@ pub fn train_network_on_dataset(
                 break;
             }
         }
-        network.train(learning_rate, epoch, &inputs, &outputs)?;
+        Network::train(
+            &model,
+            &loss_function,
+            &device,
+            &optimizer,
+            learning_rate,
+            epoch,
+            &inputs,
+            &outputs,
+        )?;
     }
-    let final_total_error =
-        print_total_error(&mut network, &inputs, &outputs, last_total_error, epochs)?;
+    let final_total_error = print_total_error(
+        &model,
+        &loss_function,
+        &inputs,
+        &outputs,
+        last_total_error,
+        epochs,
+    )?;
 
     let (expected_argmax_values, actual_argmax_values) =
-        print_results(&mut tokenizer, &mut network, &inputs, &outputs)?;
+        print_results(&model, &loss_function, &mut tokenizer, &inputs, &outputs)?;
 
     let output = NetworkTestOutput {
         initial_total_error,
@@ -130,8 +154,9 @@ pub fn train_network_on_dataset(
 }
 
 fn print_results(
+    model: &Box<dyn OperatorTrait>,
+    loss_function: &Box<dyn OperatorTrait>,
     tokenizer: &mut Tokenizer,
-    network: &mut Network,
     inputs: &[Tensor],
     outputs: &[Tensor],
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {
@@ -140,8 +165,8 @@ fn print_results(
 
     for i in 0..inputs.len() {
         let input = &inputs[i];
-        let actual_output = network.model().forward(&[input.clone()])?;
-        let loss = network.example_loss(&actual_output, &outputs[i])?;
+        let actual_output = model.forward(&[input.clone()])?;
+        let loss = Network::example_loss(loss_function, &actual_output, &outputs[i])?;
 
         let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;

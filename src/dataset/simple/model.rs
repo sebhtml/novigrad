@@ -1,4 +1,4 @@
-use crate::{Error, Forward, Operator, Operators, Tensor};
+use crate::{Error, Operator, OperatorTrait, Operators, Tensor};
 
 pub struct Model {
     embedding: Operator,
@@ -37,7 +37,7 @@ impl Model {
     }
 }
 
-impl Forward for Model {
+impl OperatorTrait for Model {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let state_0: Tensor = self.embedding.forward(inputs)?;
         let state_1 = self.linear_0.forward(&[state_0])?;
@@ -48,5 +48,13 @@ impl Forward for Model {
         let state_6 = self.linear_2.forward(&[state_5])?;
         let state_7 = self.softmax.forward(&[state_6])?;
         Ok(state_7)
+    }
+
+    fn name(&self) -> &str {
+        "SimpleModel"
+    }
+
+    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        Err(Error::UnsupportedOperation)
     }
 }

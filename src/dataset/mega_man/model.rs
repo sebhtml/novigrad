@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{Error, Forward, Identity, Operator, Operators, Tensor};
+use crate::{Error, Identity, Operator, OperatorTrait, Operators, Tensor};
 
 pub struct Model {
     vocab_size: usize,
@@ -50,7 +50,7 @@ impl Model {
     }
 }
 
-impl Forward for Model {
+impl OperatorTrait for Model {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let state_0 = self.embedding.forward(inputs)?;
         let state_0b = self.matmul.forward(&[state_0, self.parameters.clone()])?;
@@ -58,5 +58,13 @@ impl Forward for Model {
         let state_2 = self.linear.forward(&[state_1])?;
         let state_3 = self.softmax.forward(&[state_2])?;
         Ok(state_3)
+    }
+
+    fn name(&self) -> &str {
+        "MegaManModel"
+    }
+
+    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        Err(Error::UnsupportedOperation)
     }
 }

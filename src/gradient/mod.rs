@@ -17,7 +17,3 @@ impl Debug for dyn OperatorTrait {
         Ok(())
     }
 }
-
-pub trait Forward {
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error>;
-}

@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use crate::{
-    DatasetDetails, Error, Forward, Network, Tensor, TensorF32, Tokenizer, TokenizerTrait,
+    DatasetDetails, Error, Network, OperatorTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 pub fn print_expected_output_and_actual_output(

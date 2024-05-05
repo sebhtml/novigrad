@@ -5,20 +5,20 @@ use std::ops::Deref;
 pub use train::*;
 
 use crate::{
-    devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tensor, TensorF32,
+    devices::Device, Error, Operator, OperatorTrait, Optimizer, OptimizerTrait, Tensor, TensorF32,
 };
 
 pub struct Network {
-    model: Box<dyn Forward>,
+    model: Box<dyn OperatorTrait>,
     loss_function: Operator,
     device: Device,
     optimizer: Optimizer,
 }
 
 impl Network {
-    pub fn new(architecture: Box<dyn Forward>, loss_function: Operator, device: &Device) -> Self {
+    pub fn new(model: Box<dyn OperatorTrait>, loss_function: Operator, device: &Device) -> Self {
         Self {
-            model: architecture,
+            model,
             loss_function,
             device: device.clone(),
             optimizer: Default::default(),
@@ -86,11 +86,19 @@ impl Network {
     }
 }
 
-impl Forward for Network {
+impl OperatorTrait for Network {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         //println!("---BEGIN---");
-        let output = self.model.forward(inputs);
+        let output = self.model.as_ref().forward(inputs);
         //println!("---END---");
         output
+    }
+
+    fn name(&self) -> &str {
+        "Network"
+    }
+
+    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        Err(Error::UnsupportedOperation)
     }
 }

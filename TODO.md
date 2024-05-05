@@ -1,4 +1,3 @@
-- impl Drop for TensorF32
 - decouple tensor and device
 - remove tensor f32 matmul
 

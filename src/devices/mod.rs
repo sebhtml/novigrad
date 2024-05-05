@@ -1,10 +1,13 @@
 mod cpu;
-#[cfg(feature = "cuda")]
 use crate::Error;
-#[cfg(feature = "cuda")]
-#[cfg(feature = "cuda")]
-use rustacuda::prelude::DeviceBuffer;
-use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc};
+use std::{
+    borrow::Borrow,
+    cell::RefCell,
+    collections::{HashMap, LinkedList},
+    mem::swap,
+    ops::Deref,
+    rc::Rc,
+};
 
 pub use cpu::*;
 #[cfg(feature = "cuda")]
@@ -89,6 +92,7 @@ pub trait DeviceInterface {
 pub struct Device {
     tensors_with_requires_grad: Rc<RefCell<Vec<Tensor>>>,
     device: Rc<DeviceEnum>,
+    available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevBuffer>>>>,
 }
 
 #[derive(Debug)]
@@ -109,10 +113,22 @@ impl Device {
         Self {
             tensors_with_requires_grad: Rc::new(RefCell::new(vec![])),
             device: Rc::new(device),
+            available_buffers: Default::default(),
         }
     }
+
     pub fn cpu() -> Self {
         Self::new(DeviceEnum::Cpu(CpuDevice::default()))
+    }
+
+    pub fn recycle(&self, len: usize, buffer: &mut DevBuffer) {
+        let mut recycled_buffer = DevBuffer::new(self, 0);
+        swap(&mut recycled_buffer, buffer);
+
+        let available_buffers: &mut HashMap<_, _> =
+            &mut self.available_buffers.deref().borrow_mut();
+        let entry = available_buffers.entry(len);
+        entry.or_default().push_back(recycled_buffer)
     }
 
     #[cfg(feature = "cuda")]
@@ -172,7 +188,20 @@ impl Device {
     }
 
     pub fn buffer(&self, len: usize) -> DevBuffer {
-        DevBuffer::new(self, len)
+        let recycled = self
+            .available_buffers
+            .deref()
+            .borrow_mut()
+            .get_mut(&len)
+            .map(|x| x.pop_back())
+            .flatten();
+        match recycled {
+            Some(buffer) => {
+                //println!("Recycled buffer with length {}", len);
+                buffer
+            }
+            None => DevBuffer::new(self, len),
+        }
     }
 }
 

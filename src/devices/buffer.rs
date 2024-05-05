@@ -14,6 +14,16 @@ pub struct DevBuffer {
     buffer: DevBufferEnum,
 }
 
+impl Drop for DevBuffer {
+    fn drop(&mut self) {
+        if self.len() == 0 {
+            return;
+        }
+        let device = self.device.clone();
+        device.recycle(self.len(), self);
+    }
+}
+
 #[derive(Debug)]
 pub enum DevBufferEnum {
     CpuBuffer(Vec<f32>),

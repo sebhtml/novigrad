@@ -11,7 +11,7 @@ pub struct TensorF32 {
     device: Device,
     rows: usize,
     cols: usize,
-    values: DevBuffer,
+    buffer: DevBuffer,
 }
 
 impl PartialEq for TensorF32 {
@@ -25,12 +25,13 @@ impl PartialEq for TensorF32 {
 impl TensorF32 {
     pub fn new(rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
-        let values = device.buffer(values);
+        let mut buffer = device.buffer(values.len());
+        buffer.set_values(values);
         Self {
             device: device.clone(),
             rows,
             cols,
-            values,
+            buffer,
         }
     }
 
@@ -115,15 +116,15 @@ impl TensorF32 {
     }
 
     pub fn as_ptr(&self) -> *const f32 {
-        self.values.as_ptr()
+        self.buffer.as_ptr()
     }
 
     pub fn as_mut_ptr(&mut self) -> *mut f32 {
-        self.values.as_mut_ptr()
+        self.buffer.as_mut_ptr()
     }
 
     pub fn get_values(&self) -> Result<Vec<f32>, Error> {
-        self.values.get_values()
+        self.buffer.get_values()
     }
 
     pub fn resize(&mut self, rows: usize, cols: usize) {
@@ -138,10 +139,10 @@ impl TensorF32 {
 
     pub fn set_values(&mut self, new_values: Vec<f32>) {
         debug_assert_eq!(new_values.len(), self.len());
-        if self.values.len() != self.len() {
-            self.values.resize(self.len())
+        if self.buffer.len() != self.len() {
+            self.buffer.resize(self.len())
         }
-        self.values.set_values(new_values)
+        self.buffer.set_values(new_values)
     }
 
     // TODO use device for element_wise_mul

@@ -2,7 +2,6 @@ mod cpu;
 #[cfg(feature = "cuda")]
 use crate::Error;
 #[cfg(feature = "cuda")]
-use rustacuda::memory::CopyDestination;
 #[cfg(feature = "cuda")]
 use rustacuda::prelude::DeviceBuffer;
 use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc};
@@ -172,14 +171,16 @@ impl Device {
         Ok(())
     }
 
-    pub fn buffer(&self, values: Vec<f32>) -> DevBuffer {
+    pub fn buffer(&self, len: usize) -> DevBuffer {
         match self.device.deref() {
-            DeviceEnum::Cpu(_) => DevBuffer::CpuBuffer(values),
+            DeviceEnum::Cpu(_) => {
+                let values = vec![0.0; len];
+                DevBuffer::CpuBuffer(values)
+            }
             #[cfg(feature = "cuda")]
             DeviceEnum::Cuda(_) => {
                 // TODO don't unwrap
-                let mut buffer = unsafe { DeviceBuffer::uninitialized(values.len()).unwrap() };
-                buffer.copy_from(values.as_slice()).unwrap();
+                let buffer = unsafe { DeviceBuffer::uninitialized(len).unwrap() };
                 DevBuffer::CudaBuffer(buffer)
             }
         }

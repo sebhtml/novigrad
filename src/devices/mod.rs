@@ -239,6 +239,15 @@ impl Device {
         &self.tensors_with_requires_grad
     }
 
+    pub fn zero_grad(&self) -> Result<(), Error> {
+        let gradients: &[Tensor] = &self.tensors_with_requires_grad().deref().borrow();
+        for gradient in gradients {
+            let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
+            TensorF32::scalar_mul(0.0, gradient)?;
+        }
+        Ok(())
+    }
+
     pub fn buffer(&self, values: Vec<f32>) -> DevBuffer {
         match self.device.deref() {
             DeviceEnum::Cpu(_) => DevBuffer::CpuBuffer(values),

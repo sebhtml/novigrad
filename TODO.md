@@ -1,8 +1,6 @@
-- Device in LearningTensor
 - decouple tensor and device
 - impl Drop for TensorF32
-- remove device argument in OperatorTrait
-- store device in LearningTensor
+- remove tensor f32 matmul
 
 == Attention ==
 
@@ -18,7 +16,6 @@
 
 == Fixes ==
 
-- don't backward if last
 - enable backward tape recording only during training
 
 == Mini Batch ==
@@ -63,7 +60,6 @@
 
 == Refactoring ==
 
-- remove tensor f32 matmul
 - determine the value of using_cross_entropy_loss at run time
 
 == Devices ==

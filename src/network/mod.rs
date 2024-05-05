@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub struct Network {
-    architecture: Box<dyn Forward>,
+    model: Box<dyn Forward>,
     loss_function: Operator,
     device: Device,
     optimizer: Optimizer,
@@ -18,7 +18,7 @@ pub struct Network {
 impl Network {
     pub fn new(architecture: Box<dyn Forward>, loss_function: Operator, device: &Device) -> Self {
         Self {
-            architecture,
+            model: architecture,
             loss_function,
             device: device.clone(),
             optimizer: Default::default(),
@@ -63,15 +63,6 @@ impl Network {
         Ok(total_error)
     }
 
-    fn zero_grad(&self) -> Result<(), Error> {
-        let gradients: &[Tensor] = &self.device.tensors_with_requires_grad().deref().borrow();
-        for gradient in gradients {
-            let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
-            TensorF32::scalar_mul(0.0, gradient)?;
-        }
-        Ok(())
-    }
-
     fn train_back_propagation(
         &mut self,
         learning_rate: f32,
@@ -80,7 +71,7 @@ impl Network {
         x: &Tensor,
         y: &Tensor,
     ) -> Result<(), Error> {
-        self.zero_grad()?;
+        self.device.zero_grad()?;
 
         let output = self.forward(&[x.clone()])?;
 
@@ -98,7 +89,7 @@ impl Network {
 impl Forward for Network {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         //println!("---BEGIN---");
-        let output = self.architecture.forward(inputs);
+        let output = self.model.forward(inputs);
         //println!("---END---");
         output
     }

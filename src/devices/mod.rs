@@ -9,6 +9,7 @@ use std::{
     borrow::{Borrow, BorrowMut},
     cell::RefCell,
     mem::swap,
+    ops::Deref,
     rc::Rc,
 };
 
@@ -161,9 +162,10 @@ pub trait DeviceInterface {
     fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error>;
 }
 
+#[derive(Clone)]
 pub struct Device {
-    tensors_with_requires_grad: RefCell<Vec<Tensor>>,
-    device: DeviceEnum,
+    tensors_with_requires_grad: Rc<RefCell<Vec<Tensor>>>,
+    device: Rc<DeviceEnum>,
 }
 
 pub enum DeviceEnum {
@@ -181,8 +183,8 @@ impl Default for Device {
 impl Device {
     pub fn new(device: DeviceEnum) -> Self {
         Self {
-            tensors_with_requires_grad: vec![].into(),
-            device,
+            tensors_with_requires_grad: Rc::new(RefCell::new(vec![])),
+            device: Rc::new(device),
         }
     }
     pub fn cpu() -> Self {
@@ -224,18 +226,19 @@ impl Device {
         );
         if requires_grad {
             self.tensors_with_requires_grad
+                .deref()
                 .borrow_mut()
                 .push(tensor.clone())
         }
         tensor
     }
 
-    pub fn tensors_with_requires_grad(&self) -> Vec<Tensor> {
-        self.tensors_with_requires_grad.borrow().clone()
+    pub fn tensors_with_requires_grad(&self) -> &Rc<RefCell<Vec<Tensor>>> {
+        &self.tensors_with_requires_grad
     }
 
     pub fn buffer(&self, values: Vec<f32>) -> DevBuffer {
-        match self.device {
+        match self.device.deref() {
             DeviceEnum::Cpu(_) => DevBuffer::CpuBuffer(values),
             #[cfg(feature = "cuda")]
             DeviceEnum::Cuda(_) => {

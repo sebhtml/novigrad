@@ -65,7 +65,7 @@ impl Network {
     }
 
     fn zero_grad(&self) -> Result<(), Error> {
-        let gradients = self.device.tensors_with_requires_grad();
+        let gradients: &[Tensor] = &self.device.tensors_with_requires_grad().deref().borrow();
         for gradient in gradients {
             let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
             TensorF32::scalar_mul(&self.device, 0.0, gradient)?;
@@ -88,6 +88,7 @@ impl Network {
         let loss = self.loss_function.forward(&[y.clone(), output.clone()])?;
 
         let gradients = loss.backward(&self.device)?;
+        let gradients: &[Tensor] = &gradients.deref().borrow();
 
         self.optimizer
             .optimize(&gradients, &self.device, learning_rate)?;

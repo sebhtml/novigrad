@@ -79,7 +79,7 @@ impl Tensor {
     }
 
     /// Back-propagation
-    pub fn backward(&self, device: &Device) -> Result<Vec<Tensor>, Error> {
+    pub fn backward(&self, device: &Device) -> Result<Rc<RefCell<Vec<Tensor>>>, Error> {
         let tape = self.get_tape();
 
         /*
@@ -104,6 +104,6 @@ impl Tensor {
                 back_propagated_gradient.clip(-1.0, 1.0, backward_gradient)?;
             }
         }
-        Ok(device.tensors_with_requires_grad())
+        Ok(device.tensors_with_requires_grad().clone())
     }
 }

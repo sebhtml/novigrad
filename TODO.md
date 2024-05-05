@@ -1,6 +1,6 @@
 - decouple tensor and device
-- impl Drop for TensorF32
 - remove tensor f32 matmul
+- impl Drop for TensorF32
 
 == Attention ==
 

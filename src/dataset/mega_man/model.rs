@@ -1,15 +1,17 @@
 use std::rc::Rc;
 
-use crate::{Error, Identity, Operator, OperatorTrait, Operators, Tensor};
+use crate::{
+    Embedding, Error, Identity, Linear, MatMul, OperatorTrait, Operators, Reshape, Softmax, Tensor,
+};
 
 pub struct Model {
     vocab_size: usize,
     parameters: Tensor,
-    embedding: Operator,
-    matmul: Operator,
-    reshape: Operator,
-    linear: Operator,
-    softmax: Operator,
+    embedding: Embedding,
+    matmul: MatMul,
+    reshape: Reshape,
+    linear: Linear,
+    softmax: Softmax,
 }
 
 impl Model {

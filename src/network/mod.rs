@@ -4,19 +4,21 @@ mod train;
 use std::ops::Deref;
 pub use train::*;
 
-use crate::{
-    devices::Device, Error, Operator, OperatorTrait, Optimizer, OptimizerTrait, Tensor, TensorF32,
-};
+use crate::{devices::Device, Error, OperatorTrait, Optimizer, OptimizerTrait, Tensor, TensorF32};
 
 pub struct Network {
     model: Box<dyn OperatorTrait>,
-    loss_function: Operator,
+    loss_function: Box<dyn OperatorTrait>,
     device: Device,
     optimizer: Optimizer,
 }
 
 impl Network {
-    pub fn new(model: Box<dyn OperatorTrait>, loss_function: Operator, device: &Device) -> Self {
+    pub fn new(
+        model: Box<dyn OperatorTrait>,
+        loss_function: Box<dyn OperatorTrait>,
+        device: &Device,
+    ) -> Self {
         Self {
             model,
             loss_function,

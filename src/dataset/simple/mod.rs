@@ -50,7 +50,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
         architecture: Box::new(Model::new(&ops)),
         epochs: 1000,
         progress: 100,
-        loss_function_name: ops.cross_entropy_loss(),
+        loss_function_name: Box::new(ops.cross_entropy_loss()),
         initial_total_error_min: 8.0,
         final_total_error_max: 0.001,
         learning_rate: 0.5,

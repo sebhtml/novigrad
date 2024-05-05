@@ -1,14 +1,16 @@
-use crate::{Error, Operator, OperatorTrait, Operators, Tensor};
+use crate::{
+    Embedding, Error, Linear, OperatorTrait, Operators, Reshape, Sigmoid, Softmax, Tensor,
+};
 
 pub struct Model {
-    embedding: Operator,
-    linear_0: Operator,
-    sigmoid_0: Operator,
-    reshape: Operator,
-    linear_1: Operator,
-    sigmoid_1: Operator,
-    linear_2: Operator,
-    softmax: Operator,
+    embedding: Embedding,
+    linear_0: Linear,
+    sigmoid_0: Sigmoid,
+    reshape: Reshape,
+    linear_1: Linear,
+    sigmoid_1: Sigmoid,
+    linear_2: Linear,
+    softmax: Softmax,
 }
 
 impl Model {

@@ -14,7 +14,7 @@ pub struct DatasetDetails {
     pub device: Device,
     pub tokenizer: Tokenizer,
     pub examples: Vec<(Tensor, Tensor)>,
-    pub architecture: Box<dyn OperatorTrait>,
+    pub model: Box<dyn OperatorTrait>,
     pub loss_function_name: Box<dyn OperatorTrait>,
     pub learning_rate: f32,
     pub epochs: usize,

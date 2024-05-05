@@ -87,7 +87,7 @@ pub fn train_network_on_dataset(
     let mut initial_total_error = f32::NAN;
     let examples = &dataset_details.examples;
     let learning_rate = dataset_details.learning_rate;
-    let architecture = dataset_details.architecture;
+    let architecture = dataset_details.model;
     let loss_function = dataset_details.loss_function_name;
     let mut tokenizer = dataset_details.tokenizer;
     let device = dataset_details.device;

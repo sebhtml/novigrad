@@ -51,7 +51,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
         device: device.clone(),
         tokenizer,
         examples,
-        architecture: Box::new(architecture),
+        model: Box::new(architecture),
         epochs: 300,
         progress: 100,
         loss_function_name: Box::new(ops.cross_entropy_loss()),

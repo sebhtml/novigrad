@@ -1,8 +1,6 @@
 use std::rc::Rc;
 
-use crate::{
-    Embedding, Error, Identity, Linear, MatMul, OperatorTrait, Operators, Reshape, Softmax, Tensor,
-};
+use crate::{Embedding, Error, Linear, MatMul, OperatorTrait, Operators, Reshape, Softmax, Tensor};
 
 pub struct Model {
     vocab_size: usize,
@@ -18,8 +16,8 @@ impl Model {
     pub fn new(ops: &Operators) -> Self {
         let _batch_size = 1;
         let sequence_length = 32;
-        let vocab_size = 256;
-        //let vocab_size = 34816; // 32768 + 2048
+        //let vocab_size = 256;
+        let vocab_size = 34816; // 32768 + 2048
         let num_embeddings = vocab_size;
         let embedding_dim = 384;
         let _num_heads = 0;
@@ -27,7 +25,7 @@ impl Model {
         Self {
             vocab_size,
             parameters: device.tensor(
-                Rc::new(Identity::new(device)),
+                Rc::new(ops.identity()),
                 &vec![],
                 embedding_dim,
                 embedding_dim,

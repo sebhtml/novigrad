@@ -4,11 +4,15 @@ use super::LossFunction;
 use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
 #[derive(Clone)]
-pub struct CrossEntropyLoss {}
+pub struct CrossEntropyLoss {
+    device: Device,
+}
 
-impl Default for CrossEntropyLoss {
-    fn default() -> Self {
-        Self {}
+impl CrossEntropyLoss {
+    pub fn new(device: &Device) -> Self {
+        Self {
+            device: device.clone(),
+        }
     }
 }
 
@@ -64,7 +68,7 @@ impl LossFunction for CrossEntropyLoss {
 }
 
 impl OperatorTrait for CrossEntropyLoss {
-    fn backward(&self, device: &Device, inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
@@ -73,12 +77,14 @@ impl OperatorTrait for CrossEntropyLoss {
         Ok(())
     }
 
-    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
-        let loss = self.evaluate(device, expected, actual)?;
-        let output = device.tensor(Rc::new(self.clone()), inputs, 1, 1, vec![loss], false);
+        let loss = self.evaluate(&self.device, expected, actual)?;
+        let output = self
+            .device
+            .tensor(Rc::new(self.clone()), inputs, 1, 1, vec![loss], false);
         Ok(output)
     }
 

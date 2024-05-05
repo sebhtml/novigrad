@@ -3,11 +3,15 @@ use std::{ops::Deref, rc::Rc};
 use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
 #[derive(Clone)]
-pub struct MatMul {}
+pub struct MatMul {
+    device: Device,
+}
 
 impl MatMul {
-    pub fn new() -> Self {
-        MatMul {}
+    pub fn new(device: &Device) -> Self {
+        MatMul {
+            device: device.clone(),
+        }
     }
 
     fn forward(device: &Device, inputs: &[Tensor], output: &mut Tensor) -> Result<(), Error> {
@@ -37,7 +41,7 @@ impl MatMul {
         Ok(())
     }
 
-    fn backward(device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         {
@@ -63,13 +67,13 @@ impl MatMul {
 }
 
 impl OperatorTrait for MatMul {
-    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let rows = input_0.rows();
         let cols = input_1.rows();
         let len = rows * cols;
-        let mut output = device.tensor(
+        let mut output = self.device.tensor(
             Rc::new(self.clone()),
             inputs,
             rows,
@@ -77,7 +81,7 @@ impl OperatorTrait for MatMul {
             vec![0.0; len],
             false,
         );
-        MatMul::forward(device, inputs, &mut output)?;
+        MatMul::forward(&self.device, inputs, &mut output)?;
         Ok(output)
     }
 
@@ -85,7 +89,7 @@ impl OperatorTrait for MatMul {
         "MatMul"
     }
 
-    fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        MatMul::backward(device, inputs, output)
+    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        MatMul::backward(inputs, output)
     }
 }

@@ -6,11 +6,15 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 #[derive(Clone)]
-pub struct Sigmoid {}
+pub struct Sigmoid {
+    device: Device,
+}
 
 impl Sigmoid {
-    pub fn new(_device: &Device) -> Self {
-        Self {}
+    pub fn new(device: &Device) -> Self {
+        Self {
+            device: device.clone(),
+        }
     }
 }
 
@@ -63,7 +67,7 @@ impl ActivationFunction for Sigmoid {
 }
 
 impl OperatorTrait for Sigmoid {
-    fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
         // Compute activation function derivative.
@@ -72,18 +76,18 @@ impl OperatorTrait for Sigmoid {
         let rows = input.rows();
         let cols = input.cols();
         let len = rows * cols;
-        let mut layer_f_derivative = device.tensor_f32(rows, cols, vec![0.0; len]);
+        let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
         self.derive(input, output, &mut layer_f_derivative)?;
         layer_f_derivative.element_wise_mul(output_gradient, backward_gradient)?;
         Ok(())
     }
 
-    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let rows = input.rows();
         let cols = input.cols();
         let len = rows * cols;
-        let output = device.tensor(
+        let output = self.device.tensor(
             Rc::new(self.clone()),
             inputs,
             rows,

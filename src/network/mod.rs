@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 pub use train::*;
 
 use crate::{
@@ -11,17 +11,16 @@ use crate::{
 pub struct Network {
     architecture: Box<dyn Forward>,
     loss_function: Operator,
-    device: Rc<Device>,
+    device: Device,
     optimizer: Optimizer,
 }
 
 impl Network {
-    pub fn new(architecture: Box<dyn Forward>, loss_function: Operator) -> Self {
-        let device = architecture.device();
+    pub fn new(architecture: Box<dyn Forward>, loss_function: Operator, device: &Device) -> Self {
         Self {
             architecture,
             loss_function,
-            device,
+            device: device.clone(),
             optimizer: Default::default(),
         }
     }
@@ -102,9 +101,5 @@ impl Forward for Network {
         let output = self.architecture.forward(inputs);
         //println!("---END---");
         output
-    }
-
-    fn device(&self) -> Rc<Device> {
-        self.device.clone()
     }
 }

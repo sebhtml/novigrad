@@ -6,29 +6,32 @@ use crate::{
 };
 
 pub struct Operators {
-    device: Rc<Device>,
+    device: Device,
 }
 
 impl Operators {
-    pub fn new(device: Rc<Device>) -> Self {
-        Self { device }
+    pub fn new(device: &Device) -> Self {
+        Self {
+            device: device.clone(),
+        }
     }
 }
 
 impl Operators {
-    pub fn device(&self) -> Rc<Device> {
-        self.device.clone()
+    pub fn device(&self) -> &Device {
+        &self.device
     }
 
     pub fn embedding(&self, num_embeddings: usize, embedding_dim: usize) -> Operator {
-        Operator::new(
-            self.device(),
-            Rc::new(Embedding::new(num_embeddings, embedding_dim, &self.device)),
-        )
+        Operator::new(Rc::new(Embedding::new(
+            num_embeddings,
+            embedding_dim,
+            &self.device,
+        )))
     }
 
     pub fn matmul(&self) -> Operator {
-        Operator::new(self.device(), Rc::new(MatMul::new()))
+        Operator::new(Rc::new(MatMul::new(&self.device)))
     }
 
     pub fn reshape(
@@ -38,45 +41,40 @@ impl Operators {
         output_rows: usize,
         output_cols: usize,
     ) -> Operator {
-        Operator::new(
-            self.device(),
-            Rc::new(Reshape::new(
-                input_rows,
-                input_cols,
-                output_rows,
-                output_cols,
-            )),
-        )
+        Operator::new(Rc::new(Reshape::new(
+            &self.device,
+            input_rows,
+            input_cols,
+            output_rows,
+            output_cols,
+        )))
     }
 
     pub fn linear(&self, weights_rows: usize, weights_cols: usize, bias_rows: usize) -> Operator {
-        Operator::new(
-            self.device(),
-            Rc::new(Linear::new(
-                weights_rows,
-                weights_cols,
-                bias_rows,
-                &self.device,
-            )),
-        )
+        Operator::new(Rc::new(Linear::new(
+            weights_rows,
+            weights_cols,
+            bias_rows,
+            &self.device,
+        )))
     }
 
     pub fn sigmoid(&self) -> Operator {
-        Operator::new(self.device(), Rc::new(Sigmoid::new(&self.device)))
+        Operator::new(Rc::new(Sigmoid::new(&self.device)))
     }
 
     pub fn softmax(&self, using_cross_entropy_loss: bool) -> Operator {
-        Operator::new(
-            self.device(),
-            Rc::new(Softmax::new(using_cross_entropy_loss, &self.device)),
-        )
+        Operator::new(Rc::new(Softmax::new(
+            using_cross_entropy_loss,
+            &self.device,
+        )))
     }
 
     pub fn residual_sum_of_squares(&self) -> Operator {
-        Operator::new(self.device(), Rc::new(ResidualSumOfSquares::default()))
+        Operator::new(Rc::new(ResidualSumOfSquares::new(&self.device)))
     }
 
     pub fn cross_entropy_loss(&self) -> Operator {
-        Operator::new(self.device(), Rc::new(CrossEntropyLoss::default()))
+        Operator::new(Rc::new(CrossEntropyLoss::new(&self.device)))
     }
 }

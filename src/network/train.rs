@@ -90,10 +90,11 @@ pub fn train_network_on_dataset(
     let architecture = dataset_details.architecture;
     let loss_function = dataset_details.loss_function_name;
     let mut tokenizer = dataset_details.tokenizer;
+    let device = dataset_details.device;
 
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
-    let mut network = Network::new(architecture, loss_function);
+    let mut network = Network::new(architecture, loss_function, &device);
 
     let mut last_total_error = f32::NAN;
     let epochs = dataset_details.epochs;

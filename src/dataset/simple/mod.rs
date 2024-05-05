@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{
     into_one_hot_encoded_rows, DatasetDetails, Device, Error, Operators, Tensor, Tokenizer,
     TokenizerTrait,
@@ -41,11 +39,12 @@ fn load_examples(
     examples
 }
 
-pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
+pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let examples = load_examples(&device, &mut tokenizer)?;
     let ops = Operators::new(device);
     let details = DatasetDetails {
+        device: device.clone(),
         tokenizer,
         examples,
         architecture: Box::new(Model::new(&ops)),

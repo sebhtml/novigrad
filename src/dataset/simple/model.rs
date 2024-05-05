@@ -1,5 +1,4 @@
-use crate::{Device, Error, Forward, Operator, Operators, Tensor};
-use std::rc::Rc;
+use crate::{Error, Forward, Operator, Operators, Tensor};
 
 pub struct Model {
     embedding: Operator,
@@ -49,9 +48,5 @@ impl Forward for Model {
         let state_6 = self.linear_2.forward(&[state_5])?;
         let state_7 = self.softmax.forward(&[state_6])?;
         Ok(state_7)
-    }
-
-    fn device(&self) -> Rc<Device> {
-        self.embedding.device()
     }
 }

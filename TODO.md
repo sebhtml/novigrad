@@ -1,4 +1,3 @@
-- Device in Operator
 - Device in LearningTensor
 - decouple tensor and device
 - impl Drop for TensorF32

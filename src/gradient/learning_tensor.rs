@@ -91,7 +91,7 @@ impl Tensor {
             let inputs = output.inputs();
 
             // Store enabled gradients to optimize them later.
-            operator.backward(device, inputs, output)?;
+            operator.backward(inputs, output)?;
 
             // Clip the backward gradients.
             for input in inputs {

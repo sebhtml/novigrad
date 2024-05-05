@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{Device, Error, Forward, Identity, Operator, Operators, Tensor};
+use crate::{Error, Forward, Identity, Operator, Operators, Tensor};
 
 pub struct Model {
     vocab_size: usize,
@@ -25,7 +25,7 @@ impl Model {
         Self {
             vocab_size,
             parameters: device.tensor(
-                Rc::new(Identity::default()),
+                Rc::new(Identity::new(device)),
                 &vec![],
                 embedding_dim,
                 embedding_dim,
@@ -58,9 +58,5 @@ impl Forward for Model {
         let state_2 = self.linear.forward(&[state_1])?;
         let state_3 = self.softmax.forward(&[state_2])?;
         Ok(state_3)
-    }
-
-    fn device(&self) -> Rc<Device> {
-        self.embedding.device()
     }
 }

@@ -1,9 +1,7 @@
-use std::fs;
-use std::rc::Rc;
-
 use crate::tokenizers::TokenizerTrait;
 use crate::{into_one_hot_encoded_rows, Device, Operators, Tensor, Tokenizer};
 use crate::{DatasetDetails, Error};
+use std::fs;
 mod model;
 use model::*;
 
@@ -38,8 +36,8 @@ fn load_examples(
     Ok(examples)
 }
 
-pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
-    let ops = Operators::new(device.clone());
+pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
+    let ops = Operators::new(device);
     let architecture = Model::new(&ops);
     let vocab_size = architecture.vocab_size();
     let mut tokenizer = if vocab_size == 256 {
@@ -50,6 +48,7 @@ pub fn load_dataset(device: Rc<Device>) -> Result<DatasetDetails, Error> {
 
     let examples = load_examples(&device, vocab_size, &mut tokenizer)?;
     let details = DatasetDetails {
+        device: device.clone(),
         tokenizer,
         examples,
         architecture: Box::new(architecture),

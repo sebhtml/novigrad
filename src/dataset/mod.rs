@@ -11,6 +11,7 @@ pub enum Dataset {
 }
 
 pub struct DatasetDetails {
+    pub device: Device,
     pub tokenizer: Tokenizer,
     pub examples: Vec<(Tensor, Tensor)>,
     pub architecture: Box<dyn Forward>,
@@ -22,7 +23,7 @@ pub struct DatasetDetails {
     pub final_total_error_max: f32,
 }
 
-pub fn load_dataset(dataset: Dataset, device: Rc<Device>) -> Result<DatasetDetails, Error> {
+pub fn load_dataset(dataset: Dataset, device: &Device) -> Result<DatasetDetails, Error> {
     match dataset {
         Dataset::Simple => simple::load_dataset(device),
         Dataset::MegaMan => mega_man::load_dataset(device),
@@ -47,7 +48,7 @@ pub fn into_one_hot_encoded_rows(
         result_values[result.index(index, *token)] = 1.0;
     }
     Ok(device.tensor(
-        Rc::new(Identity::default()),
+        Rc::new(Identity::new(device)),
         &vec![],
         input_tokens.len(),
         num_classes,

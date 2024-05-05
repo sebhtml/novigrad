@@ -172,18 +172,7 @@ impl Device {
     }
 
     pub fn buffer(&self, len: usize) -> DevBuffer {
-        match self.device.deref() {
-            DeviceEnum::Cpu(_) => {
-                let values = vec![0.0; len];
-                DevBuffer::CpuBuffer(values)
-            }
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(_) => {
-                // TODO don't unwrap
-                let buffer = unsafe { DeviceBuffer::uninitialized(len).unwrap() };
-                DevBuffer::CudaBuffer(buffer)
-            }
-        }
+        DevBuffer::new(self, len)
     }
 }
 

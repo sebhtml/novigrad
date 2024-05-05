@@ -8,11 +8,15 @@ use super::LossFunction;
 mod tests;
 
 #[derive(Clone)]
-pub struct ResidualSumOfSquares {}
+pub struct ResidualSumOfSquares {
+    device: Device,
+}
 
-impl Default for ResidualSumOfSquares {
-    fn default() -> Self {
-        Self {}
+impl ResidualSumOfSquares {
+    pub fn new(device: &Device) -> Self {
+        Self {
+            device: device.clone(),
+        }
     }
 }
 
@@ -31,40 +35,41 @@ impl LossFunction for ResidualSumOfSquares {
         let cols = expected.cols();
         let len = rows * cols;
         let mut diffs = device.tensor_f32(rows, cols, vec![0.0; len]);
-        TensorF32::copy(device, expected, &mut diffs)?;
-        TensorF32::sub(device, actual, &mut diffs)?;
-        TensorF32::dot_product(device, &diffs, &diffs)
+        TensorF32::copy(expected, &mut diffs)?;
+        TensorF32::sub(actual, &mut diffs)?;
+        TensorF32::dot_product(&diffs, &diffs)
     }
 
     fn derive(
         &self,
-        device: &Device,
         expected: &TensorF32,
         actual: &TensorF32,
         result: &mut TensorF32,
     ) -> Result<(), Error> {
-        TensorF32::copy(device, expected, result)?;
-        TensorF32::sub(device, actual, result)?;
-        TensorF32::scalar_mul(device, -2.0, result)
+        TensorF32::copy(expected, result)?;
+        TensorF32::sub(actual, result)?;
+        TensorF32::scalar_mul(-2.0, result)
     }
 }
 
 impl OperatorTrait for ResidualSumOfSquares {
-    fn backward(&self, device: &Device, inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
-        self.derive(device, expected, actual, backward_gradient)?;
+        self.derive(expected, actual, backward_gradient)?;
         Ok(())
     }
 
-    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
-        let loss = self.evaluate(device, expected, actual)?;
-        let output = device.tensor(Rc::new(self.clone()), inputs, 1, 1, vec![loss], false);
+        let loss = self.evaluate(&self.device, expected, actual)?;
+        let output = self
+            .device
+            .tensor(Rc::new(self.clone()), inputs, 1, 1, vec![loss], false);
         Ok(output)
     }
 

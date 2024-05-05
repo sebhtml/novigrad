@@ -7,12 +7,14 @@ use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Softmax {
+    device: Device,
     using_cross_entropy_loss: bool,
 }
 
 impl Softmax {
-    pub fn new(using_cross_entropy_loss: bool, _device: &Device) -> Self {
+    pub fn new(using_cross_entropy_loss: bool, device: &Device) -> Self {
         Self {
+            device: device.clone(),
             using_cross_entropy_loss,
         }
     }
@@ -93,34 +95,34 @@ impl ActivationFunction for Softmax {
 }
 
 impl OperatorTrait for Softmax {
-    fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
         // Compute activation function derivative.
         if self.using_cross_entropy_loss {
             // Softmax and Cross Entropy Loss are best friends.
-            TensorF32::copy(device, output_gradient, backward_gradient)?;
+            TensorF32::copy(output_gradient, backward_gradient)?;
         } else {
             let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let output: &TensorF32 = &output.tensor().deref().borrow();
             let rows = input.rows();
             let cols = input.cols();
             let len = rows * cols;
-            let mut layer_f_derivative = device.tensor_f32(rows, cols, vec![0.0; len]);
+            let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
             self.derive(input, output, &mut layer_f_derivative)?;
 
-            layer_f_derivative.element_wise_mul(device, output_gradient, backward_gradient)?;
+            layer_f_derivative.element_wise_mul(output_gradient, backward_gradient)?;
         }
 
         Ok(())
     }
 
-    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let rows = input.rows();
         let cols = input.cols();
         let len = rows * cols;
-        let output = device.tensor(
+        let output = self.device.tensor(
             Rc::new(self.clone()),
             inputs,
             rows,

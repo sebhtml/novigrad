@@ -6,6 +6,7 @@ use crate::{devices::Device, Error, Identity, OperatorTrait, Tensor, TensorF32};
 
 #[derive(Clone)]
 pub struct Linear {
+    device: Device,
     weights: Tensor,
     biases: Tensor,
 }
@@ -29,7 +30,7 @@ impl Linear {
             weights[index] = rng.sample(uniform);
         }
         let weights = device.tensor(
-            Rc::new(Identity::default()),
+            Rc::new(Identity::new(device)),
             &vec![],
             weights_rows,
             weights_cols,
@@ -39,7 +40,7 @@ impl Linear {
 
         let biases_len = bias_rows * weights_rows;
         let biases = device.tensor(
-            Rc::new(Identity::default()),
+            Rc::new(Identity::new(device)),
             &vec![],
             bias_rows,
             weights_rows,
@@ -47,19 +48,23 @@ impl Linear {
             true,
         );
 
-        Linear { weights, biases }
+        Linear {
+            device: device.clone(),
+            weights,
+            biases,
+        }
     }
 }
 
 impl OperatorTrait for Linear {
-    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let biases: &TensorF32 = &self.biases.tensor().deref().borrow();
         let rows = biases.rows();
         let cols = biases.cols();
         let len = rows * cols;
-        let output = device.tensor(
+        let output = self.device.tensor(
             Rc::new(self.clone()),
             inputs,
             rows,
@@ -81,13 +86,14 @@ impl OperatorTrait for Linear {
             let a = input;
             let b = weights;
             let c = output;
-            TensorF32::copy(device, biases, c)?;
-            let op_result = TensorF32::gemm(device, false, true, 1.0, a, b, 1.0, c, false);
+            TensorF32::copy(biases, c)?;
+            let op_result = TensorF32::gemm(false, true, 1.0, a, b, 1.0, c, false);
             match op_result {
                 Ok(_) => (),
                 Err(_) => {
                     let mut w_t =
-                        device.tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
+                        self.device
+                            .tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
                     b.transpose(&mut w_t)?;
                     println!("Incompatible shapes in matrix multiplication");
                     println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
@@ -99,7 +105,7 @@ impl OperatorTrait for Linear {
         Ok(output)
     }
 
-    fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         {
             let weights_gradient: &mut TensorF32 =
@@ -109,9 +115,9 @@ impl OperatorTrait for Linear {
             let a: &TensorF32 = input;
             let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = weights_gradient;
-            TensorF32::gemm(device, true, false, 1.0, a, b, 1.0, c, true)?;
+            TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)?;
 
-            TensorF32::add(device, output_gradient, biases_gradient)?;
+            TensorF32::add(output_gradient, biases_gradient)?;
         }
 
         {
@@ -120,7 +126,7 @@ impl OperatorTrait for Linear {
             let a: &TensorF32 = weights;
             let b: &TensorF32 = output_gradient;
             let c: &mut TensorF32 = backward_gradient;
-            TensorF32::gemm(device, true, true, 1.0, a, b, 1.0, c, true)?;
+            TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
         }
 
         Ok(())

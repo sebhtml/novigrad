@@ -1,18 +1,18 @@
 use std::rc::Rc;
 
-use crate::{Device, Error, Forward, Identity, Operator, Operators, Tensor};
+use crate::{Embedding, Error, Linear, MatMul, OperatorTrait, Operators, Reshape, Softmax, Tensor};
 
-pub struct Architecture {
+pub struct Model {
     vocab_size: usize,
     parameters: Tensor,
-    embedding: Operator,
-    matmul: Operator,
-    reshape: Operator,
-    linear: Operator,
-    softmax: Operator,
+    embedding: Embedding,
+    matmul: MatMul,
+    reshape: Reshape,
+    linear: Linear,
+    softmax: Softmax,
 }
 
-impl Architecture {
+impl Model {
     pub fn new(ops: &Operators) -> Self {
         let _batch_size = 1;
         let sequence_length = 32;
@@ -25,7 +25,7 @@ impl Architecture {
         Self {
             vocab_size,
             parameters: device.tensor(
-                Rc::new(Identity::default()),
+                Rc::new(ops.identity()),
                 &vec![],
                 embedding_dim,
                 embedding_dim,
@@ -50,7 +50,7 @@ impl Architecture {
     }
 }
 
-impl Forward for Architecture {
+impl OperatorTrait for Model {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let state_0 = self.embedding.forward(inputs)?;
         let state_0b = self.matmul.forward(&[state_0, self.parameters.clone()])?;
@@ -60,7 +60,11 @@ impl Forward for Architecture {
         Ok(state_3)
     }
 
-    fn device(&self) -> Rc<Device> {
-        self.embedding.device()
+    fn name(&self) -> &str {
+        "MegaManModel"
+    }
+
+    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        Err(Error::UnsupportedOperation)
     }
 }

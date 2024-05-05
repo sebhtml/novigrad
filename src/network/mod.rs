@@ -1,27 +1,28 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 pub use train::*;
 
-use crate::{
-    devices::Device, Error, Forward, Operator, Optimizer, OptimizerTrait, Tensor, TensorF32,
-};
+use crate::{devices::Device, Error, OperatorTrait, Optimizer, OptimizerTrait, Tensor, TensorF32};
 
 pub struct Network {
-    architecture: Box<dyn Forward>,
-    loss_function: Operator,
-    device: Rc<Device>,
+    model: Box<dyn OperatorTrait>,
+    loss_function: Box<dyn OperatorTrait>,
+    device: Device,
     optimizer: Optimizer,
 }
 
 impl Network {
-    pub fn new(architecture: Box<dyn Forward>, loss_function: Operator) -> Self {
-        let device = architecture.device();
+    pub fn new(
+        model: Box<dyn OperatorTrait>,
+        loss_function: Box<dyn OperatorTrait>,
+        device: &Device,
+    ) -> Self {
         Self {
-            architecture,
+            model,
             loss_function,
-            device,
+            device: device.clone(),
             optimizer: Default::default(),
         }
     }
@@ -72,32 +73,34 @@ impl Network {
         x: &Tensor,
         y: &Tensor,
     ) -> Result<(), Error> {
+        self.device.zero_grad()?;
+
         let output = self.forward(&[x.clone()])?;
 
         let loss = self.loss_function.forward(&[y.clone(), output.clone()])?;
 
-        let gradients = loss.backward(&self.device)?;
+        let gradients = loss.backward()?;
+        let gradients: &[Tensor] = &gradients.deref().borrow();
 
-        self.optimizer
-            .optimize(&gradients, &self.device, learning_rate)?;
+        self.optimizer.optimize(&gradients, learning_rate)?;
 
-        for gradient in gradients {
-            let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
-            TensorF32::scalar_mul(&self.device, 0.0, gradient)?;
-        }
         Ok(())
     }
 }
 
-impl Forward for Network {
+impl OperatorTrait for Network {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         //println!("---BEGIN---");
-        let output = self.architecture.forward(inputs);
+        let output = self.model.as_ref().forward(inputs);
         //println!("---END---");
         output
     }
 
-    fn device(&self) -> Rc<Device> {
-        self.device.clone()
+    fn name(&self) -> &str {
+        "Network"
+    }
+
+    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        Err(Error::UnsupportedOperation)
     }
 }

@@ -1,6 +1,6 @@
-- avoid allocating tensors in forward
-- remove device argument in OperatorTrait
-- store device in LearningTensor
+- decouple tensor and device
+- remove tensor f32 matmul
+- impl Drop for TensorF32
 
 == Attention ==
 
@@ -10,14 +10,13 @@
 - use Attention in megaman
 
 == Fixes ==
-                                                                                                                                                              
+
+- implement realize() in the forward pass
 - print number of parameters optimized by optimizer
 - does it work without gradient clipping ?
 
 == Fixes ==
 
-- decouple tensor and device
-- don't backward if last
 - enable backward tape recording only during training
 
 == Mini Batch ==
@@ -31,7 +30,6 @@
 
 == Parallel Execution ==
 
-- add a unified forward tape
 - implement parallel execution of certain branches in parallel using a execution_group_id
 
 == Datasets ==
@@ -63,7 +61,6 @@
 
 == Refactoring ==
 
-- remove tensor f32 matmul
 - determine the value of using_cross_entropy_loss at run time
 
 == Devices ==

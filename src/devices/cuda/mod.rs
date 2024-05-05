@@ -15,6 +15,7 @@ use cudarc::{
 
 use crate::{DeviceInterface, Error, TensorF32};
 
+#[derive(Debug)]
 pub struct CudaDevice {
     handle: cublasHandle_t,
     _dev: Arc<driver::CudaDevice>,

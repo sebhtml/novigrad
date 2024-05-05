@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use crate::{
-    DatasetDetails, Error, Forward, Network, Tensor, TensorF32, Tokenizer, TokenizerTrait,
+    DatasetDetails, Error, Network, OperatorTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 pub fn print_expected_output_and_actual_output(
@@ -87,13 +87,14 @@ pub fn train_network_on_dataset(
     let mut initial_total_error = f32::NAN;
     let examples = &dataset_details.examples;
     let learning_rate = dataset_details.learning_rate;
-    let architecture = dataset_details.architecture;
+    let architecture = dataset_details.model;
     let loss_function = dataset_details.loss_function_name;
     let mut tokenizer = dataset_details.tokenizer;
+    let device = dataset_details.device;
 
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
-    let mut network = Network::new(architecture, loss_function);
+    let mut network = Network::new(architecture, loss_function, &device);
 
     let mut last_total_error = f32::NAN;
     let epochs = dataset_details.epochs;

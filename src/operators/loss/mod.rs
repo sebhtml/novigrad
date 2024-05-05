@@ -13,7 +13,6 @@ pub trait LossFunction {
     ) -> Result<f32, Error>;
     fn derive(
         &self,
-        device: &Device,
         expected: &TensorF32,
         actual: &TensorF32,
         result: &mut TensorF32,

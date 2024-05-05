@@ -6,6 +6,7 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 #[derive(Clone)]
 pub struct Embedding {
     embedding_table: Tensor,
+    device: Device,
 }
 
 impl Embedding {
@@ -17,7 +18,7 @@ impl Embedding {
         embedding_table.transpose(&mut transposed).unwrap();
         // TODO don't unwrap directly
         let embedding_table = device.tensor(
-            Rc::new(Identity::default()),
+            Rc::new(Identity::new(device)),
             &vec![],
             transposed.rows(),
             transposed.cols(),
@@ -25,12 +26,15 @@ impl Embedding {
             true,
         );
 
-        Self { embedding_table }
+        Self {
+            embedding_table,
+            device: device.clone(),
+        }
     }
 }
 
 impl OperatorTrait for Embedding {
-    fn backward(&self, device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let embedding_table_gradient: &mut TensorF32 =
             &mut self.embedding_table.gradient().deref().borrow_mut();
@@ -38,10 +42,10 @@ impl OperatorTrait for Embedding {
         let a: &TensorF32 = output_gradient;
         let b: &TensorF32 = input;
         let c: &mut TensorF32 = embedding_table_gradient;
-        TensorF32::gemm(device, true, false, 1.0, a, b, 1.0, c, true)
+        TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)
     }
 
-    fn forward(&self, device: &Device, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(inputs.len(), 1);
         let embedding_table: &TensorF32 = &self.embedding_table.tensor().deref().borrow();
@@ -52,7 +56,7 @@ impl OperatorTrait for Embedding {
         let rows = a.rows();
         let cols = b.rows();
         let len = rows * cols;
-        let output = device.tensor(
+        let output = self.device.tensor(
             Rc::new(self.clone()),
             inputs,
             rows,
@@ -63,7 +67,7 @@ impl OperatorTrait for Embedding {
 
         {
             let c = &mut output.tensor().deref().borrow_mut();
-            TensorF32::matmul(device, false, true, a, b, c, false)?;
+            TensorF32::matmul(false, true, a, b, c, false)?;
         }
 
         Ok(output)

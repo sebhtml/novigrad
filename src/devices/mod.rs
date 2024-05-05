@@ -215,6 +215,7 @@ impl Device {
     ) -> Tensor {
         let len = rows * cols;
         let tensor = Tensor::new(
+            self,
             operator,
             inputs,
             Rc::new(RefCell::new(Self::tensor_f32(&self, rows, cols, values))),

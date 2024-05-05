@@ -4,6 +4,7 @@ use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct Tensor {
+    device: Device,
     operator: Rc<dyn OperatorTrait>,
     inputs: Vec<Tensor>,
     tensor: Rc<RefCell<TensorF32>>,
@@ -12,12 +13,14 @@ pub struct Tensor {
 
 impl Tensor {
     pub fn new(
+        device: &Device,
         operator: Rc<dyn OperatorTrait>,
         inputs: &[Tensor],
         tensor: Rc<RefCell<TensorF32>>,
         gradient: Rc<RefCell<TensorF32>>,
     ) -> Self {
         Self {
+            device: device.clone(),
             operator,
             inputs: inputs.to_owned(),
             tensor,
@@ -79,7 +82,7 @@ impl Tensor {
     }
 
     /// Back-propagation
-    pub fn backward(&self, device: &Device) -> Result<Rc<RefCell<Vec<Tensor>>>, Error> {
+    pub fn backward(&self) -> Result<Rc<RefCell<Vec<Tensor>>>, Error> {
         let tape = self.get_tape();
 
         /*
@@ -96,7 +99,7 @@ impl Tensor {
             // Clip the backward gradients.
             for input in inputs {
                 let backward_gradient: &mut TensorF32 = &mut input.gradient().deref().borrow_mut();
-                let back_propagated_gradient = device.tensor_f32(
+                let back_propagated_gradient = self.device.tensor_f32(
                     backward_gradient.rows(),
                     backward_gradient.cols(),
                     backward_gradient.get_values()?,
@@ -104,6 +107,6 @@ impl Tensor {
                 back_propagated_gradient.clip(-1.0, 1.0, backward_gradient)?;
             }
         }
-        Ok(device.tensors_with_requires_grad().clone())
+        Ok(self.device.tensors_with_requires_grad().clone())
     }
 }

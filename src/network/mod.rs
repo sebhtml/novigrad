@@ -86,7 +86,7 @@ impl Network {
 
         let loss = self.loss_function.forward(&[y.clone(), output.clone()])?;
 
-        let gradients = loss.backward(&self.device)?;
+        let gradients = loss.backward()?;
         let gradients: &[Tensor] = &gradients.deref().borrow();
 
         self.optimizer.optimize(&gradients, learning_rate)?;

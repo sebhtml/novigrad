@@ -81,14 +81,7 @@ pub trait DeviceInterface {
     ) -> Result<f32, Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
-    fn scopy(
-        &self,
-        n: i32,
-        x: &TensorF32,
-        incx: i32,
-        y: &mut TensorF32,
-        incy: i32,
-    ) -> Result<(), Error>;
+    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
 
     /// SSCAL scales a vector by a constant.
     fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error>;
@@ -268,14 +261,7 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn scopy(
-        &self,
-        n: i32,
-        x: &TensorF32,
-        incx: i32,
-        y: &mut TensorF32,
-        incy: i32,
-    ) -> Result<(), Error> {
+    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
         match self.device.borrow() {
             DeviceEnum::Cpu(device) => device.scopy(n, x, incx, y, incy),
             #[cfg(feature = "cuda")]

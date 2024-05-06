@@ -1,6 +1,6 @@
 use cblas::{Layout, Transpose};
 extern crate cblas_sys as ffi;
-use crate::{Error, TensorF32};
+use crate::Error;
 
 use super::DeviceInterface;
 extern crate blas_src;
@@ -75,16 +75,7 @@ impl DeviceInterface for CpuDevice {
         Ok(result)
     }
 
-    fn scopy(
-        &self,
-        n: i32,
-        x: &TensorF32,
-        incx: i32,
-        y: &mut TensorF32,
-        incy: i32,
-    ) -> Result<(), Error> {
-        let x = x.as_ptr();
-        let y = y.as_mut_ptr();
+    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
         unsafe { ffi::cblas_scopy(n, x, incx, y, incy) }
         Ok(())
     }

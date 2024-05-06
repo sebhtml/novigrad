@@ -166,6 +166,8 @@ impl TensorF32 {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
+        let x = x.as_ptr();
+        let y = y.as_mut_ptr();
         device.scopy(n, x, incx, y, incy)
     }
 

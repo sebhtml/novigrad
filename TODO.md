@@ -1,4 +1,3 @@
-- decouple tensor and device
 - remove tensor f32 matmul
 - does it work without gradient clipping ?
 - print number of parameters optimized by optimizer

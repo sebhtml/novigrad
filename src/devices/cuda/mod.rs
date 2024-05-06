@@ -13,7 +13,7 @@ use cudarc::{
     driver::{self},
 };
 
-use crate::{DeviceInterface, Error, TensorF32};
+use crate::{DeviceInterface, Error};
 
 #[derive(Debug)]
 pub struct CudaDevice {
@@ -109,17 +109,8 @@ impl DeviceInterface for CudaDevice {
         Ok(result)
     }
 
-    fn scopy(
-        &self,
-        n: i32,
-        x: &TensorF32,
-        incx: i32,
-        y: &mut TensorF32,
-        incy: i32,
-    ) -> Result<(), Error> {
+    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
         let handle = self.handle;
-        let x = x.as_ptr();
-        let y = y.as_mut_ptr();
         let status = unsafe { cublasScopy_v2(handle, n, x, incx, y, incy) };
         status.result().map_err(|_| Error::UnsupportedOperation)
     }

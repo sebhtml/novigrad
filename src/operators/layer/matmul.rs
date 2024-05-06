@@ -46,20 +46,7 @@ impl OperatorTrait for MatMul {
         let a = input_0;
         let b = input_1;
         let c = output;
-        let op_result = TensorF32::matmul(false, true, a, b, c, false);
-        match op_result {
-            Ok(_) => (),
-            Err(_) => {
-                let mut b_t =
-                    self.device
-                        .tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
-                b.transpose(&mut b_t)?;
-                println!("Incompatible shapes in matrix multiplication");
-                println!("Between A {:?} and B^T {:?}", a.size(), b_t.size(),);
-                debug_assert!(false);
-            }
-        }
-        Ok(())
+        TensorF32::matmul(false, true, a, b, c, false)
     }
 
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {

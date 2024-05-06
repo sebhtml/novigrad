@@ -95,20 +95,7 @@ impl OperatorTrait for Linear {
         let b = weights;
         let c = output;
         TensorF32::copy(biases, c)?;
-        let op_result = TensorF32::gemm(false, true, 1.0, a, b, 1.0, c, false);
-        match op_result {
-            Ok(_) => (),
-            Err(_) => {
-                let mut w_t =
-                    self.device
-                        .tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
-                b.transpose(&mut w_t)?;
-                println!("Incompatible shapes in matrix multiplication");
-                println!("Between X {:?} and W^T {:?}", input.size(), w_t.size(),);
-                debug_assert!(false);
-            }
-        }
-        Ok(())
+        TensorF32::gemm(false, true, 1.0, a, b, 1.0, c, false)
     }
 
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
@@ -129,8 +116,6 @@ impl OperatorTrait for Linear {
         let a: &TensorF32 = weights;
         let b: &TensorF32 = output_gradient;
         let c: &mut TensorF32 = backward_gradient;
-        TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
-
-        Ok(())
+        TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)
     }
 }

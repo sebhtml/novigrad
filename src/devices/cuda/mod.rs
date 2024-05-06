@@ -10,7 +10,7 @@ use cudarc::{
             cublasSgemmEx, cublasSscal_v2, cudaDataType,
         },
     },
-    driver,
+    driver::{self},
 };
 
 use crate::{DeviceInterface, Error, TensorF32};

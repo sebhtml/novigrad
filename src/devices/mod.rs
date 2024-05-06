@@ -19,6 +19,12 @@ use crate::{OperatorTrait, Tensor, TensorF32};
 mod buffer;
 pub use buffer::*;
 
+pub struct MemoryInfo {
+    pub used: usize,
+    pub free: usize,
+    pub total: usize,
+}
+
 pub trait DeviceInterface {
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
@@ -90,6 +96,7 @@ pub trait DeviceInterface {
 
 #[derive(Clone, Debug)]
 pub struct Device {
+    used: Rc<RefCell<usize>>,
     tensors_with_requires_grad: Rc<RefCell<Vec<Tensor>>>,
     device: Rc<DeviceEnum>,
     available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevBuffer>>>>,
@@ -111,6 +118,7 @@ impl Default for Device {
 impl Device {
     pub fn new(device: DeviceEnum) -> Self {
         Self {
+            used: Default::default(),
             tensors_with_requires_grad: Rc::new(RefCell::new(vec![])),
             device: Rc::new(device),
             available_buffers: Default::default(),
@@ -129,6 +137,14 @@ impl Device {
             &mut self.available_buffers.deref().borrow_mut();
         let entry = available_buffers.entry(len);
         entry.or_default().push_back(recycled_buffer)
+    }
+
+    pub fn get_memory_info(&self) -> Result<MemoryInfo, Error> {
+        Ok(MemoryInfo {
+            used: *self.used.deref().borrow(),
+            free: 0,
+            total: 0,
+        })
     }
 
     #[cfg(feature = "cuda")]
@@ -200,7 +216,11 @@ impl Device {
                 //println!("Recycled buffer with length {}", len);
                 buffer
             }
-            None => DevBuffer::new(self, len),
+            None => {
+                let used: &mut usize = &mut self.used.deref().borrow_mut();
+                *used += len;
+                DevBuffer::new(self, len)
+            }
         }
     }
 }

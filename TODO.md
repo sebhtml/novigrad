@@ -1,4 +1,6 @@
-- report gpu vram usage
+- implement realize() in the forward pass
+- does it work without gradient clipping ?
+- print number of parameters optimized by optimizer
 - in TensorF32, replace rows, cols by dims
 - decouple tensor and device
 - remove tensor f32 matmul
@@ -15,12 +17,6 @@
 
 - implement mini batch
 - shuffle examples in each epoch
-
-== Fixes ==
-
-- implement realize() in the forward pass
-- print number of parameters optimized by optimizer
-- does it work without gradient clipping ?
 
 == Fixes ==
 

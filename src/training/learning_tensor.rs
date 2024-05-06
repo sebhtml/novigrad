@@ -6,7 +6,7 @@ use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 pub struct Tensor {
     device: Device,
     operator: Rc<dyn OperatorTrait>,
-    inputs: Vec<Tensor>,
+    inputs: Rc<Vec<Tensor>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
 }
@@ -22,7 +22,7 @@ impl Tensor {
         Self {
             device: device.clone(),
             operator,
-            inputs: inputs.to_owned(),
+            inputs: Rc::new(inputs.to_owned()),
             tensor,
             gradient,
         }

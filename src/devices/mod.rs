@@ -23,6 +23,7 @@ pub struct MemoryInfo {
     pub used: usize,
     pub free: usize,
     pub total: usize,
+    pub model_parameters: usize,
 }
 
 pub trait DeviceInterface {
@@ -133,10 +134,17 @@ impl Device {
     }
 
     pub fn get_memory_info(&self) -> Result<MemoryInfo, Error> {
+        let mut model_parameters = 0;
+        let gradients = self.tensors_with_requires_grad();
+        for gradient in gradients.deref().borrow().iter() {
+            let tensor_len = gradient.tensor().deref().borrow().len();
+            model_parameters += tensor_len;
+        }
         Ok(MemoryInfo {
             used: *self.used.deref().borrow(),
             free: 0,
             total: 0,
+            model_parameters,
         })
     }
 

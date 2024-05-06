@@ -21,6 +21,7 @@ impl Model {
         let num_embeddings = vocab_size;
         let embedding_dim = 384;
         let _num_heads = 0;
+        let output_rows = 1;
         let device = ops.device();
         Self {
             vocab_size,
@@ -37,10 +38,10 @@ impl Model {
             reshape: ops.reshape(
                 sequence_length,
                 embedding_dim,
-                1,
+                output_rows,
                 sequence_length * embedding_dim,
             ),
-            linear: ops.linear(vocab_size, sequence_length * embedding_dim, 1),
+            linear: ops.linear(vocab_size, sequence_length * embedding_dim, output_rows),
             softmax: ops.softmax(true),
         }
     }

@@ -66,29 +66,30 @@ pub fn print_expected_output_and_actual_output(
 fn print_device_mem_info(device: &Device) -> Result<(), Error> {
     let mem_info = &device.get_memory_info()?;
     println!(
-        "Device memory  used: {}, free: {}, total: {}",
-        mem_info.used, mem_info.free, mem_info.total,
+        "Device memory  used: {}, free: {}, total: {}, model_parameters: {}",
+        mem_info.used, mem_info.free, mem_info.total, mem_info.model_parameters,
     );
     Ok(())
 }
 
-fn print_total_error(
+fn print_total_loss(
     device: &Device,
     model: &Box<dyn OperatorTrait>,
     loss_function: &Box<dyn OperatorTrait>,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
-    last_total_error: f32,
+    last_total_loss: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
-    let total_error = Network::total_loss(model, loss_function, inputs, outputs)?;
-    let change = (total_error - last_total_error) / last_total_error;
+    let total_loss = Network::total_loss(model, loss_function, inputs, outputs)?;
+    let change = (total_loss - last_total_loss) / last_total_loss;
+    println!("----",);
     println!(
-        "Epoch {} Total_error {}, change: {}",
-        epoch, total_error, change
+        "Epoch {} Total_loss {}, change: {}",
+        epoch, total_loss, change
     );
     print_device_mem_info(device)?;
-    Ok(total_error)
+    Ok(total_loss)
 }
 
 pub struct NetworkTestOutput {
@@ -120,7 +121,7 @@ pub fn train_network_on_dataset(
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
-            let total_error = print_total_error(
+            let total_error = print_total_loss(
                 &device,
                 &model,
                 &loss_function,
@@ -148,7 +149,7 @@ pub fn train_network_on_dataset(
             &outputs,
         )?;
     }
-    let final_total_error = print_total_error(
+    let final_total_error = print_total_loss(
         &device,
         &model,
         &loss_function,

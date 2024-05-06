@@ -15,7 +15,7 @@
 
 == Fixes ==
 
-- don't use Reshape in Megaman
+- don't use Reshape in Megaman to reduce model parameters
 
 == Parallel Execution ==
 

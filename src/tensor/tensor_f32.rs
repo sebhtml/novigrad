@@ -44,7 +44,7 @@ impl TensorF32 {
             return Err(Error::IncompatibleTensorShapes);
         }
 
-        debug_assert_eq!(result.shape(), left.shape());
+        debug_assert_eq!(result.size(), left.size());
         TensorF32::scalar_mul(0.0, result)?;
 
         let mut result_values = result.get_values()?;
@@ -88,7 +88,7 @@ impl TensorF32 {
         self.rows() * self.cols()
     }
 
-    pub fn shape(&self) -> (usize, usize) {
+    pub fn size(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
 
@@ -152,7 +152,7 @@ impl TensorF32 {
 
     pub fn dot_product(x: &TensorF32, y: &TensorF32) -> Result<f32, Error> {
         let device = &x.device;
-        if x.shape() != y.shape() {
+        if x.size() != y.size() {
             return Err(Error::IncompatibleTensorShapes);
         }
         let n = x.len() as i32;
@@ -419,7 +419,7 @@ impl TryInto<f32> for &TensorF32 {
     type Error = Error;
 
     fn try_into(self) -> Result<f32, Self::Error> {
-        match self.shape() {
+        match self.size() {
             (1, 1) => {
                 let self_values = self.get_values()?;
                 Ok(self_values[self.index(0, 0)])

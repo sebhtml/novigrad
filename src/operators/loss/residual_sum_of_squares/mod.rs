@@ -28,7 +28,7 @@ impl LossFunction for ResidualSumOfSquares {
         expected: &TensorF32,
         actual: &TensorF32,
     ) -> Result<f32, Error> {
-        if expected.shape() != actual.shape() {
+        if expected.size() != actual.size() {
             return Err(Error::IncompatibleTensorShapes);
         }
         let rows = expected.rows();

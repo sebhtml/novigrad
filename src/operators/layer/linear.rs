@@ -131,7 +131,7 @@ impl OperatorTrait for Linear {
                         .tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
                 b.transpose(&mut w_t)?;
                 println!("Incompatible shapes in matrix multiplication");
-                println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
+                println!("Between X {:?} and W^T {:?}", input.size(), w_t.size(),);
                 debug_assert!(false);
             }
         }

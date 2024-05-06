@@ -26,10 +26,10 @@ impl LossFunction for CrossEntropyLoss {
         expected: &TensorF32,
         actual: &TensorF32,
     ) -> Result<f32, Error> {
-        debug_assert_eq!(actual.shape(), expected.shape());
+        debug_assert_eq!(actual.size(), expected.size());
         let p = expected;
         let q = actual;
-        if p.shape() != q.shape() {
+        if p.size() != q.size() {
             return Err(Error::IncompatibleTensorShapes);
         }
         let rows = p.rows();

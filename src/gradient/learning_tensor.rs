@@ -55,7 +55,7 @@ impl Tensor {
     }
 
     pub fn shape(&self) -> (usize, usize) {
-        self.tensor.deref().borrow().shape()
+        self.tensor.deref().borrow().size()
     }
 
     pub fn resize(&self, rows: usize, cols: usize) {

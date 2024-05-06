@@ -76,7 +76,7 @@ impl OperatorTrait for MatMul {
                         .tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
                 b.transpose(&mut b_t)?;
                 println!("Incompatible shapes in matrix multiplication");
-                println!("Between A {:?} and B^T {:?}", a.shape(), b_t.shape(),);
+                println!("Between A {:?} and B^T {:?}", a.size(), b_t.size(),);
                 debug_assert!(false);
             }
         }

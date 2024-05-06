@@ -10,7 +10,7 @@ impl OptimizerTrait for GradientDescent {
         for gradient in gradients {
             let tensor: &mut TensorF32 = &mut gradient.tensor().deref().borrow_mut();
             let gradient: &TensorF32 = &gradient.gradient().deref().borrow();
-            debug_assert_eq!(gradient.shape(), tensor.shape(),);
+            debug_assert_eq!(gradient.size(), tensor.size(),);
             TensorF32::a_x_plus_y(-learning_rate, gradient, tensor)?;
         }
         Ok(())

@@ -56,8 +56,7 @@ impl Network {
     ) -> Result<f32, Error> {
         let mut total_error = 0.0;
         for i in 0..inputs.len() {
-            let inputs = [inputs[i].clone()];
-            let output = model.forward(&inputs)?;
+            let output = model.forward(&[inputs[i].clone()])?;
             let expected_output = &outputs[i];
             let example_error = Self::example_loss(loss_function, &output, expected_output)?;
             total_error += example_error;

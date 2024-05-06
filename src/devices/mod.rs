@@ -74,9 +74,9 @@ pub trait DeviceInterface {
     fn sdot(
         &self,
         n: i32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &TensorF32,
+        y: *const f32,
         incy: i32,
     ) -> Result<f32, Error>;
 
@@ -256,9 +256,9 @@ impl DeviceInterface for Device {
     fn sdot(
         &self,
         n: i32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &TensorF32,
+        y: *const f32,
         incy: i32,
     ) -> Result<f32, Error> {
         match self.device.borrow() {

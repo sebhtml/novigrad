@@ -158,7 +158,7 @@ impl TensorF32 {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.sdot(n, x, incx, y, incy)
+        device.sdot(n, x.as_ptr(), incx, y.as_ptr(), incy)
     }
 
     pub fn copy(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {

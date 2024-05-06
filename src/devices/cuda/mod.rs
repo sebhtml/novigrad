@@ -96,14 +96,12 @@ impl DeviceInterface for CudaDevice {
     fn sdot(
         &self,
         n: i32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &TensorF32,
+        y: *const f32,
         incy: i32,
     ) -> Result<f32, Error> {
         let handle = self.handle;
-        let x = x.as_ptr();
-        let y = y.as_ptr();
         let mut result: f32 = 0.0;
         let status = unsafe {
             let result = &mut result as *mut f32;

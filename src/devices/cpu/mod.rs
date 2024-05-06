@@ -66,13 +66,11 @@ impl DeviceInterface for CpuDevice {
     fn sdot(
         &self,
         n: i32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &TensorF32,
+        y: *const f32,
         incy: i32,
     ) -> Result<f32, Error> {
-        let x = x.as_ptr();
-        let y = y.as_ptr();
         let result = unsafe { ffi::cblas_sdot(n, x, incx, y, incy) };
         Ok(result)
     }

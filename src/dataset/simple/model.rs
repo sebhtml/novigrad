@@ -22,6 +22,7 @@ impl Model {
         let embedding_dim = 384;
         let _num_heads = 0;
         let output_rows = 1;
+
         Self {
             embedding: ops.embedding(num_embeddings, embedding_dim),
             linear_0: ops.linear(embedding_dim, embedding_dim, sequence_length),
@@ -32,7 +33,7 @@ impl Model {
             ),
             linear_1: ops.linear(embedding_dim, sequence_length * embedding_dim, output_rows),
             sigmoid_1: ops.sigmoid(),
-            linear_2: ops.linear(vocab_size, embedding_dim, 1),
+            linear_2: ops.linear(vocab_size, embedding_dim, output_rows),
             softmax: ops.softmax(true),
         }
     }

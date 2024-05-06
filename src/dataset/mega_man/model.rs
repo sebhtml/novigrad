@@ -67,4 +67,8 @@ impl OperatorTrait for Model {
     fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
         Err(Error::UnsupportedOperation)
     }
+
+    fn forward_realize(&self, _inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        output.realize()
+    }
 }

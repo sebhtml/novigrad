@@ -64,17 +64,20 @@ impl OperatorTrait for Embedding {
             vec![0.0; len],
             false,
         );
-
-        {
-            let c = &mut output.tensor().deref().borrow_mut();
-            TensorF32::matmul(false, true, a, b, c, false)?;
-        }
-
         Ok(output)
     }
 
     fn name(&self) -> &str {
         "Embedding"
+    }
+
+    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let embedding_table: &TensorF32 = &self.embedding_table.tensor().deref().borrow();
+        let a = input;
+        let b = &embedding_table;
+        let c = &mut output.tensor().deref().borrow_mut();
+        TensorF32::matmul(false, true, a, b, c, false)
     }
 }
 

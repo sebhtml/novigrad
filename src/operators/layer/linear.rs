@@ -59,7 +59,6 @@ impl Linear {
 impl OperatorTrait for Linear {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let biases: &TensorF32 = &self.biases.tensor().deref().borrow();
         let rows = biases.rows();
         let cols = biases.cols();
@@ -72,35 +71,6 @@ impl OperatorTrait for Linear {
             vec![0.0; len],
             false,
         );
-
-        // Use the same convention that is used in tensorflow:
-        // Y = X @ W^T + B
-        // Weights is on the right.
-        // X is not transposed.
-        // W is transposed.
-
-        // use GEMM to do C = A * W^T + C  with weights and biases all together.
-        {
-            let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
-            let weights: &TensorF32 = &self.weights.tensor().deref().borrow();
-            let a = input;
-            let b = weights;
-            let c = output;
-            TensorF32::copy(biases, c)?;
-            let op_result = TensorF32::gemm(false, true, 1.0, a, b, 1.0, c, false);
-            match op_result {
-                Ok(_) => (),
-                Err(_) => {
-                    let mut w_t =
-                        self.device
-                            .tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
-                    b.transpose(&mut w_t)?;
-                    println!("Incompatible shapes in matrix multiplication");
-                    println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
-                    debug_assert!(false);
-                }
-            }
-        }
 
         Ok(output)
     }
@@ -134,5 +104,37 @@ impl OperatorTrait for Linear {
 
     fn name(&self) -> &str {
         "Linear"
+    }
+
+    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let biases: &TensorF32 = &self.biases.tensor().deref().borrow();
+        // Use the same convention that is used in tensorflow:
+        // Y = X @ W^T + B
+        // Weights is on the right.
+        // X is not transposed.
+        // W is transposed.
+
+        // use GEMM to do C = A * W^T + C  with weights and biases all together.
+        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
+        let weights: &TensorF32 = &self.weights.tensor().deref().borrow();
+        let a = input;
+        let b = weights;
+        let c = output;
+        TensorF32::copy(biases, c)?;
+        let op_result = TensorF32::gemm(false, true, 1.0, a, b, 1.0, c, false);
+        match op_result {
+            Ok(_) => (),
+            Err(_) => {
+                let mut w_t =
+                    self.device
+                        .tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
+                b.transpose(&mut w_t)?;
+                println!("Incompatible shapes in matrix multiplication");
+                println!("Between X {:?} and W^T {:?}", input.shape(), w_t.shape(),);
+                debug_assert!(false);
+            }
+        }
+        Ok(())
     }
 }

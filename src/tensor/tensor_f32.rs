@@ -325,15 +325,15 @@ impl TensorF32 {
 
     pub fn sub(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let alpha = -1.0;
-        Self::saxpy(alpha, x, y)
+        Self::a_x_plus_y(alpha, x, y)
     }
 
     pub fn add(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let alpha = 1.0;
-        Self::saxpy(alpha, x, y)
+        Self::a_x_plus_y(alpha, x, y)
     }
 
-    pub fn saxpy(alpha: f32, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+    pub fn a_x_plus_y(alpha: f32, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
             return Err(Error::IncompatibleTensorShapes);
@@ -341,7 +341,7 @@ impl TensorF32 {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.saxpy(n, alpha, x, incx, y, incy)
+        device.saxpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
     }
 
     // TODO use device to clip

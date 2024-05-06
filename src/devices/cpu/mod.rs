@@ -93,13 +93,11 @@ impl DeviceInterface for CpuDevice {
         &self,
         n: i32,
         alpha: f32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &mut TensorF32,
+        y: *mut f32,
         incy: i32,
     ) -> Result<(), Error> {
-        let x = x.as_ptr();
-        let y = y.as_mut_ptr();
         unsafe { ffi::cblas_saxpy(n, alpha, x, incx, y, incy) }
         Ok(())
     }

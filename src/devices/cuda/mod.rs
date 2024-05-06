@@ -80,15 +80,13 @@ impl DeviceInterface for CudaDevice {
         &self,
         n: i32,
         alpha: f32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &mut TensorF32,
+        y: *mut f32,
         incy: i32,
     ) -> Result<(), Error> {
         let handle = self.handle;
         let alpha = &alpha as *const f32;
-        let x = x.as_ptr();
-        let y = y.as_mut_ptr();
         let status = unsafe { cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
         status.result().map_err(|_| Error::UnsupportedOperation)
     }

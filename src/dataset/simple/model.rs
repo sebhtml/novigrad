@@ -1,6 +1,4 @@
-use crate::{
-    Embedding, Error, Linear, OperatorTrait, Operators, Reshape, Sigmoid, Softmax, Tensor,
-};
+use crate::{Device, Embedding, Error, Linear, OperatorTrait, Reshape, Sigmoid, Softmax, Tensor};
 
 pub struct Model {
     embedding: Embedding,
@@ -14,7 +12,7 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(ops: &Operators) -> Self {
+    pub fn new(device: &Device) -> Self {
         let _batch_size = 1;
         let sequence_length = 6;
         let vocab_size = 256;
@@ -24,17 +22,23 @@ impl Model {
         let output_rows = 1;
 
         Self {
-            embedding: ops.embedding(num_embeddings, embedding_dim),
-            linear_0: ops.linear(embedding_dim, embedding_dim, sequence_length),
-            sigmoid_0: ops.sigmoid(),
-            reshape: ops.reshape(
+            embedding: Embedding::new(device, num_embeddings, embedding_dim),
+            linear_0: Linear::new(device, embedding_dim, embedding_dim, sequence_length),
+            sigmoid_0: Sigmoid::new(device),
+            reshape: Reshape::new(
+                device,
                 vec![sequence_length, embedding_dim],
                 vec![output_rows, sequence_length * embedding_dim],
             ),
-            linear_1: ops.linear(embedding_dim, sequence_length * embedding_dim, output_rows),
-            sigmoid_1: ops.sigmoid(),
-            linear_2: ops.linear(vocab_size, embedding_dim, output_rows),
-            softmax: ops.softmax(true),
+            linear_1: Linear::new(
+                device,
+                embedding_dim,
+                sequence_length * embedding_dim,
+                output_rows,
+            ),
+            sigmoid_1: Sigmoid::new(device),
+            linear_2: Linear::new(device, vocab_size, embedding_dim, output_rows),
+            softmax: Softmax::new(device, true),
         }
     }
 }

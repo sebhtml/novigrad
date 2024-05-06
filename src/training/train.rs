@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    DatasetDetails, Device, Error, GradientDescent, Network, OperatorTrait, OptimizerTrait, Tensor,
-    TensorF32, Tokenizer, TokenizerTrait,
+    example_loss, total_loss, train, DatasetDetails, Device, Error, GradientDescent, OperatorTrait,
+    OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 pub fn print_expected_output_and_actual_output(
@@ -81,7 +81,7 @@ fn print_total_loss(
     last_total_loss: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
-    let total_loss = Network::total_loss(model, loss_function, inputs, outputs)?;
+    let total_loss = total_loss(model, loss_function, inputs, outputs)?;
     let change = (total_loss - last_total_loss) / last_total_loss;
     println!("----",);
     println!(
@@ -138,7 +138,7 @@ pub fn train_network_on_dataset(
                 break;
             }
         }
-        Network::train(
+        train(
             &model,
             &loss_function,
             &device,
@@ -184,7 +184,7 @@ fn print_results(
     for i in 0..inputs.len() {
         let input = &inputs[i];
         let actual_output = model.forward(&[input.clone()])?;
-        let loss = Network::example_loss(loss_function, &actual_output, &outputs[i])?;
+        let loss = example_loss(loss_function, &actual_output, &outputs[i])?;
 
         let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;

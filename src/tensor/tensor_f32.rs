@@ -9,8 +9,7 @@ use std::{fmt::Display, ops::Mul};
 #[derive(Debug)]
 pub struct TensorF32 {
     device: Device,
-    rows: usize,
-    cols: usize,
+    size: Vec<usize>,
     buffer: DevBuffer,
 }
 
@@ -29,8 +28,7 @@ impl TensorF32 {
         buffer.set_values(values);
         Self {
             device: device.clone(),
-            rows,
-            cols,
+            size: vec![rows, cols],
             buffer,
         }
     }
@@ -40,7 +38,7 @@ impl TensorF32 {
         Operation: F32Operation,
     {
         let left = self;
-        if left.rows != right.rows || left.cols != right.cols {
+        if left.size() != right.size() {
             return Err(Error::IncompatibleTensorShapes);
         }
 
@@ -77,30 +75,43 @@ impl TensorF32 {
     }
 
     pub fn rows(&self) -> usize {
-        self.rows
+        if self.size.len() == 2 {
+            self.size[0]
+        } else {
+            panic!()
+        }
     }
 
     pub fn cols(&self) -> usize {
-        self.cols
+        if self.size.len() == 2 {
+            self.size[1]
+        } else {
+            panic!()
+        }
     }
 
     pub fn len(&self) -> usize {
-        self.rows() * self.cols()
+        self.size.iter().fold(1, |acc, item| acc * item)
     }
 
-    pub fn size(&self) -> (usize, usize) {
-        (self.rows, self.cols)
+    pub fn size(&self) -> &[usize] {
+        &self.size
     }
 
     pub fn index(&self, row: usize, col: usize) -> usize {
-        row * self.cols + col
+        if self.size.len() == 2 {
+            let cols = self.size[1];
+            row * cols + col
+        } else {
+            panic!()
+        }
     }
 
     pub fn transpose(&self, other: &mut TensorF32) -> Result<(), Error> {
         let self_values = self.get_values()?;
         let mut other_values = other.get_values()?;
-        let rows = self.rows;
-        let cols = self.cols;
+        let rows = self.rows();
+        let cols = self.cols();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
@@ -128,11 +139,10 @@ impl TensorF32 {
     }
 
     pub fn resize(&mut self, rows: usize, cols: usize) {
-        if rows == self.rows && cols == self.cols {
+        if self.size == vec![rows, cols] {
             return;
         }
-        self.rows = rows;
-        self.cols = cols;
+        self.size = vec![rows, cols];
         let len = rows * cols;
         self.set_values(vec![0.0; len]);
     }
@@ -197,10 +207,10 @@ impl TensorF32 {
     ) -> Result<(), Error> {
         let device = &a.device;
         if !transa && !transb && !transpose_result {
-            if a.cols != b.rows {
+            if a.cols() != b.rows() {
                 return Err(Error::IncompatibleTensorShapes);
             }
-            let (m, n, k) = (a.rows, b.cols, a.cols);
+            let (m, n, k) = (a.rows(), b.cols(), a.cols());
             device.sgemm(
                 false,
                 false,
@@ -217,10 +227,10 @@ impl TensorF32 {
                 n as i32,
             )
         } else if transa && !transb && !transpose_result {
-            if a.rows != b.rows {
+            if a.rows() != b.rows() {
                 return Err(Error::IncompatibleTensorShapes);
             }
-            let (m, n, k) = (a.cols, b.cols, a.rows);
+            let (m, n, k) = (a.cols(), b.cols(), a.rows());
 
             device.sgemm(
                 false,
@@ -232,16 +242,16 @@ impl TensorF32 {
                 b.as_ptr(),
                 n as i32,
                 a.as_ptr(),
-                a.cols as i32,
+                a.cols() as i32,
                 beta,
                 c.as_mut_ptr(),
                 n as i32,
             )
         } else if !transa && transb && !transpose_result {
-            if a.cols != b.cols {
+            if a.cols() != b.cols() {
                 return Err(Error::IncompatibleTensorShapes);
             }
-            let (m, n, k) = (a.rows, b.rows, a.cols);
+            let (m, n, k) = (a.rows(), b.rows(), a.cols());
 
             device.sgemm(
                 true,
@@ -251,7 +261,7 @@ impl TensorF32 {
                 k as i32,
                 alpha,
                 b.as_ptr(),
-                b.cols as i32,
+                b.cols() as i32,
                 a.as_ptr(),
                 k as i32,
                 beta,
@@ -259,10 +269,10 @@ impl TensorF32 {
                 n as i32,
             )
         } else if transa && transb && !transpose_result {
-            if a.rows != b.cols {
+            if a.rows() != b.cols() {
                 return Err(Error::IncompatibleTensorShapes);
             }
-            let (m, n, k) = (a.cols, b.rows, a.rows);
+            let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
             device.sgemm(
                 true,
@@ -272,18 +282,18 @@ impl TensorF32 {
                 k as i32,
                 alpha,
                 b.as_ptr(),
-                b.cols as i32,
+                b.cols() as i32,
                 a.as_ptr(),
-                a.cols as i32,
+                a.cols() as i32,
                 beta,
                 c.as_mut_ptr(),
                 n as i32,
             )
         } else if transa && transb && transpose_result {
-            if a.rows != b.cols {
+            if a.rows() != b.cols() {
                 return Err(Error::IncompatibleTensorShapes);
             }
-            let (m, n, k) = (a.cols, b.rows, a.rows);
+            let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
             device.sgemm(
                 false,
@@ -293,18 +303,18 @@ impl TensorF32 {
                 k as i32,
                 alpha,
                 a.as_ptr(),
-                a.cols as i32,
+                a.cols() as i32,
                 b.as_ptr(),
-                b.cols as i32,
+                b.cols() as i32,
                 beta,
                 c.as_mut_ptr(),
                 m as i32,
             )
         } else if transa && !transb && transpose_result {
-            if a.rows != b.rows {
+            if a.rows() != b.rows() {
                 return Err(Error::IncompatibleTensorShapes);
             }
-            let (m, n, k) = (a.cols, b.cols, a.rows);
+            let (m, n, k) = (a.cols(), b.cols(), a.rows());
 
             device.sgemm(
                 false,
@@ -314,9 +324,9 @@ impl TensorF32 {
                 k as i32,
                 alpha,
                 a.as_ptr(),
-                a.cols as i32,
+                a.cols() as i32,
                 b.as_ptr(),
-                b.cols as i32,
+                b.cols() as i32,
                 beta,
                 c.as_mut_ptr(),
                 m as i32,
@@ -376,8 +386,7 @@ impl TensorF32 {
             return Err(Error::UnsupportedOperation);
         }
 
-        self.rows = new_rows;
-        self.cols = new_cols;
+        self.size = vec![new_rows, new_cols];
 
         Ok(())
     }
@@ -386,10 +395,10 @@ impl TensorF32 {
 impl Display for TensorF32 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let self_values = self.get_values().map_err(|_| std::fmt::Error)?;
-        _ = write!(f, "Shape: {:?}", (self.rows, self.cols));
+        _ = write!(f, "Shape: {:?}", self.size);
         _ = write!(f, "\n");
-        for row in 0..self.rows {
-            for col in 0..self.cols {
+        for row in 0..self.rows() {
+            for col in 0..self.cols() {
                 let value = self_values[self.index(row, col)];
                 if value < 0.0 {
                     _ = write!(f, " {:2.8}", value);
@@ -420,7 +429,7 @@ impl TryInto<f32> for &TensorF32 {
 
     fn try_into(self) -> Result<f32, Self::Error> {
         match self.size() {
-            (1, 1) => {
+            &[1, 1] => {
                 let self_values = self.get_values()?;
                 Ok(self_values[self.index(0, 0)])
             }

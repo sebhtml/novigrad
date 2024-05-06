@@ -1,7 +1,3 @@
-- remove tensor f32 matmul
-- does it work without gradient clipping ?
-- print number of parameters optimized by optimizer
-- in TensorF32, replace rows, cols by dims
 - merge network/mod.rs + train.rs -> training/mod.rs
 
 == Attention ==
@@ -18,7 +14,7 @@
 
 == Fixes ==
 
-- don't use Reshape in Megaman
+- don't use Reshape in Megaman to reduce model parameters
 
 == Parallel Execution ==
 

@@ -33,6 +33,26 @@ impl Embedding {
     }
 }
 
+fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> TensorF32 {
+    let mut rng = thread_rng();
+    let mut embeddings_table: Vec<f32> = Vec::new();
+    let left = 0.0;
+    let right = 1.0;
+    let uniform = Uniform::new(left, right);
+
+    let mut token = 0;
+    while token < num_embeddings {
+        let mut token_embeddings: Vec<f32> = Vec::new();
+        for _ in 0..embedding_dim {
+            let value = rng.sample(uniform);
+            token_embeddings.push(value);
+        }
+        embeddings_table.append(&mut token_embeddings);
+        token += 1;
+    }
+    device.tensor_f32(num_embeddings, embedding_dim, embeddings_table)
+}
+
 impl OperatorTrait for Embedding {
     fn name(&self) -> &str {
         "Embedding"
@@ -79,24 +99,4 @@ impl OperatorTrait for Embedding {
         let c: &mut TensorF32 = embedding_table_gradient;
         TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)
     }
-}
-
-fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> TensorF32 {
-    let mut rng = thread_rng();
-    let mut embeddings_table: Vec<f32> = Vec::new();
-    let left = 0.0;
-    let right = 1.0;
-    let uniform = Uniform::new(left, right);
-
-    let mut token = 0;
-    while token < num_embeddings {
-        let mut token_embeddings: Vec<f32> = Vec::new();
-        for _ in 0..embedding_dim {
-            let value = rng.sample(uniform);
-            token_embeddings.push(value);
-        }
-        embeddings_table.append(&mut token_embeddings);
-        token += 1;
-    }
-    device.tensor_f32(num_embeddings, embedding_dim, embeddings_table)
 }

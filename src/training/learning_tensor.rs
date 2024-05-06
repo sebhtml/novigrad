@@ -6,9 +6,10 @@ use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 pub struct Tensor {
     device: Device,
     operator: Rc<dyn OperatorTrait>,
-    inputs: Vec<Tensor>,
+    inputs: Rc<Vec<Tensor>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
+    realized: Rc<RefCell<bool>>,
 }
 
 impl Tensor {
@@ -22,9 +23,10 @@ impl Tensor {
         Self {
             device: device.clone(),
             operator,
-            inputs: inputs.to_owned(),
+            inputs: Rc::new(inputs.to_owned()),
             tensor,
             gradient,
+            realized: Default::default(),
         }
     }
 
@@ -37,12 +39,19 @@ impl Tensor {
     }
 
     pub fn realize(&self) -> Result<(), Error> {
+        let realized = *self.realized.deref().borrow();
+        debug_assert_eq!(realized, false);
+        if realized {
+            return Ok(());
+        }
         let tape = self.get_tape();
         for output in tape.iter() {
             let op = output.operator();
             let inputs = output.inputs();
             op.forward_realize(inputs, output)?;
         }
+        let realized: &mut bool = &mut self.realized.deref().borrow_mut();
+        *realized = true;
         Ok(())
     }
 

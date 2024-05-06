@@ -1,8 +1,5 @@
-use crate::Error;
+use crate::{Error, Tensor};
 use core::fmt::Debug;
-
-mod learning_tensor;
-pub use learning_tensor::*;
 
 pub trait OperatorTrait {
     fn name(&self) -> &str;

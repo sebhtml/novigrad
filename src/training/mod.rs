@@ -2,9 +2,11 @@
 pub mod tests;
 mod train;
 use std::ops::Deref;
-pub use train::*;
 
-use crate::{devices::Device, Error, OperatorTrait, OptimizerTrait, Tensor, TensorF32};
+pub use train::*;
+mod learning_tensor;
+use crate::{devices::Device, Error, OperatorTrait, OptimizerTrait, TensorF32};
+pub use learning_tensor::*;
 
 pub struct Network {}
 

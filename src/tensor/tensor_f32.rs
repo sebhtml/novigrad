@@ -381,12 +381,13 @@ impl TensorF32 {
         device.sscal(n, alpha, x.as_mut_ptr(), incx)
     }
 
-    pub fn resize(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {
-        if (new_rows * new_cols) != self.len() {
+    pub fn resize(&mut self, new_size: &[usize]) -> Result<(), Error> {
+        let new_len = new_size.iter().fold(1, |acc, value| acc * value);
+        if new_len != self.len() {
             return Err(Error::UnsupportedOperation);
         }
 
-        self.size = vec![new_rows, new_cols];
+        self.size = new_size.to_owned();
 
         Ok(())
     }

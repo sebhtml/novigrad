@@ -36,10 +36,8 @@ impl Model {
             embedding: ops.embedding(num_embeddings, embedding_dim),
             matmul: ops.matmul(),
             reshape: ops.reshape(
-                sequence_length,
-                embedding_dim,
-                output_rows,
-                sequence_length * embedding_dim,
+                vec![sequence_length, embedding_dim],
+                vec![output_rows, sequence_length * embedding_dim],
             ),
             linear: ops.linear(vocab_size, sequence_length * embedding_dim, output_rows),
             softmax: ops.softmax(true),

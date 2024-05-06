@@ -28,20 +28,8 @@ impl Operators {
         MatMul::new(&self.device)
     }
 
-    pub fn reshape(
-        &self,
-        input_rows: usize,
-        input_cols: usize,
-        output_rows: usize,
-        output_cols: usize,
-    ) -> Reshape {
-        Reshape::new(
-            &self.device,
-            input_rows,
-            input_cols,
-            output_rows,
-            output_cols,
-        )
+    pub fn reshape(&self, input_size: Vec<usize>, output_size: Vec<usize>) -> Reshape {
+        Reshape::new(&self.device, input_size, output_size)
     }
 
     pub fn linear(&self, weights_rows: usize, weights_cols: usize, bias_rows: usize) -> Linear {

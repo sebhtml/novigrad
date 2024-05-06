@@ -5,26 +5,16 @@ use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 #[derive(Clone)]
 pub struct Reshape {
     device: Device,
-    input_rows: usize,
-    input_cols: usize,
-    output_rows: usize,
-    output_cols: usize,
+    input_size: Vec<usize>,
+    output_size: Vec<usize>,
 }
 
 impl Reshape {
-    pub fn new(
-        device: &Device,
-        input_rows: usize,
-        input_cols: usize,
-        output_rows: usize,
-        output_cols: usize,
-    ) -> Self {
+    pub fn new(device: &Device, input_size: Vec<usize>, output_size: Vec<usize>) -> Self {
         Self {
             device: device.clone(),
-            input_rows,
-            input_cols,
-            output_rows,
-            output_cols,
+            input_size,
+            output_size,
         }
     }
 }
@@ -34,15 +24,14 @@ impl OperatorTrait for Reshape {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
         TensorF32::copy(output_gradient, backward_gradient)?;
-        backward_gradient.resize(self.input_rows, self.input_cols)?;
+        backward_gradient.resize(&self.input_size)?;
         Ok(())
     }
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        debug_assert_eq!(input.rows(), self.input_rows);
-        debug_assert_eq!(input.cols(), self.input_cols);
+        debug_assert_eq!(input.size(), self.input_size);
         let rows = input.rows();
         let cols = input.cols();
         let len = rows * cols;
@@ -65,6 +54,6 @@ impl OperatorTrait for Reshape {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
         TensorF32::copy(input, output)?;
-        output.resize(self.output_rows, self.output_cols)
+        output.resize(&self.output_size)
     }
 }

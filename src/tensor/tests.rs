@@ -80,7 +80,7 @@ fn reshape_result() {
         ],
     );
 
-    lhs.resize(1, 8).unwrap();
+    lhs.resize(&[1, 8]).unwrap();
     assert_eq!(lhs, expected);
 }
 
@@ -96,7 +96,7 @@ fn reshape_error() {
         ],
     );
 
-    let op_result = lhs.resize(1, 11);
+    let op_result = lhs.resize(&[1, 11]);
     assert_eq!(op_result, Err(Error::UnsupportedOperation));
 }
 

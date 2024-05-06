@@ -27,10 +27,8 @@ impl Model {
             linear_0: ops.linear(embedding_dim, embedding_dim, sequence_length),
             sigmoid_0: ops.sigmoid(),
             reshape: ops.reshape(
-                sequence_length,
-                embedding_dim,
-                output_rows,
-                sequence_length * embedding_dim,
+                vec![sequence_length, embedding_dim],
+                vec![output_rows, sequence_length * embedding_dim],
             ),
             linear_1: ops.linear(embedding_dim, sequence_length * embedding_dim, output_rows),
             sigmoid_1: ops.sigmoid(),

@@ -68,13 +68,8 @@ impl LossFunction for CrossEntropyLoss {
 }
 
 impl OperatorTrait for CrossEntropyLoss {
-    fn backward(&self, inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        debug_assert_eq!(inputs.len(), 2);
-        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
-        let backward_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
-        self.derive(expected, actual, backward_gradient)?;
-        Ok(())
+    fn name(&self) -> &str {
+        "CrossEntropyLoss"
     }
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
@@ -83,10 +78,6 @@ impl OperatorTrait for CrossEntropyLoss {
             .device
             .tensor(Rc::new(self.clone()), inputs, 1, 1, vec![0.0], false);
         Ok(output)
-    }
-
-    fn name(&self) -> &str {
-        "CrossEntropyLoss"
     }
 
     fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
@@ -99,5 +90,13 @@ impl OperatorTrait for CrossEntropyLoss {
             .borrow_mut()
             .set_values(vec![loss; 1]);
         Ok(())
+    }
+
+    fn backward(&self, inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        debug_assert_eq!(inputs.len(), 2);
+        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
+        let backward_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
+        self.derive(expected, actual, backward_gradient)
     }
 }

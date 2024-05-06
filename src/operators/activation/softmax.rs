@@ -95,6 +95,32 @@ impl ActivationFunction for Softmax {
 }
 
 impl OperatorTrait for Softmax {
+    fn name(&self) -> &str {
+        "Softmax"
+    }
+
+    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let rows = input.rows();
+        let cols = input.cols();
+        let len = rows * cols;
+        let output = self.device.tensor(
+            Rc::new(self.clone()),
+            inputs,
+            rows,
+            cols,
+            vec![0.0; len],
+            false,
+        );
+        Ok(output)
+    }
+
+    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
+        self.activate(input, output)
+    }
+
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
@@ -115,31 +141,5 @@ impl OperatorTrait for Softmax {
         }
 
         Ok(())
-    }
-
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let rows = input.rows();
-        let cols = input.cols();
-        let len = rows * cols;
-        let output = self.device.tensor(
-            Rc::new(self.clone()),
-            inputs,
-            rows,
-            cols,
-            vec![0.0; len],
-            false,
-        );
-        Ok(output)
-    }
-
-    fn name(&self) -> &str {
-        "Softmax"
-    }
-
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
-        self.activate(input, output)
     }
 }

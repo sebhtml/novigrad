@@ -1,5 +1,5 @@
-mod network;
-pub use network::*;
+mod training;
+pub use training::*;
 mod tensor;
 pub use tensor::*;
 mod dataset;

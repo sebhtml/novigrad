@@ -19,6 +19,12 @@ use crate::{OperatorTrait, Tensor, TensorF32};
 mod buffer;
 pub use buffer::*;
 
+pub struct MemoryInfo {
+    pub used: usize,
+    pub free: usize,
+    pub total: usize,
+}
+
 pub trait DeviceInterface {
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
@@ -43,12 +49,12 @@ pub trait DeviceInterface {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &TensorF32,
+        a: *const f32,
         lda: i32,
-        b: &TensorF32,
+        b: *const f32,
         ldb: i32,
         beta: f32,
-        c: &mut TensorF32,
+        c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error>;
 
@@ -58,9 +64,9 @@ pub trait DeviceInterface {
         &self,
         n: i32,
         alpha: f32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &mut TensorF32,
+        y: *mut f32,
         incy: i32,
     ) -> Result<(), Error>;
 
@@ -68,28 +74,22 @@ pub trait DeviceInterface {
     fn sdot(
         &self,
         n: i32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &TensorF32,
+        y: *const f32,
         incy: i32,
     ) -> Result<f32, Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
-    fn scopy(
-        &self,
-        n: i32,
-        x: &TensorF32,
-        incx: i32,
-        y: &mut TensorF32,
-        incy: i32,
-    ) -> Result<(), Error>;
+    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
 
     /// SSCAL scales a vector by a constant.
-    fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error>;
+    fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error>;
 }
 
 #[derive(Clone, Debug)]
 pub struct Device {
+    used: Rc<RefCell<usize>>,
     tensors_with_requires_grad: Rc<RefCell<Vec<Tensor>>>,
     device: Rc<DeviceEnum>,
     available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevBuffer>>>>,
@@ -111,6 +111,7 @@ impl Default for Device {
 impl Device {
     pub fn new(device: DeviceEnum) -> Self {
         Self {
+            used: Default::default(),
             tensors_with_requires_grad: Rc::new(RefCell::new(vec![])),
             device: Rc::new(device),
             available_buffers: Default::default(),
@@ -129,6 +130,14 @@ impl Device {
             &mut self.available_buffers.deref().borrow_mut();
         let entry = available_buffers.entry(len);
         entry.or_default().push_back(recycled_buffer)
+    }
+
+    pub fn get_memory_info(&self) -> Result<MemoryInfo, Error> {
+        Ok(MemoryInfo {
+            used: *self.used.deref().borrow(),
+            free: 0,
+            total: 0,
+        })
     }
 
     #[cfg(feature = "cuda")]
@@ -200,7 +209,11 @@ impl Device {
                 //println!("Recycled buffer with length {}", len);
                 buffer
             }
-            None => DevBuffer::new(self, len),
+            None => {
+                let used: &mut usize = &mut self.used.deref().borrow_mut();
+                *used += len;
+                DevBuffer::new(self, len)
+            }
         }
     }
 }
@@ -214,12 +227,12 @@ impl DeviceInterface for Device {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &TensorF32,
+        a: *const f32,
         lda: i32,
-        b: &TensorF32,
+        b: *const f32,
         ldb: i32,
         beta: f32,
-        c: &mut TensorF32,
+        c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error> {
         match self.device.borrow() {
@@ -236,9 +249,9 @@ impl DeviceInterface for Device {
     fn sdot(
         &self,
         n: i32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &TensorF32,
+        y: *const f32,
         incy: i32,
     ) -> Result<f32, Error> {
         match self.device.borrow() {
@@ -248,14 +261,7 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn scopy(
-        &self,
-        n: i32,
-        x: &TensorF32,
-        incx: i32,
-        y: &mut TensorF32,
-        incy: i32,
-    ) -> Result<(), Error> {
+    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
         match self.device.borrow() {
             DeviceEnum::Cpu(device) => device.scopy(n, x, incx, y, incy),
             #[cfg(feature = "cuda")]
@@ -267,9 +273,9 @@ impl DeviceInterface for Device {
         &self,
         n: i32,
         alpha: f32,
-        x: &TensorF32,
+        x: *const f32,
         incx: i32,
-        y: &mut TensorF32,
+        y: *mut f32,
         incy: i32,
     ) -> Result<(), Error> {
         match self.device.borrow() {
@@ -279,7 +285,7 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error> {
+    fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
         match self.device.borrow() {
             DeviceEnum::Cpu(device) => device.sscal(n, alpha, x, incx),
             #[cfg(feature = "cuda")]

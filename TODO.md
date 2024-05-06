@@ -1,7 +1,7 @@
-- report gpu vram usage
-- in TensorF32, replace rows, cols by dims
-- decouple tensor and device
 - remove tensor f32 matmul
+- does it work without gradient clipping ?
+- print number of parameters optimized by optimizer
+- in TensorF32, replace rows, cols by dims
 - merge network/mod.rs + train.rs -> training/mod.rs
 
 == Attention ==
@@ -15,12 +15,6 @@
 
 - implement mini batch
 - shuffle examples in each epoch
-
-== Fixes ==
-
-- implement realize() in the forward pass
-- print number of parameters optimized by optimizer
-- does it work without gradient clipping ?
 
 == Fixes ==
 

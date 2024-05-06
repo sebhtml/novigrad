@@ -52,6 +52,10 @@ impl OperatorTrait for Model {
         Ok(state_7)
     }
 
+    fn forward_realize(&self, _inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        output.realize()
+    }
+
     fn name(&self) -> &str {
         "SimpleModel"
     }

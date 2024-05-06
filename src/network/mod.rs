@@ -42,6 +42,7 @@ impl Network {
     ) -> Result<f32, Error> {
         let example_loss =
             loss_function.forward(&[expected_output.clone(), actual_output.clone()])?;
+        example_loss.realize()?;
         let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
         let example_loss: f32 = example_loss.try_into()?;
         Ok(example_loss)
@@ -78,9 +79,8 @@ impl Network {
         device.zero_grad()?;
 
         let output = model.forward(&[x.clone()])?;
-
         let loss = loss_function.forward(&[y.clone(), output.clone()])?;
-
+        loss.realize()?;
         let gradients = loss.backward()?;
         let gradients: &[Tensor] = &gradients.deref().borrow();
 

@@ -14,7 +14,7 @@ impl MatMul {
         }
     }
 
-    fn forward(device: &Device, inputs: &[Tensor], output: &mut Tensor) -> Result<(), Error> {
+    fn forward(device: &Device, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
@@ -73,7 +73,7 @@ impl OperatorTrait for MatMul {
         let rows = input_0.rows();
         let cols = input_1.rows();
         let len = rows * cols;
-        let mut output = self.device.tensor(
+        let output = self.device.tensor(
             Rc::new(self.clone()),
             inputs,
             rows,
@@ -81,7 +81,6 @@ impl OperatorTrait for MatMul {
             vec![0.0; len],
             false,
         );
-        MatMul::forward(&self.device, inputs, &mut output)?;
         Ok(output)
     }
 
@@ -91,5 +90,9 @@ impl OperatorTrait for MatMul {
 
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         MatMul::backward(inputs, output)
+    }
+
+    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        MatMul::forward(&self.device, inputs, output)
     }
 }

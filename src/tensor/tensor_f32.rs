@@ -158,7 +158,7 @@ impl TensorF32 {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.sdot(n, x, incx, y, incy)
+        device.sdot(n, x.as_ptr(), incx, y.as_ptr(), incy)
     }
 
     pub fn copy(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
@@ -166,6 +166,8 @@ impl TensorF32 {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
+        let x = x.as_ptr();
+        let y = y.as_mut_ptr();
         device.scopy(n, x, incx, y, incy)
     }
 
@@ -199,8 +201,19 @@ impl TensorF32 {
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
             device.sgemm(
-                false, false, n as i32, m as i32, k as i32, alpha, b, n as i32, a, k as i32, beta,
-                c, n as i32,
+                false,
+                false,
+                n as i32,
+                m as i32,
+                k as i32,
+                alpha,
+                b.as_ptr(),
+                n as i32,
+                a.as_ptr(),
+                k as i32,
+                beta,
+                c.as_mut_ptr(),
+                n as i32,
             )
         } else if transa && !transb && !transpose_result {
             if a.rows != b.rows {
@@ -215,12 +228,12 @@ impl TensorF32 {
                 m as i32,
                 k as i32,
                 alpha,
-                b,
+                b.as_ptr(),
                 n as i32,
-                a,
+                a.as_ptr(),
                 a.cols as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 n as i32,
             )
         } else if !transa && transb && !transpose_result {
@@ -236,12 +249,12 @@ impl TensorF32 {
                 m as i32,
                 k as i32,
                 alpha,
-                b,
+                b.as_ptr(),
                 b.cols as i32,
-                a,
+                a.as_ptr(),
                 k as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 n as i32,
             )
         } else if transa && transb && !transpose_result {
@@ -257,12 +270,12 @@ impl TensorF32 {
                 m as i32,
                 k as i32,
                 alpha,
-                b,
+                b.as_ptr(),
                 b.cols as i32,
-                a,
+                a.as_ptr(),
                 a.cols as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 n as i32,
             )
         } else if transa && transb && transpose_result {
@@ -278,12 +291,12 @@ impl TensorF32 {
                 n as i32,
                 k as i32,
                 alpha,
-                a,
+                a.as_ptr(),
                 a.cols as i32,
-                b,
+                b.as_ptr(),
                 b.cols as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 m as i32,
             )
         } else if transa && !transb && transpose_result {
@@ -299,12 +312,12 @@ impl TensorF32 {
                 n as i32,
                 k as i32,
                 alpha,
-                a,
+                a.as_ptr(),
                 a.cols as i32,
-                b,
+                b.as_ptr(),
                 b.cols as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 m as i32,
             )
         } else {
@@ -314,15 +327,15 @@ impl TensorF32 {
 
     pub fn sub(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let alpha = -1.0;
-        Self::saxpy(alpha, x, y)
+        Self::a_x_plus_y(alpha, x, y)
     }
 
     pub fn add(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let alpha = 1.0;
-        Self::saxpy(alpha, x, y)
+        Self::a_x_plus_y(alpha, x, y)
     }
 
-    pub fn saxpy(alpha: f32, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+    pub fn a_x_plus_y(alpha: f32, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
             return Err(Error::IncompatibleTensorShapes);
@@ -330,7 +343,7 @@ impl TensorF32 {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.saxpy(n, alpha, x, incx, y, incy)
+        device.saxpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
     }
 
     // TODO use device to clip
@@ -351,9 +364,10 @@ impl TensorF32 {
     }
 
     pub fn scalar_mul(alpha: f32, x: &mut TensorF32) -> Result<(), Error> {
+        let device = x.device.clone();
         let n = x.len() as i32;
         let incx = 1;
-        x.device.clone().sscal(n, alpha, x, incx)
+        device.sscal(n, alpha, x.as_mut_ptr(), incx)
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {

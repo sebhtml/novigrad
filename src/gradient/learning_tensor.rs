@@ -36,6 +36,16 @@ impl Tensor {
         &self.inputs
     }
 
+    pub fn realize(&self) -> Result<(), Error> {
+        let tape = self.get_tape();
+        for output in tape.iter() {
+            let op = output.operator();
+            let inputs = output.inputs();
+            op.forward_realize(inputs, output)?;
+        }
+        Ok(())
+    }
+
     pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {
         &self.tensor
     }

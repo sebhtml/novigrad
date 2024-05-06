@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use crate::{
-    DatasetDetails, Error, GradientDescent, Network, OperatorTrait, OptimizerTrait, Tensor,
+    DatasetDetails, Device, Error, GradientDescent, Network, OperatorTrait, OptimizerTrait, Tensor,
     TensorF32, Tokenizer, TokenizerTrait,
 };
 
@@ -45,21 +45,35 @@ pub fn print_expected_output_and_actual_output(
     let actual_values = actual_output.get_values()?;
     println!("");
 
-    for row in 0..rows {
-        for col in 0..cols {
-            println!(
-                "index {}  expected {}  actual {}",
-                col,
-                expected_values[expected_output.index(row, col)],
-                actual_values[actual_output.index(row, col)],
-            );
+    let print_columns = false;
+
+    if print_columns {
+        for row in 0..rows {
+            for col in 0..cols {
+                println!(
+                    "index {}  expected {}  actual {}",
+                    col,
+                    expected_values[expected_output.index(row, col)],
+                    actual_values[actual_output.index(row, col)],
+                );
+            }
         }
     }
 
     Ok(())
 }
 
+fn print_device_mem_info(device: &Device) -> Result<(), Error> {
+    let mem_info = &device.get_memory_info()?;
+    println!(
+        "Device memory  used: {}, free: {}, total: {}",
+        mem_info.used, mem_info.free, mem_info.total,
+    );
+    Ok(())
+}
+
 fn print_total_error(
+    device: &Device,
     model: &Box<dyn OperatorTrait>,
     loss_function: &Box<dyn OperatorTrait>,
     inputs: &Vec<Tensor>,
@@ -73,6 +87,7 @@ fn print_total_error(
         "Epoch {} Total_error {}, change: {}",
         epoch, total_error, change
     );
+    print_device_mem_info(device)?;
     Ok(total_error)
 }
 
@@ -106,6 +121,7 @@ pub fn train_network_on_dataset(
     for epoch in 0..epochs {
         if epoch % progress == 0 {
             let total_error = print_total_error(
+                &device,
                 &model,
                 &loss_function,
                 &inputs,
@@ -133,6 +149,7 @@ pub fn train_network_on_dataset(
         )?;
     }
     let final_total_error = print_total_error(
+        &device,
         &model,
         &loss_function,
         &inputs,

@@ -64,16 +64,25 @@ impl OperatorTrait for ResidualSumOfSquares {
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
-        let loss = self.evaluate(&self.device, expected, actual)?;
         let output = self
             .device
-            .tensor(Rc::new(self.clone()), inputs, 1, 1, vec![loss], false);
+            .tensor(Rc::new(self.clone()), inputs, 1, 1, vec![0.0], false);
         Ok(output)
     }
 
     fn name(&self) -> &str {
         "ResidualSumOfSquares"
+    }
+
+    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
+        let loss = self.evaluate(&self.device, expected, actual)?;
+        output
+            .tensor()
+            .deref()
+            .borrow_mut()
+            .set_values(vec![loss; 1]);
+        Ok(())
     }
 }

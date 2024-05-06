@@ -16,8 +16,8 @@ impl Model {
     pub fn new(ops: &Operators) -> Self {
         let _batch_size = 1;
         let sequence_length = 32;
-        //let vocab_size = 256;
-        let vocab_size = 34816; // 32768 + 2048
+        let vocab_size = 256;
+        //let vocab_size = 34816; // 32768 + 2048
         let num_embeddings = vocab_size;
         let embedding_dim = 384;
         let _num_heads = 0;
@@ -66,5 +66,9 @@ impl OperatorTrait for Model {
 
     fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
         Err(Error::UnsupportedOperation)
+    }
+
+    fn forward_realize(&self, _inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        output.realize()
     }
 }

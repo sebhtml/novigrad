@@ -91,7 +91,7 @@ pub trait DeviceInterface {
     ) -> Result<(), Error>;
 
     /// SSCAL scales a vector by a constant.
-    fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error>;
+    fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error>;
 }
 
 #[derive(Clone, Debug)]
@@ -299,7 +299,7 @@ impl DeviceInterface for Device {
         }
     }
 
-    fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error> {
+    fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
         match self.device.borrow() {
             DeviceEnum::Cpu(device) => device.sscal(n, alpha, x, incx),
             #[cfg(feature = "cuda")]

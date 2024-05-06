@@ -124,9 +124,8 @@ impl DeviceInterface for CudaDevice {
         status.result().map_err(|_| Error::UnsupportedOperation)
     }
 
-    fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error> {
+    fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
         let handle = self.handle;
-        let x = x.as_mut_ptr();
         let alpha = &alpha as *const f32;
         let status = unsafe { cublasSscal_v2(handle, n, alpha, x, incx) };
         status.result().map_err(|_| Error::UnsupportedOperation)

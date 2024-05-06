@@ -102,8 +102,7 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
-    fn sscal(&self, n: i32, alpha: f32, x: &mut TensorF32, incx: i32) -> Result<(), Error> {
-        let x = x.as_mut_ptr();
+    fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
         unsafe { ffi::cblas_sscal(n, alpha, x, incx) }
         Ok(())
     }

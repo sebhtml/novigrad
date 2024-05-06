@@ -362,9 +362,10 @@ impl TensorF32 {
     }
 
     pub fn scalar_mul(alpha: f32, x: &mut TensorF32) -> Result<(), Error> {
+        let device = x.device.clone();
         let n = x.len() as i32;
         let incx = 1;
-        x.device.clone().sscal(n, alpha, x, incx)
+        device.sscal(n, alpha, x.as_mut_ptr(), incx)
     }
 
     pub fn reshape(&mut self, new_rows: usize, new_cols: usize) -> Result<(), Error> {

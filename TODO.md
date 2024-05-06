@@ -1,4 +1,3 @@
-- remove tensor f32 matmul
 - does it work without gradient clipping ?
 - print number of parameters optimized by optimizer
 - in TensorF32, replace rows, cols by dims

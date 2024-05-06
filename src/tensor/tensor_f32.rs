@@ -179,6 +179,7 @@ impl TensorF32 {
         c: &mut TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
+        TensorF32::scalar_mul(0.0, c)?;
         let alpha = 1.0;
         let beta = 0.0;
         TensorF32::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)

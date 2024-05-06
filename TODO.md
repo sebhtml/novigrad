@@ -23,7 +23,6 @@
 == Datasets ==
 
 - put load_dataset in a polymorphic enum
-- put txt file in a data directory (check rust documentation)
 
 == Initialization ==
 

@@ -12,7 +12,7 @@ fn load_examples(
 ) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let context_size = 32;
     let mut examples = Vec::new();
-    let file_path = "Mega_Man.txt";
+    let file_path = "data/Mega_Man.txt";
     let text = fs::read_to_string(file_path).map_err(|_| Error::UnsupportedOperation)?;
     println!("[load_megaman_examples] loaded {} bytes", text.len());
     let tokens: Vec<usize> = tokenizer.encode(&text);

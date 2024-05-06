@@ -4,7 +4,7 @@ use crate::{BytePairEncoding, TokenizerTrait};
 
 #[test]
 fn decode() {
-    let file_path = "Mega_Man.txt";
+    let file_path = "data/Mega_Man.txt";
     let text = fs::read_to_string(file_path).unwrap();
     let mut tokenizer = BytePairEncoding::default();
     let tokens = tokenizer.encode(&text);
@@ -14,14 +14,14 @@ fn decode() {
 
 #[test]
 fn text_length() {
-    let file_path = "Mega_Man.txt";
+    let file_path = "data/Mega_Man.txt";
     let text = fs::read_to_string(file_path).unwrap();
     assert_eq!(text.len(), 78970,);
 }
 
 #[test]
 fn deterministic_tokens_length() {
-    let file_path = "Mega_Man.txt";
+    let file_path = "data/Mega_Man.txt";
     let text = fs::read_to_string(file_path).unwrap();
     let mut tokenizer = BytePairEncoding::default();
     let tokens = tokenizer.encode(&text);
@@ -30,7 +30,7 @@ fn deterministic_tokens_length() {
 
 #[test]
 fn no_repeated_pairs() {
-    let file_path = "Mega_Man.txt";
+    let file_path = "data/Mega_Man.txt";
     let text = fs::read_to_string(file_path).unwrap();
     let mut tokenizer = BytePairEncoding::default();
     let tokens = tokenizer.encode(&text);

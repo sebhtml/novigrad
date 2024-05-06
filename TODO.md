@@ -1,5 +1,3 @@
-- merge network/mod.rs + train.rs -> training/mod.rs
-
 == Attention ==
 
 - implement Scale
@@ -14,7 +12,7 @@
 
 == Fixes ==
 
-- don't use Reshape in Megaman to reduce model parameters
+- don't use Reshape in Megaman to reduce the number of model parameters
 
 == Parallel Execution ==
 
@@ -52,6 +50,7 @@
 
 == Devices ==
 
-- add Blas implementation for AMD GPUs.
-- support for Google tpu
-- support for Apple metal
+- Add support AMD GPUs (ROCm/rocBLAS)
+- Add support for Google TPU
+- Add support for Apple Metal
+- Add support for Intel Arc

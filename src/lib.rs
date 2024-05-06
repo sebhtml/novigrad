@@ -4,8 +4,6 @@ mod tensor;
 pub use tensor::*;
 mod dataset;
 pub use dataset::*;
-mod gradient;
-use gradient::*;
 mod devices;
 pub use devices::*;
 mod optimizer;

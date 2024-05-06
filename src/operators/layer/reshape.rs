@@ -34,7 +34,7 @@ impl OperatorTrait for Reshape {
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
         let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
         TensorF32::copy(output_gradient, backward_gradient)?;
-        backward_gradient.reshape(self.input_rows, self.input_cols)?;
+        backward_gradient.resize(self.input_rows, self.input_cols)?;
         Ok(())
     }
 
@@ -65,6 +65,6 @@ impl OperatorTrait for Reshape {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
         TensorF32::copy(input, output)?;
-        output.reshape(self.output_rows, self.output_cols)
+        output.resize(self.output_rows, self.output_cols)
     }
 }

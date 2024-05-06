@@ -55,8 +55,8 @@ impl Tensor {
     }
 
     pub fn resize(&self, rows: usize, cols: usize) {
-        self.tensor.deref().borrow_mut().resize(rows, cols);
-        self.gradient.deref().borrow_mut().resize(rows, cols);
+        self.tensor.deref().borrow_mut().reallocate(rows, cols);
+        self.gradient.deref().borrow_mut().reallocate(rows, cols);
     }
 
     pub fn get_tape(&self) -> Vec<Tensor> {

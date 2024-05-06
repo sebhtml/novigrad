@@ -138,12 +138,12 @@ impl TensorF32 {
         self.buffer.get_values()
     }
 
-    pub fn reallocate(&mut self, rows: usize, cols: usize) {
-        if self.size == vec![rows, cols] {
+    pub fn reallocate(&mut self, new_size: &[usize]) {
+        if new_size == self.size {
             return;
         }
-        self.size = vec![rows, cols];
-        let len = rows * cols;
+        self.size = new_size.to_owned();
+        let len = self.len();
         self.set_values(vec![0.0; len]);
     }
 

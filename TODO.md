@@ -1,4 +1,3 @@
-- in TensorF32, replace rows, cols by dims
 - merge network/mod.rs + train.rs -> training/mod.rs
 
 == Attention ==

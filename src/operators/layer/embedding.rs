@@ -34,15 +34,8 @@ impl Embedding {
 }
 
 impl OperatorTrait for Embedding {
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
-        let embedding_table_gradient: &mut TensorF32 =
-            &mut self.embedding_table.gradient().deref().borrow_mut();
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let a: &TensorF32 = output_gradient;
-        let b: &TensorF32 = input;
-        let c: &mut TensorF32 = embedding_table_gradient;
-        TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)
+    fn name(&self) -> &str {
+        "Embedding"
     }
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
@@ -67,10 +60,6 @@ impl OperatorTrait for Embedding {
         Ok(output)
     }
 
-    fn name(&self) -> &str {
-        "Embedding"
-    }
-
     fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let embedding_table: &TensorF32 = &self.embedding_table.tensor().deref().borrow();
@@ -78,6 +67,17 @@ impl OperatorTrait for Embedding {
         let b = &embedding_table;
         let c = &mut output.tensor().deref().borrow_mut();
         TensorF32::matmul(false, true, a, b, c, false)
+    }
+
+    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+        let embedding_table_gradient: &mut TensorF32 =
+            &mut self.embedding_table.gradient().deref().borrow_mut();
+        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let a: &TensorF32 = output_gradient;
+        let b: &TensorF32 = input;
+        let c: &mut TensorF32 = embedding_table_gradient;
+        TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)
     }
 }
 

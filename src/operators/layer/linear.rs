@@ -57,6 +57,10 @@ impl Linear {
 }
 
 impl OperatorTrait for Linear {
+    fn name(&self) -> &str {
+        "Linear"
+    }
+
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let biases: &TensorF32 = &self.biases.tensor().deref().borrow();
@@ -73,37 +77,6 @@ impl OperatorTrait for Linear {
         );
 
         Ok(output)
-    }
-
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
-        {
-            let weights_gradient: &mut TensorF32 =
-                &mut self.weights.gradient().deref().borrow_mut();
-            let biases_gradient: &mut TensorF32 = &mut self.biases.gradient().deref().borrow_mut();
-            let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-            let a: &TensorF32 = input;
-            let b: &TensorF32 = output_gradient;
-            let c: &mut TensorF32 = weights_gradient;
-            TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)?;
-
-            TensorF32::add(output_gradient, biases_gradient)?;
-        }
-
-        {
-            let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let weights: &TensorF32 = &self.weights.tensor().deref().borrow();
-            let a: &TensorF32 = weights;
-            let b: &TensorF32 = output_gradient;
-            let c: &mut TensorF32 = backward_gradient;
-            TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
-        }
-
-        Ok(())
-    }
-
-    fn name(&self) -> &str {
-        "Linear"
     }
 
     fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
@@ -135,6 +108,29 @@ impl OperatorTrait for Linear {
                 debug_assert!(false);
             }
         }
+        Ok(())
+    }
+
+    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+
+        let weights_gradient: &mut TensorF32 = &mut self.weights.gradient().deref().borrow_mut();
+        let biases_gradient: &mut TensorF32 = &mut self.biases.gradient().deref().borrow_mut();
+        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let a: &TensorF32 = input;
+        let b: &TensorF32 = output_gradient;
+        let c: &mut TensorF32 = weights_gradient;
+        TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)?;
+
+        TensorF32::add(output_gradient, biases_gradient)?;
+
+        let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
+        let weights: &TensorF32 = &self.weights.tensor().deref().borrow();
+        let a: &TensorF32 = weights;
+        let b: &TensorF32 = output_gradient;
+        let c: &mut TensorF32 = backward_gradient;
+        TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
+
         Ok(())
     }
 }

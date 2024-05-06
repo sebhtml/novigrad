@@ -16,6 +16,10 @@ impl MatMul {
 }
 
 impl OperatorTrait for MatMul {
+    fn name(&self) -> &str {
+        "MatMul"
+    }
+
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
@@ -33,8 +37,16 @@ impl OperatorTrait for MatMul {
         Ok(output)
     }
 
-    fn name(&self) -> &str {
-        "MatMul"
+    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        debug_assert_eq!(inputs.len(), 2);
+        let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
+
+        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
+        let a = input_0;
+        let b = input_1;
+        let c = output;
+        TensorF32::matmul(false, true, a, b, c, false)
     }
 
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
@@ -55,31 +67,6 @@ impl OperatorTrait for MatMul {
         let c: &mut TensorF32 = input_0_gradient;
         TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
 
-        Ok(())
-    }
-
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        debug_assert_eq!(inputs.len(), 2);
-        let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
-
-        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
-        let a = input_0;
-        let b = input_1;
-        let c = output;
-        let op_result = TensorF32::matmul(false, true, a, b, c, false);
-        match op_result {
-            Ok(_) => (),
-            Err(_) => {
-                let mut b_t =
-                    self.device
-                        .tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
-                b.transpose(&mut b_t)?;
-                println!("Incompatible shapes in matrix multiplication");
-                println!("Between A {:?} and B^T {:?}", a.size(), b_t.size(),);
-                debug_assert!(false);
-            }
-        }
         Ok(())
     }
 }

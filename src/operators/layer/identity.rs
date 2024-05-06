@@ -36,16 +36,15 @@ impl OperatorTrait for Identity {
         Ok(output)
     }
 
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
-        let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-        TensorF32::copy(output_gradient, backward_gradient)?;
-        Ok(())
-    }
-
     fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
         TensorF32::copy(input, output)
+    }
+
+    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+        let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
+        TensorF32::copy(output_gradient, backward_gradient)
     }
 }

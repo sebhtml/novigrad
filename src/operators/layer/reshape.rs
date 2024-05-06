@@ -20,12 +20,8 @@ impl Reshape {
 }
 
 impl OperatorTrait for Reshape {
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
-        let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-        TensorF32::copy(output_gradient, backward_gradient)?;
-        backward_gradient.resize(&self.input_size)?;
-        Ok(())
+    fn name(&self) -> &str {
+        "Reshape"
     }
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
@@ -46,14 +42,17 @@ impl OperatorTrait for Reshape {
         Ok(output)
     }
 
-    fn name(&self) -> &str {
-        "Reshape"
-    }
-
     fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
         TensorF32::copy(input, output)?;
         output.resize(&self.output_size)
+    }
+
+    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+        let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
+        TensorF32::copy(output_gradient, backward_gradient)?;
+        backward_gradient.resize(&self.input_size)
     }
 }

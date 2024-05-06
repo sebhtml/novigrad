@@ -205,6 +205,31 @@ impl TensorF32 {
         c: &mut TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
+        let op_result = Self::_gemm(transa, transb, alpha, a, b, beta, c, transpose_result);
+        match op_result {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                let device = &a.device;
+                let mut b_t = device.tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
+                b.transpose(&mut b_t)?;
+                println!("Incompatible shapes in matrix multiplication");
+                println!("Between A {:?} and B^T {:?}", a.size(), b_t.size(),);
+                debug_assert!(false);
+                Err(error)
+            }
+        }
+    }
+
+    fn _gemm(
+        transa: bool,
+        transb: bool,
+        alpha: f32,
+        a: &TensorF32,
+        b: &TensorF32,
+        beta: f32,
+        c: &mut TensorF32,
+        transpose_result: bool,
+    ) -> Result<(), Error> {
         let device = &a.device;
         if !transa && !transb && !transpose_result {
             if a.cols() != b.rows() {

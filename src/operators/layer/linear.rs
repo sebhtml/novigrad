@@ -13,10 +13,10 @@ pub struct Linear {
 
 impl Linear {
     pub fn new(
+        device: &Device,
         weights_rows: usize,
         weights_cols: usize,
         bias_rows: usize,
-        device: &Device,
     ) -> Self {
         // Xavier Initialization, or Glorot Initialization,
         let mut rng = thread_rng();

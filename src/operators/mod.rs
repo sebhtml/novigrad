@@ -1,5 +1,3 @@
-mod operators;
-pub use operators::*;
 mod activation;
 pub use activation::*;
 mod layer;

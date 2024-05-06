@@ -1,5 +1,5 @@
 use crate::tokenizers::TokenizerTrait;
-use crate::{into_one_hot_encoded_rows, Device, Operators, Tensor, Tokenizer};
+use crate::{into_one_hot_encoded_rows, CrossEntropyLoss, Device, Tensor, Tokenizer};
 use crate::{DatasetDetails, Error};
 use std::fs;
 mod model;
@@ -37,8 +37,7 @@ fn load_examples(
 }
 
 pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
-    let ops = Operators::new(device);
-    let architecture = Model::new(&ops);
+    let architecture = Model::new(device);
     let vocab_size = architecture.vocab_size();
     let mut tokenizer = if vocab_size == 256 {
         Tokenizer::ascii_tokenizer()
@@ -54,7 +53,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
         model: Box::new(architecture),
         epochs: 300,
         progress: 100,
-        loss_function_name: Box::new(ops.cross_entropy_loss()),
+        loss_function_name: Box::new(CrossEntropyLoss::new(device)),
         initial_total_error_min: 50.0,
         final_total_error_max: 0.002,
         learning_rate: 0.5,

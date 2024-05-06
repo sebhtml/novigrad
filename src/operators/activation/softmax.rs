@@ -12,7 +12,7 @@ pub struct Softmax {
 }
 
 impl Softmax {
-    pub fn new(using_cross_entropy_loss: bool, device: &Device) -> Self {
+    pub fn new(device: &Device, using_cross_entropy_loss: bool) -> Self {
         Self {
             device: device.clone(),
             using_cross_entropy_loss,

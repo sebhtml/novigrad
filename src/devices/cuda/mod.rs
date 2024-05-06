@@ -41,12 +41,12 @@ impl DeviceInterface for CudaDevice {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &TensorF32,
+        a: *const f32,
         lda: i32,
-        b: &TensorF32,
+        b: *const f32,
         ldb: i32,
         beta: f32,
-        c: &mut TensorF32,
+        c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error> {
         let handle = self.handle;
@@ -58,16 +58,15 @@ impl DeviceInterface for CudaDevice {
             false => cublasOperation_t::CUBLAS_OP_N,
             true => cublasOperation_t::CUBLAS_OP_T,
         };
-        let a = a.as_ptr() as *const c_void;
-        let b = b.as_ptr() as *const c_void;
-        let c = c.as_mut_ptr() as *mut c_void;
+        let a = a as *const c_void;
+        let b = b as *const c_void;
+        let c = c as *mut c_void;
         let a_type = cudaDataType::CUDA_R_32F;
         let b_type = cudaDataType::CUDA_R_32F;
         let c_type = cudaDataType::CUDA_R_32F;
         let alpha = &alpha as *const f32;
         let beta = &beta as *const f32;
 
-        // TODO use impl Gemm<f32> for CudaBlas with DevicePtr<T>.
         let status = unsafe {
             cublasSgemmEx(
                 handle, transa, transb, m, n, k, alpha, a, a_type, lda, b, b_type, ldb, beta, c,

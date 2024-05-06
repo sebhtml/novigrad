@@ -199,8 +199,19 @@ impl TensorF32 {
             }
             let (m, n, k) = (a.rows, b.cols, a.cols);
             device.sgemm(
-                false, false, n as i32, m as i32, k as i32, alpha, b, n as i32, a, k as i32, beta,
-                c, n as i32,
+                false,
+                false,
+                n as i32,
+                m as i32,
+                k as i32,
+                alpha,
+                b.as_ptr(),
+                n as i32,
+                a.as_ptr(),
+                k as i32,
+                beta,
+                c.as_mut_ptr(),
+                n as i32,
             )
         } else if transa && !transb && !transpose_result {
             if a.rows != b.rows {
@@ -215,12 +226,12 @@ impl TensorF32 {
                 m as i32,
                 k as i32,
                 alpha,
-                b,
+                b.as_ptr(),
                 n as i32,
-                a,
+                a.as_ptr(),
                 a.cols as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 n as i32,
             )
         } else if !transa && transb && !transpose_result {
@@ -236,12 +247,12 @@ impl TensorF32 {
                 m as i32,
                 k as i32,
                 alpha,
-                b,
+                b.as_ptr(),
                 b.cols as i32,
-                a,
+                a.as_ptr(),
                 k as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 n as i32,
             )
         } else if transa && transb && !transpose_result {
@@ -257,12 +268,12 @@ impl TensorF32 {
                 m as i32,
                 k as i32,
                 alpha,
-                b,
+                b.as_ptr(),
                 b.cols as i32,
-                a,
+                a.as_ptr(),
                 a.cols as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 n as i32,
             )
         } else if transa && transb && transpose_result {
@@ -278,12 +289,12 @@ impl TensorF32 {
                 n as i32,
                 k as i32,
                 alpha,
-                a,
+                a.as_ptr(),
                 a.cols as i32,
-                b,
+                b.as_ptr(),
                 b.cols as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 m as i32,
             )
         } else if transa && !transb && transpose_result {
@@ -299,12 +310,12 @@ impl TensorF32 {
                 n as i32,
                 k as i32,
                 alpha,
-                a,
+                a.as_ptr(),
                 a.cols as i32,
-                b,
+                b.as_ptr(),
                 b.cols as i32,
                 beta,
-                c,
+                c.as_mut_ptr(),
                 m as i32,
             )
         } else {

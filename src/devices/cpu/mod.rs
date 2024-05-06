@@ -25,12 +25,12 @@ impl DeviceInterface for CpuDevice {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &TensorF32,
+        a: *const f32,
         lda: i32,
-        b: &TensorF32,
+        b: *const f32,
         ldb: i32,
         beta: f32,
-        c: &mut TensorF32,
+        c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error> {
         let layout = Layout::ColumnMajor;
@@ -42,9 +42,6 @@ impl DeviceInterface for CpuDevice {
             false => Transpose::None,
             true => Transpose::Ordinary,
         };
-        let a = a.as_ptr();
-        let b = b.as_ptr();
-        let c = c.as_mut_ptr();
         unsafe {
             ffi::cblas_sgemm(
                 layout.into(),

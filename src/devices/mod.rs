@@ -49,12 +49,12 @@ pub trait DeviceInterface {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &TensorF32,
+        a: *const f32,
         lda: i32,
-        b: &TensorF32,
+        b: *const f32,
         ldb: i32,
         beta: f32,
-        c: &mut TensorF32,
+        c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error>;
 
@@ -234,12 +234,12 @@ impl DeviceInterface for Device {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &TensorF32,
+        a: *const f32,
         lda: i32,
-        b: &TensorF32,
+        b: *const f32,
         ldb: i32,
         beta: f32,
-        c: &mut TensorF32,
+        c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error> {
         match self.device.borrow() {

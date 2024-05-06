@@ -10,7 +10,7 @@ pub struct Embedding {
 }
 
 impl Embedding {
-    pub fn new(num_embeddings: usize, embedding_dim: usize, device: &Device) -> Self {
+    pub fn new(device: &Device, num_embeddings: usize, embedding_dim: usize) -> Self {
         let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim);
         let len = embedding_table.len();
         let mut transposed = device.tensor_f32(embedding_dim, num_embeddings, vec![0.0; len]);

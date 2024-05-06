@@ -1,6 +1,7 @@
+use crate::{
+    Device, Embedding, Error, Identity, Linear, MatMul, OperatorTrait, Reshape, Softmax, Tensor,
+};
 use std::rc::Rc;
-
-use crate::{Embedding, Error, Linear, MatMul, OperatorTrait, Operators, Reshape, Softmax, Tensor};
 
 pub struct Model {
     vocab_size: usize,
@@ -13,7 +14,7 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(ops: &Operators) -> Self {
+    pub fn new(device: &Device) -> Self {
         let _batch_size = 1;
         let sequence_length = 32;
         let vocab_size = 256;
@@ -22,25 +23,31 @@ impl Model {
         let embedding_dim = 384;
         let _num_heads = 0;
         let output_rows = 1;
-        let device = ops.device();
+
         Self {
             vocab_size,
             parameters: device.tensor(
-                Rc::new(ops.identity()),
+                Rc::new(Identity::new(device)),
                 &vec![],
                 embedding_dim,
                 embedding_dim,
                 vec![0.0; embedding_dim * embedding_dim],
                 true,
             ),
-            embedding: ops.embedding(num_embeddings, embedding_dim),
-            matmul: ops.matmul(),
-            reshape: ops.reshape(
+            embedding: Embedding::new(device, num_embeddings, embedding_dim),
+            matmul: MatMul::new(device),
+            reshape: Reshape::new(
+                device,
                 vec![sequence_length, embedding_dim],
                 vec![output_rows, sequence_length * embedding_dim],
             ),
-            linear: ops.linear(vocab_size, sequence_length * embedding_dim, output_rows),
-            softmax: ops.softmax(true),
+            linear: Linear::new(
+                device,
+                vocab_size,
+                sequence_length * embedding_dim,
+                output_rows,
+            ),
+            softmax: Softmax::new(device, true),
         }
     }
 

@@ -21,7 +21,7 @@ impl Operators {
     }
 
     pub fn embedding(&self, num_embeddings: usize, embedding_dim: usize) -> Embedding {
-        Embedding::new(num_embeddings, embedding_dim, &self.device)
+        Embedding::new(&self.device, num_embeddings, embedding_dim)
     }
 
     pub fn matmul(&self) -> MatMul {
@@ -33,7 +33,7 @@ impl Operators {
     }
 
     pub fn linear(&self, weights_rows: usize, weights_cols: usize, bias_rows: usize) -> Linear {
-        Linear::new(weights_rows, weights_cols, bias_rows, &self.device)
+        Linear::new(&self.device, weights_rows, weights_cols, bias_rows)
     }
 
     pub fn sigmoid(&self) -> Sigmoid {
@@ -41,7 +41,7 @@ impl Operators {
     }
 
     pub fn softmax(&self, using_cross_entropy_loss: bool) -> Softmax {
-        Softmax::new(using_cross_entropy_loss, &self.device)
+        Softmax::new(&self.device, using_cross_entropy_loss)
     }
 
     pub fn residual_sum_of_squares(&self) -> ResidualSumOfSquares {

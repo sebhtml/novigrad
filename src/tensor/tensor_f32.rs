@@ -119,8 +119,7 @@ impl TensorF32 {
     }
 
     // TODO use device for element_wise_mul
-    pub fn mul(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
-        let left = self;
+    pub fn mul(left: &TensorF32, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
         if left.size() != right.size() {
             return Err(Error::IncompatibleTensorShapes);
         }

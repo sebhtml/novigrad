@@ -1,5 +1,6 @@
 == Attention ==
 
+- implement Mul
 - implement Scale
 - implement Mask
 - implement Attention

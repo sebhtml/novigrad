@@ -8,3 +8,5 @@ mod matmul;
 pub use matmul::*;
 mod identity;
 pub use identity::*;
+mod mul;
+pub use mul::*;

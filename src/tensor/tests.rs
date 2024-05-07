@@ -594,7 +594,7 @@ fn element_wise_mul_result() {
     );
 
     let mut result = device.tensor_f32(3, 2, vec![0.0; 6]);
-    lhs.mul(&rhs, &mut result).unwrap();
+    TensorF32::mul(&lhs, &rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 

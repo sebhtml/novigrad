@@ -10,6 +10,7 @@ pub struct Tensor {
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
     realized: Rc<RefCell<bool>>,
+    requires_grad: bool,
 }
 
 impl Tensor {
@@ -19,6 +20,7 @@ impl Tensor {
         inputs: &[Tensor],
         tensor: Rc<RefCell<TensorF32>>,
         gradient: Rc<RefCell<TensorF32>>,
+        requires_grad: bool,
     ) -> Self {
         Self {
             device: device.clone(),
@@ -27,6 +29,7 @@ impl Tensor {
             tensor,
             gradient,
             realized: Default::default(),
+            requires_grad,
         }
     }
 
@@ -36,6 +39,10 @@ impl Tensor {
 
     pub fn inputs(&self) -> &Vec<Tensor> {
         &self.inputs
+    }
+
+    pub fn requires_grad(&self) -> bool {
+        self.requires_grad
     }
 
     pub fn realize(&self) -> Result<(), Error> {
@@ -108,18 +115,20 @@ impl Tensor {
             let operator = output.operator().deref();
             let inputs = output.inputs();
 
-            // Store enabled gradients to optimize them later.
             operator.backward(inputs, output)?;
 
-            // Clip the backward gradients.
             for input in inputs {
-                let backward_gradient: &mut TensorF32 = &mut input.gradient().deref().borrow_mut();
-                let back_propagated_gradient = self.device.tensor_f32(
-                    backward_gradient.rows(),
-                    backward_gradient.cols(),
-                    backward_gradient.get_values()?,
+                if !input.requires_grad() {
+                    continue;
+                }
+                let input_gradient: &mut TensorF32 = &mut input.gradient().deref().borrow_mut();
+                let input_gradient_tmp = self.device.tensor_f32(
+                    input_gradient.rows(),
+                    input_gradient.cols(),
+                    input_gradient.get_values()?,
                 );
-                back_propagated_gradient.clip(-1.0, 1.0, backward_gradient)?;
+                // Clip the backward gradients.
+                input_gradient_tmp.clip(-1.0, 1.0, input_gradient)?;
             }
         }
         Ok(self.device.tensors_with_requires_grad().clone())

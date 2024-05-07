@@ -25,6 +25,7 @@ impl Embedding {
             transposed.cols(),
             transposed.get_values().unwrap(),
             true,
+            true,
         );
 
         let matmul = MatMul::new(device);

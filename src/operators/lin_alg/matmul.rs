@@ -33,6 +33,7 @@ impl OperatorTrait for MatMul {
             rows,
             cols,
             vec![0.0; len],
+            true,
             false,
         );
         Ok(output)
@@ -54,19 +55,23 @@ impl OperatorTrait for MatMul {
         debug_assert_eq!(inputs.len(), 2);
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
 
-        let input_1_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
-        let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let a: &TensorF32 = input_0;
-        let b: &TensorF32 = output_gradient;
-        let c: &mut TensorF32 = input_1_gradient;
-        TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)?;
+        if inputs[1].requires_grad() {
+            let input_1_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
+            let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
+            let a: &TensorF32 = input_0;
+            let b: &TensorF32 = output_gradient;
+            let c: &mut TensorF32 = input_1_gradient;
+            TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)?;
+        }
 
-        let input_0_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-        let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
-        let a: &TensorF32 = input_1;
-        let b: &TensorF32 = output_gradient;
-        let c: &mut TensorF32 = input_0_gradient;
-        TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
+        if inputs[0].requires_grad() {
+            let input_0_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
+            let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
+            let a: &TensorF32 = input_1;
+            let b: &TensorF32 = output_gradient;
+            let c: &mut TensorF32 = input_0_gradient;
+            TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
+        }
 
         Ok(())
     }

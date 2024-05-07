@@ -111,6 +111,7 @@ impl OperatorTrait for Softmax {
             rows,
             cols,
             vec![0.0; len],
+            true,
             false,
         );
         Ok(output)
@@ -123,22 +124,25 @@ impl OperatorTrait for Softmax {
     }
 
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
-        let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-        // Compute activation function derivative.
-        if self.using_cross_entropy_loss {
-            // Softmax and Cross Entropy Loss are best friends.
-            return TensorF32::copy(output_gradient, backward_gradient);
+        if inputs[0].requires_grad() {
+            let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
+            let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+            // Compute activation function derivative.
+            if self.using_cross_entropy_loss {
+                // Softmax and Cross Entropy Loss are best friends.
+                return TensorF32::copy(output_gradient, input_gradient);
+            }
+
+            let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+            let output: &TensorF32 = &output.tensor().deref().borrow();
+            let rows = input.rows();
+            let cols = input.cols();
+            let len = rows * cols;
+            let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+            self.derive(input, output, &mut layer_f_derivative)?;
+            layer_f_derivative.element_wise_mul(output_gradient, input_gradient)?;
         }
 
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &TensorF32 = &output.tensor().deref().borrow();
-        let rows = input.rows();
-        let cols = input.cols();
-        let len = rows * cols;
-        let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-        self.derive(input, output, &mut layer_f_derivative)?;
-
-        layer_f_derivative.element_wise_mul(output_gradient, backward_gradient)
+        Ok(())
     }
 }

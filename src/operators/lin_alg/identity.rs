@@ -32,6 +32,7 @@ impl OperatorTrait for Identity {
             rows,
             cols,
             vec![0.0; len],
+            true,
             false,
         );
         Ok(output)
@@ -44,8 +45,12 @@ impl OperatorTrait for Identity {
     }
 
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
-        let backward_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-        TensorF32::copy(output_gradient, backward_gradient)
+        if inputs[0].requires_grad() {
+            let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
+            let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+            TensorF32::copy(output_gradient, input_gradient)?;
+        }
+
+        Ok(())
     }
 }

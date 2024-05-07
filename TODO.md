@@ -1,7 +1,5 @@
 == Attention ==
 
-- implement Mul
-- implement Scale
 - implement Mask
 - implement Attention
 - use Attention in megaman

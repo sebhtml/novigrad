@@ -1,7 +1,7 @@
 mod activation;
 pub use activation::*;
-mod layer;
-pub use layer::*;
+mod view;
+pub use view::*;
 mod loss;
 pub use loss::*;
 mod lin_alg;

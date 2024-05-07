@@ -4,6 +4,8 @@ mod layer;
 pub use layer::*;
 mod loss;
 pub use loss::*;
+mod lin_alg;
+pub use lin_alg::*;
 
 use crate::{Error, Tensor};
 use core::fmt::Debug;

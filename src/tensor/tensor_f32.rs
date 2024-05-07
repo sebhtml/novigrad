@@ -4,7 +4,7 @@ use crate::{
     Error,
 };
 
-use std::{fmt::Display, ops::Mul};
+use std::fmt::Display;
 
 #[derive(Debug)]
 pub struct TensorF32 {
@@ -31,47 +31,6 @@ impl TensorF32 {
             size: vec![rows, cols],
             buffer,
         }
-    }
-
-    fn operation<Operation>(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error>
-    where
-        Operation: F32Operation,
-    {
-        let left = self;
-        if left.size() != right.size() {
-            return Err(Error::IncompatibleTensorShapes);
-        }
-
-        debug_assert_eq!(result.size(), left.size());
-        TensorF32::scalar_mul(0.0, result)?;
-
-        let mut result_values = result.get_values()?;
-        let left_values = left.get_values()?;
-        let right_values = right.get_values()?;
-
-        let result_ptr = result_values.as_mut_ptr();
-        let left_ptr = left_values.as_ptr();
-        let right_ptr = right_values.as_ptr();
-
-        unsafe {
-            let mut index = 0;
-            let len = left_values.len();
-            while index < len {
-                let left_cell = left_ptr.add(index);
-                let right_cell = right_ptr.add(index);
-                let result_cell = result_ptr.add(index);
-                let left = *left_cell;
-                let right = *right_cell;
-                let value = Operation::op(left, right);
-                debug_assert!(value.is_finite());
-                *result_cell = value;
-                index += 1;
-            }
-        }
-
-        result.set_values(result_values);
-
-        Ok(())
     }
 
     pub fn rows(&self) -> usize {
@@ -156,8 +115,42 @@ impl TensorF32 {
     }
 
     // TODO use device for element_wise_mul
-    pub fn element_wise_mul(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
-        self.operation::<F32Mul>(right, result)
+    pub fn mul(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+        let left = self;
+        if left.size() != right.size() {
+            return Err(Error::IncompatibleTensorShapes);
+        }
+
+        debug_assert_eq!(result.size(), left.size());
+        TensorF32::scalar_mul(0.0, result)?;
+
+        let mut result_values = result.get_values()?;
+        let left_values = left.get_values()?;
+        let right_values = right.get_values()?;
+
+        let result_ptr = result_values.as_mut_ptr();
+        let left_ptr = left_values.as_ptr();
+        let right_ptr = right_values.as_ptr();
+
+        unsafe {
+            let mut index = 0;
+            let len = left_values.len();
+            while index < len {
+                let left_cell = left_ptr.add(index);
+                let right_cell = right_ptr.add(index);
+                let result_cell = result_ptr.add(index);
+                let left = *left_cell;
+                let right = *right_cell;
+                let value = left * right;
+                debug_assert!(value.is_finite());
+                *result_cell = value;
+                index += 1;
+            }
+        }
+
+        result.set_values(result_values);
+
+        Ok(())
     }
 
     pub fn dot_product(x: &TensorF32, y: &TensorF32) -> Result<f32, Error> {
@@ -435,18 +428,6 @@ impl Display for TensorF32 {
             _ = write!(f, "\n");
         }
         Ok(())
-    }
-}
-
-pub trait F32Operation {
-    fn op(left: f32, right: f32) -> f32;
-}
-
-struct F32Mul {}
-
-impl F32Operation for F32Mul {
-    fn op(left: f32, right: f32) -> f32 {
-        <f32 as Mul>::mul(left, right)
     }
 }
 

@@ -140,7 +140,7 @@ impl OperatorTrait for Softmax {
             let len = rows * cols;
             let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
             self.derive(input, output, &mut layer_f_derivative)?;
-            layer_f_derivative.element_wise_mul(output_gradient, input_gradient)?;
+            layer_f_derivative.mul(output_gradient, input_gradient)?;
         }
 
         Ok(())

@@ -6,13 +6,13 @@ use crate::{devices::Device, Error, Identity, OperatorTrait, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Gemm.html
 #[derive(Clone)]
-pub struct Linear {
+pub struct Gemm {
     device: Device,
     weights: Tensor,
     biases: Tensor,
 }
 
-impl Linear {
+impl Gemm {
     pub fn new(
         device: &Device,
         weights_rows: usize,
@@ -49,7 +49,7 @@ impl Linear {
             true,
         );
 
-        Linear {
+        Gemm {
             device: device.clone(),
             weights,
             biases,
@@ -57,7 +57,7 @@ impl Linear {
     }
 }
 
-impl OperatorTrait for Linear {
+impl OperatorTrait for Gemm {
     fn name(&self) -> &str {
         "Linear"
     }

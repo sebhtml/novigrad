@@ -1,5 +1,5 @@
 use crate::{
-    Device, Embedding, Error, Gemm, Identity, MatMul, OperatorTrait, Reshape, Softmax, Tensor,
+    Device, Embedding, Error, Identity, Linear, MatMul, OperatorTrait, Reshape, Softmax, Tensor,
 };
 use std::rc::Rc;
 
@@ -9,7 +9,7 @@ pub struct Model {
     embedding: Embedding,
     matmul: MatMul,
     reshape: Reshape,
-    linear: Gemm,
+    linear: Linear,
     softmax: Softmax,
 }
 
@@ -41,7 +41,7 @@ impl Model {
                 vec![sequence_length, embedding_dim],
                 vec![output_rows, sequence_length * embedding_dim],
             ),
-            linear: Gemm::new(
+            linear: Linear::new(
                 device,
                 vocab_size,
                 sequence_length * embedding_dim,

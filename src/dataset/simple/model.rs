@@ -1,13 +1,13 @@
-use crate::{Device, Embedding, Error, Gemm, OperatorTrait, Reshape, Sigmoid, Softmax, Tensor};
+use crate::{Device, Embedding, Error, Linear, OperatorTrait, Reshape, Sigmoid, Softmax, Tensor};
 
 pub struct Model {
     embedding: Embedding,
-    linear_0: Gemm,
+    linear_0: Linear,
     sigmoid_0: Sigmoid,
     reshape: Reshape,
-    linear_1: Gemm,
+    linear_1: Linear,
     sigmoid_1: Sigmoid,
-    linear_2: Gemm,
+    linear_2: Linear,
     softmax: Softmax,
 }
 
@@ -23,21 +23,21 @@ impl Model {
 
         Self {
             embedding: Embedding::new(device, num_embeddings, embedding_dim),
-            linear_0: Gemm::new(device, embedding_dim, embedding_dim, sequence_length),
+            linear_0: Linear::new(device, embedding_dim, embedding_dim, sequence_length),
             sigmoid_0: Sigmoid::new(device),
             reshape: Reshape::new(
                 device,
                 vec![sequence_length, embedding_dim],
                 vec![output_rows, sequence_length * embedding_dim],
             ),
-            linear_1: Gemm::new(
+            linear_1: Linear::new(
                 device,
                 embedding_dim,
                 sequence_length * embedding_dim,
                 output_rows,
             ),
             sigmoid_1: Sigmoid::new(device),
-            linear_2: Gemm::new(device, vocab_size, embedding_dim, output_rows),
+            linear_2: Linear::new(device, vocab_size, embedding_dim, output_rows),
             softmax: Softmax::new(device, true),
         }
     }

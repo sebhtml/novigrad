@@ -1,9 +1,11 @@
 mod activation;
 pub use activation::*;
-mod layer;
-pub use layer::*;
+mod view;
+pub use view::*;
 mod loss;
 pub use loss::*;
+mod lin_alg;
+pub use lin_alg::*;
 
 use crate::{Error, Tensor};
 use core::fmt::Debug;

@@ -33,6 +33,7 @@ impl Model {
                 embedding_dim,
                 vec![0.0; embedding_dim * embedding_dim],
                 true,
+                true,
             ),
             embedding: Embedding::new(device, num_embeddings, embedding_dim),
             matmul: MatMul::new(device),

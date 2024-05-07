@@ -1,12 +1,13 @@
-use std::{ops::Deref, rc::Rc};
+use std::rc::Rc;
 
-use crate::{devices::Device, Error, Identity, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, Identity, MatMul, OperatorTrait, Tensor, TensorF32};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
+/// Embedding is not a ONNX operator.
 #[derive(Clone)]
 pub struct Embedding {
     embedding_table: Tensor,
-    device: Device,
+    matmul: MatMul,
 }
 
 impl Embedding {
@@ -24,11 +25,14 @@ impl Embedding {
             transposed.cols(),
             transposed.get_values().unwrap(),
             true,
+            true,
         );
+
+        let matmul = MatMul::new(device);
 
         Self {
             embedding_table,
-            device: device.clone(),
+            matmul,
         }
     }
 }
@@ -55,48 +59,19 @@ fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: us
 
 impl OperatorTrait for Embedding {
     fn name(&self) -> &str {
-        "Embedding"
+        self.matmul.name()
     }
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        debug_assert_eq!(inputs.len(), 1);
-        let embedding_table: &TensorF32 = &self.embedding_table.tensor().deref().borrow();
-        debug_assert_eq!(input.cols(), embedding_table.cols());
-
-        let a = input;
-        let b = &embedding_table;
-        let rows = a.rows();
-        let cols = b.rows();
-        let len = rows * cols;
-        let output = self.device.tensor(
-            Rc::new(self.clone()),
-            inputs,
-            rows,
-            cols,
-            vec![0.0; len],
-            false,
-        );
-        Ok(output)
+        let inputs = &[inputs[0].clone(), self.embedding_table.clone()];
+        self.matmul.forward(inputs)
     }
 
     fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let embedding_table: &TensorF32 = &self.embedding_table.tensor().deref().borrow();
-        let a = input;
-        let b = &embedding_table;
-        let c = &mut output.tensor().deref().borrow_mut();
-        TensorF32::matmul(false, true, a, b, c, false)
+        self.matmul.forward_realize(inputs, output)
     }
 
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
-        let embedding_table_gradient: &mut TensorF32 =
-            &mut self.embedding_table.gradient().deref().borrow_mut();
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let a: &TensorF32 = output_gradient;
-        let b: &TensorF32 = input;
-        let c: &mut TensorF32 = embedding_table_gradient;
-        TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)
+        self.matmul.backward(inputs, output)
     }
 }

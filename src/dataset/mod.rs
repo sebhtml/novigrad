@@ -54,5 +54,6 @@ pub fn into_one_hot_encoded_rows(
         num_classes,
         result_values,
         false,
+        false,
     ))
 }

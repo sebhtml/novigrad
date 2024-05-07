@@ -91,7 +91,7 @@ pub trait DeviceInterface {
 #[derive(Clone, Debug)]
 pub struct Device {
     used: Rc<RefCell<usize>>,
-    tensors_with_requires_grad: Rc<RefCell<Vec<Tensor>>>,
+    tensors_to_optimize: Rc<RefCell<Vec<Tensor>>>,
     device: Rc<DeviceEnum>,
     available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevBuffer>>>>,
 }
@@ -113,7 +113,7 @@ impl Device {
     pub fn new(device: DeviceEnum) -> Self {
         Self {
             used: Default::default(),
-            tensors_with_requires_grad: Rc::new(RefCell::new(vec![])),
+            tensors_to_optimize: Rc::new(RefCell::new(vec![])),
             device: Rc::new(device),
             available_buffers: Default::default(),
         }
@@ -168,6 +168,7 @@ impl Device {
         cols: usize,
         values: Vec<f32>,
         requires_grad: bool,
+        optimize: bool,
     ) -> Tensor {
         let len = rows * cols;
         let tensor = Tensor::new(
@@ -181,9 +182,10 @@ impl Device {
                 cols,
                 vec![0.0; len],
             ))),
+            requires_grad,
         );
-        if requires_grad {
-            self.tensors_with_requires_grad
+        if optimize {
+            self.tensors_to_optimize
                 .deref()
                 .borrow_mut()
                 .push(tensor.clone())
@@ -192,7 +194,7 @@ impl Device {
     }
 
     pub fn tensors_with_requires_grad(&self) -> &Rc<RefCell<Vec<Tensor>>> {
-        &self.tensors_with_requires_grad
+        &self.tensors_to_optimize
     }
 
     pub fn zero_grad(&self) -> Result<(), Error> {

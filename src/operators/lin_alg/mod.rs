@@ -1,5 +1,5 @@
-mod linear;
-pub use linear::*;
+mod gemm;
+pub use gemm::*;
 mod embedding;
 pub use embedding::*;
 mod matmul;

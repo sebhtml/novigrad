@@ -7,7 +7,7 @@ use super::LossFunction;
 #[cfg(test)]
 mod tests;
 
-/// https://onnx.ai/onnx/operators/index.html ???
+/// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
 pub struct ResidualSumOfSquares {
     device: Device,
@@ -49,7 +49,7 @@ impl LossFunction for ResidualSumOfSquares {
     ) -> Result<(), Error> {
         TensorF32::copy(expected, result)?;
         TensorF32::sub(actual, result)?;
-        TensorF32::scalar_mul(-2.0, result)
+        TensorF32::scale(-2.0, result)
     }
 }
 

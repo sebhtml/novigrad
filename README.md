@@ -14,13 +14,14 @@ Rust
 - [candle](https://github.com/huggingface/candle)
 - [dfdx]( https://github.com/coreylowman/dfdx)
 - [tch-rs](https://github.com/LaurentMazare/tch-rs)
+- [wonnx](https://github.com/webonnx/wonnx/)
 
 Python
 - [PyTorch](https://github.com/pytorch/pytorch)
 - [TensorFlow](https://github.com/tensorflow/tensorflow)
 - [micrograd](https://github.com/karpathy/micrograd)
-- [teenygrad](https://github.com/tinygrad/teenygrad)
 - [tinygrad](https://github.com/tinygrad/tinygrad)
+- [teenygrad](https://github.com/tinygrad/teenygrad)
 
 C++
 - [onnx](https://github.com/onnx/onnx)

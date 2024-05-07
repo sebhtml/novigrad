@@ -122,7 +122,7 @@ impl TensorF32 {
         }
 
         debug_assert_eq!(result.size(), left.size());
-        TensorF32::scalar_mul(0.0, result)?;
+        TensorF32::scale(0.0, result)?;
 
         let mut result_values = result.get_values()?;
         let left_values = left.get_values()?;
@@ -182,7 +182,7 @@ impl TensorF32 {
         c: &mut TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
-        TensorF32::scalar_mul(0.0, c)?;
+        TensorF32::scale(0.0, c)?;
         let alpha = 1.0;
         let beta = 0.0;
         TensorF32::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)
@@ -392,7 +392,7 @@ impl TensorF32 {
         Ok(())
     }
 
-    pub fn scalar_mul(alpha: f32, x: &mut TensorF32) -> Result<(), Error> {
+    pub fn scale(alpha: f32, x: &mut TensorF32) -> Result<(), Error> {
         let device = x.device.clone();
         let n = x.len() as i32;
         let incx = 1;

@@ -7,6 +7,7 @@ use super::LossFunction;
 #[cfg(test)]
 mod tests;
 
+/// https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
 pub struct ResidualSumOfSquares {
     device: Device,

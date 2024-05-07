@@ -4,6 +4,7 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{devices::Device, Error, Identity, OperatorTrait, Tensor, TensorF32};
 
+/// https://onnx.ai/onnx/operators/onnx__Gemm.html
 #[derive(Clone)]
 pub struct Linear {
     device: Device,

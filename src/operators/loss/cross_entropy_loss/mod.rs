@@ -3,6 +3,7 @@ use std::{ops::Deref, rc::Rc};
 use super::LossFunction;
 use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
+/// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
 #[derive(Clone)]
 pub struct CrossEntropyLoss {
     device: Device,

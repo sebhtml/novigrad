@@ -2,6 +2,7 @@ use std::{ops::Deref, rc::Rc};
 
 use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
 
+/// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]
 pub struct MatMul {
     device: Device,

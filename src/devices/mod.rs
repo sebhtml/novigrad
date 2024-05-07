@@ -201,7 +201,7 @@ impl Device {
         let gradients: &[Tensor] = &self.tensors_with_requires_grad().deref().borrow();
         for gradient in gradients {
             let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
-            TensorF32::scale(0.0, gradient)?;
+            gradient.zero()?;
         }
         Ok(())
     }

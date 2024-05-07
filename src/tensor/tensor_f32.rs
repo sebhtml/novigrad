@@ -114,6 +114,10 @@ impl TensorF32 {
         self.buffer.set_values(new_values)
     }
 
+    pub fn zero(&mut self) -> Result<(), Error> {
+        TensorF32::scale(0.0, self)
+    }
+
     // TODO use device for element_wise_mul
     pub fn mul(&self, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
         let left = self;
@@ -122,7 +126,7 @@ impl TensorF32 {
         }
 
         debug_assert_eq!(result.size(), left.size());
-        TensorF32::scale(0.0, result)?;
+        result.zero()?;
 
         let mut result_values = result.get_values()?;
         let left_values = left.get_values()?;
@@ -182,7 +186,7 @@ impl TensorF32 {
         c: &mut TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
-        TensorF32::scale(0.0, c)?;
+        c.zero()?;
         let alpha = 1.0;
         let beta = 0.0;
         TensorF32::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)

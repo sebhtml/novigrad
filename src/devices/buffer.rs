@@ -6,7 +6,6 @@ use rustacuda::memory::DeviceBuffer;
 
 use crate::Error;
 use crate::{Device, ErrorEnum};
-use crate::{DeviceEnum, DeviceInterface};
 
 #[derive(Debug)]
 pub struct DevBuffer {

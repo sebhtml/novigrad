@@ -209,6 +209,7 @@ impl TensorF32 {
                 let mut b_t = device.tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
                 b.transpose(&mut b_t)?;
                 println!("Incompatible shapes in matrix multiplication");
+                println!("transa: {}, transb: {}", transa, transb);
                 println!("Between A {:?} and B^T {:?}", a.size(), b_t.size(),);
                 debug_assert!(false);
                 Err(error)

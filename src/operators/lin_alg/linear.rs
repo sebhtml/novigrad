@@ -4,7 +4,8 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{Device, Error, Gemm, Identity, OperatorTrait, Tensor};
 
-/// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
+/// Linear is not a ONNX operator.
+/// https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
 pub struct Linear {
     weights: Tensor,

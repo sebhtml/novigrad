@@ -38,7 +38,7 @@ impl Model {
                 true,
             ),
             embedding: Embedding::new(device, num_embeddings, embedding_dim),
-            matmul: MatMul::new(device),
+            matmul: MatMul::new(device, true),
             reshape: Reshape::new(
                 device,
                 vec![sequence_length, embedding_dim],

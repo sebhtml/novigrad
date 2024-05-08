@@ -4,6 +4,7 @@ use crate::{devices::Device, Error, Identity, MatMul, OperatorTrait, Tensor, Ten
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 /// Embedding is not a ONNX operator.
+/// https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
 pub struct Embedding {
     embedding_table: Tensor,
@@ -28,7 +29,8 @@ impl Embedding {
             true,
         );
 
-        let matmul = MatMul::new(device);
+        let transb = true;
+        let matmul = MatMul::new(device, transb);
 
         Self {
             embedding_table,

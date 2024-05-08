@@ -12,8 +12,9 @@ use cudarc::{
     },
     driver::{self},
 };
+use rustacuda::memory::DeviceBuffer;
 
-use crate::{DeviceInterface, Error, ErrorEnum};
+use crate::{DevBufferEnum, DeviceInterface, Error, ErrorEnum};
 
 #[derive(Debug)]
 pub struct CudaDevice {
@@ -160,5 +161,11 @@ impl DeviceInterface for CudaDevice {
                 ErrorEnum::IncompatibleTensorShapes,
             )
         })
+    }
+
+    fn device_buffer(&self, len: usize) -> DevBufferEnum {
+        // TODO don't unwrap
+        let buffer = unsafe { DeviceBuffer::uninitialized(len).unwrap() };
+        DevBufferEnum::CudaBuffer(buffer)
     }
 }

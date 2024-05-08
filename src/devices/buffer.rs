@@ -4,9 +4,9 @@ use std::{borrow::BorrowMut, mem::swap};
 use rustacuda::memory::CopyDestination;
 use rustacuda::memory::DeviceBuffer;
 
-use crate::DeviceEnum;
 use crate::Error;
 use crate::{Device, ErrorEnum};
+use crate::{DeviceEnum, DeviceInterface};
 
 #[derive(Debug)]
 pub struct DevBuffer {
@@ -33,18 +33,7 @@ pub enum DevBufferEnum {
 
 impl DevBuffer {
     pub fn new(device: &Device, len: usize) -> DevBuffer {
-        let buffer = match device.device.deref() {
-            DeviceEnum::Cpu(_) => {
-                let values = vec![0.0; len];
-                DevBufferEnum::CpuBuffer(values)
-            }
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(_) => {
-                // TODO don't unwrap
-                let buffer = unsafe { DeviceBuffer::uninitialized(len).unwrap() };
-                DevBufferEnum::CudaBuffer(buffer)
-            }
-        };
+        let buffer = device.device.deref().device_buffer(len);
         DevBuffer {
             device: device.clone(),
             buffer,

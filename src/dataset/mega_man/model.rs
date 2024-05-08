@@ -1,5 +1,6 @@
 use crate::{
-    Device, Embedding, Error, Identity, Linear, MatMul, OperatorTrait, Reshape, Softmax, Tensor,
+    Device, Embedding, Error, Identity, Linear, Mask, MatMul, OperatorTrait, Reshape, Softmax,
+    Tensor,
 };
 use std::rc::Rc;
 
@@ -24,6 +25,7 @@ impl Model {
         let _num_heads = 0;
         let output_rows = 1;
 
+        let mask = Mask::try_new(device, sequence_length, sequence_length).unwrap();
         Self {
             vocab_size,
             parameters: device.tensor(

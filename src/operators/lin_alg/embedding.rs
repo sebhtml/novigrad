@@ -59,7 +59,7 @@ fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: us
 
 impl OperatorTrait for Embedding {
     fn name(&self) -> &str {
-        self.matmul.name()
+        "Embedding"
     }
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {

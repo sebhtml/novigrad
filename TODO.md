@@ -1,8 +1,9 @@
 == Attention ==
 
-- implement Mask
 - implement Attention
 - use Attention in megaman
+
+- remove random calls to unwrap()
 
 == Mini Batch ==
 

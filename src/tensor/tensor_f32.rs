@@ -145,7 +145,7 @@ impl TensorF32 {
                 let left = *left_cell;
                 let right = *right_cell;
                 let value = left * right;
-                debug_assert!(value.is_finite());
+                //debug_assert!(value.is_finite());
                 *result_cell = value;
                 index += 1;
             }

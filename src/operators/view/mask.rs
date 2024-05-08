@@ -29,7 +29,7 @@ impl Mask {
             for col in 0..mask_cols {
                 if row > col {
                     let index = mask.tensor().deref().borrow().index(row, col);
-                    values[index] = 0.0;
+                    values[index] = f32::NEG_INFINITY;
                 }
             }
         }

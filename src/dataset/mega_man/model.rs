@@ -25,7 +25,17 @@ impl Model {
         let _num_heads = 0;
         let output_rows = 1;
 
-        let mask = Mask::try_new(device, sequence_length, sequence_length).unwrap();
+        /*
+        TODO
+                let attention =
+            MaskedScaledDotProductAttention::try_new(device, sequence_length, embedding_dim)
+                .unwrap();
+
+        let weights_rows = vocab_size;
+        let weights_cols = embedding_dim;
+        let bias_rows = sequence_length;
+        let linear = Linear::new(device, weights_rows, weights_cols, bias_rows);
+         */
         Self {
             vocab_size,
             parameters: device.tensor(

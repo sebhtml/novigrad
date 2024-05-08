@@ -44,6 +44,10 @@ impl Model {
 }
 
 impl OperatorTrait for Model {
+    fn name(&self) -> &str {
+        "SimpleModel"
+    }
+
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let state_0: Tensor = self.embedding.forward(inputs)?;
         let state_1 = self.linear_0.forward(&[state_0])?;
@@ -56,12 +60,8 @@ impl OperatorTrait for Model {
         Ok(state_7)
     }
 
-    fn forward_realize(&self, _inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        output.realize()
-    }
-
-    fn name(&self) -> &str {
-        "SimpleModel"
+    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        Err(Error::UnsupportedOperation)
     }
 
     fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {

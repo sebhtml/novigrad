@@ -9,14 +9,14 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub struct Softmax {
     device: Device,
-    using_cross_entropy_loss: bool,
+    next_op_is_cross_entropy_loss: bool,
 }
 
 impl Softmax {
-    pub fn new(device: &Device, using_cross_entropy_loss: bool) -> Self {
+    pub fn new(device: &Device, next_op_is_cross_entropy_loss: bool) -> Self {
         Self {
             device: device.clone(),
-            using_cross_entropy_loss,
+            next_op_is_cross_entropy_loss,
         }
     }
 }
@@ -128,7 +128,7 @@ impl OperatorTrait for Softmax {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
             // Compute activation function derivative.
-            if self.using_cross_entropy_loss {
+            if self.next_op_is_cross_entropy_loss {
                 // Softmax and Cross Entropy Loss are best friends.
                 return TensorF32::copy(output_gradient, input_gradient);
             }

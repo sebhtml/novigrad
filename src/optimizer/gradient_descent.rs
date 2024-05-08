@@ -7,7 +7,7 @@ pub struct GradientDescent {}
 
 impl OptimizerTrait for GradientDescent {
     fn optimize(&self, gradients: &[Tensor], learning_rate: f32) -> Result<(), Error> {
-        println!("Optimizing {} model tensors", gradients.len());
+        //println!("Optimizing {} model tensors", gradients.len());
         for gradient in gradients {
             let tensor: &mut TensorF32 = &mut gradient.tensor().deref().borrow_mut();
             let gradient: &TensorF32 = &gradient.gradient().deref().borrow();

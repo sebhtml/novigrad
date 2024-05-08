@@ -1,6 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Gemm, Identity, Mask, MatMul, OperatorTrait, Scale, Softmax, Tensor};
+use crate::{
+    Device, Error, ErrorEnum, Gemm, Identity, Mask, MatMul, OperatorTrait, Scale, Softmax, Tensor,
+};
 
 /// MaskedScaledDotProductAttention is not a ONNX operator.
 /// https://onnx.ai/onnx/operators/index.html ???
@@ -103,10 +105,20 @@ impl OperatorTrait for MaskedScaledDotProductAttention {
     }
 
     fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::UnsupportedOperation)
+        Err(Error::new(
+            file!(),
+            line!(),
+            column!(),
+            ErrorEnum::UnsupportedOperation,
+        ))
     }
 
     fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::UnsupportedOperation)
+        Err(Error::new(
+            file!(),
+            line!(),
+            column!(),
+            ErrorEnum::UnsupportedOperation,
+        ))
     }
 }

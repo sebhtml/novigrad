@@ -1,8 +1,8 @@
-use crate::DevBuffer;
 use crate::{
     devices::{Device, DeviceInterface},
     Error,
 };
+use crate::{DevBuffer, ErrorEnum};
 
 use std::fmt::Display;
 
@@ -121,7 +121,12 @@ impl TensorF32 {
     // TODO use device for element_wise_mul
     pub fn mul(left: &TensorF32, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
         if left.size() != right.size() {
-            return Err(Error::IncompatibleTensorShapes);
+            return Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::IncompatibleTensorShapes,
+            ));
         }
 
         debug_assert_eq!(result.size(), left.size());
@@ -159,7 +164,12 @@ impl TensorF32 {
     pub fn dot_product(x: &TensorF32, y: &TensorF32) -> Result<f32, Error> {
         let device = &x.device;
         if x.size() != y.size() {
-            return Err(Error::IncompatibleTensorShapes);
+            return Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::IncompatibleTensorShapes,
+            ));
         }
         let n = x.len() as i32;
         let incx = 1;
@@ -230,7 +240,12 @@ impl TensorF32 {
         let device = &a.device;
         if !transa && !transb && !transpose_result {
             if a.cols() != b.rows() {
-                return Err(Error::IncompatibleTensorShapes);
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
             }
             let (m, n, k) = (a.rows(), b.cols(), a.cols());
             device.sgemm(
@@ -250,7 +265,12 @@ impl TensorF32 {
             )
         } else if transa && !transb && !transpose_result {
             if a.rows() != b.rows() {
-                return Err(Error::IncompatibleTensorShapes);
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
             }
             let (m, n, k) = (a.cols(), b.cols(), a.rows());
 
@@ -271,7 +291,12 @@ impl TensorF32 {
             )
         } else if !transa && transb && !transpose_result {
             if a.cols() != b.cols() {
-                return Err(Error::IncompatibleTensorShapes);
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
             }
             let (m, n, k) = (a.rows(), b.rows(), a.cols());
 
@@ -292,7 +317,12 @@ impl TensorF32 {
             )
         } else if transa && transb && !transpose_result {
             if a.rows() != b.cols() {
-                return Err(Error::IncompatibleTensorShapes);
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
             }
             let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
@@ -313,7 +343,12 @@ impl TensorF32 {
             )
         } else if transa && transb && transpose_result {
             if a.rows() != b.cols() {
-                return Err(Error::IncompatibleTensorShapes);
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
             }
             let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
@@ -334,7 +369,12 @@ impl TensorF32 {
             )
         } else if transa && !transb && transpose_result {
             if a.rows() != b.rows() {
-                return Err(Error::IncompatibleTensorShapes);
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
             }
             let (m, n, k) = (a.cols(), b.cols(), a.rows());
 
@@ -354,7 +394,12 @@ impl TensorF32 {
                 m as i32,
             )
         } else {
-            Err(Error::UnsupportedOperation)
+            Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::UnsupportedOperation,
+            ))
         }
     }
 
@@ -371,7 +416,12 @@ impl TensorF32 {
     pub fn a_x_plus_y(alpha: f32, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
-            return Err(Error::IncompatibleTensorShapes);
+            return Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::IncompatibleTensorShapes,
+            ));
         }
         let n = x.len() as i32;
         let incx = 1;
@@ -406,7 +456,12 @@ impl TensorF32 {
     pub fn resize(&mut self, new_size: &[usize]) -> Result<(), Error> {
         let new_len = new_size.iter().fold(1, |acc, value| acc * value);
         if new_len != self.len() {
-            return Err(Error::UnsupportedOperation);
+            return Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::UnsupportedOperation,
+            ));
         }
 
         self.size = new_size.to_owned();
@@ -444,7 +499,12 @@ impl TryInto<f32> for &TensorF32 {
                 let self_values = self.get_values()?;
                 Ok(self_values[self.index(0, 0)])
             }
-            _ => Err(Error::UnsupportedOperation),
+            _ => Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::UnsupportedOperation,
+            )),
         }
     }
 }

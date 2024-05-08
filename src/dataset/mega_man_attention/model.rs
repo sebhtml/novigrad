@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    Device, Embedding, Error, Linear, MaskedScaledDotProductAttention, MatMul, OperatorTrait,
-    Reshape, Softmax, Tensor,
+    Device, Embedding, Error, ErrorEnum, Linear, MaskedScaledDotProductAttention, MatMul,
+    OperatorTrait, Reshape, Softmax, Tensor,
 };
 
 pub struct Model {
@@ -92,10 +92,20 @@ impl OperatorTrait for Model {
     }
 
     fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::UnsupportedOperation)
+        Err(Error::new(
+            file!(),
+            line!(),
+            column!(),
+            ErrorEnum::UnsupportedOperation,
+        ))
     }
 
     fn forward_realize(&self, _inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        Err(Error::UnsupportedOperation)
+        Err(Error::new(
+            file!(),
+            line!(),
+            column!(),
+            ErrorEnum::UnsupportedOperation,
+        ))
     }
 }

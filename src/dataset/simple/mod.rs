@@ -1,6 +1,6 @@
 use crate::{
-    into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, Tensor, Tokenizer,
-    TokenizerTrait,
+    into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, ErrorEnum, Tensor,
+    Tokenizer, TokenizerTrait,
 };
 
 mod model;
@@ -33,7 +33,12 @@ fn load_examples(
                 acc.push((a, b));
                 Ok(acc)
             }
-            _ => Err(Error::UnsupportedOperation),
+            _ => Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::UnsupportedOperation,
+            )),
         });
 
     examples

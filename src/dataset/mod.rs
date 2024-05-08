@@ -4,7 +4,7 @@ mod simple;
 
 use std::{fs, rc::Rc};
 
-use crate::{Device, Error, Identity, OperatorTrait, Tensor, Tokenizer, TokenizerTrait};
+use crate::{Device, Error, ErrorEnum, Identity, OperatorTrait, Tensor, Tokenizer, TokenizerTrait};
 
 pub enum Dataset {
     Simple,
@@ -70,7 +70,14 @@ fn load_examples(
     tokenizer: &mut Tokenizer,
 ) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let mut examples = Vec::new();
-    let text = fs::read_to_string(file_path).map_err(|_| Error::UnsupportedOperation)?;
+    let text = fs::read_to_string(file_path).map_err(|_| {
+        Error::new(
+            file!(),
+            line!(),
+            column!(),
+            ErrorEnum::IncompatibleTensorShapes,
+        )
+    })?;
     println!("[load_megaman_examples] loaded {} bytes", text.len());
     let tokens: Vec<usize> = tokenizer.encode(&text);
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());

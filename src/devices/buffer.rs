@@ -4,9 +4,9 @@ use std::{borrow::BorrowMut, mem::swap};
 use rustacuda::memory::CopyDestination;
 use rustacuda::memory::DeviceBuffer;
 
-use crate::Device;
 use crate::DeviceEnum;
 use crate::Error;
+use crate::{Device, ErrorEnum};
 
 #[derive(Debug)]
 pub struct DevBuffer {
@@ -75,7 +75,12 @@ impl DevBuffer {
                 let mut values = vec![0.0; buffer.len()];
                 match buffer.copy_to(values.as_mut_slice()) {
                     Ok(_) => Ok(values),
-                    _ => Err(Error::UnsupportedOperation),
+                    _ => Err(Error::new(
+                        file!(),
+                        line!(),
+                        column!(),
+                        ErrorEnum::UnsupportedOperation,
+                    )),
                 }
             }
         }

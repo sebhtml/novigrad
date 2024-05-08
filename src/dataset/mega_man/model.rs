@@ -1,11 +1,11 @@
 use crate::{
-    Device, Embedding, Error, Identity, Linear, Mask, MatMul, OperatorTrait, Reshape, Softmax,
-    Tensor,
+    Device, Embedding, Error, Identity, Linear, MatMul, OperatorTrait, Reshape, Softmax, Tensor,
 };
 use std::rc::Rc;
 
 pub struct Model {
     vocab_size: usize,
+    sequence_length: usize,
     parameters: Tensor,
     embedding: Embedding,
     matmul: MatMul,
@@ -16,28 +16,14 @@ pub struct Model {
 
 impl Model {
     pub fn new(device: &Device) -> Self {
-        let _batch_size = 1;
         let sequence_length = 32;
         let vocab_size = 256;
-        //let vocab_size = 34816; // 32768 + 2048
-        let num_embeddings = vocab_size;
         let embedding_dim = 384;
-        let _num_heads = 0;
         let output_rows = 1;
 
-        /*
-        TODO
-                let attention =
-            MaskedScaledDotProductAttention::try_new(device, sequence_length, embedding_dim)
-                .unwrap();
-
-        let weights_rows = vocab_size;
-        let weights_cols = embedding_dim;
-        let bias_rows = sequence_length;
-        let linear = Linear::new(device, weights_rows, weights_cols, bias_rows);
-         */
         Self {
             vocab_size,
+            sequence_length,
             parameters: device.tensor(
                 Rc::new(Identity::new(device)),
                 &vec![],
@@ -47,7 +33,7 @@ impl Model {
                 true,
                 true,
             ),
-            embedding: Embedding::new(device, num_embeddings, embedding_dim),
+            embedding: Embedding::new(device, vocab_size, embedding_dim),
             matmul: MatMul::new(device, true),
             reshape: Reshape::new(
                 device,
@@ -66,6 +52,10 @@ impl Model {
 
     pub fn vocab_size(&self) -> usize {
         self.vocab_size
+    }
+
+    pub fn sequence_length(&self) -> usize {
+        self.sequence_length
     }
 }
 
@@ -87,7 +77,7 @@ impl OperatorTrait for Model {
         Err(Error::UnsupportedOperation)
     }
 
-    fn forward_realize(&self, _inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        output.realize()
+    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        Err(Error::UnsupportedOperation)
     }
 }

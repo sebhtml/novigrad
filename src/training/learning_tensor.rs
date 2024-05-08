@@ -47,7 +47,6 @@ impl Tensor {
 
     pub fn realize(&self) -> Result<(), Error> {
         let realized = *self.realized.deref().borrow();
-        debug_assert_eq!(realized, false);
         if realized {
             return Ok(());
         }

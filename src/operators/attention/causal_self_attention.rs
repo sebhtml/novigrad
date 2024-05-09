@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{Device, Error, ErrorEnum, Mask, MatMul, OperatorTrait, Scale, Softmax, Tensor};
+use crate::{Device, Error, Mask, MatMul, OperatorTrait, Scale, Softmax, Tensor};
 
 /// MaskedScaledDotProductAttention is not a ONNX operator.
 /// https://onnx.ai/onnx/operators/index.html ???
@@ -43,23 +43,23 @@ impl OperatorTrait for CausalSelfAttention {
         "MaskedScaledDotProductAttention"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let debug = false;
         if debug {
             println!("Entering Attention");
         }
         debug_assert_eq!(inputs.len(), 3);
-        let q = &inputs[0];
-        let k = &inputs[1];
-        let v = &inputs[2];
+        let q = inputs[0];
+        let k = inputs[1];
+        let v = inputs[2];
 
-        let weights = self.qk_matmul.forward(&[q.clone(), k.clone()])?;
+        let weights = self.qk_matmul.forward(&[q, k])?;
         if debug {
             weights.realize()?;
             println!("Q*K^T weights {}", weights.tensor().deref().borrow());
         }
 
-        let scaled_weights = self.scale.forward(&[weights])?;
+        let scaled_weights = self.scale.forward(&[&weights])?;
         if debug {
             scaled_weights.realize()?;
             println!(
@@ -67,7 +67,7 @@ impl OperatorTrait for CausalSelfAttention {
                 scaled_weights.tensor().deref().borrow()
             );
         }
-        let masked_weights = self.mask.forward(&[scaled_weights])?;
+        let masked_weights = self.mask.forward(&[&scaled_weights])?;
         if debug {
             masked_weights.realize()?;
             println!(
@@ -75,7 +75,7 @@ impl OperatorTrait for CausalSelfAttention {
                 masked_weights.tensor().deref().borrow()
             );
         }
-        let softmaxed_weights = self.softmax.forward(&[masked_weights])?;
+        let softmaxed_weights = self.softmax.forward(&[&masked_weights])?;
         if debug {
             softmaxed_weights.realize()?;
             println!(
@@ -83,7 +83,7 @@ impl OperatorTrait for CausalSelfAttention {
                 softmaxed_weights.tensor().deref().borrow()
             );
         }
-        let attentions = self.matmul.forward(&[softmaxed_weights, v.clone()])?;
+        let attentions = self.matmul.forward(&[&softmaxed_weights, v])?;
         if debug {
             attentions.realize()?;
             println!("attentions {}", attentions.tensor().deref().borrow());
@@ -91,21 +91,11 @@ impl OperatorTrait for CausalSelfAttention {
         Ok(attentions)
     }
 
-    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
+        panic!()
     }
 
-    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
+        panic!()
     }
 }

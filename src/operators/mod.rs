@@ -14,9 +14,9 @@ use core::fmt::Debug;
 
 pub trait OperatorTrait {
     fn name(&self) -> &str;
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error>;
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error>;
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error>;
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error>;
+    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error>;
+    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error>;
 }
 
 impl Debug for dyn OperatorTrait {

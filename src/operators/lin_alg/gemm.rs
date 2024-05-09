@@ -24,21 +24,21 @@ impl OperatorTrait for Gemm {
         "Gemm"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 3);
-        let input = &inputs[0];
-        let weights = &inputs[1];
-        let biases = &inputs[2];
-        let product = self.matmul.forward(&[input.clone(), weights.clone()])?;
-        let sum = self.add.forward(&[product, biases.clone()])?;
+        let input = inputs[0];
+        let weights = inputs[1];
+        let biases = inputs[2];
+        let product = self.matmul.forward(&[input, weights])?;
+        let sum = self.add.forward(&[&product, biases])?;
         Ok(sum)
     }
 
-    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 
-    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 }

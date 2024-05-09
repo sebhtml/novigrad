@@ -64,16 +64,16 @@ impl OperatorTrait for Embedding {
         "Embedding"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        let inputs = &[inputs[0].clone(), self.embedding_table.clone()];
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
+        let inputs = &[inputs[0], &self.embedding_table];
         self.matmul.forward(inputs)
     }
 
-    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 
-    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 }

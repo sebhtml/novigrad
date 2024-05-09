@@ -58,7 +58,7 @@ impl Model {
 }
 
 impl OperatorTrait for Model {
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let debug = false;
         if debug {
             println!("----");
@@ -71,32 +71,32 @@ impl OperatorTrait for Model {
             embeddings.realize()?;
             println!("embedding {}", &embeddings.tensor().deref().borrow());
         }
-        let q = self.q.forward(&[embeddings.clone()])?;
+        let q = self.q.forward(&[&embeddings])?;
         if debug {
             q.realize()?;
             println!("q {}", &q.tensor().deref().borrow());
         }
-        let k = self.k.forward(&[embeddings.clone()])?;
+        let k = self.k.forward(&[&embeddings])?;
         if debug {
             k.realize()?;
             println!("k {}", &k.tensor().deref().borrow());
         }
-        let v = self.v.forward(&[embeddings.clone()])?;
+        let v = self.v.forward(&[&embeddings])?;
         if debug {
             v.realize()?;
             println!("v {}", &v.tensor().deref().borrow());
         }
-        let attended = self.attention.forward(&[q, k, v])?;
+        let attended = self.attention.forward(&[&q, &k, &v])?;
         if debug {
             attended.realize()?;
             println!("attended {}", &attended.tensor().deref().borrow());
         }
-        let linearized = self.linear.forward(&[attended])?;
+        let linearized = self.linear.forward(&[&attended])?;
         if debug {
             linearized.realize()?;
             println!("linearized {}", &linearized.tensor().deref().borrow());
         }
-        let probabilities = self.softmax.forward(&[linearized])?;
+        let probabilities = self.softmax.forward(&[&linearized])?;
         if debug {
             probabilities.realize()?;
             println!("probabilities {}", &probabilities.tensor().deref().borrow());
@@ -108,11 +108,11 @@ impl OperatorTrait for Model {
         "MegaManModel"
     }
 
-    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 
-    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 }

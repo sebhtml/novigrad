@@ -78,7 +78,7 @@ impl OperatorTrait for CrossEntropyLoss {
         "CrossEntropyLoss"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output =
             self.device
@@ -86,7 +86,7 @@ impl OperatorTrait for CrossEntropyLoss {
         Ok(output)
     }
 
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(&self.device, expected, actual)?;
@@ -98,7 +98,7 @@ impl OperatorTrait for CrossEntropyLoss {
         Ok(())
     }
 
-    fn backward(&self, inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         if inputs[1].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();

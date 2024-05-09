@@ -100,7 +100,7 @@ impl OperatorTrait for Softmax {
         "Softmax"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let rows = input.rows();
         let cols = input.cols();
@@ -117,13 +117,13 @@ impl OperatorTrait for Softmax {
         Ok(output)
     }
 
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
         self.activate(input, output)
     }
 
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             let output_gradient: &TensorF32 = &output.gradient().deref().borrow();

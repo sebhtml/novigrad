@@ -66,17 +66,18 @@ impl OperatorTrait for Linear {
         "Linear"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
-        let inputs = &[inputs[0].clone(), self.weights.clone(), self.biases.clone()];
+        let input = inputs[0];
+        let inputs = &[input, &self.weights, &self.biases];
         self.gemm.forward(inputs)
     }
 
-    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 
-    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 }

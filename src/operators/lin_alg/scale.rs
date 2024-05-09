@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, OperatorTrait, TensorF32};
+use crate::{Device, OperatorTrait, Tensor, TensorF32};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// TODO implement broadcasting to use Mul instead
@@ -24,7 +24,7 @@ impl OperatorTrait for Scale {
         "Scale"
     }
 
-    fn forward(&self, inputs: &[crate::Tensor]) -> Result<crate::Tensor, crate::Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, crate::Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let rows = input.rows();
@@ -42,11 +42,7 @@ impl OperatorTrait for Scale {
         Ok(output)
     }
 
-    fn forward_realize(
-        &self,
-        inputs: &[crate::Tensor],
-        output: &crate::Tensor,
-    ) -> Result<(), crate::Error> {
+    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
         TensorF32::copy(input, output)?;
@@ -54,11 +50,7 @@ impl OperatorTrait for Scale {
         TensorF32::scale(alpha, output)
     }
 
-    fn backward(
-        &self,
-        inputs: &[crate::Tensor],
-        output: &crate::Tensor,
-    ) -> Result<(), crate::Error> {
+    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
         debug_assert_eq!(inputs.len(), 1);
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
 

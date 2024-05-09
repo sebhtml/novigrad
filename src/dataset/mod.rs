@@ -90,8 +90,8 @@ fn load_examples(
         let one_hot_encoded_tokens = into_one_hot_encoded_rows(device, input_tokens, vocab_size)?;
         let output_begin = input_begin + 1;
         let output_end = output_begin + output_sequence_length;
-        let next_token = &tokens[output_begin..output_end];
-        let output_multiclass = into_one_hot_encoded_rows(device, next_token, vocab_size)?;
+        let output_tokens = &tokens[output_begin..output_end];
+        let output_multiclass = into_one_hot_encoded_rows(device, output_tokens, vocab_size)?;
 
         examples.push((
             //

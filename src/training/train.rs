@@ -188,12 +188,12 @@ fn print_results(
 
         let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
-        let expected_argmax = expected_output_argmaxes[0];
+        let expected_argmax = expected_output_argmaxes.last().unwrap().to_owned();
         expected_argmax_values.push(expected_argmax);
 
         let actual_output: &TensorF32 = &actual_output.tensor().deref().borrow();
         let actual_output_argmaxes = get_row_argmaxes(actual_output)?;
-        let actual_argmax = actual_output_argmaxes[0];
+        let actual_argmax = actual_output_argmaxes.last().unwrap().to_owned();
         actual_argmax_values.push(actual_argmax);
 
         print_expected_output_and_actual_output(

@@ -61,6 +61,10 @@ impl OperatorTrait for MaskedScaledDotProductAttention {
     }
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+        let debug = false;
+        if debug {
+            println!("Entering Attention");
+        }
         debug_assert_eq!(inputs.len(), 3);
         let q = &inputs[0];
         let k = &inputs[1];
@@ -77,18 +81,27 @@ impl OperatorTrait for MaskedScaledDotProductAttention {
         let weights = self
             .gemm
             .forward(&[q.clone(), k.clone(), self.gemm_biases.clone()])?;
-        //weights.realize()?;
-        //println!("weights {}", weights.tensor().deref().borrow());
+        if debug {
+            weights.realize()?;
+            println!("Q*K^T weights {}", weights.tensor().deref().borrow());
+        }
+
         let scaled_weights = self.scale.forward(&[weights])?;
-        //scaled_weights.realize()?;
-        //println!("scaled_weights {}", scaled_weights.tensor().deref().borrow());
+        if debug {
+            scaled_weights.realize()?;
+            println!(
+                "scaled_weights {}",
+                scaled_weights.tensor().deref().borrow()
+            );
+        }
         let masked_weights = self.mask.forward(&[scaled_weights])?;
-        //masked_weights.realize()?;
-        //println!("masked_weights {}", masked_weights.tensor().deref().borrow());
-        //println!(
-        //    "masked_weights {:?}",
-        //    masked_weights.tensor().deref().borrow().size()
-        //);
+        if debug {
+            masked_weights.realize()?;
+            println!(
+                "masked_weights {}",
+                masked_weights.tensor().deref().borrow()
+            );
+        }
         let softmaxed_weights = self.softmax.forward(&[masked_weights])?;
         //softmaxed_weights.realize()?;
         //println!("softmaxed_weights {}", softmaxed_weights.tensor().deref().borrow());

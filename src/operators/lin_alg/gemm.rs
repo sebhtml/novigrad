@@ -26,8 +26,10 @@ impl OperatorTrait for Gemm {
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 3);
-        let biases = &inputs[2];
-        let biases: &TensorF32 = &biases.tensor().deref().borrow();
+        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+        let weights: &TensorF32 = &inputs[1].tensor().deref().borrow();
+        debug_assert_eq!(input.cols(), weights.cols());
+        let biases: &TensorF32 = &inputs[2].tensor().deref().borrow();
         let rows = biases.rows();
         let cols = biases.cols();
         let len = rows * cols;

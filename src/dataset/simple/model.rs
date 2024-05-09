@@ -1,6 +1,4 @@
-use crate::{
-    Device, Embedding, Error, ErrorEnum, Linear, OperatorTrait, Reshape, Sigmoid, Softmax, Tensor,
-};
+use crate::{Device, Embedding, Error, Linear, OperatorTrait, Reshape, Sigmoid, Softmax, Tensor};
 
 pub struct Model {
     embedding: Embedding,
@@ -63,20 +61,10 @@ impl OperatorTrait for Model {
     }
 
     fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+        panic!()
     }
 
     fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+        panic!()
     }
 }

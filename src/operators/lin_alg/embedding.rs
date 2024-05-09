@@ -69,11 +69,11 @@ impl OperatorTrait for Embedding {
         self.matmul.forward(inputs)
     }
 
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        self.matmul.forward_realize(inputs, output)
+    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        panic!()
     }
 
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        self.matmul.backward(inputs, output)
+    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        panic!()
     }
 }

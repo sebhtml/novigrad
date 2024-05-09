@@ -1,6 +1,5 @@
 use crate::{
-    Device, Embedding, Error, ErrorEnum, Identity, Linear, MatMul, OperatorTrait, Reshape, Softmax,
-    Tensor,
+    Device, Embedding, Error, Identity, Linear, MatMul, OperatorTrait, Reshape, Softmax, Tensor,
 };
 use std::rc::Rc;
 
@@ -75,20 +74,10 @@ impl OperatorTrait for Model {
     }
 
     fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+        panic!()
     }
 
     fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+        panic!()
     }
 }

@@ -52,7 +52,7 @@ impl Linear {
             true,
         );
 
-        let gemm = Gemm::new(device);
+        let gemm = Gemm::new(device, true);
         Self {
             weights,
             biases,

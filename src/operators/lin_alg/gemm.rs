@@ -9,7 +9,10 @@ pub struct Gemm {
 }
 
 impl Gemm {
-    pub fn new(device: &Device) -> Self {
+    pub fn new(device: &Device, transb: bool) -> Self {
+        if !transb {
+            panic!();
+        }
         Self {
             device: device.clone(),
         }

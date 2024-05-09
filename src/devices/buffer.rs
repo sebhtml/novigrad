@@ -1,8 +1,7 @@
 use std::ops::Deref;
 use std::{borrow::BorrowMut, mem::swap};
 
-use rustacuda::memory::CopyDestination;
-use rustacuda::memory::DeviceBuffer;
+use cudarc::driver::{CudaSlice, DevicePtr, DevicePtrMut, DeviceSlice};
 
 use crate::DeviceEnum;
 use crate::Error;
@@ -28,7 +27,7 @@ impl Drop for DevBuffer {
 pub enum DevBufferEnum {
     CpuBuffer(Vec<f32>),
     #[cfg(feature = "cuda")]
-    CudaBuffer(DeviceBuffer<f32>),
+    CudaBuffer(CudaSlice<f32>),
 }
 
 impl DevBuffer {
@@ -39,9 +38,9 @@ impl DevBuffer {
                 DevBufferEnum::CpuBuffer(values)
             }
             #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(_) => {
+            DeviceEnum::Cuda(device) => {
                 // TODO don't unwrap
-                let buffer = unsafe { DeviceBuffer::uninitialized(len).unwrap() };
+                let buffer = device.dev.alloc_zeros(len).unwrap();
                 DevBufferEnum::CudaBuffer(buffer)
             }
         };
@@ -55,7 +54,7 @@ impl DevBuffer {
         match &self.buffer {
             DevBufferEnum::CpuBuffer(ref values) => values.as_ptr(),
             #[cfg(feature = "cuda")]
-            DevBufferEnum::CudaBuffer(ref values) => values.as_ptr(),
+            DevBufferEnum::CudaBuffer(ref values) => *values.device_ptr() as *const _,
         }
     }
 
@@ -63,17 +62,19 @@ impl DevBuffer {
         match self.buffer.borrow_mut() {
             DevBufferEnum::CpuBuffer(ref mut values) => values.as_mut_ptr(),
             #[cfg(feature = "cuda")]
-            DevBufferEnum::CudaBuffer(ref mut values) => values.as_mut_ptr(),
+            DevBufferEnum::CudaBuffer(ref mut values) => *values.device_ptr_mut() as *mut _,
         }
     }
 
     pub fn get_values(&self) -> Result<Vec<f32>, Error> {
-        match &self.buffer {
+        match self.buffer {
             DevBufferEnum::CpuBuffer(ref values) => Ok(values.clone()),
             #[cfg(feature = "cuda")]
             DevBufferEnum::CudaBuffer(ref buffer) => {
                 let mut values = vec![0.0; buffer.len()];
-                match buffer.copy_to(values.as_mut_slice()) {
+                let dev = buffer.device();
+                let result = dev.dtoh_sync_copy_into(buffer, &mut values);
+                match result {
                     Ok(_) => Ok(values),
                     _ => Err(Error::new(
                         file!(),
@@ -95,7 +96,8 @@ impl DevBuffer {
             #[cfg(feature = "cuda")]
             DevBufferEnum::CudaBuffer(ref mut buffer) => {
                 // TODO don't unwrap directly.
-                buffer.copy_from(new_values.as_slice()).unwrap();
+                let dev = buffer.device();
+                dev.htod_sync_copy_into(&new_values, buffer).unwrap();
             }
         }
     }
@@ -112,7 +114,9 @@ impl DevBuffer {
             DevBufferEnum::CpuBuffer(buffer) => buffer.resize(new_len, Default::default()),
             DevBufferEnum::CudaBuffer(buffer) => {
                 if buffer.len() != new_len {
-                    let mut new_buffer = unsafe { DeviceBuffer::uninitialized(new_len).unwrap() };
+                    let dev = buffer.device();
+                    // TODO don't unwrap
+                    let mut new_buffer = dev.alloc_zeros(new_len).unwrap();
                     swap(buffer, &mut new_buffer);
                 }
             }

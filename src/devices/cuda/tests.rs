@@ -57,8 +57,10 @@ fn cublas_sgemm_column_major() {
         )
         .unwrap();
 
+    let values = c.get_values().unwrap();
+
     assert_eq!(
-        &c.get_values().unwrap(),
+        &values,
         &vec![
             //
             40.0, 90.0, //
@@ -90,4 +92,38 @@ fn cuda_set_value() {
         tensor.get_values().unwrap(),
         vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0,]
     );
+}
+
+#[test]
+fn buffer() {
+    use crate::Device;
+    use std::ptr::null;
+    let device = Device::cuda().unwrap();
+    let buffer = device.buffer(32);
+    assert_ne!(buffer.as_ptr(), null());
+}
+
+#[test]
+fn dtoh_sync_copy_into() {
+    use cudarc::driver::CudaSlice;
+    let len = 32;
+    let dev = cudarc::driver::CudaDevice::new(0).unwrap();
+    let device_slice: CudaSlice<f32> = dev.alloc_zeros(len).unwrap();
+    let mut host_slice = vec![0.0; len];
+    dev.dtoh_sync_copy_into(&device_slice, &mut host_slice)
+        .unwrap();
+}
+
+#[test]
+fn htod_sync_copy_into() {
+    use cudarc::driver::CudaSlice;
+    let len = 32;
+    let dev = cudarc::driver::CudaDevice::new(0).unwrap();
+    let mut device_slice: CudaSlice<f32> = dev.alloc_zeros(len).unwrap();
+    let values = vec![1.0; len];
+    dev.htod_sync_copy_into(&values, &mut device_slice).unwrap();
+    let mut host_slice = vec![0.0; len];
+    dev.dtoh_sync_copy_into(&device_slice, &mut host_slice)
+        .unwrap();
+    assert_eq!(host_slice, values);
 }

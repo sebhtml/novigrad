@@ -4,29 +4,29 @@ mod tests;
 
 use cudarc::{
     cublas::{
-        result::create_handle,
         sys::{
-            cublasHandle_t, cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2,
-            cublasSgemmEx, cublasSscal_v2, cudaDataType,
+            cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2, cublasSgemmEx,
+            cublasSscal_v2, cudaDataType,
         },
+        CudaBlas,
     },
-    driver::{self},
+    driver,
 };
 
 use crate::{DeviceInterface, Error, ErrorEnum};
 
 #[derive(Debug)]
 pub struct CudaDevice {
-    handle: cublasHandle_t,
-    _dev: Arc<driver::CudaDevice>,
+    cuda_blas: CudaBlas,
+    pub dev: Arc<driver::CudaDevice>,
 }
 
 impl CudaDevice {
     pub fn try_default() -> Result<CudaDevice, Error> {
-        let handle = create_handle();
         let dev = cudarc::driver::CudaDevice::new(0);
-        match (handle, dev) {
-            (Ok(handle), Ok(dev)) => Ok(CudaDevice { handle, _dev: dev }),
+        let cuda_blas = dev.clone().map(|x| CudaBlas::new(x));
+        match (cuda_blas, dev) {
+            (Ok(Ok(cuda_blas)), Ok(dev)) => Ok(CudaDevice { cuda_blas, dev }),
             _ => Err(Error::new(
                 file!(),
                 line!(),
@@ -54,7 +54,7 @@ impl DeviceInterface for CudaDevice {
         c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error> {
-        let handle = self.handle;
+        let handle = *self.cuda_blas.handle();
         let transa = match transa {
             false => cublasOperation_t::CUBLAS_OP_N,
             true => cublasOperation_t::CUBLAS_OP_T,
@@ -92,7 +92,7 @@ impl DeviceInterface for CudaDevice {
         y: *mut f32,
         incy: i32,
     ) -> Result<(), Error> {
-        let handle = self.handle;
+        let handle = *self.cuda_blas.handle();
         let alpha = &alpha as *const f32;
         let status = unsafe { cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
         status
@@ -108,7 +108,7 @@ impl DeviceInterface for CudaDevice {
         y: *const f32,
         incy: i32,
     ) -> Result<f32, Error> {
-        let handle = self.handle;
+        let handle = *self.cuda_blas.handle();
         let mut result: f32 = 0.0;
         let status = unsafe {
             let result = &mut result as *mut f32;
@@ -121,7 +121,7 @@ impl DeviceInterface for CudaDevice {
     }
 
     fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
-        let handle = self.handle;
+        let handle = *self.cuda_blas.handle();
         let status = unsafe { cublasScopy_v2(handle, n, x, incx, y, incy) };
         status
             .result()
@@ -129,7 +129,7 @@ impl DeviceInterface for CudaDevice {
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
-        let handle = self.handle;
+        let handle = *self.cuda_blas.handle();
         let alpha = &alpha as *const f32;
         let status = unsafe { cublasSscal_v2(handle, n, alpha, x, incx) };
         status

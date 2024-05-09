@@ -18,7 +18,7 @@ impl Model {
     pub fn new(device: &Device) -> Self {
         let sequence_length = 32;
         let vocab_size = 256;
-        let embedding_dim = 384;
+        let n_embd = 384;
         let output_rows = 1;
 
         Self {
@@ -27,25 +27,20 @@ impl Model {
             parameters: device.tensor(
                 Rc::new(Identity::new(device)),
                 &vec![],
-                embedding_dim,
-                embedding_dim,
-                vec![0.0; embedding_dim * embedding_dim],
+                n_embd,
+                n_embd,
+                vec![0.0; n_embd * n_embd],
                 true,
                 true,
             ),
-            embedding: Embedding::new(device, vocab_size, embedding_dim),
+            embedding: Embedding::new(device, vocab_size, n_embd),
             matmul: MatMul::new(device, true),
             reshape: Reshape::new(
                 device,
-                vec![sequence_length, embedding_dim],
-                vec![output_rows, sequence_length * embedding_dim],
+                vec![sequence_length, n_embd],
+                vec![output_rows, sequence_length * n_embd],
             ),
-            linear: Linear::new(
-                device,
-                vocab_size,
-                sequence_length * embedding_dim,
-                output_rows,
-            ),
+            linear: Linear::new(device, vocab_size, sequence_length * n_embd, output_rows),
             softmax: Softmax::new(device, true),
         }
     }

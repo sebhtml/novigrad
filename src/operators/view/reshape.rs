@@ -29,8 +29,8 @@ impl OperatorTrait for Reshape {
         debug_assert_eq!(inputs.len(), 1);
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(input.size(), self.input_size);
-        let rows = input.rows();
-        let cols = input.cols();
+        let rows = self.output_size[0];
+        let cols = self.output_size[1];
         let len = rows * cols;
         let output = self.device.tensor(
             Rc::new(self.clone()),

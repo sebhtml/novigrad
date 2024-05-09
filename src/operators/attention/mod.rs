@@ -1,2 +1,2 @@
-mod masked_scaled_dot_product_attention;
-pub use masked_scaled_dot_product_attention::*;
+mod causal_self_attention;
+pub use causal_self_attention::*;

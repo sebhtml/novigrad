@@ -1,13 +1,13 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Identity, Mul, OperatorTrait, Tensor};
+use crate::{Add, Device, Error, Identity, OperatorTrait, Tensor};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// Attention Is All You Need -> https://arxiv.org/abs/1706.03762
 #[derive(Clone)]
 pub struct Mask {
     mask: Tensor,
-    mul: Mul,
+    add: Add,
 }
 
 impl Mask {
@@ -37,12 +37,12 @@ impl Mask {
 
         /*
         {
-            let mask: &TensorF32 = &mask.tensor().deref().borrow();
-            println!("mask {}", mask);
+            println!("mask {}", &mask.tensor().deref().borrow());
         }
-        */
-        let mul = Mul::new(device);
-        let mask = Self { mask, mul };
+         */
+
+        let add = Add::new(device);
+        let mask = Self { mask, add };
         Ok(mask)
     }
 }
@@ -54,14 +54,14 @@ impl OperatorTrait for Mask {
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let inputs = &[inputs[0].clone(), self.mask.clone()];
-        self.mul.forward(inputs)
+        self.add.forward(inputs)
     }
 
     fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        self.mul.forward_realize(inputs, output)
+        self.add.forward_realize(inputs, output)
     }
 
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        self.mul.backward(inputs, output)
+        self.add.backward(inputs, output)
     }
 }

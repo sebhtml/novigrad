@@ -60,16 +60,18 @@ impl Model {
 
 impl OperatorTrait for Model {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        let debug = false;
+        let debug = true;
         if debug {
             println!("----");
         }
+        if debug {
+            println!("input {}", inputs[0].tensor().deref().borrow());
+        }
         let embeddings = self.embedding.forward(inputs)?;
-        //embeddings.realize()?;
-        //println!(
-        //"embedding {:?}",
-        //&embeddings.tensor().deref().borrow()
-        //);
+        if debug {
+            embeddings.realize()?;
+            println!("embedding {}", &embeddings.tensor().deref().borrow());
+        }
         let q = self.q.forward(&[embeddings.clone()])?;
         if debug {
             q.realize()?;

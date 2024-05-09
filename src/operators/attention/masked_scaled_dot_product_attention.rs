@@ -61,7 +61,7 @@ impl OperatorTrait for MaskedScaledDotProductAttention {
     }
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        let debug = false;
+        let debug = true;
         if debug {
             println!("Entering Attention");
         }
@@ -69,15 +69,7 @@ impl OperatorTrait for MaskedScaledDotProductAttention {
         let q = &inputs[0];
         let k = &inputs[1];
         let v = &inputs[2];
-        /*
-        println!(
-            "q {:?} k {:?} v {:?}",
-            q.tensor().deref().borrow().size(),
-            k.tensor().deref().borrow().size(),
-            v.tensor().deref().borrow().size(),
-        );
-         */
-        //println!("q {}", q.tensor().deref().borrow());
+
         let weights = self
             .gemm
             .forward(&[q.clone(), k.clone(), self.gemm_biases.clone()])?;

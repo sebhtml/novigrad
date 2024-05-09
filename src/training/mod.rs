@@ -79,6 +79,7 @@ fn train_back_propagation(
     let output = model.forward(&[x.clone()])?;
     let loss = loss_function.forward(&[y.clone(), output.clone()])?;
     loss.realize()?;
+
     let gradients = loss.backward()?;
     let gradients: &[Tensor] = &gradients.deref().borrow();
 

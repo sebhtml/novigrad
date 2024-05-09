@@ -7,6 +7,7 @@ use super::load_examples;
 
 pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let file_path = "data/Mega_Man.txt";
+    let max_number_of_examples = 10;
     let model = Model::new(device);
     let vocab_size = model.vocab_size();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
@@ -15,6 +16,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let examples = load_examples(
         &device,
         file_path,
+        max_number_of_examples,
         input_sequence_length,
         output_sequence_length,
         vocab_size,

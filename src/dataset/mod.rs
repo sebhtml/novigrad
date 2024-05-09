@@ -64,6 +64,7 @@ pub fn into_one_hot_encoded_rows(
 fn load_examples(
     device: &Device,
     file_path: &str,
+    max_number_of_examples: usize,
     input_sequence_length: usize,
     output_sequence_length: usize,
     vocab_size: usize,
@@ -82,7 +83,6 @@ fn load_examples(
     let tokens: Vec<usize> = tokenizer.encode(&text);
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
-    let max_number_of_examples = 10;
     while i + input_sequence_length < tokens.len() && i < max_number_of_examples {
         let input_begin = i + 0;
         let input_end = input_begin + input_sequence_length;

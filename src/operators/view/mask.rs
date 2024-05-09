@@ -1,19 +1,19 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Identity, Mul, OperatorTrait, Tensor};
+use crate::{Add, Device, Error, Identity, OperatorTrait, Tensor};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// Attention Is All You Need -> https://arxiv.org/abs/1706.03762
 #[derive(Clone)]
 pub struct Mask {
     mask: Tensor,
-    mul: Mul,
+    add: Add,
 }
 
 impl Mask {
     pub fn try_new(device: &Device, mask_rows: usize, mask_cols: usize) -> Result<Self, Error> {
         let len = mask_rows * mask_cols;
-        let mask = vec![1.0; len];
+        let mask = vec![0.0; len];
 
         let mask = device.tensor(
             Rc::new(Identity::new(device)),
@@ -27,7 +27,7 @@ impl Mask {
         let mut values = mask.tensor().deref().borrow().get_values()?;
         for row in 0..mask_rows {
             for col in 0..mask_cols {
-                if row > col {
+                if row < col {
                     let index = mask.tensor().deref().borrow().index(row, col);
                     values[index] = f32::NEG_INFINITY;
                 }
@@ -35,14 +35,12 @@ impl Mask {
         }
         mask.tensor().deref().borrow_mut().set_values(values);
 
-        /*
         {
-            let mask: &TensorF32 = &mask.tensor().deref().borrow();
-            println!("mask {}", mask);
+            println!("mask {}", &mask.tensor().deref().borrow());
         }
-        */
-        let mul = Mul::new(device);
-        let mask = Self { mask, mul };
+
+        let add = Add::new(device);
+        let mask = Self { mask, add };
         Ok(mask)
     }
 }
@@ -54,14 +52,14 @@ impl OperatorTrait for Mask {
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
         let inputs = &[inputs[0].clone(), self.mask.clone()];
-        self.mul.forward(inputs)
+        self.add.forward(inputs)
     }
 
     fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        self.mul.forward_realize(inputs, output)
+        self.add.forward_realize(inputs, output)
     }
 
     fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        self.mul.backward(inputs, output)
+        self.add.backward(inputs, output)
     }
 }

@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     Device, Embedding, Error, ErrorEnum, Linear, MaskedScaledDotProductAttention, MatMul,
-    OperatorTrait, Reshape, Softmax, Tensor,
+    OperatorTrait, Reshape, Softmax, Tensor, TensorF32,
 };
 
 pub struct Model {
@@ -20,10 +20,10 @@ pub struct Model {
 impl Model {
     pub fn new(device: &Device) -> Self {
         let _batch_size = 1;
-        let sequence_length = 32;
-        let vocab_size = 256;
+        let sequence_length = 6;
+        let vocab_size = 20;
         //let vocab_size = 34816; // 32768 + 2048
-        let embedding_dim = 384;
+        let embedding_dim = 4;
         let _num_heads = 1;
 
         let q = Linear::new(device, embedding_dim, embedding_dim, sequence_length);
@@ -60,30 +60,48 @@ impl Model {
 
 impl OperatorTrait for Model {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+        let debug = false;
+        if debug {
+            println!("----");
+        }
+        if debug {
+            println!("input {}", inputs[0].tensor().deref().borrow());
+        }
         let embeddings = self.embedding.forward(inputs)?;
-        //embeddings.realize()?;
-        //println!(
-        //    "embedding {:?}",
-        //    embeddings.tensor().deref().borrow().size()
-        //);
+        if debug {
+            embeddings.realize()?;
+            println!("embedding {}", &embeddings.tensor().deref().borrow());
+        }
         let q = self.q.forward(&[embeddings.clone()])?;
-        //q.realize()?;
-        //println!("q {:?}", q.tensor().deref().borrow().size());
+        if debug {
+            q.realize()?;
+            println!("q {}", &q.tensor().deref().borrow());
+        }
         let k = self.k.forward(&[embeddings.clone()])?;
-        //k.realize()?;
-        //println!("k {:?}", k.tensor().deref().borrow().size());
+        if debug {
+            k.realize()?;
+            println!("k {}", &k.tensor().deref().borrow());
+        }
         let v = self.v.forward(&[embeddings.clone()])?;
-        //v.realize()?;
-        //println!("v {:?}", v.tensor().deref().borrow().size());
+        if debug {
+            v.realize()?;
+            println!("v {}", &v.tensor().deref().borrow());
+        }
         let attended = self.attention.forward(&[q, k, v])?;
-        //attended.realize()?;
-        //println!("attended {:?}", attended.tensor().deref().borrow().size());
+        if debug {
+            attended.realize()?;
+            println!("attended {}", &attended.tensor().deref().borrow());
+        }
         let linearized = self.linear.forward(&[attended])?;
-        //linearized.realize()?;
-        //println!("linearized {:?}", linearized.tensor().deref().borrow().size());
+        if debug {
+            linearized.realize()?;
+            println!("linearized {}", &linearized.tensor().deref().borrow());
+        }
         let probabilities = self.softmax.forward(&[linearized])?;
-        //probabilities.realize()?;
-        //println!("probabilities {:?}", probabilities.tensor().deref().borrow().size());
+        if debug {
+            probabilities.realize()?;
+            println!("probabilities {}", &probabilities.tensor().deref().borrow());
+        }
         Ok(probabilities)
     }
 

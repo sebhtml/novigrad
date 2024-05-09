@@ -6,6 +6,7 @@ pub use byte_pair_encoding::*;
 use crate::Error;
 
 pub trait TokenizerTrait {
+    fn vocab_size(&self) -> usize;
     fn encode(&mut self, text: &str) -> Vec<usize>;
     fn decode(&self, tokens: &[usize]) -> Result<String, Error>;
 }
@@ -16,6 +17,13 @@ pub enum Tokenizer {
 }
 
 impl TokenizerTrait for Tokenizer {
+    fn vocab_size(&self) -> usize {
+        match self {
+            Tokenizer::BytePairEncoding(object) => object.vocab_size(),
+            Tokenizer::AsciiTokenizer(object) => object.vocab_size(),
+        }
+    }
+
     fn encode(&mut self, text: &str) -> Vec<usize> {
         match self {
             Tokenizer::BytePairEncoding(object) => object.encode(text),

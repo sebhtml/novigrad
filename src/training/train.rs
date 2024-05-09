@@ -6,59 +6,42 @@ use crate::{
 };
 
 pub fn print_expected_output_and_actual_output(
+    epoch: usize,
     tokenizer: &mut Tokenizer,
     example: usize,
     input: &TensorF32,
     expected_output: &TensorF32,
     actual_output: &TensorF32,
-    expected_argmax: usize,
-    actual_argmax: usize,
+    expected_output_token: usize,
+    actual_output_token: usize,
     loss: f32,
 ) -> Result<(), Error> {
-    let rows = expected_output.rows();
-    let cols = expected_output.cols();
-
     let input_tokens = get_row_argmaxes(input)?;
-    let expected_output_token = [expected_argmax];
-    let actual_output_token = [actual_argmax];
 
     println!("----");
-    println!("Example {}", example);
+    println!("Epoch {} Example {}", epoch, example);
     println!("Loss {}", loss);
 
-    println!("  input_tokens: {:?}", &input_tokens);
     println!("  input_text: {}", tokenizer.decode(&input_tokens)?);
 
-    println!("  expected_output_token: {:?}", &expected_output_token);
     println!(
         "  expected_output_text: {}",
-        tokenizer.decode(&expected_output_token)?
+        tokenizer.decode(&[expected_output_token])?
     );
 
-    println!("  actual_output_token: {:?}", &actual_output_token);
     println!(
         "  actual_output_text: {}",
-        tokenizer.decode(&actual_output_token)?
+        tokenizer.decode(&[actual_output_token])?
     );
 
-    let expected_values = expected_output.get_values()?;
-    let actual_values = actual_output.get_values()?;
-    println!("");
+    println!("  input_tokens: {:?}", &input_tokens);
+    println!(
+        "  epoch: {}, example: {}, loss: {}, expected_output_token: {}, actual_output_token: {}",
+        epoch, example, loss, expected_output_token, actual_output_token
+    );
 
-    let print_columns = false;
-
-    if print_columns {
-        for row in 0..rows {
-            for col in 0..cols {
-                println!(
-                    "index {}  expected {}  actual {}",
-                    col,
-                    expected_values[expected_output.index(row, col)],
-                    actual_values[actual_output.index(row, col)],
-                );
-            }
-        }
-    }
+    println!("expected_output {}", expected_output);
+    println!("actual_output {}", actual_output);
 
     Ok(())
 }
@@ -117,7 +100,7 @@ pub fn train_network_on_dataset(
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
 
-    let (_, _) = print_results(&model, &loss_function, &mut tokenizer, &inputs, &outputs)?;
+    let (_, _) = print_results(0, &model, &loss_function, &mut tokenizer, &inputs, &outputs)?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
@@ -159,8 +142,14 @@ pub fn train_network_on_dataset(
         epochs,
     )?;
 
-    let (expected_argmax_values, actual_argmax_values) =
-        print_results(&model, &loss_function, &mut tokenizer, &inputs, &outputs)?;
+    let (expected_argmax_values, actual_argmax_values) = print_results(
+        epochs,
+        &model,
+        &loss_function,
+        &mut tokenizer,
+        &inputs,
+        &outputs,
+    )?;
 
     let output = NetworkTestOutput {
         initial_total_error,
@@ -172,6 +161,7 @@ pub fn train_network_on_dataset(
 }
 
 fn print_results(
+    epoch: usize,
     model: &Box<dyn OperatorTrait>,
     loss_function: &Box<dyn OperatorTrait>,
     tokenizer: &mut Tokenizer,
@@ -188,15 +178,16 @@ fn print_results(
 
         let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
-        let expected_argmax = expected_output_argmaxes[0];
+        let expected_argmax = expected_output_argmaxes.last().unwrap().to_owned();
         expected_argmax_values.push(expected_argmax);
 
         let actual_output: &TensorF32 = &actual_output.tensor().deref().borrow();
         let actual_output_argmaxes = get_row_argmaxes(actual_output)?;
-        let actual_argmax = actual_output_argmaxes[0];
+        let actual_argmax = actual_output_argmaxes.last().unwrap().to_owned();
         actual_argmax_values.push(actual_argmax);
 
         print_expected_output_and_actual_output(
+            epoch,
             tokenizer,
             i,
             &input.tensor().deref().borrow(),

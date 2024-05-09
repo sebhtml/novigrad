@@ -245,7 +245,6 @@ impl DeviceInterface for Device {
         c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error> {
-        println!("c {:?}", c);
         match self.device.borrow() {
             DeviceEnum::Cpu(device) => {
                 device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)

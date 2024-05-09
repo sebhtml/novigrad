@@ -64,13 +64,15 @@ pub fn into_one_hot_encoded_rows(
 fn load_examples(
     device: &Device,
     file_path: &str,
+    max_chars: Option<usize>,
+    max_number_of_examples: usize,
     input_sequence_length: usize,
     output_sequence_length: usize,
     vocab_size: usize,
     tokenizer: &mut Tokenizer,
 ) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let mut examples = Vec::new();
-    let text = fs::read_to_string(file_path).map_err(|_| {
+    let mut text = fs::read_to_string(file_path).map_err(|_| {
         Error::new(
             file!(),
             line!(),
@@ -78,11 +80,13 @@ fn load_examples(
             ErrorEnum::IncompatibleTensorShapes,
         )
     })?;
+    if let Some(max_chars) = max_chars {
+        text = text[0..max_chars].to_owned();
+    }
     println!("[load_megaman_examples] loaded {} bytes", text.len());
     let tokens: Vec<usize> = tokenizer.encode(&text);
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
-    let max_number_of_examples = 10;
     while i + input_sequence_length < tokens.len() && i < max_number_of_examples {
         let input_begin = i + 0;
         let input_end = input_begin + input_sequence_length;
@@ -90,8 +94,8 @@ fn load_examples(
         let one_hot_encoded_tokens = into_one_hot_encoded_rows(device, input_tokens, vocab_size)?;
         let output_begin = input_begin + 1;
         let output_end = output_begin + output_sequence_length;
-        let next_token = &tokens[output_begin..output_end];
-        let output_multiclass = into_one_hot_encoded_rows(device, next_token, vocab_size)?;
+        let output_tokens = &tokens[output_begin..output_end];
+        let output_multiclass = into_one_hot_encoded_rows(device, output_tokens, vocab_size)?;
 
         examples.push((
             //

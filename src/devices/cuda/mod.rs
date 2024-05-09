@@ -12,9 +12,8 @@ use cudarc::{
     },
     driver::{self},
 };
-use rustacuda::memory::DeviceBuffer;
 
-use crate::{DevBufferEnum, DeviceInterface, Error, ErrorEnum};
+use crate::{DeviceInterface, Error, ErrorEnum};
 
 #[derive(Debug)]
 pub struct CudaDevice {
@@ -79,14 +78,9 @@ impl DeviceInterface for CudaDevice {
                 c_type, ldc,
             )
         };
-        status.result().map_err(|_| {
-            Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            )
-        })
+        status
+            .result()
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
     }
 
     fn saxpy(
@@ -101,14 +95,9 @@ impl DeviceInterface for CudaDevice {
         let handle = self.handle;
         let alpha = &alpha as *const f32;
         let status = unsafe { cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
-        status.result().map_err(|_| {
-            Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            )
-        })
+        status
+            .result()
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
     }
 
     fn sdot(
@@ -126,12 +115,7 @@ impl DeviceInterface for CudaDevice {
             cublasSdot_v2(handle, n, x, incx, y, incy, result)
         };
         status.result().map_err(|_| {
-            Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            )
+            Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation)
         })?;
         Ok(result)
     }
@@ -139,33 +123,17 @@ impl DeviceInterface for CudaDevice {
     fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
         let handle = self.handle;
         let status = unsafe { cublasScopy_v2(handle, n, x, incx, y, incy) };
-        status.result().map_err(|_| {
-            Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            )
-        })
+        status
+            .result()
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
         let handle = self.handle;
         let alpha = &alpha as *const f32;
         let status = unsafe { cublasSscal_v2(handle, n, alpha, x, incx) };
-        status.result().map_err(|_| {
-            Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            )
-        })
-    }
-
-    fn device_buffer(&self, len: usize) -> DevBufferEnum {
-        // TODO don't unwrap
-        let buffer = unsafe { DeviceBuffer::uninitialized(len).unwrap() };
-        DevBufferEnum::CudaBuffer(buffer)
+        status
+            .result()
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
     }
 }

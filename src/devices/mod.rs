@@ -1,6 +1,7 @@
 mod cpu;
 use crate::Error;
 use std::{
+    borrow::Borrow,
     cell::RefCell,
     collections::{HashMap, LinkedList},
     mem::swap,
@@ -11,10 +12,10 @@ use std::{
 pub use cpu::*;
 #[cfg(feature = "cuda")]
 mod cuda;
-use crate::{OperatorTrait, Tensor, TensorF32};
-use core::fmt::Debug;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
+
+use crate::{OperatorTrait, Tensor, TensorF32};
 mod buffer;
 pub use buffer::*;
 
@@ -26,7 +27,6 @@ pub struct MemoryInfo {
 }
 
 pub trait DeviceInterface {
-    fn device_buffer(&self, len: usize) -> DevBufferEnum;
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
     ///
@@ -92,72 +92,15 @@ pub trait DeviceInterface {
 pub struct Device {
     used: Rc<RefCell<usize>>,
     tensors_to_optimize: Rc<RefCell<Vec<Tensor>>>,
-    device: Rc<dyn DeviceInterface>,
+    device: Rc<DeviceEnum>,
     available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevBuffer>>>>,
 }
 
-impl Debug for dyn DeviceInterface {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Ok(())
-    }
-}
-
-impl DeviceInterface for Device {
-    fn device_buffer(&self, len: usize) -> DevBufferEnum {
-        self.device.deref().device_buffer(len)
-    }
-
-    fn sgemm(
-        &self,
-        transa: bool,
-        transb: bool,
-        m: i32,
-        n: i32,
-        k: i32,
-        alpha: f32,
-        a: *const f32,
-        lda: i32,
-        b: *const f32,
-        ldb: i32,
-        beta: f32,
-        c: *mut f32,
-        ldc: i32,
-    ) -> Result<(), Error> {
-        self.device
-            .deref()
-            .sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-    }
-
-    fn saxpy(
-        &self,
-        n: i32,
-        alpha: f32,
-        x: *const f32,
-        incx: i32,
-        y: *mut f32,
-        incy: i32,
-    ) -> Result<(), Error> {
-        self.device.deref().saxpy(n, alpha, x, incx, y, incy)
-    }
-
-    fn sdot(
-        &self,
-        n: i32,
-        x: *const f32,
-        incx: i32,
-        y: *const f32,
-        incy: i32,
-    ) -> Result<f32, Error> {
-        self.device.deref().sdot(n, x, incx, y, incy)
-    }
-
-    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
-        self.device.deref().scopy(n, x, incx, y, incy)
-    }
-
-    fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
-        self.device.deref().sscal(n, alpha, x, incx)
-    }
+#[derive(Debug)]
+pub enum DeviceEnum {
+    Cpu(CpuDevice),
+    #[cfg(feature = "cuda")]
+    Cuda(CudaDevice),
 }
 
 impl Default for Device {
@@ -167,18 +110,17 @@ impl Default for Device {
 }
 
 impl Device {
-    pub fn new(device: &Rc<dyn DeviceInterface>) -> Self {
+    pub fn new(device: DeviceEnum) -> Self {
         Self {
             used: Default::default(),
             tensors_to_optimize: Rc::new(RefCell::new(vec![])),
-            device: device.to_owned(),
+            device: Rc::new(device),
             available_buffers: Default::default(),
         }
     }
 
     pub fn cpu() -> Self {
-        let device: Rc<dyn DeviceInterface> = Rc::new(CpuDevice::default());
-        Self::new(&device)
+        Self::new(DeviceEnum::Cpu(CpuDevice::default()))
     }
 
     pub fn recycle(&self, len: usize, buffer: &mut DevBuffer) {
@@ -209,10 +151,7 @@ impl Device {
     #[cfg(feature = "cuda")]
     pub fn cuda() -> Result<Self, Error> {
         match CudaDevice::try_default() {
-            Ok(cublas) => {
-                let device: Rc<dyn DeviceInterface> = Rc::new(cublas);
-                Ok(Self::new(&device))
-            }
+            Ok(cublas) => Ok(Self::new(DeviceEnum::Cuda(cublas))),
             Err(error) => Err(error),
         }
     }
@@ -285,6 +224,82 @@ impl Device {
                 *used += len;
                 DevBuffer::new(self, len)
             }
+        }
+    }
+}
+
+impl DeviceInterface for Device {
+    fn sgemm(
+        &self,
+        transa: bool,
+        transb: bool,
+        m: i32,
+        n: i32,
+        k: i32,
+        alpha: f32,
+        a: *const f32,
+        lda: i32,
+        b: *const f32,
+        ldb: i32,
+        beta: f32,
+        c: *mut f32,
+        ldc: i32,
+    ) -> Result<(), Error> {
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => {
+                device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+            }
+            #[cfg(feature = "cuda")]
+            DeviceEnum::Cuda(device) => {
+                device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+            }
+        }
+    }
+
+    fn sdot(
+        &self,
+        n: i32,
+        x: *const f32,
+        incx: i32,
+        y: *const f32,
+        incy: i32,
+    ) -> Result<f32, Error> {
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => device.sdot(n, x, incx, y, incy),
+            #[cfg(feature = "cuda")]
+            DeviceEnum::Cuda(device) => device.sdot(n, x, incx, y, incy),
+        }
+    }
+
+    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => device.scopy(n, x, incx, y, incy),
+            #[cfg(feature = "cuda")]
+            DeviceEnum::Cuda(device) => device.scopy(n, x, incx, y, incy),
+        }
+    }
+
+    fn saxpy(
+        &self,
+        n: i32,
+        alpha: f32,
+        x: *const f32,
+        incx: i32,
+        y: *mut f32,
+        incy: i32,
+    ) -> Result<(), Error> {
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => device.saxpy(n, alpha, x, incx, y, incy),
+            #[cfg(feature = "cuda")]
+            DeviceEnum::Cuda(device) => device.saxpy(n, alpha, x, incx, y, incy),
+        }
+    }
+
+    fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => device.sscal(n, alpha, x, incx),
+            #[cfg(feature = "cuda")]
+            DeviceEnum::Cuda(device) => device.sscal(n, alpha, x, incx),
         }
     }
 }

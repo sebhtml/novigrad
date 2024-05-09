@@ -12,3 +12,5 @@ mod mul;
 pub use mul::*;
 mod scale;
 pub use scale::*;
+mod add;
+pub use add::*;

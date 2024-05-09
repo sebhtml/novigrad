@@ -33,7 +33,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
         tokenizer,
         examples,
         model: Box::new(model),
-        epochs: 300,
+        epochs: 1000,
         progress: 100,
         loss_function_name: Box::new(CrossEntropyLoss::new(device)),
         initial_total_error_min: 50.0,

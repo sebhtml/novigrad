@@ -60,7 +60,7 @@ impl Model {
 
 impl OperatorTrait for Model {
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        let debug = true;
+        let debug = false;
         if debug {
             println!("----");
         }

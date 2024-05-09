@@ -13,7 +13,7 @@ pub struct Mask {
 impl Mask {
     pub fn try_new(device: &Device, mask_rows: usize, mask_cols: usize) -> Result<Self, Error> {
         let len = mask_rows * mask_cols;
-        let mask = vec![1.0; len];
+        let mask = vec![0.0; len];
 
         let mask = device.tensor(
             Rc::new(Identity::new(device)),
@@ -27,7 +27,7 @@ impl Mask {
         let mut values = mask.tensor().deref().borrow().get_values()?;
         for row in 0..mask_rows {
             for col in 0..mask_cols {
-                if row > col {
+                if row < col {
                     let index = mask.tensor().deref().borrow().index(row, col);
                     values[index] = f32::NEG_INFINITY;
                 }
@@ -35,11 +35,9 @@ impl Mask {
         }
         mask.tensor().deref().borrow_mut().set_values(values);
 
-        /*
         {
             println!("mask {}", &mask.tensor().deref().borrow());
         }
-         */
 
         let add = Add::new(device);
         let mask = Self { mask, add };

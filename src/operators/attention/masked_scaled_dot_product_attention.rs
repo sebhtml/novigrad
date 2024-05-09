@@ -1,8 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{
-    Device, Error, ErrorEnum, Gemm, Identity, Mask, MatMul, OperatorTrait, Scale, Softmax, Tensor,
-};
+use crate::{Device, Error, ErrorEnum, Mask, MatMul, OperatorTrait, Scale, Softmax, Tensor};
 
 /// MaskedScaledDotProductAttention is not a ONNX operator.
 /// https://onnx.ai/onnx/operators/index.html ???
@@ -10,8 +8,7 @@ use crate::{
 /// https://arxiv.org/abs/1706.03762
 #[derive(Clone)]
 pub struct MaskedScaledDotProductAttention {
-    gemm: Gemm, // The MatMul in "Attention Is All You Need" in Fig. 2 on page 4
-    gemm_biases: Tensor,
+    qk_matmul: MatMul,
     scale: Scale,
     mask: Mask,
     softmax: Softmax,
@@ -20,19 +17,7 @@ pub struct MaskedScaledDotProductAttention {
 
 impl MaskedScaledDotProductAttention {
     pub fn try_new(device: &Device, rows: usize, cols: usize) -> Result<Self, Error> {
-        let gemm = Gemm::new(device);
-
-        let len = rows * rows;
-        let gemm_biases = device.tensor(
-            Rc::new(Identity::new(device)),
-            &vec![],
-            rows,
-            rows,
-            vec![0.0; len],
-            true,
-            true,
-        );
-
+        let qk_matmul = MatMul::new(device, true);
         let alpha = 1.0 / f32::sqrt(cols as f32);
         let scale = Scale::new(device, alpha);
         let mask_rows = rows;
@@ -40,12 +25,10 @@ impl MaskedScaledDotProductAttention {
         let mask = Mask::try_new(device, mask_rows, mask_cols)?;
         let next_op_is_cross_entropy_loss = false;
         let softmax = Softmax::new(device, next_op_is_cross_entropy_loss);
-        let transb = false;
-        let matmul = MatMul::new(device, transb);
+        let matmul = MatMul::new(device, false);
 
         let attention = Self {
-            gemm,
-            gemm_biases,
+            qk_matmul,
             scale,
             mask,
             softmax,
@@ -61,7 +44,7 @@ impl OperatorTrait for MaskedScaledDotProductAttention {
     }
 
     fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        let debug = true;
+        let debug = false;
         if debug {
             println!("Entering Attention");
         }
@@ -70,9 +53,7 @@ impl OperatorTrait for MaskedScaledDotProductAttention {
         let k = &inputs[1];
         let v = &inputs[2];
 
-        let weights = self
-            .gemm
-            .forward(&[q.clone(), k.clone(), self.gemm_biases.clone()])?;
+        let weights = self.qk_matmul.forward(&[q.clone(), k.clone()])?;
         if debug {
             weights.realize()?;
             println!("Q*K^T weights {}", weights.tensor().deref().borrow());
@@ -95,17 +76,18 @@ impl OperatorTrait for MaskedScaledDotProductAttention {
             );
         }
         let softmaxed_weights = self.softmax.forward(&[masked_weights])?;
-        //softmaxed_weights.realize()?;
-        //println!("softmaxed_weights {}", softmaxed_weights.tensor().deref().borrow());
-        //println!(
-        //"softmaxed_weights {:?}",
-        //softmaxed_weights.tensor().deref().borrow().size()
-        //);
+        if debug {
+            softmaxed_weights.realize()?;
+            println!(
+                "softmaxed_weights {}",
+                softmaxed_weights.tensor().deref().borrow()
+            );
+        }
         let attentions = self.matmul.forward(&[softmaxed_weights, v.clone()])?;
-        //println!(
-        //"attentions {:?}",
-        //attentions.tensor().deref().borrow().size()
-        //);
+        if debug {
+            attentions.realize()?;
+            println!("attentions {}", attentions.tensor().deref().borrow());
+        }
         Ok(attentions)
     }
 

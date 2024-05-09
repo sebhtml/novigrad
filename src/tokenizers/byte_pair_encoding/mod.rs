@@ -6,6 +6,7 @@ use crate::{Error, ErrorEnum, TokenizerTrait};
 mod tests;
 
 pub struct BytePairEncoding {
+    vocab_size: usize,
     // TODO add maximum vocabulary size.
     byte_to_token: HashMap<u8, usize>,
     token_to_byte: HashMap<usize, u8>,
@@ -16,6 +17,7 @@ pub struct BytePairEncoding {
 impl Default for BytePairEncoding {
     fn default() -> Self {
         Self {
+            vocab_size: 0,
             byte_to_token: Default::default(),
             token_to_byte: Default::default(),
             token_pair_to_token: Default::default(),
@@ -118,6 +120,8 @@ impl TokenizerTrait for BytePairEncoding {
             }
         }
 
+        self.vocab_size = next_token;
+
         tokens
     }
 
@@ -152,5 +156,9 @@ impl TokenizerTrait for BytePairEncoding {
         }
         String::from_utf8(output)
             .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
+    }
+
+    fn vocab_size(&self) -> usize {
+        self.vocab_size
     }
 }

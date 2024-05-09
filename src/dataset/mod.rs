@@ -64,6 +64,7 @@ pub fn into_one_hot_encoded_rows(
 fn load_examples(
     device: &Device,
     file_path: &str,
+    max_chars: Option<usize>,
     max_number_of_examples: usize,
     input_sequence_length: usize,
     output_sequence_length: usize,
@@ -71,7 +72,7 @@ fn load_examples(
     tokenizer: &mut Tokenizer,
 ) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let mut examples = Vec::new();
-    let text = fs::read_to_string(file_path).map_err(|_| {
+    let mut text = fs::read_to_string(file_path).map_err(|_| {
         Error::new(
             file!(),
             line!(),
@@ -79,6 +80,9 @@ fn load_examples(
             ErrorEnum::IncompatibleTensorShapes,
         )
     })?;
+    if let Some(max_chars) = max_chars {
+        text = text[0..max_chars].to_owned();
+    }
     println!("[load_megaman_examples] loaded {} bytes", text.len());
     let tokens: Vec<usize> = tokenizer.encode(&text);
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());

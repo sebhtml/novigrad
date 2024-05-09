@@ -20,4 +20,8 @@ impl TokenizerTrait for AsciiTokenizer {
             .join("");
         Ok(output)
     }
+
+    fn vocab_size(&self) -> usize {
+        256
+    }
 }

@@ -16,8 +16,6 @@ pub fn print_expected_output_and_actual_output(
     actual_output_token: usize,
     loss: f32,
 ) -> Result<(), Error> {
-    let rows = expected_output.rows();
-    let cols = expected_output.cols();
     let input_tokens = get_row_argmaxes(input)?;
 
     println!("----");
@@ -42,24 +40,8 @@ pub fn print_expected_output_and_actual_output(
         epoch, example, loss, expected_output_token, actual_output_token
     );
 
-    let expected_values = expected_output.get_values()?;
-    let actual_values = actual_output.get_values()?;
-    println!("");
-
-    let print_columns = false;
-
-    if print_columns {
-        for row in 0..rows {
-            for col in 0..cols {
-                println!(
-                    "index {}  expected {}  actual {}",
-                    col,
-                    expected_values[expected_output.index(row, col)],
-                    actual_values[actual_output.index(row, col)],
-                );
-            }
-        }
-    }
+    println!("expected_output {}", expected_output);
+    println!("actual_output {}", actual_output);
 
     Ok(())
 }

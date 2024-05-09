@@ -20,10 +20,10 @@ pub struct Model {
 impl Model {
     pub fn new(device: &Device) -> Self {
         let _batch_size = 1;
-        let sequence_length = 32;
-        let vocab_size = 256;
+        let sequence_length = 6;
+        let vocab_size = 20;
         //let vocab_size = 34816; // 32768 + 2048
-        let embedding_dim = 384;
+        let embedding_dim = 4;
         let _num_heads = 1;
 
         let q = Linear::new(device, embedding_dim, embedding_dim, sequence_length);

@@ -47,16 +47,18 @@ impl Tensor {
 
     pub fn realize(&self) -> Result<(), Error> {
         let realized = *self.realized.deref().borrow();
-        debug_assert_eq!(realized, false);
         if realized {
             return Ok(());
         }
         let tape = self.get_tape();
+        //println!("Realize.. Start");
         for output in tape.iter() {
             let op = output.operator();
             let inputs = output.inputs();
+            //println!("op {}  inputs: {}, output: {}", op.name(), inputs.len(), 1);
             op.forward_realize(inputs, output)?;
         }
+        //println!("Realize.. Done");
         let realized: &mut bool = &mut self.realized.deref().borrow_mut();
         *realized = true;
         Ok(())

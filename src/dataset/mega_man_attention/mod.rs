@@ -9,9 +9,14 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let file_path = "data/Mega_Man.txt";
     let model = Model::new(device);
     let vocab_size = model.vocab_size();
-    let mut tokenizer = Tokenizer::ascii_tokenizer();
+    let mut tokenizer = if vocab_size == 256 {
+        Tokenizer::ascii_tokenizer()
+    } else {
+        Tokenizer::byte_pair_encoding()
+    };
+
     let input_sequence_length = model.sequence_length();
-    let output_sequence_length = 1;
+    let output_sequence_length = input_sequence_length;
     let examples = load_examples(
         &device,
         file_path,
@@ -20,6 +25,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
         vocab_size,
         &mut tokenizer,
     )?;
+
     let details = DatasetDetails {
         device: device.clone(),
         tokenizer,

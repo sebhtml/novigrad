@@ -1,7 +1,7 @@
 use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
-use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, ErrorEnum, OperatorTrait, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
 #[derive(Clone)]
@@ -31,7 +31,12 @@ impl LossFunction for CrossEntropyLoss {
         let p = expected;
         let q = actual;
         if p.size() != q.size() {
-            return Err(Error::IncompatibleTensorShapes);
+            return Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::IncompatibleTensorShapes,
+            ));
         }
         let rows = p.rows();
         let cols = p.cols();

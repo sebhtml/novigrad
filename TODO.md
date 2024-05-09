@@ -1,8 +1,10 @@
 == Attention ==
 
-- implement Mask
+- remove rustacuda since it's broken
 - implement Attention
 - use Attention in megaman
+
+- remove random calls to unwrap()
 
 == Mini Batch ==
 

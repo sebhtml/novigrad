@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod tests;
 mod train;
-use std::ops::Deref;
+use std::{ops::Deref, time::SystemTime};
 
 pub use train::*;
 mod learning_tensor;
@@ -85,4 +85,13 @@ fn train_back_propagation(
     optimizer.optimize(&gradients, learning_rate)?;
 
     Ok(())
+}
+
+pub fn time_it<F: Fn() -> T, T>(text: &str, f: F) -> T {
+    let start = SystemTime::now();
+    let result = f();
+    let end = SystemTime::now();
+    let duration = end.duration_since(start).unwrap();
+    println!("{} took {} μs", text, duration.as_micros());
+    result
 }

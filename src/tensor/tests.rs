@@ -2,7 +2,7 @@ use rand::Rng;
 
 use crate::{
     tensor::{Error, TensorF32},
-    Device,
+    Device, ErrorEnum,
 };
 
 #[test]
@@ -54,7 +54,10 @@ fn multiplication_shape_compatibility() {
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
     let error = TensorF32::matmul(false, false, &lhs, &rhs, &mut result, false);
-    assert_eq!(error, Err(Error::IncompatibleTensorShapes))
+    assert_eq!(
+        error.map_err(|e| e.error),
+        Err(ErrorEnum::IncompatibleTensorShapes)
+    )
 }
 
 #[test]
@@ -97,7 +100,10 @@ fn reshape_error() {
     );
 
     let op_result = lhs.resize(&[1, 11]);
-    assert_eq!(op_result, Err(Error::UnsupportedOperation));
+    assert_eq!(
+        op_result.map_err(|e| e.error),
+        Err(ErrorEnum::UnsupportedOperation)
+    );
 }
 
 #[test]

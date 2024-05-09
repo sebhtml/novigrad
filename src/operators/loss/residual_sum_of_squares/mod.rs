@@ -1,13 +1,14 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, ErrorEnum, OperatorTrait, Tensor, TensorF32};
 
 use super::LossFunction;
 
 #[cfg(test)]
 mod tests;
 
-/// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
+/// ResidualSumOfSquares is not a ONNX operator.
+/// https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
 pub struct ResidualSumOfSquares {
     device: Device,
@@ -30,7 +31,12 @@ impl LossFunction for ResidualSumOfSquares {
         actual: &TensorF32,
     ) -> Result<f32, Error> {
         if expected.size() != actual.size() {
-            return Err(Error::IncompatibleTensorShapes);
+            return Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::IncompatibleTensorShapes,
+            ));
         }
         let rows = expected.rows();
         let cols = expected.cols();

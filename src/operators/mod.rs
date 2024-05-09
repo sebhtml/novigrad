@@ -6,6 +6,8 @@ mod loss;
 pub use loss::*;
 mod lin_alg;
 pub use lin_alg::*;
+mod attention;
+pub use attention::*;
 
 use crate::{Error, Tensor};
 use core::fmt::Debug;

@@ -7,7 +7,7 @@ use crate::{Device, Error, ErrorEnum, Mask, MatMul, OperatorTrait, Scale, Softma
 /// Attention Is All You Need
 /// https://arxiv.org/abs/1706.03762
 #[derive(Clone)]
-pub struct MaskedScaledDotProductAttention {
+pub struct CausalSelfAttention {
     qk_matmul: MatMul,
     scale: Scale,
     mask: Mask,
@@ -15,7 +15,7 @@ pub struct MaskedScaledDotProductAttention {
     matmul: MatMul,
 }
 
-impl MaskedScaledDotProductAttention {
+impl CausalSelfAttention {
     pub fn try_new(device: &Device, rows: usize, cols: usize) -> Result<Self, Error> {
         let qk_matmul = MatMul::new(device, true);
         let alpha = 1.0 / f32::sqrt(cols as f32);
@@ -38,7 +38,7 @@ impl MaskedScaledDotProductAttention {
     }
 }
 
-impl OperatorTrait for MaskedScaledDotProductAttention {
+impl OperatorTrait for CausalSelfAttention {
     fn name(&self) -> &str {
         "MaskedScaledDotProductAttention"
     }

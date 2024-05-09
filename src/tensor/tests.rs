@@ -1,9 +1,6 @@
 use rand::Rng;
 
-use crate::{
-    tensor::{Error, TensorF32},
-    Device, ErrorEnum,
-};
+use crate::{tensor::TensorF32, Device, ErrorEnum};
 
 #[test]
 fn new() {

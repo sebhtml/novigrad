@@ -1,8 +1,7 @@
 use std::ops::Deref;
 
 use crate::{
-    Device, Embedding, Error, ErrorEnum, Linear, MaskedScaledDotProductAttention, MatMul,
-    OperatorTrait, Reshape, Softmax, Tensor, TensorF32,
+    CausalSelfAttention, Device, Embedding, Error, Linear, OperatorTrait, Softmax, Tensor,
 };
 
 pub struct Model {
@@ -12,7 +11,7 @@ pub struct Model {
     q: Linear,
     k: Linear,
     v: Linear,
-    attention: MaskedScaledDotProductAttention,
+    attention: CausalSelfAttention,
     linear: Linear,
     softmax: Softmax,
 }
@@ -22,24 +21,24 @@ impl Model {
         let _batch_size = 1;
         let sequence_length = 6;
         let vocab_size = 20;
-        //let vocab_size = 34816; // 32768 + 2048
-        let embedding_dim = 4;
+        let n_embd = 4;
         let _num_heads = 1;
+        let _n_layer = 1;
+        let _dropout = 0.1;
+        let _block_size = 2048;
 
-        let q = Linear::new(device, embedding_dim, embedding_dim, sequence_length);
-        let k = Linear::new(device, embedding_dim, embedding_dim, sequence_length);
-        let v = Linear::new(device, embedding_dim, embedding_dim, sequence_length);
+        let q = Linear::new(device, n_embd, n_embd, sequence_length);
+        let k = Linear::new(device, n_embd, n_embd, sequence_length);
+        let v = Linear::new(device, n_embd, n_embd, sequence_length);
 
-        let attention =
-            MaskedScaledDotProductAttention::try_new(device, sequence_length, embedding_dim)
-                .unwrap();
+        let attention = CausalSelfAttention::try_new(device, sequence_length, n_embd).unwrap();
 
-        let linear = Linear::new(device, vocab_size, embedding_dim, sequence_length);
+        let linear = Linear::new(device, vocab_size, n_embd, sequence_length);
 
         Self {
             vocab_size,
             sequence_length,
-            embedding: Embedding::new(device, vocab_size, embedding_dim),
+            embedding: Embedding::new(device, vocab_size, n_embd),
             q,
             k,
             v,
@@ -110,20 +109,10 @@ impl OperatorTrait for Model {
     }
 
     fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+        panic!()
     }
 
-    fn forward_realize(&self, _inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+        panic!()
     }
 }

@@ -1,6 +1,4 @@
-use crate::{
-    Device, Embedding, Error, ErrorEnum, Linear, OperatorTrait, Reshape, Sigmoid, Softmax, Tensor,
-};
+use crate::{Device, Embedding, Error, Linear, OperatorTrait, Reshape, Sigmoid, Softmax, Tensor};
 
 pub struct Model {
     embedding: Embedding,
@@ -15,31 +13,25 @@ pub struct Model {
 
 impl Model {
     pub fn new(device: &Device) -> Self {
-        let _batch_size = 1;
         let sequence_length = 6;
         let vocab_size = 256;
-        let num_embeddings = vocab_size;
-        let embedding_dim = 384;
-        let _num_heads = 0;
+        let n_embd = 384;
         let output_rows = 1;
 
+        let linear_1 = Linear::new(device, n_embd, sequence_length * n_embd, output_rows);
+
         Self {
-            embedding: Embedding::new(device, num_embeddings, embedding_dim),
-            linear_0: Linear::new(device, embedding_dim, embedding_dim, sequence_length),
+            embedding: Embedding::new(device, vocab_size, n_embd),
+            linear_0: Linear::new(device, n_embd, n_embd, sequence_length),
             sigmoid_0: Sigmoid::new(device),
             reshape: Reshape::new(
                 device,
-                vec![sequence_length, embedding_dim],
-                vec![output_rows, sequence_length * embedding_dim],
+                vec![sequence_length, n_embd],
+                vec![output_rows, sequence_length * n_embd],
             ),
-            linear_1: Linear::new(
-                device,
-                embedding_dim,
-                sequence_length * embedding_dim,
-                output_rows,
-            ),
+            linear_1,
             sigmoid_1: Sigmoid::new(device),
-            linear_2: Linear::new(device, vocab_size, embedding_dim, output_rows),
+            linear_2: Linear::new(device, vocab_size, n_embd, output_rows),
             softmax: Softmax::new(device, true),
         }
     }
@@ -63,20 +55,10 @@ impl OperatorTrait for Model {
     }
 
     fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+        panic!()
     }
 
     fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
-        Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::UnsupportedOperation,
-        ))
+        panic!()
     }
 }

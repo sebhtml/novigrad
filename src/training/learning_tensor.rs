@@ -17,11 +17,12 @@ impl Tensor {
     pub fn new(
         device: &Device,
         operator: Rc<dyn OperatorTrait>,
-        inputs: &[Tensor],
+        inputs: &[&Tensor],
         tensor: Rc<RefCell<TensorF32>>,
         gradient: Rc<RefCell<TensorF32>>,
         requires_grad: bool,
     ) -> Self {
+        let inputs: Vec<Tensor> = inputs.into_iter().map(|x| (**x).clone()).collect();
         Self {
             device: device.clone(),
             operator,
@@ -54,9 +55,9 @@ impl Tensor {
         //println!("Realize.. Start");
         for output in tape.iter() {
             let op = output.operator();
-            let inputs = output.inputs();
+            let inputs: Vec<_> = output.inputs().iter().collect();
             //println!("op {}  inputs: {}, output: {}", op.name(), inputs.len(), 1);
-            op.forward_realize(inputs, output)?;
+            op.forward_realize(&inputs, output)?;
         }
         //println!("Realize.. Done");
         let realized: &mut bool = &mut self.realized.deref().borrow_mut();
@@ -115,9 +116,9 @@ impl Tensor {
         */
         for output in tape.iter().rev() {
             let operator = output.operator().deref();
-            let inputs = output.inputs();
+            let inputs: Vec<_> = output.inputs().iter().collect();
 
-            operator.backward(inputs, output)?;
+            operator.backward(&inputs, output)?;
 
             for input in inputs {
                 if !input.requires_grad() {

@@ -21,7 +21,7 @@ impl OperatorTrait for Add {
         "Add"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, crate::Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, crate::Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
@@ -41,7 +41,7 @@ impl OperatorTrait for Add {
         Ok(output)
     }
 
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), crate::Error> {
+    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
@@ -49,7 +49,7 @@ impl OperatorTrait for Add {
         TensorF32::add(input_1, output)
     }
 
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), crate::Error> {
+    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
 

@@ -55,12 +55,12 @@ impl Model {
 }
 
 impl OperatorTrait for Model {
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let state_0 = self.embedding.forward(inputs)?;
-        let state_0b = self.matmul.forward(&[state_0, self.parameters.clone()])?;
-        let state_1 = self.reshape.forward(&[state_0b])?;
-        let state_2 = self.linear.forward(&[state_1])?;
-        let state_3 = self.softmax.forward(&[state_2])?;
+        let state_0b = self.matmul.forward(&[&state_0, &self.parameters])?;
+        let state_1 = self.reshape.forward(&[&state_0b])?;
+        let state_2 = self.linear.forward(&[&state_1])?;
+        let state_3 = self.softmax.forward(&[&state_2])?;
         Ok(state_3)
     }
 
@@ -68,11 +68,11 @@ impl OperatorTrait for Model {
         "MegaManModel"
     }
 
-    fn backward(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 
-    fn forward_realize(&self, _inputs: &[Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
         panic!()
     }
 }

@@ -50,16 +50,16 @@ impl OperatorTrait for Mask {
         "Mask"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
-        let inputs = &[inputs[0].clone(), self.mask.clone()];
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
+        let inputs = &[&inputs[0], &self.mask];
         self.add.forward(inputs)
     }
 
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        self.add.forward_realize(inputs, output)
+    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
+        panic!()
     }
 
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
-        self.add.backward(inputs, output)
+    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
+        panic!()
     }
 }

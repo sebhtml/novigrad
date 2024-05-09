@@ -1,3 +1,4 @@
+
 == Multi-Head Attention ==
 
 - implement Concat
@@ -16,6 +17,7 @@
 
 == Datasets ==
 
+- simplify datasets
 - put load_dataset in a polymorphic enum
 
 == Initialization ==

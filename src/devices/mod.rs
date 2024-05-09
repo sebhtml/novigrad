@@ -163,7 +163,7 @@ impl Device {
     pub fn tensor(
         &self,
         operator: Rc<dyn OperatorTrait>,
-        inputs: &[Tensor],
+        inputs: &[&Tensor],
         rows: usize,
         cols: usize,
         values: Vec<f32>,

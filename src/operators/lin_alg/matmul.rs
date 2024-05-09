@@ -23,7 +23,7 @@ impl OperatorTrait for MatMul {
         "MatMul"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
@@ -47,7 +47,7 @@ impl OperatorTrait for MatMul {
         Ok(output)
     }
 
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
@@ -59,7 +59,7 @@ impl OperatorTrait for MatMul {
         TensorF32::matmul(false, transb, a, b, c, false)
     }
 
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
 

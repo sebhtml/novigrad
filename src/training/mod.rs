@@ -39,7 +39,7 @@ pub fn example_loss(
     actual_output: &Tensor,
     expected_output: &Tensor,
 ) -> Result<f32, Error> {
-    let example_loss = loss_function.forward(&[expected_output.clone(), actual_output.clone()])?;
+    let example_loss = loss_function.forward(&[&expected_output, &actual_output])?;
     example_loss.realize()?;
     let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
     let example_loss: f32 = example_loss.try_into()?;
@@ -54,7 +54,7 @@ pub fn total_loss(
 ) -> Result<f32, Error> {
     let mut total_error = 0.0;
     for i in 0..inputs.len() {
-        let output = model.forward(&[inputs[i].clone()])?;
+        let output = model.forward(&[&inputs[i]])?;
         let expected_output = &outputs[i];
         let example_error = example_loss(loss_function, &output, expected_output)?;
         total_error += example_error;
@@ -76,8 +76,8 @@ fn train_back_propagation(
 ) -> Result<(), Error> {
     device.zero_grad()?;
 
-    let output = model.forward(&[x.clone()])?;
-    let loss = loss_function.forward(&[y.clone(), output.clone()])?;
+    let output = model.forward(&[&x])?;
+    let loss = loss_function.forward(&[&y, &output])?;
     loss.realize()?;
 
     let gradients = loss.backward()?;

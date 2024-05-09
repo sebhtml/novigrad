@@ -173,7 +173,7 @@ fn print_results(
 
     for i in 0..inputs.len() {
         let input = &inputs[i];
-        let actual_output = model.forward(&[input.clone()])?;
+        let actual_output = model.forward(&[&input])?;
         let loss = example_loss(loss_function, &actual_output, &outputs[i])?;
 
         let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();

@@ -25,7 +25,7 @@ impl OperatorTrait for Reshape {
         "Reshape"
     }
 
-    fn forward(&self, inputs: &[Tensor]) -> Result<Tensor, Error> {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         debug_assert_eq!(input.size(), self.input_size);
@@ -44,14 +44,14 @@ impl OperatorTrait for Reshape {
         Ok(output)
     }
 
-    fn forward_realize(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
         TensorF32::copy(input, output)?;
         output.resize(&self.output_size)
     }
 
-    fn backward(&self, inputs: &[Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             let output_gradient: &TensorF32 = &output.gradient().deref().borrow();

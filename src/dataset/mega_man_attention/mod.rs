@@ -10,7 +10,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let max_chars = Some(30);
     let max_number_of_examples = 10;
     // TODO vocab_size should be a new argument
-    let model = Model::new(device);
+    let model = MegaManAttentionModel::new(device);
     let vocab_size = model.vocab_size();
     let mut tokenizer = Tokenizer::byte_pair_encoding();
 

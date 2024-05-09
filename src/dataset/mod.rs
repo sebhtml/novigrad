@@ -4,7 +4,9 @@ mod simple;
 
 use std::{fs, rc::Rc};
 
-use crate::{Device, Error, ErrorEnum, Identity, OperatorTrait, Tensor, Tokenizer, TokenizerTrait};
+use crate::{
+    Device, Error, ErrorEnum, Identity, Model, OperatorTrait, Tensor, Tokenizer, TokenizerTrait,
+};
 
 pub enum Dataset {
     Simple,
@@ -16,7 +18,7 @@ pub struct DatasetDetails {
     pub device: Device,
     pub tokenizer: Tokenizer,
     pub examples: Vec<(Tensor, Tensor)>,
-    pub model: Box<dyn OperatorTrait>,
+    pub model: Box<dyn Model>,
     pub loss_function_name: Box<dyn OperatorTrait>,
     pub learning_rate: f32,
     pub epochs: usize,

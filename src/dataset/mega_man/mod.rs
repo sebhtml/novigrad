@@ -9,7 +9,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
-    let model = Model::new(device);
+    let model = MegaManModel::new(device);
     let vocab_size = model.vocab_size();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let input_sequence_length = model.sequence_length();

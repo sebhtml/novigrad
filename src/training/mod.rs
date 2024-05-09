@@ -5,11 +5,11 @@ use std::{ops::Deref, time::SystemTime};
 
 pub use train::*;
 mod learning_tensor;
-use crate::{devices::Device, Error, OperatorTrait, OptimizerTrait, TensorF32};
+use crate::{devices::Device, Error, Model, OperatorTrait, OptimizerTrait, TensorF32};
 pub use learning_tensor::*;
 
 pub fn train(
-    model: &Box<dyn OperatorTrait>,
+    model: &Box<dyn Model>,
     loss_function: &Box<dyn OperatorTrait>,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
@@ -47,7 +47,7 @@ pub fn example_loss(
 }
 
 pub fn total_loss(
-    model: &Box<dyn OperatorTrait>,
+    model: &Box<dyn Model>,
     loss_function: &Box<dyn OperatorTrait>,
     inputs: &[Tensor],
     outputs: &[Tensor],
@@ -64,7 +64,7 @@ pub fn total_loss(
 }
 
 fn train_back_propagation(
-    model: &Box<dyn OperatorTrait>,
+    model: &Box<dyn Model>,
     loss_function: &Box<dyn OperatorTrait>,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,

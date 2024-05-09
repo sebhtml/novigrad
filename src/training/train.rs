@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    example_loss, total_loss, train, DatasetDetails, Device, Error, GradientDescent, OperatorTrait,
-    OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
+    example_loss, total_loss, train, DatasetDetails, Device, Error, GradientDescent, Model,
+    OperatorTrait, OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 pub fn print_expected_output_and_actual_output(
@@ -57,7 +57,7 @@ fn print_device_mem_info(device: &Device) -> Result<(), Error> {
 
 fn print_total_loss(
     device: &Device,
-    model: &Box<dyn OperatorTrait>,
+    model: &Box<dyn Model>,
     loss_function: &Box<dyn OperatorTrait>,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
@@ -162,7 +162,7 @@ pub fn train_network_on_dataset(
 
 fn print_results(
     epoch: usize,
-    model: &Box<dyn OperatorTrait>,
+    model: &Box<dyn Model>,
     loss_function: &Box<dyn OperatorTrait>,
     tokenizer: &mut Tokenizer,
     inputs: &[Tensor],

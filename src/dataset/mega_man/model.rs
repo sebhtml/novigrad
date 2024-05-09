@@ -1,9 +1,12 @@
 use crate::{
-    Device, Embedding, Error, Identity, Linear, MatMul, OperatorTrait, Reshape, Softmax, Tensor,
+    Device, Embedding, Error, Identity, Linear, MatMul, Model, OperatorTrait, Reshape, Softmax,
+    Tensor,
 };
 use std::rc::Rc;
 
-pub struct Model {
+pub struct MegaManModel {
+    input_shape: Vec<usize>,
+    output_shape: Vec<usize>,
     vocab_size: usize,
     sequence_length: usize,
     parameters: Tensor,
@@ -14,7 +17,7 @@ pub struct Model {
     softmax: Softmax,
 }
 
-impl Model {
+impl MegaManModel {
     pub fn new(device: &Device) -> Self {
         let sequence_length = 32;
         let vocab_size = 256;
@@ -22,6 +25,8 @@ impl Model {
         let output_rows = 1;
 
         Self {
+            input_shape: vec![sequence_length, vocab_size],
+            output_shape: vec![output_rows, vocab_size],
             vocab_size,
             sequence_length,
             parameters: device.tensor(
@@ -54,7 +59,7 @@ impl Model {
     }
 }
 
-impl OperatorTrait for Model {
+impl Model for MegaManModel {
     fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let state_0 = self.embedding.forward(inputs)?;
         let state_0b = self.matmul.forward(&[&state_0, &self.parameters])?;
@@ -64,15 +69,11 @@ impl OperatorTrait for Model {
         Ok(state_3)
     }
 
-    fn name(&self) -> &str {
-        "MegaManModel"
+    fn input_shape(&self) -> &[usize] {
+        &self.input_shape
     }
 
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
-    }
-
-    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
+    fn output_shape(&self) -> &[usize] {
+        &self.output_shape
     }
 }

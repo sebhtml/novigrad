@@ -10,6 +10,7 @@
 
 - implement mini batch
 - shuffle examples in each epoch
+- device.tensor should take size instead of rows, cols
 
 == Parallel Execution ==
 

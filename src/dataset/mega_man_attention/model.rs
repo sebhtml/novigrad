@@ -1,10 +1,12 @@
 use std::ops::Deref;
 
 use crate::{
-    CausalSelfAttention, Device, Embedding, Error, Linear, OperatorTrait, Softmax, Tensor,
+    CausalSelfAttention, Device, Embedding, Error, Linear, Model, OperatorTrait, Softmax, Tensor,
 };
 
-pub struct Model {
+pub struct MegaManAttentionModel {
+    input_shape: Vec<usize>,
+    output_shape: Vec<usize>,
     vocab_size: usize,
     sequence_length: usize,
     embedding: Embedding,
@@ -16,7 +18,7 @@ pub struct Model {
     softmax: Softmax,
 }
 
-impl Model {
+impl MegaManAttentionModel {
     pub fn new(device: &Device) -> Self {
         let _batch_size = 1;
         let sequence_length = 6;
@@ -36,6 +38,8 @@ impl Model {
         let linear = Linear::new(device, vocab_size, n_embd, sequence_length);
 
         Self {
+            input_shape: vec![sequence_length, vocab_size],
+            output_shape: vec![sequence_length, vocab_size],
             vocab_size,
             sequence_length,
             embedding: Embedding::new(device, vocab_size, n_embd),
@@ -57,7 +61,7 @@ impl Model {
     }
 }
 
-impl OperatorTrait for Model {
+impl Model for MegaManAttentionModel {
     fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let debug = false;
         if debug {
@@ -104,15 +108,11 @@ impl OperatorTrait for Model {
         Ok(probabilities)
     }
 
-    fn name(&self) -> &str {
-        "MegaManModel"
+    fn input_shape(&self) -> &[usize] {
+        &self.input_shape
     }
 
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
-    }
-
-    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
+    fn output_shape(&self) -> &[usize] {
+        &self.output_shape
     }
 }

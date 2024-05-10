@@ -1,3 +1,5 @@
+mod model;
+pub use model::*;
 mod mega_man;
 mod mega_man_attention;
 mod simple;

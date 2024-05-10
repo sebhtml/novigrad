@@ -103,12 +103,12 @@ impl Model for MegaManAttentionModel {
         Ok(probabilities)
     }
 
-    fn input_shape(&self) -> &[usize] {
-        &self.input_shape
+    fn input_shape(&self) -> Vec<usize> {
+        self.input_shape.clone()
     }
 
-    fn output_shape(&self) -> &[usize] {
-        &self.output_shape
+    fn output_shape(&self) -> Vec<usize> {
+        self.output_shape.clone()
     }
 }
 

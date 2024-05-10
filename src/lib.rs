@@ -6,8 +6,6 @@ mod dataset;
 pub use dataset::*;
 mod devices;
 pub use devices::*;
-mod optimizer;
-pub use optimizer::*;
 mod operators;
 pub use operators::*;
 mod tokenizers;

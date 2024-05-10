@@ -8,7 +8,6 @@
 
 - move code from training/mod.rs to training/train.rs
 - rename module learnig_tensor to tensor
-- move optimizer to training
 - rename OperatorTrait to Operator
 
 == Device fixes ==

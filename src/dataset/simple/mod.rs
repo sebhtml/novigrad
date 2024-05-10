@@ -1,4 +1,3 @@
-
 use crate::{
     into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, ErrorEnum, Program,
     Tensor, Tokenizer, TokenizerTrait,

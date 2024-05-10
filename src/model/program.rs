@@ -71,10 +71,21 @@ impl Program {
         }
         // Clear states
         for tensor in self.forward_instructions.iter() {
-            tensor.tensor().deref().borrow_mut().zero()?;
-            tensor.gradient().deref().borrow_mut().zero()?;
             //tensor.realize()?;
         }
         Ok(self.program_output.clone())
+    }
+
+    pub fn loss(&self, expected_output: &Tensor) -> Result<Tensor, Error> {
+        // Copy expected output
+        {
+            let example_output: &mut TensorF32 =
+                &mut self.example_input.tensor().deref().borrow_mut();
+            let expected_output: &TensorF32 = &expected_output.tensor().deref().borrow_mut();
+            TensorF32::copy(expected_output, example_output)?;
+        }
+        let loss = &self.loss;
+        //loss.realize()?;
+        Ok(loss.clone())
     }
 }

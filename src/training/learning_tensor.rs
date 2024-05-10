@@ -47,6 +47,8 @@ impl Tensor {
 
     pub fn realize(&self) -> Result<(), Error> {
         let output = self;
+        output.tensor().deref().borrow_mut().zero()?;
+        output.gradient().deref().borrow_mut().zero()?;
         let op = output.operator();
         let inputs: Vec<_> = output.inputs().iter().collect();
 

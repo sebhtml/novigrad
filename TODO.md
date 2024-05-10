@@ -2,10 +2,10 @@
 
 - model structs with no operator fields
 - merge models and /datasets -> models/
-- remove DatasetEnum
 
 == Fixes ==
 
+- remove DatasetEnum
 - move code from training/mod.rs to training/train.rs
 - rename module learnig_tensor to tensor
 - rename OperatorTrait to Operator

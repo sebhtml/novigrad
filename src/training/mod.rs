@@ -6,8 +6,7 @@ mod optimizers;
 pub use optimizers::*;
 pub use train::*;
 mod learning_tensor;
-use crate::{devices::Device, Error, 
-    Program, TensorF32};
+use crate::{devices::Device, Error, Program, TensorF32};
 pub use learning_tensor::*;
 
 pub fn train(

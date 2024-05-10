@@ -83,9 +83,19 @@ fn train_back_propagation(
 ) -> Result<(), Error> {
     device.zero_grad()?;
 
-    let output = model.forward(&[&x])?;
-    let program_output = program.forward(&[&x])?;
+    let model_output = model.forward(&[&x])?;
+    let tape = model_output.get_tape();
+    for o in tape.iter() {
+        o.realize()?;
+    }
 
+    let program_output = program.forward(&[&x])?;
+    let tape = program_output.get_tape();
+    for o in tape.iter() {
+        o.realize()?;
+    }
+
+    let output = model_output.clone();
     let loss = loss_function.forward(&[&y, &output])?;
     let tape = loss.get_tape();
     for o in tape.iter() {
@@ -93,11 +103,11 @@ fn train_back_propagation(
     }
 
     {
-        if &output != &program_output {
+        if &model_output != &program_output {
             println!("PANIC epoch {}  example {}", epoch, example_index);
 
             println!("x {}", x);
-            let tape1 = output.get_tape();
+            let tape1 = model_output.get_tape();
             let tape2 = program_output.get_tape();
             println!("output tape {}", tape1.len());
             println!("program_output tape {}", tape2.len());

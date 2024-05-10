@@ -1,6 +1,5 @@
 == Models ==
 
-- make model structs private
 - model structs with no operator fields
 - merge models and /datasets -> models/
 - remove DatasetEnum

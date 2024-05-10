@@ -5,7 +5,7 @@ use crate::{DatasetDetails, Error};
 use crate::{Embedding, Identity, Linear, MatMul, Model, OperatorTrait, Reshape, Softmax, Tensor};
 use std::rc::Rc;
 
-pub struct MegaManModel {
+struct MegaManModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     vocab_size: usize,

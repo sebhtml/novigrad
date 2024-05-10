@@ -6,7 +6,7 @@ use std::ops::Deref;
 
 use crate::{CausalSelfAttention, Embedding, Linear, Model, OperatorTrait, Softmax, Tensor};
 
-pub struct MegaManAttentionModel {
+struct MegaManAttentionModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     vocab_size: usize,

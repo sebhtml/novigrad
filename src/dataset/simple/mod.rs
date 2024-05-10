@@ -5,7 +5,7 @@ use crate::{
 
 use crate::{Embedding, Linear, Model, OperatorTrait, Reshape, Sigmoid, Softmax};
 
-pub struct SimpleModel {
+struct SimpleModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,

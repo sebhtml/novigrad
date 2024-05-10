@@ -40,7 +40,11 @@ pub fn example_loss(
     expected_output: &Tensor,
 ) -> Result<f32, Error> {
     let example_loss = loss_function.forward(&[&expected_output, &actual_output])?;
-    example_loss.realize()?;
+    let tape = example_loss.get_tape();
+    for o in tape.iter() {
+        o.realize()?;
+    }
+
     let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
     let example_loss: f32 = example_loss.try_into()?;
     Ok(example_loss)
@@ -78,7 +82,10 @@ fn train_back_propagation(
 
     let output = model.forward(&[&x])?;
     let loss = loss_function.forward(&[&y, &output])?;
-    loss.realize()?;
+    let tape = loss.get_tape();
+    for o in tape.iter() {
+        o.realize()?;
+    }
 
     let gradients = loss.backward()?;
     let gradients: &[Tensor] = &gradients.deref().borrow();

@@ -9,7 +9,6 @@ pub struct Tensor {
     inputs: Rc<Vec<Tensor>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
-    realized: Rc<RefCell<bool>>,
     requires_grad: bool,
 }
 
@@ -29,7 +28,6 @@ impl Tensor {
             inputs: Rc::new(inputs.to_owned()),
             tensor,
             gradient,
-            realized: Default::default(),
             requires_grad,
         }
     }
@@ -47,21 +45,10 @@ impl Tensor {
     }
 
     pub fn realize(&self) -> Result<(), Error> {
-        let realized = *self.realized.deref().borrow();
-        if realized {
-            return Ok(());
-        }
-        let tape = self.get_tape();
-        //println!("Realize.. Start");
-        for output in tape.iter() {
-            let op = output.operator();
-            let inputs: Vec<_> = output.inputs().iter().collect();
-            //println!("op {}  inputs: {}, output: {}", op.name(), inputs.len(), 1);
-            op.forward_realize(&inputs, output)?;
-        }
-        //println!("Realize.. Done");
-        let realized: &mut bool = &mut self.realized.deref().borrow_mut();
-        *realized = true;
+        let output = self;
+        let op = output.operator();
+        let inputs: Vec<_> = output.inputs().iter().collect();
+        op.forward_realize(&inputs, output)?;
         Ok(())
     }
 

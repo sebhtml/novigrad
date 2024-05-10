@@ -1,13 +1,14 @@
-use std::rc::Rc;
+use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Identity, Model, OperatorTrait, Tensor};
+use crate::{Device, Error, Identity, Model, OperatorTrait, Tensor, TensorF32};
 
 pub struct Program {
-    input: Tensor,
-    output: Tensor,
+    example_input: Tensor,
+    example_output: Tensor,
     program_output: Tensor,
     loss: Tensor,
-    instructions: Vec<Tensor>,
+    forward_instructions: Vec<Tensor>,
+    backward_instructions: Vec<Tensor>,
 }
 
 impl Program {
@@ -19,7 +20,7 @@ impl Program {
         // input
         let input_shape = model.input_shape();
         let input_len = input_shape[0] * input_shape[1];
-        let input = device.tensor(
+        let example_input = device.tensor(
             Rc::new(Identity::new(device)),
             &vec![],
             input_shape[0],
@@ -31,7 +32,7 @@ impl Program {
         // output
         let output_shape = model.output_shape();
         let output_len = output_shape[0] * output_shape[1];
-        let output = device.tensor(
+        let example_output = device.tensor(
             Rc::new(Identity::new(device)),
             &vec![],
             output_shape[0],
@@ -41,26 +42,32 @@ impl Program {
             false,
         );
 
-        let inputs = vec![&input];
+        let inputs = vec![&example_input];
         let program_output = model.forward(&inputs)?;
+        let forward_instructions = program_output.get_tape();
         let loss = loss_operator.forward(&inputs)?;
-        let instructions = loss.get_tape();
+        let backward_instructions = loss.get_tape().clone().into_iter().rev().collect();
         let program = Program {
-            input,
-            output,
+            example_input,
+            example_output,
             program_output,
             loss,
-            instructions,
+            forward_instructions,
+            backward_instructions,
         };
         Ok(program)
     }
 
     pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        // TODO
-        // assign input
-        // assign output
-        // call realize on loss.
-        // return program_output
+        {
+            let example_input: &mut TensorF32 =
+                &mut self.example_input.tensor().deref().borrow_mut();
+            let input: &TensorF32 = &inputs[0].tensor().deref().borrow_mut();
+            TensorF32::copy(input, example_input)?;
+        }
+        for tensor in self.forward_instructions.iter() {
+            tensor.realize()?;
+        }
         Ok(self.program_output.clone())
     }
 }

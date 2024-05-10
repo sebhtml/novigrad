@@ -1,7 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    example_loss, total_loss, train, DatasetDetails, Device, Error, GradientDescent, Model, OperatorTrait, OptimizerTrait, Program, Tensor, TensorF32, Tokenizer, TokenizerTrait
+    example_loss, total_loss, train, DatasetDetails, Device, Error, GradientDescent, Model,
+    OperatorTrait, OptimizerTrait, Program, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 pub fn print_expected_output_and_actual_output(
@@ -99,7 +100,7 @@ pub fn train_network_on_dataset(
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
 
-    let _program = Program::try_new(&device, &model, &loss_operator)?;
+    let program = Program::try_new(&device, &model, &loss_operator)?;
     let (_, _) = print_results(0, &model, &loss_operator, &mut tokenizer, &inputs, &outputs)?;
 
     for epoch in 0..epochs {
@@ -123,6 +124,7 @@ pub fn train_network_on_dataset(
         }
         train(
             &model,
+            &program,
             &loss_operator,
             &device,
             &optimizer,

@@ -5,11 +5,12 @@ use std::{ops::Deref, time::SystemTime};
 
 pub use train::*;
 mod learning_tensor;
-use crate::{devices::Device, Error, Model, OperatorTrait, OptimizerTrait, TensorF32};
+use crate::{devices::Device, Error, Model, OperatorTrait, OptimizerTrait, Program, TensorF32};
 pub use learning_tensor::*;
 
 pub fn train(
     model: &Box<dyn Model>,
+    program: &Program,
     loss_function: &Box<dyn OperatorTrait>,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
@@ -21,6 +22,7 @@ pub fn train(
     for i in 0..inputs.len() {
         train_back_propagation(
             model,
+            program,
             loss_function,
             device,
             optimizer,
@@ -69,6 +71,7 @@ pub fn total_loss(
 
 fn train_back_propagation(
     model: &Box<dyn Model>,
+    program: &Program,
     loss_function: &Box<dyn OperatorTrait>,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
@@ -81,6 +84,7 @@ fn train_back_propagation(
     device.zero_grad()?;
 
     let output = model.forward(&[&x])?;
+    //let output = program.forward(&[&x])?;
     let loss = loss_function.forward(&[&y, &output])?;
     let tape = loss.get_tape();
     for o in tape.iter() {

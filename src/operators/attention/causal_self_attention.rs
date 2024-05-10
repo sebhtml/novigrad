@@ -55,13 +55,11 @@ impl OperatorTrait for CausalSelfAttention {
 
         let weights = self.qk_matmul.forward(&[q, k])?;
         if debug {
-            weights.realize()?;
             println!("Q*K^T weights {}", weights.tensor().deref().borrow());
         }
 
         let scaled_weights = self.scale.forward(&[&weights])?;
         if debug {
-            scaled_weights.realize()?;
             println!(
                 "scaled_weights {}",
                 scaled_weights.tensor().deref().borrow()
@@ -69,7 +67,6 @@ impl OperatorTrait for CausalSelfAttention {
         }
         let masked_weights = self.mask.forward(&[&scaled_weights])?;
         if debug {
-            masked_weights.realize()?;
             println!(
                 "masked_weights {}",
                 masked_weights.tensor().deref().borrow()
@@ -77,7 +74,6 @@ impl OperatorTrait for CausalSelfAttention {
         }
         let softmaxed_weights = self.softmax.forward(&[&masked_weights])?;
         if debug {
-            softmaxed_weights.realize()?;
             println!(
                 "softmaxed_weights {}",
                 softmaxed_weights.tensor().deref().borrow()
@@ -85,7 +81,6 @@ impl OperatorTrait for CausalSelfAttention {
         }
         let attentions = self.matmul.forward(&[&softmaxed_weights, v])?;
         if debug {
-            attentions.realize()?;
             println!("attentions {}", attentions.tensor().deref().borrow());
         }
         Ok(attentions)

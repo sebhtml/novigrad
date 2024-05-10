@@ -1,6 +1,6 @@
 use crate::{
-    into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, ErrorEnum, Tensor,
-    Tokenizer, TokenizerTrait,
+    into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, ErrorEnum, Program,
+    Tensor, Tokenizer, TokenizerTrait,
 };
 
 mod model;
@@ -47,14 +47,16 @@ fn load_examples(
 pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let examples = load_examples(&device, &mut tokenizer)?;
+    let model = SimpleModel::new(device);
+    let loss_operator = CrossEntropyLoss::new(device);
+    let program = Program::try_new(&device, &model, &loss_operator)?;
     let details = DatasetDetails {
         device: device.clone(),
         tokenizer,
         examples,
-        model: Box::new(Model::new(device)),
+        program,
         epochs: 1000,
         progress: 100,
-        loss_function_name: Box::new(CrossEntropyLoss::new(device)),
         initial_total_error_min: 8.0,
         final_total_error_max: 0.001,
         learning_rate: 0.5,

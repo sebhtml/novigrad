@@ -1,10 +1,12 @@
 use std::ops::Deref;
 
 use crate::{
-    CausalSelfAttention, Device, Embedding, Error, Linear, OperatorTrait, Softmax, Tensor,
+    CausalSelfAttention, Device, Embedding, Error, Linear, Model, OperatorTrait, Softmax, Tensor,
 };
 
-pub struct Model {
+pub struct MegaManAttentionModel {
+    input_shape: Vec<usize>,
+    output_shape: Vec<usize>,
     vocab_size: usize,
     sequence_length: usize,
     embedding: Embedding,
@@ -16,7 +18,7 @@ pub struct Model {
     softmax: Softmax,
 }
 
-impl Model {
+impl MegaManAttentionModel {
     pub fn new(device: &Device) -> Self {
         let _batch_size = 1;
         let sequence_length = 6;
@@ -36,6 +38,8 @@ impl Model {
         let linear = Linear::new(device, vocab_size, n_embd, sequence_length);
 
         Self {
+            input_shape: vec![sequence_length, vocab_size],
+            output_shape: vec![sequence_length, vocab_size],
             vocab_size,
             sequence_length,
             embedding: Embedding::new(device, vocab_size, n_embd),
@@ -57,7 +61,7 @@ impl Model {
     }
 }
 
-impl OperatorTrait for Model {
+impl Model for MegaManAttentionModel {
     fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let debug = false;
         if debug {
@@ -68,51 +72,40 @@ impl OperatorTrait for Model {
         }
         let embeddings = self.embedding.forward(inputs)?;
         if debug {
-            embeddings.realize()?;
             println!("embedding {}", &embeddings.tensor().deref().borrow());
         }
         let q = self.q.forward(&[&embeddings])?;
         if debug {
-            q.realize()?;
             println!("q {}", &q.tensor().deref().borrow());
         }
         let k = self.k.forward(&[&embeddings])?;
         if debug {
-            k.realize()?;
             println!("k {}", &k.tensor().deref().borrow());
         }
         let v = self.v.forward(&[&embeddings])?;
         if debug {
-            v.realize()?;
             println!("v {}", &v.tensor().deref().borrow());
         }
         let attended = self.attention.forward(&[&q, &k, &v])?;
         if debug {
-            attended.realize()?;
             println!("attended {}", &attended.tensor().deref().borrow());
         }
         let linearized = self.linear.forward(&[&attended])?;
         if debug {
-            linearized.realize()?;
             println!("linearized {}", &linearized.tensor().deref().borrow());
         }
         let probabilities = self.softmax.forward(&[&linearized])?;
         if debug {
-            probabilities.realize()?;
             println!("probabilities {}", &probabilities.tensor().deref().borrow());
         }
         Ok(probabilities)
     }
 
-    fn name(&self) -> &str {
-        "MegaManModel"
+    fn input_shape(&self) -> &[usize] {
+        &self.input_shape
     }
 
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
-    }
-
-    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
+    fn output_shape(&self) -> &[usize] {
+        &self.output_shape
     }
 }

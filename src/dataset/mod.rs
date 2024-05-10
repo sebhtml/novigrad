@@ -1,10 +1,10 @@
 mod mega_man;
 mod mega_man_attention;
 mod simple;
-
+use crate::Program;
 use std::{fs, rc::Rc};
 
-use crate::{Device, Error, ErrorEnum, Identity, OperatorTrait, Tensor, Tokenizer, TokenizerTrait};
+use crate::{Device, Error, ErrorEnum, Identity, Tensor, Tokenizer, TokenizerTrait};
 
 pub enum Dataset {
     Simple,
@@ -16,8 +16,7 @@ pub struct DatasetDetails {
     pub device: Device,
     pub tokenizer: Tokenizer,
     pub examples: Vec<(Tensor, Tensor)>,
-    pub model: Box<dyn OperatorTrait>,
-    pub loss_function_name: Box<dyn OperatorTrait>,
+    pub program: Program,
     pub learning_rate: f32,
     pub epochs: usize,
     pub progress: usize,

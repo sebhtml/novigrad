@@ -1,21 +1,19 @@
-use crate::{Device, Error, OperatorTrait, TensorF32};
+use crate::{Error, OperatorTrait, TensorF32};
 use core::fmt::Debug;
+use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct Tensor {
-    device: Device,
     operator: Rc<dyn OperatorTrait>,
     inputs: Rc<Vec<Tensor>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
-    realized: Rc<RefCell<bool>>,
     requires_grad: bool,
 }
 
 impl Tensor {
     pub fn new(
-        device: &Device,
         operator: Rc<dyn OperatorTrait>,
         inputs: &[&Tensor],
         tensor: Rc<RefCell<TensorF32>>,
@@ -24,12 +22,10 @@ impl Tensor {
     ) -> Self {
         let inputs: Vec<Tensor> = inputs.into_iter().map(|x| (**x).clone()).collect();
         Self {
-            device: device.clone(),
             operator,
             inputs: Rc::new(inputs.to_owned()),
             tensor,
             gradient,
-            realized: Default::default(),
             requires_grad,
         }
     }
@@ -47,21 +43,13 @@ impl Tensor {
     }
 
     pub fn realize(&self) -> Result<(), Error> {
-        let realized = *self.realized.deref().borrow();
-        if realized {
-            return Ok(());
-        }
-        let tape = self.get_tape();
-        //println!("Realize.. Start");
-        for output in tape.iter() {
-            let op = output.operator();
-            let inputs: Vec<_> = output.inputs().iter().collect();
-            //println!("op {}  inputs: {}, output: {}", op.name(), inputs.len(), 1);
-            op.forward_realize(&inputs, output)?;
-        }
-        //println!("Realize.. Done");
-        let realized: &mut bool = &mut self.realized.deref().borrow_mut();
-        *realized = true;
+        let output = self;
+        output.tensor().deref().borrow_mut().zero()?;
+        output.gradient().deref().borrow_mut().zero()?;
+        let op = output.operator();
+        let inputs: Vec<_> = output.inputs().iter().collect();
+
+        op.forward_realize(&inputs, output)?;
         Ok(())
     }
 
@@ -105,35 +93,19 @@ impl Tensor {
             );
         }
     }
+}
 
-    /// Back-propagation
-    pub fn backward(&self) -> Result<Rc<RefCell<Vec<Tensor>>>, Error> {
-        let tape = self.get_tape();
+impl PartialEq for Tensor {
+    fn eq(&self, other: &Self) -> bool {
+        let t1: &TensorF32 = &self.tensor().deref().borrow();
+        let t2: &TensorF32 = &other.tensor().deref().borrow();
+        t1 == t2
+    }
+}
 
-        /*
-            println!("----");
-            Self::print_tape(&tape);
-        */
-        for output in tape.iter().rev() {
-            let operator = output.operator().deref();
-            let inputs: Vec<_> = output.inputs().iter().collect();
-
-            operator.backward(&inputs, output)?;
-
-            for input in inputs {
-                if !input.requires_grad() {
-                    continue;
-                }
-                let input_gradient: &mut TensorF32 = &mut input.gradient().deref().borrow_mut();
-                let input_gradient_tmp = self.device.tensor_f32(
-                    input_gradient.rows(),
-                    input_gradient.cols(),
-                    input_gradient.get_values()?,
-                );
-                // Clip the backward gradients.
-                input_gradient_tmp.clip(-1.0, 1.0, input_gradient)?;
-            }
-        }
-        Ok(self.device.tensors_with_requires_grad().clone())
+impl Display for Tensor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let tensor: &TensorF32 = &self.tensor().deref().borrow();
+        std::fmt::Display::fmt(&tensor, f)
     }
 }

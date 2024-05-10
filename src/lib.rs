@@ -12,3 +12,5 @@ mod operators;
 pub use operators::*;
 mod tokenizers;
 pub use tokenizers::*;
+mod models;
+pub use models::*;

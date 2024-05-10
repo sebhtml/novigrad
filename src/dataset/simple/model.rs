@@ -1,6 +1,10 @@
-use crate::{Device, Embedding, Error, Linear, OperatorTrait, Reshape, Sigmoid, Softmax, Tensor};
+use crate::{
+    Device, Embedding, Error, Linear, Model, OperatorTrait, Reshape, Sigmoid, Softmax, Tensor,
+};
 
-pub struct Model {
+pub struct SimpleModel {
+    input_shape: Vec<usize>,
+    output_shape: Vec<usize>,
     embedding: Embedding,
     linear_0: Linear,
     sigmoid_0: Sigmoid,
@@ -11,7 +15,7 @@ pub struct Model {
     softmax: Softmax,
 }
 
-impl Model {
+impl SimpleModel {
     pub fn new(device: &Device) -> Self {
         let sequence_length = 6;
         let vocab_size = 256;
@@ -21,6 +25,8 @@ impl Model {
         let linear_1 = Linear::new(device, n_embd, sequence_length * n_embd, output_rows);
 
         Self {
+            input_shape: vec![sequence_length, vocab_size],
+            output_shape: vec![output_rows, vocab_size],
             embedding: Embedding::new(device, vocab_size, n_embd),
             linear_0: Linear::new(device, n_embd, n_embd, sequence_length),
             sigmoid_0: Sigmoid::new(device),
@@ -37,11 +43,7 @@ impl Model {
     }
 }
 
-impl OperatorTrait for Model {
-    fn name(&self) -> &str {
-        "SimpleModel"
-    }
-
+impl Model for SimpleModel {
     fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let state_0: Tensor = self.embedding.forward(inputs)?;
         let state_1 = self.linear_0.forward(&[&state_0])?;
@@ -54,11 +56,11 @@ impl OperatorTrait for Model {
         Ok(state_7)
     }
 
-    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
+    fn input_shape(&self) -> &[usize] {
+        &self.input_shape
     }
 
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
+    fn output_shape(&self) -> &[usize] {
+        &self.output_shape
     }
 }

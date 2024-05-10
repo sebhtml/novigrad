@@ -21,7 +21,6 @@ pub fn train(
 ) -> Result<(), Error> {
     for i in 0..inputs.len() {
         train_back_propagation(
-            model,
             program,
             loss_function,
             device,
@@ -70,28 +69,20 @@ pub fn total_loss(
 }
 
 fn train_back_propagation(
-    model: &Box<dyn Model>,
     program: &Program,
     loss_function: &Box<dyn OperatorTrait>,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
     learning_rate: f32,
-    epoch: usize,
-    example_index: usize,
+    _epoch: usize,
+    _example_index: usize,
     x: &Tensor,
     y: &Tensor,
 ) -> Result<(), Error> {
     device.zero_grad()?;
 
-    let model_output = model.forward(&[&x])?;
-    let model_loss = loss_function.forward(&[&y, &model_output])?;
-    let tape = model_loss.get_tape();
-    for o in tape.iter() {
-        o.realize()?;
-    }
-
     let program_output = program.forward(&[&x])?;
-    let program_loss = loss_function.forward(&[&y, &model_output])?;
+    let program_loss = loss_function.forward(&[&y, &program_output])?;
     let tape = program_loss.get_tape();
     for o in tape.iter() {
         o.realize()?;
@@ -101,31 +92,6 @@ fn train_back_propagation(
     let tape = loss.get_tape();
     for o in tape.iter() {
         o.realize()?;
-    }
-
-    {
-        if &model_loss != &program_loss {
-            println!("PANIC epoch {}  example {}", epoch, example_index);
-
-            println!("x {}", x);
-            let tape1 = model_output.get_tape();
-            let tape2 = program_output.get_tape();
-            println!("output tape {}", tape1.len());
-            println!("program_output tape {}", tape2.len());
-            let input1 = &tape1[0].inputs()[0];
-            let input2 = &tape2[0].inputs()[0];
-            println!("input1 {}", input1);
-            println!("input2 {}", input2);
-            for i in 0..tape1.len() {
-                assert_eq!(tape1[i].operator().name(), tape2[i].operator().name());
-                println!("{} {}", i, tape1[i].operator().name());
-                println!("output {}", tape1[i]);
-                println!("program_output {}", tape2[i]);
-                assert_eq!(tape1[i], tape2[i]);
-            }
-
-            panic!();
-        }
     }
 
     let gradients = loss.backward()?;

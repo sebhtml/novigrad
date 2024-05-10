@@ -2,12 +2,8 @@
 
 - remove DatasetEnum
 - move code from training/mod.rs to training/train.rs
-- model structs with no operator fields
-
-== Device fixes ==
-
-- remove impl of OperatorTrait when they are panic'ing.
 - remove DeviceEnum
+- device.tensor should take size instead of rows, cols
 
 == Error ==
 
@@ -24,7 +20,6 @@
 
 - implement mini batch
 - shuffle examples in each epoch
-- device.tensor should take size instead of rows, cols
 
 == Program ==
 

@@ -43,23 +43,9 @@ impl Mask {
         let mask = Self { mask, add };
         Ok(mask)
     }
-}
 
-impl Operator for Mask {
-    fn name(&self) -> &str {
-        "Mask"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
+    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let inputs = &[&inputs[0], &self.mask];
         self.add.forward(inputs)
-    }
-
-    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
     }
 }

@@ -37,6 +37,11 @@ impl Embedding {
             matmul,
         }
     }
+
+    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
+        let inputs = &[inputs[0], &self.embedding_table];
+        self.matmul.forward(inputs)
+    }
 }
 
 fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> TensorF32 {
@@ -57,23 +62,4 @@ fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: us
         token += 1;
     }
     device.tensor_f32(num_embeddings, embedding_dim, embeddings_table)
-}
-
-impl Operator for Embedding {
-    fn name(&self) -> &str {
-        "Embedding"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        let inputs = &[inputs[0], &self.embedding_table];
-        self.matmul.forward(inputs)
-    }
-
-    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
-    }
 }

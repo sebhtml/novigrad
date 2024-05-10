@@ -59,25 +59,11 @@ impl Linear {
             gemm,
         }
     }
-}
 
-impl Operator for Linear {
-    fn name(&self) -> &str {
-        "Linear"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
+    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 1);
         let input = inputs[0];
         let inputs = &[input, &self.weights, &self.biases];
         self.gemm.forward(inputs)
-    }
-
-    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
     }
 }

@@ -36,14 +36,8 @@ impl CausalSelfAttention {
         };
         Ok(attention)
     }
-}
 
-impl Operator for CausalSelfAttention {
-    fn name(&self) -> &str {
-        "MaskedScaledDotProductAttention"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
+    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         let debug = false;
         if debug {
             println!("Entering Attention");
@@ -84,13 +78,5 @@ impl Operator for CausalSelfAttention {
             println!("attentions {}", attentions.tensor().deref().borrow());
         }
         Ok(attentions)
-    }
-
-    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
     }
 }

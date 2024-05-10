@@ -1,10 +1,9 @@
 == Models ==
 
-- one .rs file per model
 - make model structs private
-- remove DatasetEnum
-- merge models and /datasets -> models/
 - model structs with no operator fields
+- merge models and /datasets -> models/
+- remove DatasetEnum
 
 == Fixes ==
 

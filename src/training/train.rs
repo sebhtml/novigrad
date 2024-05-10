@@ -1,8 +1,7 @@
 use std::ops::Deref;
 
 use crate::{
-    example_loss, total_loss, train, DatasetDetails, Device, Error, GradientDescent, Model,
-    OperatorTrait, OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
+    example_loss, total_loss, train, DatasetDetails, Device, Error, GradientDescent, Model, OperatorTrait, OptimizerTrait, Program, Tensor, TensorF32, Tokenizer, TokenizerTrait
 };
 
 pub fn print_expected_output_and_actual_output(
@@ -89,7 +88,7 @@ pub fn train_network_on_dataset(
     let examples = &dataset_details.examples;
     let learning_rate = dataset_details.learning_rate;
     let model = dataset_details.model;
-    let loss_function = dataset_details.loss_function_name;
+    let loss_operator = dataset_details.loss_operator;
     let mut tokenizer = dataset_details.tokenizer;
     let device = dataset_details.device;
     let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::default());
@@ -100,14 +99,15 @@ pub fn train_network_on_dataset(
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
 
-    let (_, _) = print_results(0, &model, &loss_function, &mut tokenizer, &inputs, &outputs)?;
+    let _program = Program::try_new(&device, &model, &loss_operator)?;
+    let (_, _) = print_results(0, &model, &loss_operator, &mut tokenizer, &inputs, &outputs)?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
             let total_error = print_total_loss(
                 &device,
                 &model,
-                &loss_function,
+                &loss_operator,
                 &inputs,
                 &outputs,
                 last_total_error,
@@ -123,7 +123,7 @@ pub fn train_network_on_dataset(
         }
         train(
             &model,
-            &loss_function,
+            &loss_operator,
             &device,
             &optimizer,
             learning_rate,
@@ -135,7 +135,7 @@ pub fn train_network_on_dataset(
     let final_total_error = print_total_loss(
         &device,
         &model,
-        &loss_function,
+        &loss_operator,
         &inputs,
         &outputs,
         last_total_error,
@@ -145,7 +145,7 @@ pub fn train_network_on_dataset(
     let (expected_argmax_values, actual_argmax_values) = print_results(
         epochs,
         &model,
-        &loss_function,
+        &loss_operator,
         &mut tokenizer,
         &inputs,
         &outputs,

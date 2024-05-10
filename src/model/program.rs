@@ -34,9 +34,9 @@ impl Program {
         let output = device.tensor(
             Rc::new(Identity::new(device)),
             &vec![],
-            input_shape[0],
-            input_shape[1],
-            vec![0.0; input_len],
+            output_shape[0],
+            output_shape[1],
+            vec![0.0; output_len],
             false,
             false,
         );

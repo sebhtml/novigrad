@@ -1,15 +1,18 @@
-== Fixes ==
+== Refactoring ==
 
+- models with no operator fields
+- merge the many load_examples functions
 - remove DatasetEnum
 - move code from training/mod.rs to training/train.rs
 - remove DeviceEnum
 - device.tensor should take size instead of rows, cols
-
-== Error ==
-
 - restore simple Errors (no line etc.)
-- return ErrNoGradient if output tensor has no gradient
+
+== Fixes ==
+
 - remove random calls to unwrap()
+- return ErrNoGradient if output tensor has no gradient
+- add function to print a program instructions, inputs, output
 
 == Multi-Head Attention ==
 
@@ -23,7 +26,6 @@
 
 == Program ==
 
-- add function to print a program instructions, inputs, output
 - implement parallel execution of certain branches in parallel using a execution_group_id
 - don't allocate gradients until they are requested (like COW), because they are useless during inference
 

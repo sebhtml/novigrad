@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{devices::Device, Error, Identity, MatMul, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, Identity, MatMul, Operator, Tensor, TensorF32};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 /// Embedding is not a ONNX operator.
@@ -59,7 +59,7 @@ fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: us
     device.tensor_f32(num_embeddings, embedding_dim, embeddings_table)
 }
 
-impl OperatorTrait for Embedding {
+impl Operator for Embedding {
     fn name(&self) -> &str {
         "Embedding"
     }

@@ -1,11 +1,11 @@
-use crate::{Error, OperatorTrait, TensorF32};
+use crate::{Error, Operator, TensorF32};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct Tensor {
-    operator: Rc<dyn OperatorTrait>,
+    operator: Rc<dyn Operator>,
     inputs: Rc<Vec<Tensor>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
@@ -14,7 +14,7 @@ pub struct Tensor {
 
 impl Tensor {
     pub fn new(
-        operator: Rc<dyn OperatorTrait>,
+        operator: Rc<dyn Operator>,
         inputs: &[&Tensor],
         tensor: Rc<RefCell<TensorF32>>,
         gradient: Rc<RefCell<TensorF32>>,
@@ -30,7 +30,7 @@ impl Tensor {
         }
     }
 
-    pub fn operator(&self) -> &Rc<dyn OperatorTrait> {
+    pub fn operator(&self) -> &Rc<dyn Operator> {
         &self.operator
     }
 

@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{Device, Error, Gemm, Identity, OperatorTrait, Tensor};
+use crate::{Device, Error, Gemm, Identity, Operator, Tensor};
 
 /// Linear is not a ONNX operator.
 /// https://onnx.ai/onnx/operators/index.html ???
@@ -61,7 +61,7 @@ impl Linear {
     }
 }
 
-impl OperatorTrait for Linear {
+impl Operator for Linear {
     fn name(&self) -> &str {
         "Linear"
     }

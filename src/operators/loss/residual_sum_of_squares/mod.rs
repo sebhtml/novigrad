@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, Error, ErrorEnum, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, ErrorEnum, Operator, Tensor, TensorF32};
 
 use super::LossFunction;
 
@@ -59,7 +59,7 @@ impl LossFunction for ResidualSumOfSquares {
     }
 }
 
-impl OperatorTrait for ResidualSumOfSquares {
+impl Operator for ResidualSumOfSquares {
     fn name(&self) -> &str {
         "ResidualSumOfSquares"
     }

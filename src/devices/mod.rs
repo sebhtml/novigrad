@@ -15,7 +15,7 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{OperatorTrait, Tensor, TensorF32};
+use crate::{Operator, Tensor, TensorF32};
 mod buffer;
 pub use buffer::*;
 
@@ -162,7 +162,7 @@ impl Device {
 
     pub fn tensor(
         &self,
-        operator: Rc<dyn OperatorTrait>,
+        operator: Rc<dyn Operator>,
         inputs: &[&Tensor],
         rows: usize,
         cols: usize,

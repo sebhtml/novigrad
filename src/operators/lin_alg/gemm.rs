@@ -1,4 +1,4 @@
-use crate::{devices::Device, Add, Error, MatMul, OperatorTrait, Tensor};
+use crate::{devices::Device, Add, Error, MatMul, Operator, Tensor};
 
 /// https://onnx.ai/onnx/operators/onnx__Gemm.html
 #[derive(Clone)]
@@ -19,7 +19,7 @@ impl Gemm {
     }
 }
 
-impl OperatorTrait for Gemm {
+impl Operator for Gemm {
     fn name(&self) -> &str {
         "Gemm"
     }

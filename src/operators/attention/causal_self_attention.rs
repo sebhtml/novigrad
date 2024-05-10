@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{Device, Error, Mask, MatMul, OperatorTrait, Scale, Softmax, Tensor};
+use crate::{Device, Error, Mask, MatMul, Operator, Scale, Softmax, Tensor};
 
 /// MaskedScaledDotProductAttention is not a ONNX operator.
 /// https://onnx.ai/onnx/operators/index.html ???
@@ -38,7 +38,7 @@ impl CausalSelfAttention {
     }
 }
 
-impl OperatorTrait for CausalSelfAttention {
+impl Operator for CausalSelfAttention {
     fn name(&self) -> &str {
         "MaskedScaledDotProductAttention"
     }

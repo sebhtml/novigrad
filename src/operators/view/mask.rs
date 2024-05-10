@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Add, Device, Error, Identity, OperatorTrait, Tensor};
+use crate::{Add, Device, Error, Identity, Operator, Tensor};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// Attention Is All You Need -> https://arxiv.org/abs/1706.03762
@@ -45,7 +45,7 @@ impl Mask {
     }
 }
 
-impl OperatorTrait for Mask {
+impl Operator for Mask {
     fn name(&self) -> &str {
         "Mask"
     }

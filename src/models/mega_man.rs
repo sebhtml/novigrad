@@ -2,7 +2,7 @@ use super::load_examples;
 use crate::{CrossEntropyLoss, Device, Program, Tokenizer};
 use crate::{DatasetDetails, Error};
 
-use crate::{Embedding, Identity, Linear, MatMul, Model, OperatorTrait, Reshape, Softmax, Tensor};
+use crate::{Embedding, Identity, Linear, MatMul, Model, Operator, Reshape, Softmax, Tensor};
 use std::rc::Rc;
 
 struct MegaManModel {

@@ -4,7 +4,7 @@ use crate::{DatasetDetails, Error};
 
 use std::ops::Deref;
 
-use crate::{CausalSelfAttention, Embedding, Linear, Model, OperatorTrait, Softmax, Tensor};
+use crate::{CausalSelfAttention, Embedding, Linear, Model, Operator, Softmax, Tensor};
 
 struct MegaManAttentionModel {
     input_shape: Vec<usize>,

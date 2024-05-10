@@ -2,7 +2,6 @@
 
 - remove DatasetEnum
 - move code from training/mod.rs to training/train.rs
-- rename OperatorTrait to Operator
 - model structs with no operator fields
 
 == Device fixes ==

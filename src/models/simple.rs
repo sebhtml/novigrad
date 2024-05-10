@@ -3,7 +3,7 @@ use crate::{
     Tensor, Tokenizer, TokenizerTrait,
 };
 
-use crate::{Embedding, Linear, Model, OperatorTrait, Reshape, Sigmoid, Softmax};
+use crate::{Embedding, Linear, Model, Operator, Reshape, Sigmoid, Softmax};
 
 struct SimpleModel {
     device: Device,

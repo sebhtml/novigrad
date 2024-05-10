@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, OperatorTrait, Tensor, TensorF32};
+use crate::{Device, Operator, Tensor, TensorF32};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// TODO implement broadcasting to use Mul instead
@@ -19,7 +19,7 @@ impl Scale {
     }
 }
 
-impl OperatorTrait for Scale {
+impl Operator for Scale {
     fn name(&self) -> &str {
         "Scale"
     }

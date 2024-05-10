@@ -1,7 +1,7 @@
 use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
-use crate::{devices::Device, Error, ErrorEnum, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, ErrorEnum, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
 #[derive(Clone)]
@@ -73,7 +73,7 @@ impl LossFunction for CrossEntropyLoss {
     }
 }
 
-impl OperatorTrait for CrossEntropyLoss {
+impl Operator for CrossEntropyLoss {
     fn name(&self) -> &str {
         "CrossEntropyLoss"
     }

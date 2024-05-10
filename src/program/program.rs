@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Identity, Model, OperatorTrait, Tensor, TensorF32};
+use crate::{Device, Error, Identity, Model, Operator, Tensor, TensorF32};
 
 pub struct Program {
     device: Device,
@@ -16,7 +16,7 @@ impl Program {
     pub fn try_new(
         device: &Device,
         model: &impl Model,
-        loss_operator: &impl OperatorTrait,
+        loss_operator: &impl Operator,
     ) -> Result<Self, Error> {
         // input
         let input_shape = model.input_shape();

@@ -1,4 +1,4 @@
-use crate::{devices::Device, Add, Error, MatMul, OperatorTrait, Tensor};
+use crate::{devices::Device, Add, Error, MatMul, Operator, Tensor};
 
 /// https://onnx.ai/onnx/operators/onnx__Gemm.html
 #[derive(Clone)]
@@ -17,14 +17,8 @@ impl Gemm {
             add: Add::new(device),
         }
     }
-}
 
-impl OperatorTrait for Gemm {
-    fn name(&self) -> &str {
-        "Gemm"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
+    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
         debug_assert_eq!(inputs.len(), 3);
         let input = inputs[0];
         let weights = inputs[1];
@@ -32,13 +26,5 @@ impl OperatorTrait for Gemm {
         let product = self.matmul.forward(&[input, weights])?;
         let sum = self.add.forward(&[&product, biases])?;
         Ok(sum)
-    }
-
-    fn forward_realize(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
-        panic!()
     }
 }

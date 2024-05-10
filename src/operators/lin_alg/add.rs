@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, OperatorTrait, Tensor, TensorF32};
+use crate::{Device, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
@@ -16,7 +16,7 @@ impl Add {
     }
 }
 
-impl OperatorTrait for Add {
+impl Operator for Add {
     fn name(&self) -> &str {
         "Add"
     }

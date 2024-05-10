@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{devices::Device, Error, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Reshape.html
 #[derive(Clone)]
@@ -20,7 +20,7 @@ impl Reshape {
     }
 }
 
-impl OperatorTrait for Reshape {
+impl Operator for Reshape {
     fn name(&self) -> &str {
         "Reshape"
     }

@@ -1,10 +1,12 @@
+use super::load_examples;
+use crate::{CrossEntropyLoss, Device, Program, Tokenizer, TokenizerTrait};
+use crate::{DatasetDetails, Error};
+
 use std::ops::Deref;
 
-use crate::{
-    CausalSelfAttention, Device, Embedding, Error, Linear, Model, OperatorTrait, Softmax, Tensor,
-};
+use crate::{CausalSelfAttention, Embedding, Linear, Model, Operator, Softmax, Tensor};
 
-pub struct MegaManAttentionModel {
+struct MegaManAttentionModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     vocab_size: usize,
@@ -101,11 +103,53 @@ impl Model for MegaManAttentionModel {
         Ok(probabilities)
     }
 
-    fn input_shape(&self) -> &[usize] {
-        &self.input_shape
+    fn input_shape(&self) -> Vec<usize> {
+        self.input_shape.clone()
     }
 
-    fn output_shape(&self) -> &[usize] {
-        &self.output_shape
+    fn output_shape(&self) -> Vec<usize> {
+        self.output_shape.clone()
     }
+}
+
+pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
+    let file_path = "data/Mega_Man.txt";
+    let max_chars = Some(30);
+    let max_number_of_examples = 10;
+    // TODO vocab_size should be a new argument
+    let model = MegaManAttentionModel::new(device);
+    let vocab_size = model.vocab_size();
+    let mut tokenizer = Tokenizer::byte_pair_encoding();
+
+    let input_sequence_length = model.sequence_length();
+    let output_sequence_length = input_sequence_length;
+    let examples = load_examples(
+        &device,
+        file_path,
+        max_chars,
+        max_number_of_examples,
+        input_sequence_length,
+        output_sequence_length,
+        vocab_size,
+        &mut tokenizer,
+    )?;
+
+    println!("TOkenizer vocab_size: {}", tokenizer.vocab_size());
+
+    let model = model;
+    let loss_operator = CrossEntropyLoss::new(device);
+    let program = Program::try_new(&device, &model, &loss_operator)?;
+
+    let details = DatasetDetails {
+        device: device.clone(),
+        tokenizer,
+        examples,
+        program,
+        epochs: 1000,
+        progress: 100,
+        initial_total_error_min: 50.0,
+        final_total_error_max: 0.002,
+        learning_rate: 0.5,
+    };
+    Ok(details)
 }

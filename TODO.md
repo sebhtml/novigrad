@@ -1,25 +1,35 @@
+== Fixes ==
+
+- remove DatasetEnum
+- move code from training/mod.rs to training/train.rs
+- remove DeviceEnum
+- device.tensor should take size instead of rows, cols
+
+== Error ==
+
+- restore simple Errors (no line etc.)
+- return ErrNoGradient if output tensor has no gradient
+- remove random calls to unwrap()
 
 == Multi-Head Attention ==
 
 - implement Concat
 - implement MultiHeadAttention
 
-- remove random calls to unwrap()
-
 == Mini Batch ==
 
 - implement mini batch
 - shuffle examples in each epoch
-- device.tensor should take size instead of rows, cols
 
-== Parallel Execution ==
+== Program ==
 
+- add function to print a program instructions, inputs, output
 - implement parallel execution of certain branches in parallel using a execution_group_id
+- don't allocate gradients until they are requested (like COW), because they are useless during inference
 
 == Datasets ==
 
-- simplify datasets
-- put load_dataset in a polymorphic enum
+- serialize and deserialize model to ONNX format
 
 == Initialization ==
 
@@ -43,6 +53,7 @@
 
 == Devices ==
 
+- Add support for Jim Keller's https://tenstorrent.com/cards/
 - Add support AMD GPUs (ROCm/rocBLAS)
 - Add support for Google TPU
 - Add support for Apple Metal

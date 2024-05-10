@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, OperatorTrait, TensorF32};
+use crate::{ActivationFunction, Operator, TensorF32};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -67,7 +67,7 @@ impl ActivationFunction for Sigmoid {
     }
 }
 
-impl OperatorTrait for Sigmoid {
+impl Operator for Sigmoid {
     fn name(&self) -> &str {
         "Sigmoid"
     }

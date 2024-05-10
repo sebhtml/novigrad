@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, OperatorTrait, Tensor, TensorF32};
+use crate::{Device, Error, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Mul.html
 #[derive(Clone)]
@@ -16,7 +16,7 @@ impl Mul {
     }
 }
 
-impl OperatorTrait for Mul {
+impl Operator for Mul {
     fn name(&self) -> &str {
         "Mul"
     }

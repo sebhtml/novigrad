@@ -25,7 +25,7 @@ impl Program {
             &vec![],
             input_shape[0],
             input_shape[1],
-            vec![0.0; input_len],
+            vec![0.7; input_len],
             false,
             false,
         );
@@ -37,15 +37,16 @@ impl Program {
             &vec![],
             output_shape[0],
             output_shape[1],
-            vec![0.0; output_len],
+            vec![0.7; output_len],
             false,
             false,
         );
 
-        let inputs = vec![&example_input];
-        let program_output = model.forward(&inputs)?;
+        let forward_inputs = vec![&example_input];
+        let program_output = model.forward(&forward_inputs)?;
         let forward_instructions = program_output.get_tape();
-        let loss = loss_operator.forward(&inputs)?;
+        let loss_inputs = vec![&example_output, &program_output];
+        let loss = loss_operator.forward(&loss_inputs)?;
         let backward_instructions = loss.get_tape().clone().into_iter().rev().collect();
         let program = Program {
             example_input,
@@ -66,6 +67,7 @@ impl Program {
             TensorF32::copy(input, example_input)?;
         }
         for tensor in self.forward_instructions.iter() {
+            tensor.tensor().deref().borrow_mut().zero()?;
             tensor.realize()?;
         }
         Ok(self.program_output.clone())

@@ -76,19 +76,45 @@ fn train_back_propagation(
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
     learning_rate: f32,
-    _epoch: usize,
-    _example_index: usize,
+    epoch: usize,
+    example_index: usize,
     x: &Tensor,
     y: &Tensor,
 ) -> Result<(), Error> {
     device.zero_grad()?;
 
     let output = model.forward(&[&x])?;
-    //let output = program.forward(&[&x])?;
+    let program_output = program.forward(&[&x])?;
+
     let loss = loss_function.forward(&[&y, &output])?;
     let tape = loss.get_tape();
     for o in tape.iter() {
         o.realize()?;
+    }
+
+    {
+        if &output != &program_output {
+            println!("PANIC epoch {}  example {}", epoch, example_index);
+
+            println!("x {}", x);
+            let tape1 = output.get_tape();
+            let tape2 = program_output.get_tape();
+            println!("output tape {}", tape1.len());
+            println!("program_output tape {}", tape2.len());
+            let input1 = &tape1[0].inputs()[0];
+            let input2 = &tape2[0].inputs()[0];
+            println!("input1 {}", input1);
+            println!("input2 {}", input2);
+            for i in 0..tape1.len() {
+                assert_eq!(tape1[i].operator().name(), tape2[i].operator().name());
+                println!("{} {}", i, tape1[i].operator().name());
+                println!("output {}", tape1[i]);
+                println!("program_output {}", tape2[i]);
+                assert_eq!(tape1[i], tape2[i]);
+            }
+
+            panic!();
+        }
     }
 
     let gradients = loss.backward()?;

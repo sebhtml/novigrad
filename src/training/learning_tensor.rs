@@ -1,5 +1,6 @@
 use crate::{Device, Error, OperatorTrait, TensorF32};
 use core::fmt::Debug;
+use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
@@ -48,6 +49,7 @@ impl Tensor {
         let output = self;
         let op = output.operator();
         let inputs: Vec<_> = output.inputs().iter().collect();
+
         op.forward_realize(&inputs, output)?;
         Ok(())
     }
@@ -122,5 +124,20 @@ impl Tensor {
             }
         }
         Ok(self.device.tensors_with_requires_grad().clone())
+    }
+}
+
+impl PartialEq for Tensor {
+    fn eq(&self, other: &Self) -> bool {
+        let t1: &TensorF32 = &self.tensor().deref().borrow();
+        let t2: &TensorF32 = &other.tensor().deref().borrow();
+        t1 == t2
+    }
+}
+
+impl Display for Tensor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let tensor: &TensorF32 = &self.tensor().deref().borrow();
+        std::fmt::Display::fmt(&tensor, f)
     }
 }

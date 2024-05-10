@@ -71,7 +71,7 @@ impl Program {
         }
         // Clear states
         for tensor in self.forward_instructions.iter() {
-            //tensor.realize()?;
+            tensor.realize()?;
         }
         Ok(self.program_output.clone())
     }
@@ -85,7 +85,7 @@ impl Program {
             TensorF32::copy(expected_output, example_output)?;
         }
         let loss = &self.loss;
-        //loss.realize()?;
+        loss.realize()?;
         Ok(loss.clone())
     }
 }

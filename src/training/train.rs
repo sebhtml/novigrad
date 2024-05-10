@@ -123,9 +123,7 @@ pub fn train_network_on_dataset(
             }
         }
         train(
-            &model,
             &program,
-            &loss_operator,
             &device,
             &optimizer,
             learning_rate,

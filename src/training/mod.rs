@@ -9,9 +9,7 @@ use crate::{devices::Device, Error, Model, OperatorTrait, OptimizerTrait, Progra
 pub use learning_tensor::*;
 
 pub fn train(
-    model: &Box<dyn Model>,
     program: &Program,
-    loss_function: &Box<dyn OperatorTrait>,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
     learning_rate: f32,
@@ -22,7 +20,6 @@ pub fn train(
     for i in 0..inputs.len() {
         train_back_propagation(
             program,
-            loss_function,
             device,
             optimizer,
             learning_rate,
@@ -70,7 +67,6 @@ pub fn total_loss(
 
 fn train_back_propagation(
     program: &Program,
-    loss_function: &Box<dyn OperatorTrait>,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
     learning_rate: f32,
@@ -81,13 +77,8 @@ fn train_back_propagation(
 ) -> Result<(), Error> {
     device.zero_grad()?;
 
-    let program_output = program.forward(&[&x])?;
-    //let loss = loss_function.forward(&[&y, &program_output])?;
+    let _ = program.forward(&[&x])?;
     let loss = program.loss(y)?;
-    let tape = loss.get_tape();
-    for o in tape.iter() {
-        o.realize()?;
-    }
 
     let gradients = loss.backward()?;
     let gradients: &[Tensor] = &gradients.deref().borrow();

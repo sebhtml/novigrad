@@ -10,6 +10,11 @@
 
 == Fixes ==
 
+- clip in place
+- models return expected size in Error instead of inputsize and outputsize
+- make list of things that are using Tensorf32::setvalue
+- remove recycle
+- remove forward from Operator trait
 - remove random calls to unwrap()
 - return ErrNoGradient if output tensor has no gradient
 - add function to print a program instructions, inputs, output
@@ -27,6 +32,10 @@
 == Program ==
 
 - implement parallel execution of certain branches in parallel using a execution_group_id
+
+== Tensor ==
+
+- don't allocate gradient when enable grad is false
 - don't allocate gradients until they are requested (like COW), because they are useless during inference
 
 == Datasets ==
@@ -55,6 +64,8 @@
 
 == Devices ==
 
+- use cuda stream to realize a tensor
+- implement a mul cuda kernel
 - Add support for Jim Keller's https://tenstorrent.com/cards/
 - Add support AMD GPUs (ROCm/rocBLAS)
 - Add support for Google TPU

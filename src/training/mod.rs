@@ -5,9 +5,9 @@ use std::{ops::Deref, time::SystemTime};
 mod optimizers;
 pub use optimizers::*;
 pub use train::*;
-mod learning_tensor;
+mod tensor;
 use crate::{devices::Device, Error, Program, TensorF32};
-pub use learning_tensor::*;
+pub use tensor::*;
 
 pub fn train(
     program: &Program,

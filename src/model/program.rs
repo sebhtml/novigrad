@@ -14,8 +14,8 @@ pub struct Program {
 impl Program {
     pub fn try_new(
         device: &Device,
-        model: &Box<dyn Model>,
-        loss_operator: &Box<dyn OperatorTrait>,
+        model: &impl Model,
+        loss_operator: &impl OperatorTrait,
     ) -> Result<Self, Error> {
         // input
         let input_shape = model.input_shape();

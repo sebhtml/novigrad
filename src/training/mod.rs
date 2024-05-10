@@ -5,7 +5,7 @@ use std::{ops::Deref, time::SystemTime};
 
 pub use train::*;
 mod learning_tensor;
-use crate::{devices::Device, Error, Model, OperatorTrait, OptimizerTrait, Program, TensorF32};
+use crate::{devices::Device, Error, OptimizerTrait, Program, TensorF32};
 pub use learning_tensor::*;
 
 pub fn train(
@@ -32,34 +32,15 @@ pub fn train(
     Ok(())
 }
 
-pub fn example_loss(
-    loss_function: &Box<dyn OperatorTrait>,
-    actual_output: &Tensor,
-    expected_output: &Tensor,
-) -> Result<f32, Error> {
-    let example_loss = loss_function.forward(&[&expected_output, &actual_output])?;
-    let tape = example_loss.get_tape();
-    for o in tape.iter() {
-        o.realize()?;
-    }
-
-    let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
-    let example_loss: f32 = example_loss.try_into()?;
-    Ok(example_loss)
-}
-
-pub fn total_loss(
-    model: &Box<dyn Model>,
-    loss_function: &Box<dyn OperatorTrait>,
-    inputs: &[Tensor],
-    outputs: &[Tensor],
-) -> Result<f32, Error> {
+pub fn total_loss(program: &Program, inputs: &[Tensor], outputs: &[Tensor]) -> Result<f32, Error> {
     let mut total_error = 0.0;
     for i in 0..inputs.len() {
-        let output = model.forward(&[&inputs[i]])?;
+        let _ = program.forward(&[&inputs[i]])?;
         let expected_output = &outputs[i];
-        let example_error = example_loss(loss_function, &output, expected_output)?;
-        total_error += example_error;
+        let example_loss = program.loss(expected_output)?;
+        let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
+        let example_loss: f32 = example_loss.try_into()?;
+        total_error += example_loss;
     }
 
     Ok(total_error)

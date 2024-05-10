@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    example_loss, total_loss, train, DatasetDetails, Device, Error, GradientDescent, Model,
-    OperatorTrait, OptimizerTrait, Program, Tensor, TensorF32, Tokenizer, TokenizerTrait,
+    total_loss, train, DatasetDetails, Device, Error, GradientDescent, OptimizerTrait, Program,
+    Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 pub fn print_expected_output_and_actual_output(
@@ -57,14 +57,13 @@ fn print_device_mem_info(device: &Device) -> Result<(), Error> {
 
 fn print_total_loss(
     device: &Device,
-    model: &Box<dyn Model>,
-    loss_function: &Box<dyn OperatorTrait>,
+    program: &Program,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
     last_total_loss: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
-    let total_loss = total_loss(model, loss_function, inputs, outputs)?;
+    let total_loss = total_loss(program, inputs, outputs)?;
     let change = (total_loss - last_total_loss) / last_total_loss;
     println!("----",);
     println!(
@@ -88,8 +87,7 @@ pub fn train_network_on_dataset(
     let mut initial_total_error = f32::NAN;
     let examples = &dataset_details.examples;
     let learning_rate = dataset_details.learning_rate;
-    let model = dataset_details.model;
-    let loss_operator = dataset_details.loss_operator;
+    let program = dataset_details.program;
     let mut tokenizer = dataset_details.tokenizer;
     let device = dataset_details.device;
     let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::default());
@@ -100,15 +98,13 @@ pub fn train_network_on_dataset(
     let epochs = dataset_details.epochs;
     let progress = dataset_details.progress;
 
-    let program = Program::try_new(&device, &model, &loss_operator)?;
-    let (_, _) = print_results(0, &model, &loss_operator, &mut tokenizer, &inputs, &outputs)?;
+    let (_, _) = print_results(0, &program, &mut tokenizer, &inputs, &outputs)?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
             let total_error = print_total_loss(
                 &device,
-                &model,
-                &loss_operator,
+                &program,
                 &inputs,
                 &outputs,
                 last_total_error,
@@ -134,22 +130,15 @@ pub fn train_network_on_dataset(
     }
     let final_total_error = print_total_loss(
         &device,
-        &model,
-        &loss_operator,
+        &program,
         &inputs,
         &outputs,
         last_total_error,
         epochs,
     )?;
 
-    let (expected_argmax_values, actual_argmax_values) = print_results(
-        epochs,
-        &model,
-        &loss_operator,
-        &mut tokenizer,
-        &inputs,
-        &outputs,
-    )?;
+    let (expected_argmax_values, actual_argmax_values) =
+        print_results(epochs, &program, &mut tokenizer, &inputs, &outputs)?;
 
     let output = NetworkTestOutput {
         initial_total_error,
@@ -162,8 +151,7 @@ pub fn train_network_on_dataset(
 
 fn print_results(
     epoch: usize,
-    model: &Box<dyn Model>,
-    loss_function: &Box<dyn OperatorTrait>,
+    program: &Program,
     tokenizer: &mut Tokenizer,
     inputs: &[Tensor],
     outputs: &[Tensor],
@@ -173,8 +161,10 @@ fn print_results(
 
     for i in 0..inputs.len() {
         let input = &inputs[i];
-        let actual_output = model.forward(&[&input])?;
-        let loss = example_loss(loss_function, &actual_output, &outputs[i])?;
+        let actual_output = program.forward(&[&input])?;
+        let loss = program.loss(&outputs[i])?;
+        let loss: &TensorF32 = &loss.tensor().deref().borrow();
+        let loss: f32 = loss.try_into()?;
 
         let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;

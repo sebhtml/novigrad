@@ -1,4 +1,4 @@
-use crate::{CrossEntropyLoss, Device, Tokenizer};
+use crate::{CrossEntropyLoss, Device, Program, Tokenizer};
 use crate::{DatasetDetails, Error};
 mod model;
 use model::*;
@@ -24,14 +24,16 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
         vocab_size,
         &mut tokenizer,
     )?;
+    let loss_operator = CrossEntropyLoss::new(device);
+    let program = Program::try_new(&device, &model, &loss_operator)?;
+
     let details = DatasetDetails {
         device: device.clone(),
         tokenizer,
         examples,
-        model: Box::new(model),
+        program,
         epochs: 300,
         progress: 100,
-        loss_operator: Box::new(CrossEntropyLoss::new(device)),
         initial_total_error_min: 50.0,
         final_total_error_max: 0.002,
         learning_rate: 0.5,

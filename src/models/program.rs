@@ -1,8 +1,9 @@
-use std::{ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{Device, Error, Identity, Model, OperatorTrait, Tensor, TensorF32};
 
 pub struct Program {
+    device: Device,
     example_input: Tensor,
     example_output: Tensor,
     program_output: Tensor,
@@ -51,6 +52,7 @@ impl Program {
         let backward_instructions = loss.get_tape().clone().into_iter().rev().collect();
 
         let program = Program {
+            device: device.clone(),
             example_input,
             example_output,
             program_output,
@@ -87,5 +89,30 @@ impl Program {
         let loss = &self.loss;
         loss.realize()?;
         Ok(loss.clone())
+    }
+
+    /// Back-propagation
+    pub fn backward(&self) -> Result<Rc<RefCell<Vec<Tensor>>>, Error> {
+        for output in self.backward_instructions.iter() {
+            let operator = output.operator().deref();
+            let inputs: Vec<_> = output.inputs().iter().collect();
+
+            operator.backward(&inputs, output)?;
+
+            for input in inputs {
+                if !input.requires_grad() {
+                    continue;
+                }
+                let input_gradient: &mut TensorF32 = &mut input.gradient().deref().borrow_mut();
+                let input_gradient_tmp = self.device.tensor_f32(
+                    input_gradient.rows(),
+                    input_gradient.cols(),
+                    input_gradient.get_values()?,
+                );
+                // Clip the backward gradients.
+                input_gradient_tmp.clip(-1.0, 1.0, input_gradient)?;
+            }
+        }
+        Ok(self.device.tensors_with_requires_grad().clone())
     }
 }

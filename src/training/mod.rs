@@ -58,10 +58,9 @@ fn train_back_propagation(
 ) -> Result<(), Error> {
     device.zero_grad()?;
 
-    let _ = program.forward(&[&x])?;
-    let loss = program.loss(y)?;
-
-    let gradients = loss.backward()?;
+    let _output = program.forward(&[&x])?;
+    let _loss = program.loss(y)?;
+    let gradients = program.backward()?;
     let gradients: &[Tensor] = &gradients.deref().borrow();
 
     optimizer.optimize(&gradients, learning_rate)?;

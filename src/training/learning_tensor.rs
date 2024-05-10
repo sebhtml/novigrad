@@ -1,11 +1,10 @@
-use crate::{Device, Error, OperatorTrait, TensorF32};
+use crate::{Error, OperatorTrait, TensorF32};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct Tensor {
-    device: Device,
     operator: Rc<dyn OperatorTrait>,
     inputs: Rc<Vec<Tensor>>,
     tensor: Rc<RefCell<TensorF32>>,
@@ -15,7 +14,6 @@ pub struct Tensor {
 
 impl Tensor {
     pub fn new(
-        device: &Device,
         operator: Rc<dyn OperatorTrait>,
         inputs: &[&Tensor],
         tensor: Rc<RefCell<TensorF32>>,
@@ -24,7 +22,6 @@ impl Tensor {
     ) -> Self {
         let inputs: Vec<Tensor> = inputs.into_iter().map(|x| (**x).clone()).collect();
         Self {
-            device: device.clone(),
             operator,
             inputs: Rc::new(inputs.to_owned()),
             tensor,
@@ -95,37 +92,6 @@ impl Tensor {
                 element.inputs().len()
             );
         }
-    }
-
-    /// Back-propagation
-    pub fn backward(&self) -> Result<Rc<RefCell<Vec<Tensor>>>, Error> {
-        let tape = self.get_tape();
-
-        /*
-            println!("----");
-            Self::print_tape(&tape);
-        */
-        for output in tape.iter().rev() {
-            let operator = output.operator().deref();
-            let inputs: Vec<_> = output.inputs().iter().collect();
-
-            operator.backward(&inputs, output)?;
-
-            for input in inputs {
-                if !input.requires_grad() {
-                    continue;
-                }
-                let input_gradient: &mut TensorF32 = &mut input.gradient().deref().borrow_mut();
-                let input_gradient_tmp = self.device.tensor_f32(
-                    input_gradient.rows(),
-                    input_gradient.cols(),
-                    input_gradient.get_values()?,
-                );
-                // Clip the backward gradients.
-                input_gradient_tmp.clip(-1.0, 1.0, input_gradient)?;
-            }
-        }
-        Ok(self.device.tensors_with_requires_grad().clone())
     }
 }
 

@@ -82,7 +82,8 @@ fn train_back_propagation(
     device.zero_grad()?;
 
     let program_output = program.forward(&[&x])?;
-    let loss = loss_function.forward(&[&y, &program_output])?;
+    //let loss = loss_function.forward(&[&y, &program_output])?;
+    let loss = program.loss(y)?;
     let tape = loss.get_tape();
     for o in tape.iter() {
         o.realize()?;

@@ -80,7 +80,7 @@ impl Program {
         // Copy expected output
         {
             let example_output: &mut TensorF32 =
-                &mut self.example_input.tensor().deref().borrow_mut();
+                &mut self.example_output.tensor().deref().borrow_mut();
             let expected_output: &TensorF32 = &expected_output.tensor().deref().borrow_mut();
             TensorF32::copy(expected_output, example_output)?;
         }

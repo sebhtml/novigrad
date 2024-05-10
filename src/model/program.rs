@@ -72,6 +72,7 @@ impl Program {
         // Clear states
         for tensor in self.forward_instructions.iter() {
             tensor.tensor().deref().borrow_mut().zero()?;
+            tensor.gradient().deref().borrow_mut().zero()?;
             //tensor.realize()?;
         }
         Ok(self.program_output.clone())

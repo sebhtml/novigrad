@@ -1,10 +1,33 @@
+== Models ==
+
+- one .rs file per model
+- make model structs private
+- remove DatasetEnum
+- merge models and /datasets -> models/
+- model structs with no operator fields
+
+== Fixes ==
+
+- move code from training/mod.rs to training/train.rs
+- rename module learnig_tensor to tensor
+- move optimizer to training
+- rename OperatorTrait to Operator
+
+== Device fixes ==
+
+- remove impl of OperatorTrait when they are panic'ing.
+- remove DeviceEnum
+
+== Error ==
+
+- restore simple Errors (no line etc.)
+- return ErrNoGradient if output tensor has no gradient
+- remove random calls to unwrap()
 
 == Multi-Head Attention ==
 
 - implement Concat
 - implement MultiHeadAttention
-
-- remove random calls to unwrap()
 
 == Mini Batch ==
 
@@ -12,14 +35,15 @@
 - shuffle examples in each epoch
 - device.tensor should take size instead of rows, cols
 
-== Parallel Execution ==
+== Program ==
 
+- add function to print a program instructions, inputs, output
 - implement parallel execution of certain branches in parallel using a execution_group_id
+- don't allocate gradients until they are requested (like COW), because they are useless during inference
 
 == Datasets ==
 
-- simplify datasets
-- put load_dataset in a polymorphic enum
+- serialize and deserialize model to ONNX format
 
 == Initialization ==
 
@@ -43,6 +67,7 @@
 
 == Devices ==
 
+- Add support for Jim Keller's https://tenstorrent.com/cards/
 - Add support AMD GPUs (ROCm/rocBLAS)
 - Add support for Google TPU
 - Add support for Apple Metal

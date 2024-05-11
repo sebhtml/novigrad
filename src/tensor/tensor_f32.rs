@@ -197,7 +197,6 @@ impl TensorF32 {
         dst_col: usize,
     ) -> Result<(), Error> {
         debug_assert_eq!(src_col, 0);
-        debug_assert_eq!(src_row, dst_row);
         /*
         let device = &src.device;
         let n = src_col as i32;

@@ -690,3 +690,21 @@ fn transpose() {
         }
     }
 }
+
+#[test]
+fn copy() {
+    let device = Device::default();
+    let expected = device.tensor_f32(
+        2,
+        4,
+        vec![
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 7.0, 8.0, //
+        ],
+    );
+
+    let mut actual = device.tensor_f32(2, 4, vec![0.0; 2 * 4]);
+
+    TensorF32::copy(&expected, &mut actual).unwrap();
+    assert_eq!(actual, expected);
+}

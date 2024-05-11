@@ -79,11 +79,9 @@ impl Program {
     /// Back-propagation
     pub fn backward(&self) -> Result<Rc<RefCell<Vec<Tensor>>>, Error> {
         for output in self.backward_instructions.iter() {
-            let operator = output.operator().deref();
+            output.backward()?;
+
             let inputs: Vec<_> = output.inputs().iter().collect();
-
-            operator.backward(&inputs, output)?;
-
             for input in inputs {
                 if !input.requires_grad() {
                     continue;
@@ -111,7 +109,7 @@ impl UnaryOperator for Program {
             let input: &TensorF32 = &input.tensor().deref().borrow_mut();
             TensorF32::copy(input, example_input)?;
         }
-        // Clear states
+        // Forward tensors
         for tensor in self.forward_instructions.iter() {
             tensor.forward()?;
         }

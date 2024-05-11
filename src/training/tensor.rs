@@ -46,11 +46,16 @@ impl Tensor {
         let output = self;
         output.tensor().deref().borrow_mut().zero()?;
         output.gradient().deref().borrow_mut().zero()?;
-        let op = output.operator();
+        let operator = output.operator();
         let inputs: Vec<_> = output.inputs().iter().collect();
+        operator.forward(&inputs, output)
+    }
 
-        op.forward(&inputs, output)?;
-        Ok(())
+    pub fn backward(&self) -> Result<(), Error> {
+        let output = self;
+        let operator = output.operator().deref();
+        let inputs: Vec<_> = output.inputs().iter().collect();
+        operator.backward(&inputs, output)
     }
 
     pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {

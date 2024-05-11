@@ -26,7 +26,6 @@
 
 == Multi-Head Attention ==
 
-- implement Concat
 - implement MultiHeadAttention
 
 == Mini Batch ==

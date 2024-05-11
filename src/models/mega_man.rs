@@ -1,8 +1,8 @@
 use super::load_examples;
-use crate::{CrossEntropyLoss, Device, Program, Tokenizer};
+use crate::{BinaryOperator, CrossEntropyLoss, Device, Program, Tokenizer, UnaryOperator};
 use crate::{DatasetDetails, Error};
 
-use crate::{Embedding, Identity, Linear, MatMul, Model, Operator, Reshape, Softmax, Tensor};
+use crate::{Embedding, Identity, Linear, MatMul, Model, Reshape, Softmax, Tensor};
 use std::rc::Rc;
 
 struct MegaManModel {
@@ -60,21 +60,23 @@ impl MegaManModel {
     }
 }
 
-impl Model for MegaManModel {
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        let state_0 = self.embedding.forward(inputs)?;
-        let state_0b = self.matmul.forward(&[&state_0, &self.parameters])?;
-        let state_1 = self.reshape.forward(&[&state_0b])?;
-        let state_2 = self.linear.forward(&[&state_1])?;
-        let state_3 = self.softmax.forward(&[&state_2])?;
+impl UnaryOperator for MegaManModel {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        let state_0 = self.embedding.forward(input)?;
+        let state_0b = self.matmul.forward(&state_0, &self.parameters)?;
+        let state_1 = self.reshape.forward(&state_0b)?;
+        let state_2 = self.linear.forward(&state_1)?;
+        let state_3 = self.softmax.forward(&state_2)?;
         Ok(state_3)
     }
+}
 
-    fn input_shape(&self) -> Vec<usize> {
+impl Model for MegaManModel {
+    fn input_size(&self) -> Vec<usize> {
         self.input_shape.clone()
     }
 
-    fn output_shape(&self) -> Vec<usize> {
+    fn output_size(&self) -> Vec<usize> {
         self.output_shape.clone()
     }
 }

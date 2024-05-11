@@ -1,6 +1,8 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Identity, Model, Operator, Tensor, TensorF32};
+use crate::{
+    BinaryOperator, Device, Error, Identity, Model, Operator, Tensor, TensorF32, UnaryOperator,
+};
 
 pub struct Program {
     device: Device,
@@ -15,11 +17,11 @@ pub struct Program {
 impl Program {
     pub fn try_new(
         device: &Device,
-        model: &impl Model,
-        loss_operator: &impl Operator,
+        model: &(impl UnaryOperator + Model),
+        loss_operator: &(impl BinaryOperator + Operator),
     ) -> Result<Self, Error> {
         // input
-        let input_shape = model.input_shape();
+        let input_shape = model.input_size();
         let input_len = input_shape[0] * input_shape[1];
         let example_input = device.tensor(
             Rc::new(Identity::new(device)),
@@ -31,7 +33,7 @@ impl Program {
             false,
         );
         // output
-        let output_shape = model.output_shape();
+        let output_shape = model.output_size();
         let output_len = output_shape[0] * output_shape[1];
         let example_output = device.tensor(
             Rc::new(Identity::new(device)),
@@ -43,12 +45,10 @@ impl Program {
             false,
         );
 
-        let forward_inputs = vec![&example_input];
-        let program_output = model.forward(&forward_inputs)?;
+        let program_output = model.forward(&example_input)?;
         let forward_instructions = program_output.get_tape();
 
-        let loss_inputs = vec![&example_output, &program_output];
-        let loss = loss_operator.forward(&loss_inputs)?;
+        let loss = BinaryOperator::forward(loss_operator, &example_output, &program_output)?;
         let backward_instructions = loss.get_tape().clone().into_iter().rev().collect();
 
         let program = Program {
@@ -63,21 +63,6 @@ impl Program {
         Ok(program)
     }
 
-    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        // Copy input
-        {
-            let example_input: &mut TensorF32 =
-                &mut self.example_input.tensor().deref().borrow_mut();
-            let input: &TensorF32 = &inputs[0].tensor().deref().borrow_mut();
-            TensorF32::copy(input, example_input)?;
-        }
-        // Clear states
-        for tensor in self.forward_instructions.iter() {
-            tensor.realize()?;
-        }
-        Ok(self.program_output.clone())
-    }
-
     pub fn loss(&self, expected_output: &Tensor) -> Result<Tensor, Error> {
         // Copy expected output
         {
@@ -87,18 +72,16 @@ impl Program {
             TensorF32::copy(expected_output, example_output)?;
         }
         let loss = &self.loss;
-        loss.realize()?;
+        loss.forward()?;
         Ok(loss.clone())
     }
 
     /// Back-propagation
     pub fn backward(&self) -> Result<Rc<RefCell<Vec<Tensor>>>, Error> {
         for output in self.backward_instructions.iter() {
-            let operator = output.operator().deref();
+            output.backward()?;
+
             let inputs: Vec<_> = output.inputs().iter().collect();
-
-            operator.backward(&inputs, output)?;
-
             for input in inputs {
                 if !input.requires_grad() {
                     continue;
@@ -114,5 +97,22 @@ impl Program {
             }
         }
         Ok(self.device.tensors_with_requires_grad().clone())
+    }
+}
+
+impl UnaryOperator for Program {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        // Copy input
+        {
+            let example_input: &mut TensorF32 =
+                &mut self.example_input.tensor().deref().borrow_mut();
+            let input: &TensorF32 = &input.tensor().deref().borrow_mut();
+            TensorF32::copy(input, example_input)?;
+        }
+        // Forward tensors
+        for tensor in self.forward_instructions.iter() {
+            tensor.forward()?;
+        }
+        Ok(self.program_output.clone())
     }
 }

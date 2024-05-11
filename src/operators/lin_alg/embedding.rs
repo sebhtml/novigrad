@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
-use crate::{devices::Device, Error, Identity, MatMul, Operator, Tensor, TensorF32};
+use crate::{
+    devices::Device, BinaryOperator, Error, Identity, MatMul, Tensor, TensorF32, UnaryOperator,
+};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 /// Embedding is not a ONNX operator.
@@ -37,10 +39,11 @@ impl Embedding {
             matmul,
         }
     }
+}
 
-    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        let inputs = &[inputs[0], &self.embedding_table];
-        self.matmul.forward(inputs)
+impl UnaryOperator for Embedding {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        self.matmul.forward(input, &self.embedding_table)
     }
 }
 

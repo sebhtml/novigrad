@@ -42,15 +42,20 @@ impl Tensor {
         self.requires_grad
     }
 
-    pub fn realize(&self) -> Result<(), Error> {
+    pub fn forward(&self) -> Result<(), Error> {
         let output = self;
         output.tensor().deref().borrow_mut().zero()?;
         output.gradient().deref().borrow_mut().zero()?;
-        let op = output.operator();
+        let operator = output.operator();
         let inputs: Vec<_> = output.inputs().iter().collect();
+        operator.forward(&inputs, output)
+    }
 
-        op.forward_realize(&inputs, output)?;
-        Ok(())
+    pub fn backward(&self) -> Result<(), Error> {
+        let output = self;
+        let operator = output.operator().deref();
+        let inputs: Vec<_> = output.inputs().iter().collect();
+        operator.backward(&inputs, output)
     }
 
     pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {

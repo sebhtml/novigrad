@@ -28,8 +28,8 @@ impl SimpleModel {
     }
 }
 
-impl Model for SimpleModel {
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
+impl UnaryOperator for SimpleModel {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
         let device = &self.device;
         let sequence_length = self.sequence_length;
         let vocab_size = self.vocab_size;
@@ -49,7 +49,7 @@ impl Model for SimpleModel {
         let linear_2 = Linear::new(device, vocab_size, n_embd, output_rows);
         let softmax = Softmax::new(device, true);
 
-        let state_0 = embedding.forward(inputs[0])?;
+        let state_0 = embedding.forward(input)?;
         let state_1 = linear_0.forward(&state_0)?;
         let state_2 = sigmoid_0.forward(&state_1)?;
         let state_3 = reshape.forward(&state_2)?;
@@ -59,7 +59,9 @@ impl Model for SimpleModel {
         let state_7 = softmax.forward(&state_6)?;
         Ok(state_7)
     }
+}
 
+impl Model for SimpleModel {
     fn input_shape(&self) -> Vec<usize> {
         vec![self.sequence_length, self.vocab_size]
     }

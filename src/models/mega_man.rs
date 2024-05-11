@@ -60,16 +60,18 @@ impl MegaManModel {
     }
 }
 
-impl Model for MegaManModel {
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        let state_0 = self.embedding.forward(inputs[0])?;
+impl UnaryOperator for MegaManModel {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        let state_0 = self.embedding.forward(input)?;
         let state_0b = self.matmul.forward(&state_0, &self.parameters)?;
         let state_1 = self.reshape.forward(&state_0b)?;
         let state_2 = self.linear.forward(&state_1)?;
         let state_3 = self.softmax.forward(&state_2)?;
         Ok(state_3)
     }
+}
 
+impl Model for MegaManModel {
     fn input_shape(&self) -> Vec<usize> {
         self.input_shape.clone()
     }

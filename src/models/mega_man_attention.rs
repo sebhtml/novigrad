@@ -65,16 +65,16 @@ impl MegaManAttentionModel {
     }
 }
 
-impl Model for MegaManAttentionModel {
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
+impl UnaryOperator for MegaManAttentionModel {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
         let debug = false;
         if debug {
             println!("----");
         }
         if debug {
-            println!("input {}", inputs[0].tensor().deref().borrow());
+            println!("input {}", input.tensor().deref().borrow());
         }
-        let embeddings = self.embedding.forward(inputs[0])?;
+        let embeddings = self.embedding.forward(input)?;
         if debug {
             println!("embedding {}", &embeddings.tensor().deref().borrow());
         }
@@ -104,7 +104,9 @@ impl Model for MegaManAttentionModel {
         }
         Ok(probabilities)
     }
+}
 
+impl Model for MegaManAttentionModel {
     fn input_shape(&self) -> Vec<usize> {
         self.input_shape.clone()
     }

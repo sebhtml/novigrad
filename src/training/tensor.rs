@@ -42,7 +42,7 @@ impl Tensor {
         self.requires_grad
     }
 
-    pub fn realize(&self) -> Result<(), Error> {
+    pub fn forward(&self) -> Result<(), Error> {
         let output = self;
         output.tensor().deref().borrow_mut().zero()?;
         output.gradient().deref().borrow_mut().zero()?;

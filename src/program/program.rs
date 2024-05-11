@@ -72,7 +72,7 @@ impl Program {
             TensorF32::copy(expected_output, example_output)?;
         }
         let loss = &self.loss;
-        loss.realize()?;
+        loss.forward()?;
         Ok(loss.clone())
     }
 
@@ -113,7 +113,7 @@ impl UnaryOperator for Program {
         }
         // Clear states
         for tensor in self.forward_instructions.iter() {
-            tensor.realize()?;
+            tensor.forward()?;
         }
         Ok(self.program_output.clone())
     }

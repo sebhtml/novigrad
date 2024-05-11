@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{Device, Error, Gemm, Identity, Operator, Tensor};
+use crate::{Device, Error, Gemm, Identity, Tensor, TernaryOperator, UnaryOperator};
 
 /// Linear is not a ONNX operator.
 /// https://onnx.ai/onnx/operators/index.html ???
@@ -59,11 +59,10 @@ impl Linear {
             gemm,
         }
     }
+}
 
-    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        debug_assert_eq!(inputs.len(), 1);
-        let input = inputs[0];
-        let inputs = &[input, &self.weights, &self.biases];
-        self.gemm.forward(inputs)
+impl UnaryOperator for Linear {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        self.gemm.forward(input, &self.weights, &self.biases)
     }
 }

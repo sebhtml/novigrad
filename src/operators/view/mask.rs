@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Add, Device, Error, Identity, Operator, Tensor};
+use crate::{Add, BinaryOperator, Device, Error, Identity, Tensor, UnaryOperator};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// Attention Is All You Need -> https://arxiv.org/abs/1706.03762
@@ -43,9 +43,10 @@ impl Mask {
         let mask = Self { mask, add };
         Ok(mask)
     }
+}
 
-    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        let inputs = &[&inputs[0], &self.mask];
-        self.add.forward(inputs)
+impl UnaryOperator for Mask {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        self.add.forward(input, &self.mask)
     }
 }

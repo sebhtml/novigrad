@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Identity, Model, Operator, Tensor, TensorF32};
+use crate::{BinaryOperator, Device, Error, Identity, Model, Operator, Tensor, TensorF32};
 
 pub struct Program {
     device: Device,
@@ -16,7 +16,7 @@ impl Program {
     pub fn try_new(
         device: &Device,
         model: &impl Model,
-        loss_operator: &impl Operator,
+        loss_operator: &(impl BinaryOperator + Operator),
     ) -> Result<Self, Error> {
         // input
         let input_shape = model.input_shape();
@@ -47,8 +47,7 @@ impl Program {
         let program_output = model.forward(&forward_inputs)?;
         let forward_instructions = program_output.get_tape();
 
-        let loss_inputs = vec![&example_output, &program_output];
-        let loss = loss_operator.forward(&loss_inputs)?;
+        let loss = loss_operator.forward(&example_output, &program_output)?;
         let backward_instructions = loss.get_tape().clone().into_iter().rev().collect();
 
         let program = Program {

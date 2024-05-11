@@ -1,9 +1,9 @@
 use crate::{
     into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, ErrorEnum, Program,
-    Tensor, Tokenizer, TokenizerTrait,
+    Tensor, Tokenizer, TokenizerTrait, UnaryOperator,
 };
 
-use crate::{Embedding, Linear, Model, Operator, Reshape, Sigmoid, Softmax};
+use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
 
 struct SimpleModel {
     device: Device,
@@ -49,14 +49,14 @@ impl Model for SimpleModel {
         let linear_2 = Linear::new(device, vocab_size, n_embd, output_rows);
         let softmax = Softmax::new(device, true);
 
-        let state_0 = embedding.forward(inputs)?;
-        let state_1 = linear_0.forward(&[&state_0])?;
-        let state_2 = sigmoid_0.forward(&[&state_1])?;
-        let state_3 = reshape.forward(&[&state_2])?;
-        let state_4 = linear_1.forward(&[&state_3])?;
-        let state_5 = sigmoid_1.forward(&[&state_4])?;
-        let state_6 = linear_2.forward(&[&state_5])?;
-        let state_7 = softmax.forward(&[&state_6])?;
+        let state_0 = embedding.forward(inputs[0])?;
+        let state_1 = linear_0.forward(&state_0)?;
+        let state_2 = sigmoid_0.forward(&state_1)?;
+        let state_3 = reshape.forward(&state_2)?;
+        let state_4 = linear_1.forward(&state_3)?;
+        let state_5 = sigmoid_1.forward(&state_4)?;
+        let state_6 = linear_2.forward(&state_5)?;
+        let state_7 = softmax.forward(&state_6)?;
         Ok(state_7)
     }
 

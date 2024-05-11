@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Operator, TensorF32};
+use crate::{ActivationFunction, Operator, TensorF32, UnaryOperator};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -67,19 +67,15 @@ impl ActivationFunction for Sigmoid {
     }
 }
 
-impl Operator for Sigmoid {
-    fn name(&self) -> &str {
-        "Sigmoid"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let rows = input.rows();
-        let cols = input.cols();
+impl UnaryOperator for Sigmoid {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        let input_t: &TensorF32 = &input.tensor().deref().borrow();
+        let rows = input_t.rows();
+        let cols = input_t.cols();
         let len = rows * cols;
         let output = self.device.tensor(
             Rc::new(self.clone()),
-            inputs,
+            &[input],
             rows,
             cols,
             vec![0.0; len],
@@ -87,6 +83,12 @@ impl Operator for Sigmoid {
             false,
         );
         Ok(output)
+    }
+}
+
+impl Operator for Sigmoid {
+    fn name(&self) -> &str {
+        "Sigmoid"
     }
 
     fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {

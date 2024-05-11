@@ -1,10 +1,12 @@
 use super::load_examples;
-use crate::{CrossEntropyLoss, Device, Program, Tokenizer, TokenizerTrait};
+use crate::{
+    CrossEntropyLoss, Device, Program, TernaryOperator, Tokenizer, TokenizerTrait, UnaryOperator,
+};
 use crate::{DatasetDetails, Error};
 
 use std::ops::Deref;
 
-use crate::{CausalSelfAttention, Embedding, Linear, Model, Operator, Softmax, Tensor};
+use crate::{CausalSelfAttention, Embedding, Linear, Model, Softmax, Tensor};
 
 struct MegaManAttentionModel {
     input_shape: Vec<usize>,
@@ -72,31 +74,31 @@ impl Model for MegaManAttentionModel {
         if debug {
             println!("input {}", inputs[0].tensor().deref().borrow());
         }
-        let embeddings = self.embedding.forward(inputs)?;
+        let embeddings = self.embedding.forward(inputs[0])?;
         if debug {
             println!("embedding {}", &embeddings.tensor().deref().borrow());
         }
-        let q = self.q.forward(&[&embeddings])?;
+        let q = self.q.forward(&embeddings)?;
         if debug {
             println!("q {}", &q.tensor().deref().borrow());
         }
-        let k = self.k.forward(&[&embeddings])?;
+        let k = self.k.forward(&embeddings)?;
         if debug {
             println!("k {}", &k.tensor().deref().borrow());
         }
-        let v = self.v.forward(&[&embeddings])?;
+        let v = self.v.forward(&embeddings)?;
         if debug {
             println!("v {}", &v.tensor().deref().borrow());
         }
-        let attended = self.attention.forward(&[&q, &k, &v])?;
+        let attended = self.attention.forward(&q, &k, &v)?;
         if debug {
             println!("attended {}", &attended.tensor().deref().borrow());
         }
-        let linearized = self.linear.forward(&[&attended])?;
+        let linearized = self.linear.forward(&attended)?;
         if debug {
             println!("linearized {}", &linearized.tensor().deref().borrow());
         }
-        let probabilities = self.softmax.forward(&[&linearized])?;
+        let probabilities = self.softmax.forward(&linearized)?;
         if debug {
             println!("probabilities {}", &probabilities.tensor().deref().borrow());
         }

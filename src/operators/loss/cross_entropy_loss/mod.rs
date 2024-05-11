@@ -1,7 +1,7 @@
 use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
-use crate::{devices::Device, Error, ErrorEnum, Operator, Tensor, TensorF32};
+use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
 #[derive(Clone)]
@@ -73,17 +73,24 @@ impl LossFunction for CrossEntropyLoss {
     }
 }
 
+impl BinaryOperator for CrossEntropyLoss {
+    fn forward(&self, input_1: &Tensor, input_2: &Tensor) -> Result<Tensor, Error> {
+        let output = self.device.tensor(
+            Rc::new(self.clone()),
+            &[input_1, input_2],
+            1,
+            1,
+            vec![0.0],
+            true,
+            false,
+        );
+        Ok(output)
+    }
+}
+
 impl Operator for CrossEntropyLoss {
     fn name(&self) -> &str {
         "CrossEntropyLoss"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        debug_assert_eq!(inputs.len(), 2);
-        let output =
-            self.device
-                .tensor(Rc::new(self.clone()), inputs, 1, 1, vec![0.0], true, false);
-        Ok(output)
     }
 
     fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {

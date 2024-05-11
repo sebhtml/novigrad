@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Operator, Tensor, TensorF32};
+use crate::{Device, Error, Operator, Tensor, TensorF32, UnaryOperator};
 
 /// https://onnx.ai/onnx/operators/onnx__Identity.html
 #[derive(Clone)]
@@ -16,19 +16,15 @@ impl Identity {
     }
 }
 
-impl Operator for Identity {
-    fn name(&self) -> &str {
-        "Identity"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let rows = input.rows();
-        let cols = input.cols();
+impl UnaryOperator for Identity {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        let input_t: &TensorF32 = &input.tensor().deref().borrow();
+        let rows = input_t.rows();
+        let cols = input_t.cols();
         let len = rows * cols;
         let output = self.device.tensor(
             Rc::new(self.clone()),
-            inputs,
+            &[input],
             rows,
             cols,
             vec![0.0; len],
@@ -36,6 +32,12 @@ impl Operator for Identity {
             false,
         );
         Ok(output)
+    }
+}
+
+impl Operator for Identity {
+    fn name(&self) -> &str {
+        "Identity"
     }
 
     fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {

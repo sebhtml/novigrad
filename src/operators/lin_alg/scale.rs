@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Operator, Tensor, TensorF32};
+use crate::{Device, Operator, Tensor, TensorF32, UnaryOperator};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// TODO implement broadcasting to use Mul instead
@@ -19,20 +19,15 @@ impl Scale {
     }
 }
 
-impl Operator for Scale {
-    fn name(&self) -> &str {
-        "Scale"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, crate::Error> {
-        debug_assert_eq!(inputs.len(), 1);
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let rows = input.rows();
-        let cols = input.cols();
+impl UnaryOperator for Scale {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, crate::Error> {
+        let input_t: &TensorF32 = &input.tensor().deref().borrow();
+        let rows = input_t.rows();
+        let cols = input_t.cols();
         let len = rows * cols;
         let output = self.device.tensor(
             Rc::new(self.clone()),
-            inputs,
+            &[input],
             rows,
             cols,
             vec![0.0; len],
@@ -40,6 +35,12 @@ impl Operator for Scale {
             false,
         );
         Ok(output)
+    }
+}
+
+impl Operator for Scale {
+    fn name(&self) -> &str {
+        "Scale"
     }
 
     fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {

@@ -12,9 +12,25 @@ pub use attention::*;
 use crate::{Error, Tensor};
 use core::fmt::Debug;
 
+pub trait UnaryOperator {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error>;
+}
+
+pub trait BinaryOperator {
+    fn forward(&self, input_1: &Tensor, input_2: &Tensor) -> Result<Tensor, Error>;
+}
+
+pub trait TernaryOperator {
+    fn forward(
+        &self,
+        input_1: &Tensor,
+        input_2: &Tensor,
+        input_3: &Tensor,
+    ) -> Result<Tensor, Error>;
+}
+
 pub trait Operator {
     fn name(&self) -> &str;
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error>;
     fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error>;
     fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error>;
 }

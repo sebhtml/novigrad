@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, Error, Operator, Tensor, TensorF32};
+use crate::{devices::Device, Error, Operator, Tensor, TensorF32, UnaryOperator};
 
 /// https://onnx.ai/onnx/operators/onnx__Reshape.html
 #[derive(Clone)]
@@ -20,21 +20,16 @@ impl Reshape {
     }
 }
 
-impl Operator for Reshape {
-    fn name(&self) -> &str {
-        "Reshape"
-    }
-
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        debug_assert_eq!(inputs.len(), 1);
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        debug_assert_eq!(input.size(), self.input_size);
+impl UnaryOperator for Reshape {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        let input_tensor: &TensorF32 = &input.tensor().deref().borrow();
+        debug_assert_eq!(input_tensor.size(), self.input_size);
         let rows = self.output_size[0];
         let cols = self.output_size[1];
         let len = rows * cols;
         let output = self.device.tensor(
             Rc::new(self.clone()),
-            inputs,
+            &[input],
             rows,
             cols,
             vec![0.0; len],
@@ -42,6 +37,12 @@ impl Operator for Reshape {
             false,
         );
         Ok(output)
+    }
+}
+
+impl Operator for Reshape {
+    fn name(&self) -> &str {
+        "Reshape"
     }
 
     fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {

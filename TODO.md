@@ -1,3 +1,9 @@
+== Tensor clean-up ==
+
+- device.tensor should have the same first arguments as device.tensor_f32
+- device.tensor should take a impl Operator, not a Rc
+- device.tensor should take size instead of rows, cols
+
 == Refactoring ==
 
 - models with no operator fields
@@ -5,7 +11,6 @@
 - remove DatasetEnum
 - move code from training/mod.rs to training/train.rs
 - remove DeviceEnum
-- device.tensor should take size instead of rows, cols
 - restore simple Errors (no line etc.)
 
 == Fixes ==
@@ -21,7 +26,6 @@
 
 == Multi-Head Attention ==
 
-- implement Concat
 - implement MultiHeadAttention
 
 == Mini Batch ==

@@ -106,6 +106,7 @@ impl TensorF32 {
         self.set_values(vec![0.0; len]);
     }
 
+    // TODO This method should return a Result.
     pub fn set_values(&mut self, new_values: Vec<f32>) {
         debug_assert_eq!(new_values.len(), self.len());
         if self.buffer.len() != self.len() {
@@ -184,6 +185,25 @@ impl TensorF32 {
         let incy = 1;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
+        device.scopy(n, x, incx, y, incy)
+    }
+
+    pub fn copy_slice(
+        src: &TensorF32,
+        src_row: usize,
+        src_col: usize,
+        dst: &mut TensorF32,
+        dst_row: usize,
+        dst_col: usize,
+    ) -> Result<(), Error> {
+        let device = &src.device;
+        let n = src.cols() as i32;
+        let incx = 1;
+        let incy = 1;
+        let x = src.as_ptr().wrapping_add(src_row * src.cols() + src_col);
+        let y = dst
+            .as_mut_ptr()
+            .wrapping_add(dst_row * dst.cols() + dst_col);
         device.scopy(n, x, incx, y, incy)
     }
 

@@ -690,3 +690,55 @@ fn transpose() {
         }
     }
 }
+
+#[test]
+fn copy() {
+    let device = Device::default();
+    let expected = device.tensor_f32(
+        2,
+        4,
+        vec![
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 7.0, 8.0, //
+        ],
+    );
+
+    let mut actual = device.tensor_f32(2, 4, vec![0.0; 2 * 4]);
+
+    TensorF32::copy(&expected, &mut actual).unwrap();
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn copy_slice() {
+    let device = Device::default();
+    let from = device.tensor_f32(
+        2,
+        2,
+        vec![
+            11.0, 12.0, //
+            13.0, 14.0, //
+        ],
+    );
+
+    let mut actual = device.tensor_f32(
+        2,
+        4,
+        vec![
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 7.0, 8.0, //
+        ],
+    );
+
+    let expected = device.tensor_f32(
+        2,
+        4,
+        vec![
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 11.0, 12.0, //
+        ],
+    );
+
+    TensorF32::copy_slice(&from, 0, 0, &mut actual, 1, 2).unwrap();
+    assert_eq!(actual, expected);
+}

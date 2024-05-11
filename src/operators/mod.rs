@@ -29,6 +29,12 @@ pub trait TernaryOperator {
     ) -> Result<Tensor, Error>;
 }
 
+/// An n-ary function takes n arguments.
+/// https://en.wikipedia.org/wiki/Arity
+pub trait NaryOperator {
+    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error>;
+}
+
 pub trait Operator {
     fn name(&self) -> &str;
     fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error>;

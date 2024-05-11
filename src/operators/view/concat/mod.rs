@@ -48,7 +48,6 @@ impl Operator for Concat {
     }
 
     fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
-        println!("forward {} inputs", inputs.len());
         let dst: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
         for input_index in 0..inputs.len() {
             let src: &TensorF32 = &inputs[input_index].tensor().deref().borrow();
@@ -64,7 +63,19 @@ impl Operator for Concat {
         Ok(())
     }
 
-    fn backward(&self, _inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+        let src: &TensorF32 = &output.gradient().deref().borrow_mut();
+        for input_index in 0..inputs.len() {
+            let dst: &mut TensorF32 = &mut inputs[input_index].gradient().deref().borrow_mut();
+            let dst_col = 0;
+            let input_rows = dst.rows();
+            let input_cols = dst.cols();
+            for dst_row in 0..input_rows {
+                let src_row = dst_row;
+                let src_col = input_index * input_cols;
+                TensorF32::copy_slice(src, src_row, src_col, dst, dst_row, dst_col)?;
+            }
+        }
         Ok(())
     }
 }

@@ -1,5 +1,6 @@
 == Tensor clean-up ==
 
+- device.tensor should have the same first arguments as device.tensor_f32
 - device.tensor should take a impl Operator, not a Rc
 - device.tensor should take size instead of rows, cols
 

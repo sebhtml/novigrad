@@ -197,9 +197,9 @@ impl TensorF32 {
         dst_col: usize,
     ) -> Result<(), Error> {
         debug_assert_eq!(src_col, 0);
-        /*
+        debug_assert_eq!(dst_col % src.cols(), 0);
         let device = &src.device;
-        let n = src_col as i32;
+        let n = src.cols() as i32;
         let incx = 1;
         let incy = 1;
         let x = src.as_ptr().wrapping_add(src_row * src.cols() + src_col);
@@ -207,15 +207,6 @@ impl TensorF32 {
             .as_mut_ptr()
             .wrapping_add(dst_row * dst.cols() + dst_col);
         device.scopy(n, x, incx, y, incy)
-         */
-        let src_values = src.get_values()?;
-        let mut dst_values = dst.get_values()?;
-        for src_col_i in 0..src.cols() {
-            let dst_col_i = dst_col + src_col_i;
-            dst_values[dst.index(dst_row, dst_col_i)] = src_values[src.index(src_row, src_col_i)];
-        }
-        dst.set_values(dst_values);
-        Ok(())
     }
 
     pub fn matmul(

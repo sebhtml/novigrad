@@ -43,7 +43,7 @@ impl Operator for Scale {
         "Scale"
     }
 
-    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
+    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
         TensorF32::copy(input, output)?;

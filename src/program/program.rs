@@ -48,7 +48,7 @@ impl Program {
         let program_output = model.forward(&example_input)?;
         let forward_instructions = program_output.get_tape();
 
-        let loss = loss_operator.forward(&example_output, &program_output)?;
+        let loss = BinaryOperator::forward(loss_operator, &example_output, &program_output)?;
         let backward_instructions = loss.get_tape().clone().into_iter().rev().collect();
 
         let program = Program {

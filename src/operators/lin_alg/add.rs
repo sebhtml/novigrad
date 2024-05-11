@@ -42,7 +42,7 @@ impl Operator for Add {
         "Add"
     }
 
-    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
+    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();

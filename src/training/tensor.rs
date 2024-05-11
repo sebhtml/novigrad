@@ -49,7 +49,7 @@ impl Tensor {
         let op = output.operator();
         let inputs: Vec<_> = output.inputs().iter().collect();
 
-        op.forward_realize(&inputs, output)?;
+        op.forward(&inputs, output)?;
         Ok(())
     }
 

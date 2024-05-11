@@ -48,7 +48,7 @@ impl Operator for MatMul {
         "MatMul"
     }
 
-    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();

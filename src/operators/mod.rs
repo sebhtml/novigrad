@@ -31,7 +31,7 @@ pub trait TernaryOperator {
 
 pub trait Operator {
     fn name(&self) -> &str;
-    fn forward_realize(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error>;
+    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error>;
     fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error>;
 }
 

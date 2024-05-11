@@ -62,11 +62,11 @@ impl UnaryOperator for SimpleModel {
 }
 
 impl Model for SimpleModel {
-    fn input_shape(&self) -> Vec<usize> {
+    fn input_size(&self) -> Vec<usize> {
         vec![self.sequence_length, self.vocab_size]
     }
 
-    fn output_shape(&self) -> Vec<usize> {
+    fn output_size(&self) -> Vec<usize> {
         vec![self.output_rows, self.vocab_size]
     }
 }

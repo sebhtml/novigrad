@@ -107,11 +107,11 @@ impl UnaryOperator for MegaManAttentionModel {
 }
 
 impl Model for MegaManAttentionModel {
-    fn input_shape(&self) -> Vec<usize> {
+    fn input_size(&self) -> Vec<usize> {
         self.input_shape.clone()
     }
 
-    fn output_shape(&self) -> Vec<usize> {
+    fn output_size(&self) -> Vec<usize> {
         self.output_shape.clone()
     }
 }

@@ -1,4 +1,4 @@
 pub trait Model {
-    fn input_shape(&self) -> Vec<usize>;
-    fn output_shape(&self) -> Vec<usize>;
+    fn input_size(&self) -> Vec<usize>;
+    fn output_size(&self) -> Vec<usize>;
 }

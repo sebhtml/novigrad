@@ -72,11 +72,11 @@ impl UnaryOperator for MegaManModel {
 }
 
 impl Model for MegaManModel {
-    fn input_shape(&self) -> Vec<usize> {
+    fn input_size(&self) -> Vec<usize> {
         self.input_shape.clone()
     }
 
-    fn output_shape(&self) -> Vec<usize> {
+    fn output_size(&self) -> Vec<usize> {
         self.output_shape.clone()
     }
 }

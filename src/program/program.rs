@@ -21,7 +21,7 @@ impl Program {
         loss_operator: &(impl BinaryOperator + Operator),
     ) -> Result<Self, Error> {
         // input
-        let input_shape = model.input_shape();
+        let input_shape = model.input_size();
         let input_len = input_shape[0] * input_shape[1];
         let example_input = device.tensor(
             Rc::new(Identity::new(device)),
@@ -33,7 +33,7 @@ impl Program {
             false,
         );
         // output
-        let output_shape = model.output_shape();
+        let output_shape = model.output_size();
         let output_len = output_shape[0] * output_shape[1];
         let example_output = device.tensor(
             Rc::new(Identity::new(device)),

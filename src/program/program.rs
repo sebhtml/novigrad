@@ -63,21 +63,6 @@ impl Program {
         Ok(program)
     }
 
-    pub fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        // Copy input
-        {
-            let example_input: &mut TensorF32 =
-                &mut self.example_input.tensor().deref().borrow_mut();
-            let input: &TensorF32 = &inputs[0].tensor().deref().borrow_mut();
-            TensorF32::copy(input, example_input)?;
-        }
-        // Clear states
-        for tensor in self.forward_instructions.iter() {
-            tensor.realize()?;
-        }
-        Ok(self.program_output.clone())
-    }
-
     pub fn loss(&self, expected_output: &Tensor) -> Result<Tensor, Error> {
         // Copy expected output
         {
@@ -114,5 +99,22 @@ impl Program {
             }
         }
         Ok(self.device.tensors_with_requires_grad().clone())
+    }
+}
+
+impl UnaryOperator for Program {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        // Copy input
+        {
+            let example_input: &mut TensorF32 =
+                &mut self.example_input.tensor().deref().borrow_mut();
+            let input: &TensorF32 = &input.tensor().deref().borrow_mut();
+            TensorF32::copy(input, example_input)?;
+        }
+        // Clear states
+        for tensor in self.forward_instructions.iter() {
+            tensor.realize()?;
+        }
+        Ok(self.program_output.clone())
     }
 }

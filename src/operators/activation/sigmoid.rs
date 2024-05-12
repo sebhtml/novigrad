@@ -116,7 +116,7 @@ impl Operator for SigmoidBackward {
         "SigmoidBackward"
     }
 
-    fn forward(&self, outputs: &[&Tensor], inputs: &[&Tensor]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         if outputs[0].requires_grad() {
             let output_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
             let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();

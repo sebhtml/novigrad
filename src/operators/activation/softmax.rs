@@ -122,6 +122,32 @@ impl Operator for Softmax {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let softmax_b = SoftmaxBackward::new(&self.device, self.next_op_is_cross_entropy_loss);
+        softmax_b.forward(inputs, outputs)
+    }
+}
+
+pub struct SoftmaxBackward {
+    device: Device,
+    next_op_is_cross_entropy_loss: bool,
+}
+
+impl SoftmaxBackward {
+    pub fn new(device: &Device, next_op_is_cross_entropy_loss: bool) -> Self {
+        Self {
+            device: device.clone(),
+            next_op_is_cross_entropy_loss,
+        }
+    }
+}
+
+impl Operator for SoftmaxBackward {
+    fn name(&self) -> &str {
+        todo!()
+    }
+
+    // TODO reverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
@@ -142,5 +168,9 @@ impl Operator for Softmax {
         }
 
         Ok(())
+    }
+
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        todo!()
     }
 }

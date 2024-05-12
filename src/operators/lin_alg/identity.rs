@@ -44,6 +44,26 @@ impl Operator for Identity {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let identity_b = IdentityBackward::default();
+        identity_b.forward(inputs, outputs)
+    }
+}
+
+pub struct IdentityBackward {}
+
+impl Default for IdentityBackward {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl Operator for IdentityBackward {
+    fn name(&self) -> &str {
+        "IdentityBackward"
+    }
+
+    // TODO inverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
@@ -51,5 +71,9 @@ impl Operator for Identity {
         }
 
         Ok(())
+    }
+
+    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
+        todo!()
     }
 }

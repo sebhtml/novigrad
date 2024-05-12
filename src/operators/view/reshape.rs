@@ -50,6 +50,28 @@ impl Operator for Reshape {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let reshape_b = ReshapeBackward::new(self.input_size.clone());
+        reshape_b.forward(inputs, outputs)
+    }
+}
+
+pub struct ReshapeBackward {
+    input_size: Vec<usize>,
+}
+
+impl ReshapeBackward {
+    pub fn new(input_size: Vec<usize>) -> Self {
+        Self { input_size }
+    }
+}
+
+impl Operator for ReshapeBackward {
+    fn name(&self) -> &str {
+        "ReshapeBackward"
+    }
+
+    // TODO reverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
@@ -57,5 +79,9 @@ impl Operator for Reshape {
             input_gradient.resize(&self.input_size)?;
         }
         Ok(())
+    }
+
+    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
+        todo!()
     }
 }

@@ -48,19 +48,41 @@ impl Operator for Add {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        debug_assert_eq!(inputs.len(), 2);
-        let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
+        let add_b = AddBackward::new();
+        add_b.forward(outputs, inputs)
+    }
+}
 
-        if inputs[1].requires_grad() {
-            let input_1_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
-            TensorF32::copy(output_gradient, input_1_gradient)?;
+pub struct AddBackward {}
+
+impl AddBackward {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+impl Operator for AddBackward {
+    fn name(&self) -> &str {
+        "AddBackward"
+    }
+
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+        debug_assert_eq!(outputs.len(), 2);
+        let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
+
+        if outputs[1].requires_grad() {
+            let output_1_gradient: &mut TensorF32 = &mut outputs[1].gradient().deref().borrow_mut();
+            TensorF32::copy(input_gradient, output_1_gradient)?;
         }
 
-        if inputs[0].requires_grad() {
-            let input_0_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            TensorF32::copy(output_gradient, input_0_gradient)?;
+        if outputs[0].requires_grad() {
+            let output_0_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
+            TensorF32::copy(input_gradient, output_0_gradient)?;
         }
 
         Ok(())
+    }
+
+    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), crate::Error> {
+        panic!()
     }
 }

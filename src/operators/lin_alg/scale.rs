@@ -40,9 +40,9 @@ impl Operator for Scale {
         "Scale"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut outputs[0].tensor().deref().borrow_mut();
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
+        let input: &TensorF32 = &inputs[0];
+        let output: &TensorF32 = outputs[0];
         TensorF32::copy(input, output)?;
         let alpha = self.alpha;
         TensorF32::scale(alpha, output)

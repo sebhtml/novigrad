@@ -39,10 +39,10 @@ impl Operator for Mul {
         "Mul"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut outputs[0].tensor().deref().borrow_mut();
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input_0 = inputs[0];
+        let input_1 = inputs[1];
+        let output = outputs[0];
         TensorF32::mul(input_0, input_1, output)
     }
 

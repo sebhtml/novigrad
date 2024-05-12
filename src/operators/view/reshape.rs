@@ -23,7 +23,7 @@ impl Reshape {
 impl UnaryOperator for Reshape {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
         let input_tensor: &TensorF32 = &input.tensor().deref().borrow();
-        debug_assert_eq!(input_tensor.size(), self.input_size);
+        debug_assert_eq!(*input_tensor.size().deref().borrow_mut(), self.input_size);
         let rows = self.output_size[0];
         let cols = self.output_size[1];
         let len = rows * cols;
@@ -42,9 +42,9 @@ impl Operator for Reshape {
         "Reshape"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut outputs[0].tensor().deref().borrow_mut();
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input = &inputs[0];
+        let output = outputs[0];
         TensorF32::copy(input, output)?;
         output.resize(&self.output_size)
     }

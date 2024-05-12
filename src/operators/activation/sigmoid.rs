@@ -20,7 +20,7 @@ impl Sigmoid {
 }
 
 impl ActivationFunction for Sigmoid {
-    fn activate(&self, product_matrix: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+    fn activate(&self, product_matrix: &TensorF32, result: &TensorF32) -> Result<(), Error> {
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
         let values = product_matrix.get_values()?;
@@ -88,9 +88,9 @@ impl Operator for Sigmoid {
         "Sigmoid"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut outputs[0].tensor().deref().borrow_mut();
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
         self.activate(input, output)
     }
 

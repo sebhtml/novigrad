@@ -9,7 +9,7 @@ pub use lin_alg::*;
 mod attention;
 pub use attention::*;
 
-use crate::{Error, Tensor};
+use crate::{Error, Tensor, TensorF32};
 use core::fmt::Debug;
 
 pub trait UnaryOperator {
@@ -37,7 +37,7 @@ pub trait NaryOperator {
 
 pub trait Operator {
     fn name(&self) -> &str;
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error>;
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error>;
     fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error>;
 }
 

@@ -4,13 +4,13 @@ use crate::{
 };
 use crate::{DevBuffer, ErrorEnum};
 
-use std::fmt::Display;
+use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TensorF32 {
     device: Device,
-    size: Vec<usize>,
-    buffer: DevBuffer,
+    size: Rc<RefCell<Vec<usize>>>,
+    buffer: Rc<RefCell<DevBuffer>>,
 }
 
 impl PartialEq for TensorF32 {
@@ -28,38 +28,42 @@ impl TensorF32 {
         buffer.set_values(values);
         Self {
             device: device.clone(),
-            size: vec![rows, cols],
-            buffer,
+            size: Rc::new(RefCell::new(vec![rows, cols])),
+            buffer: Rc::new(RefCell::new(buffer)),
         }
     }
 
     pub fn rows(&self) -> usize {
-        if self.size.len() == 2 {
-            self.size[0]
+        if self.size.deref().borrow().len() == 2 {
+            self.size.deref().borrow()[0]
         } else {
             panic!()
         }
     }
 
     pub fn cols(&self) -> usize {
-        if self.size.len() == 2 {
-            self.size[1]
+        if self.size.deref().borrow().len() == 2 {
+            self.size.deref().borrow()[1]
         } else {
             panic!()
         }
     }
 
     pub fn len(&self) -> usize {
-        self.size.iter().fold(1, |acc, item| acc * item)
+        self.size
+            .deref()
+            .borrow()
+            .iter()
+            .fold(1, |acc, item| acc * item)
     }
 
-    pub fn size(&self) -> &[usize] {
+    pub fn size(&self) -> &Rc<RefCell<Vec<usize>>> {
         &self.size
     }
 
     pub fn index(&self, row: usize, col: usize) -> usize {
-        if self.size.len() == 2 {
-            let cols = self.size[1];
+        if self.size.deref().borrow().len() == 2 {
+            let cols = self.size.deref().borrow()[1];
             row * cols + col
         } else {
             panic!()
@@ -86,41 +90,41 @@ impl TensorF32 {
     }
 
     pub fn as_ptr(&self) -> *const f32 {
-        self.buffer.as_ptr()
+        self.buffer.deref().borrow().as_ptr()
     }
 
-    pub fn as_mut_ptr(&mut self) -> *mut f32 {
-        self.buffer.as_mut_ptr()
+    pub fn as_mut_ptr(&self) -> *mut f32 {
+        self.buffer.deref().borrow_mut().as_mut_ptr()
     }
 
     pub fn get_values(&self) -> Result<Vec<f32>, Error> {
-        self.buffer.get_values()
+        self.buffer.deref().borrow().get_values()
     }
 
     pub fn reallocate(&mut self, new_size: &[usize]) {
-        if new_size == self.size {
+        if *new_size == *self.size.deref().borrow() {
             return;
         }
-        self.size = new_size.to_owned();
+        *self.size.deref().borrow_mut() = new_size.to_owned();
         let len = self.len();
         self.set_values(vec![0.0; len]);
     }
 
     // TODO This method should return a Result.
-    pub fn set_values(&mut self, new_values: Vec<f32>) {
+    pub fn set_values(&self, new_values: Vec<f32>) {
         debug_assert_eq!(new_values.len(), self.len());
-        if self.buffer.len() != self.len() {
-            self.buffer.resize(self.len())
+        if self.buffer.deref().borrow().len() != self.len() {
+            self.buffer.deref().borrow_mut().resize(self.len())
         }
-        self.buffer.set_values(new_values)
+        self.buffer.deref().borrow_mut().set_values(new_values)
     }
 
-    pub fn zero(&mut self) -> Result<(), Error> {
+    pub fn zero(&self) -> Result<(), Error> {
         TensorF32::scale(0.0, self)
     }
 
     // TODO use device for element_wise_mul
-    pub fn mul(left: &TensorF32, right: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+    pub fn mul(left: &TensorF32, right: &TensorF32, result: &TensorF32) -> Result<(), Error> {
         if left.size() != right.size() {
             return Err(Error::new(
                 file!(),
@@ -178,7 +182,7 @@ impl TensorF32 {
         device.sdot(n, x.as_ptr(), incx, y.as_ptr(), incy)
     }
 
-    pub fn copy(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+    pub fn copy(x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
         let device = &x.device;
         let n = x.len() as i32;
         let incx = 1;
@@ -192,7 +196,7 @@ impl TensorF32 {
         src: &TensorF32,
         src_row: usize,
         src_col: usize,
-        dst: &mut TensorF32,
+        dst: &TensorF32,
         dst_row: usize,
         dst_col: usize,
     ) -> Result<(), Error> {
@@ -212,7 +216,7 @@ impl TensorF32 {
         transb: bool,
         a: &TensorF32,
         b: &TensorF32,
-        c: &mut TensorF32,
+        c: &TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
         c.zero()?;
@@ -228,7 +232,7 @@ impl TensorF32 {
         a: &TensorF32,
         b: &TensorF32,
         beta: f32,
-        c: &mut TensorF32,
+        c: &TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
         let op_result = Self::_gemm(transa, transb, alpha, a, b, beta, c, transpose_result);
@@ -254,7 +258,7 @@ impl TensorF32 {
         a: &TensorF32,
         b: &TensorF32,
         beta: f32,
-        c: &mut TensorF32,
+        c: &TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
         let device = &a.device;
@@ -423,17 +427,17 @@ impl TensorF32 {
         }
     }
 
-    pub fn sub(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+    pub fn sub(x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
         let alpha = -1.0;
         Self::a_x_plus_y(alpha, x, y)
     }
 
-    pub fn add(x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+    pub fn add(x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
         let alpha = 1.0;
         Self::a_x_plus_y(alpha, x, y)
     }
 
-    pub fn a_x_plus_y(alpha: f32, x: &TensorF32, y: &mut TensorF32) -> Result<(), Error> {
+    pub fn a_x_plus_y(alpha: f32, x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
             return Err(Error::new(
@@ -450,7 +454,7 @@ impl TensorF32 {
     }
 
     // TODO use device to clip
-    pub fn clip(&self, min: f32, max: f32, result: &mut TensorF32) -> Result<(), Error> {
+    pub fn clip(&self, min: f32, max: f32, result: &TensorF32) -> Result<(), Error> {
         let len = self.len();
         let mut index = 0;
         let self_values = self.get_values()?;
@@ -466,14 +470,14 @@ impl TensorF32 {
         Ok(())
     }
 
-    pub fn scale(alpha: f32, x: &mut TensorF32) -> Result<(), Error> {
+    pub fn scale(alpha: f32, x: &TensorF32) -> Result<(), Error> {
         let device = x.device.clone();
         let n = x.len() as i32;
         let incx = 1;
         device.sscal(n, alpha, x.as_mut_ptr(), incx)
     }
 
-    pub fn resize(&mut self, new_size: &[usize]) -> Result<(), Error> {
+    pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {
         let new_len = new_size.iter().fold(1, |acc, value| acc * value);
         if new_len != self.len() {
             return Err(Error::new(
@@ -484,7 +488,7 @@ impl TensorF32 {
             ));
         }
 
-        self.size = new_size.to_owned();
+        *self.size.deref().borrow_mut() = new_size.to_owned();
 
         Ok(())
     }
@@ -514,7 +518,8 @@ impl TryInto<f32> for &TensorF32 {
     type Error = Error;
 
     fn try_into(self) -> Result<f32, Self::Error> {
-        match self.size() {
+        let size: &[usize] = &self.size().deref().borrow();
+        match size {
             &[1, 1] => {
                 let self_values = self.get_values()?;
                 Ok(self_values[self.index(0, 0)])

@@ -92,15 +92,11 @@ impl Operator for CrossEntropyLoss {
         "CrossEntropyLoss"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let expected: &TensorF32 = &inputs[0];
+        let actual: &TensorF32 = &inputs[1];
         let loss = self.evaluate(&self.device, expected, actual)?;
-        outputs[0]
-            .tensor()
-            .deref()
-            .borrow_mut()
-            .set_values(vec![loss; 1]);
+        outputs[0].set_values(vec![loss; 1]);
         Ok(())
     }
 

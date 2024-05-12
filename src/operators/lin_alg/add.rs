@@ -28,6 +28,7 @@ impl BinaryOperator for Add {
         let inputs = &[input_1, input_2];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(Rc::new(AddBackward::new()), outputs, inputs);
         Ok(output)
     }
 }
@@ -43,11 +44,6 @@ impl Operator for Add {
         let output = outputs[0].tensor().deref().borrow();
         TensorF32::copy(&input_0, &output)?;
         TensorF32::add(&input_1, &output)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        let instruction = Instruction::new(Rc::new(AddBackward::new()), outputs, inputs);
-        instruction.forward()
     }
 }
 
@@ -78,9 +74,5 @@ impl Operator for AddBackward {
         }
 
         Ok(())
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        panic!()
     }
 }

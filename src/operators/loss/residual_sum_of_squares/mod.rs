@@ -61,6 +61,11 @@ impl BinaryOperator for ResidualSumOfSquares {
         let inputs = &[input_1, input_2];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(
+            Rc::new(ResidualSumOfSquaresBackward::default()),
+            outputs,
+            inputs,
+        );
         Ok(output)
     }
 }
@@ -80,15 +85,6 @@ impl Operator for ResidualSumOfSquares {
             .borrow()
             .set_values(vec![loss; 1]);
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let instruction = Instruction::new(
-            Rc::new(ResidualSumOfSquaresBackward::default()),
-            outputs,
-            inputs,
-        );
-        instruction.forward()
     }
 }
 
@@ -114,9 +110,5 @@ impl Operator for ResidualSumOfSquaresBackward {
             ResidualSumOfSquares::derive(expected, actual, output_gradient)?;
         }
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
     }
 }

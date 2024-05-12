@@ -75,6 +75,11 @@ impl BinaryOperator for CrossEntropyLoss {
         let inputs = &[input_1, input_2];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(
+            Rc::new(CrossEntropyLossBackward::default()),
+            outputs,
+            inputs,
+        );
         Ok(output)
     }
 }
@@ -94,15 +99,6 @@ impl Operator for CrossEntropyLoss {
             .borrow()
             .set_values(vec![loss; 1]);
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let instruction = Instruction::new(
-            Rc::new(CrossEntropyLossBackward::default()),
-            outputs,
-            inputs,
-        );
-        instruction.forward()
     }
 }
 
@@ -128,9 +124,5 @@ impl Operator for CrossEntropyLossBackward {
             CrossEntropyLoss::derive(expected, actual, output_gradient)?;
         }
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
     }
 }

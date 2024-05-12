@@ -29,6 +29,7 @@ impl UnaryOperator for Scale {
         let inputs = &[input];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(Rc::new(ScaleBackward::new(self.alpha)), outputs, inputs);
         Ok(output)
     }
 }
@@ -44,11 +45,6 @@ impl Operator for Scale {
         TensorF32::copy(input, output)?;
         let alpha = self.alpha;
         TensorF32::scale(alpha, output)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        let instrution = Instruction::new(Rc::new(ScaleBackward::new(self.alpha)), outputs, inputs);
-        instrution.forward()
     }
 }
 
@@ -80,9 +76,5 @@ impl Operator for ScaleBackward {
         }
 
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        todo!()
     }
 }

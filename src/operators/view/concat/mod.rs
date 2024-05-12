@@ -32,6 +32,7 @@ impl NaryOperator for Concat {
         let output = self.device.tensor(rows, cols, values, true, false);
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(Rc::new(ConcatBackward::default()), outputs, inputs);
         Ok(output)
     }
 }
@@ -55,11 +56,6 @@ impl Operator for Concat {
             }
         }
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let instruction = Instruction::new(Rc::new(ConcatBackward::default()), outputs, inputs);
-        instruction.forward()
     }
 }
 
@@ -90,9 +86,5 @@ impl Operator for ConcatBackward {
             }
         }
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
     }
 }

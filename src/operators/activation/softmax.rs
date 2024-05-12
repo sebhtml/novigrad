@@ -104,6 +104,14 @@ impl UnaryOperator for Softmax {
         let inputs = &[input];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(
+            Rc::new(SoftmaxBackward::new(
+                &self.device,
+                self.next_op_is_cross_entropy_loss,
+            )),
+            outputs,
+            inputs,
+        );
         Ok(output)
     }
 }
@@ -117,18 +125,6 @@ impl Operator for Softmax {
         let input = inputs[0].tensor().deref().borrow();
         let output = outputs[0].tensor().deref().borrow();
         Self::activate(&input, &output)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let instruction = Instruction::new(
-            Rc::new(SoftmaxBackward::new(
-                &self.device,
-                self.next_op_is_cross_entropy_loss,
-            )),
-            outputs,
-            inputs,
-        );
-        instruction.forward()
     }
 }
 
@@ -172,9 +168,5 @@ impl Operator for SoftmaxBackward {
         }
 
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
     }
 }

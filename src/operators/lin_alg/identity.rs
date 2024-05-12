@@ -26,6 +26,7 @@ impl UnaryOperator for Identity {
         let inputs = &[input];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(Rc::new(IdentityBackward::default()), outputs, inputs);
         Ok(output)
     }
 }
@@ -39,11 +40,6 @@ impl Operator for Identity {
         let input = inputs[0].tensor().deref().borrow();
         let output = outputs[0].tensor().deref().borrow();
         TensorF32::copy(&input, &output)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let instruction = Instruction::new(Rc::new(IdentityBackward::default()), outputs, inputs);
-        instruction.forward()
     }
 }
 
@@ -68,9 +64,5 @@ impl Operator for IdentityBackward {
         }
 
         Ok(())
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
     }
 }

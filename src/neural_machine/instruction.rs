@@ -34,10 +34,4 @@ impl Instruction {
         let outputs: Vec<&Tensor> = self.outputs.iter().collect();
         self.operator.forward(&inputs, &outputs)
     }
-
-    pub fn backward(&self) -> Result<(), Error> {
-        let inputs: Vec<&Tensor> = self.inputs.iter().collect();
-        let outputs: Vec<&Tensor> = self.outputs.iter().collect();
-        self.operator.backward(&inputs, &outputs)
-    }
 }

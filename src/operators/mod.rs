@@ -40,7 +40,6 @@ pub trait NaryOperator {
 pub trait Operator {
     fn name(&self) -> &str;
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error>;
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error>;
 }
 
 impl Debug for dyn Operator {

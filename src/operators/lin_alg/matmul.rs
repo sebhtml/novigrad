@@ -34,6 +34,11 @@ impl BinaryOperator for MatMul {
         let inputs = &[input_0, input_1];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(
+            Rc::new(MatMulBackward::new(self.transb)),
+            outputs,
+            inputs,
+        );
         Ok(output)
     }
 }
@@ -53,12 +58,6 @@ impl Operator for MatMul {
         let c = output;
         let transb = self.transb;
         TensorF32::matmul(false, transb, a, b, c, false)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let instruction =
-            Instruction::new(Rc::new(MatMulBackward::new(self.transb)), outputs, inputs);
-        instruction.forward()
     }
 }
 
@@ -106,9 +105,5 @@ impl Operator for MatMulBackward {
         }
 
         Ok(())
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
-        panic!()
     }
 }

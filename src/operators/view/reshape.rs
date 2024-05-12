@@ -31,6 +31,11 @@ impl UnaryOperator for Reshape {
         let inputs = &[input];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(
+            Rc::new(ReshapeBackward::new(self.input_size.clone())),
+            outputs,
+            inputs,
+        );
         Ok(output)
     }
 }
@@ -45,15 +50,6 @@ impl Operator for Reshape {
         let output = &outputs[0].tensor().deref().borrow();
         TensorF32::copy(input, output)?;
         output.resize(&self.output_size)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let instruction = Instruction::new(
-            Rc::new(ReshapeBackward::new(self.input_size.clone())),
-            outputs,
-            inputs,
-        );
-        instruction.forward()
     }
 }
 
@@ -80,9 +76,5 @@ impl Operator for ReshapeBackward {
             output_gradient.resize(&self.input_size)?;
         }
         Ok(())
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
     }
 }

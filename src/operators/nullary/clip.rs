@@ -28,8 +28,4 @@ impl Operator for Clip {
         }
         Ok(())
     }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
-    }
 }

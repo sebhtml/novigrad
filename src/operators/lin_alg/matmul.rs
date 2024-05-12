@@ -45,11 +45,11 @@ impl Operator for MatMul {
         "MatMul"
     }
 
-    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
+        let output: &mut TensorF32 = &mut outputs[0].tensor().deref().borrow_mut();
         let a = input_0;
         let b = input_1;
         let c = output;

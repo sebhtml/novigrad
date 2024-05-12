@@ -88,9 +88,9 @@ impl Operator for Sigmoid {
         "Sigmoid"
     }
 
-    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
+        let output: &mut TensorF32 = &mut outputs[0].tensor().deref().borrow_mut();
         self.activate(input, output)
     }
 

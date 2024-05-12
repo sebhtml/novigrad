@@ -29,10 +29,13 @@ impl Instruction {
     pub fn forward(&self) -> Result<(), Error> {
         //println!("Instruction forward {}", self.operator.name());
         let inputs: Vec<&Tensor> = self.inputs.iter().collect();
-        let output: &Tensor = &self.outputs[0];
-        output.tensor().deref().borrow_mut().zero()?;
-        output.gradient().deref().borrow_mut().zero()?;
-        self.operator.forward(&inputs, output)
+        let outputs: Vec<&Tensor> = self.outputs.iter().collect();
+        {
+            let output: &Tensor = &outputs[0];
+            output.tensor().deref().borrow_mut().zero()?;
+            output.gradient().deref().borrow_mut().zero()?;
+        }
+        self.operator.forward(&inputs, &outputs)
     }
 
     pub fn backward(&self) -> Result<(), Error> {

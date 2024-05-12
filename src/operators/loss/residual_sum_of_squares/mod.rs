@@ -78,11 +78,11 @@ impl Operator for ResidualSumOfSquares {
         "ResidualSumOfSquares"
     }
 
-    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
         let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
         let loss = self.evaluate(&self.device, expected, actual)?;
-        output
+        outputs[0]
             .tensor()
             .deref()
             .borrow_mut()

@@ -44,8 +44,8 @@ impl Operator for Concat {
         "Concat"
     }
 
-    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
-        let dst: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let dst: &mut TensorF32 = &mut outputs[0].tensor().deref().borrow_mut();
         for input_index in 0..inputs.len() {
             let src: &TensorF32 = &inputs[input_index].tensor().deref().borrow();
             let src_col = 0;

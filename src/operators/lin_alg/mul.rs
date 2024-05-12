@@ -45,8 +45,8 @@ impl Operator for Mul {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let mul_b = MulBackward::default();
-        mul_b.forward(inputs, outputs)
+        let instruction = Instruction::new(Rc::new(MulBackward::default()), inputs, outputs);
+        instruction.forward()
     }
 }
 

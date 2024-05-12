@@ -2,7 +2,10 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
     BinaryOperator, Device, Error, Instruction, Model, Operator, Tensor, TensorF32, UnaryOperator,
+    Zero,
 };
+
+use super::instruction;
 
 pub struct NeuralMachine {
     device: Device,
@@ -42,11 +45,18 @@ impl NeuralMachine {
         );
 
         let program_output = model.forward(&example_input)?;
-        let forward_instructions = program_output
-            .get_tape()
-            .into_iter()
-            .map(|x| x.forward_instructions().deref().borrow()[0].to_owned())
-            .collect();
+        let mut forward_instructions = vec![];
+
+        let tape = program_output.get_tape();
+
+        for tensor in tape {
+            let instruction = tensor.forward_instructions().deref().borrow()[0].to_owned();
+            let outputs: Vec<Tensor> = instruction.outputs().deref().clone().into_iter().collect();
+            let outputs: Vec<&Tensor> = outputs.iter().collect();
+            let zero_instruction = Instruction::new(Rc::new(Zero::default()), &[], &outputs);
+            forward_instructions.push(zero_instruction);
+            forward_instructions.push(instruction);
+        }
 
         let loss = BinaryOperator::forward(loss_operator, &example_output, &program_output)?;
         let backward_instructions = loss

@@ -48,8 +48,12 @@ impl Operator for Reshape {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let reshape_b = ReshapeBackward::new(self.input_size.clone());
-        reshape_b.forward(inputs, outputs)
+        let instruction = Instruction::new(
+            Rc::new(ReshapeBackward::new(self.input_size.clone())),
+            inputs,
+            outputs,
+        );
+        instruction.forward()
     }
 }
 

@@ -92,8 +92,9 @@ impl Operator for Sigmoid {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let sigmoid_b = SigmoidBackward::new(&self.device);
-        sigmoid_b.forward(outputs, inputs)
+        let instruction =
+            Instruction::new(Rc::new(SigmoidBackward::new(&self.device)), outputs, inputs);
+        instruction.forward()
     }
 }
 

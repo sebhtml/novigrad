@@ -120,8 +120,15 @@ impl Operator for Softmax {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let softmax_b = SoftmaxBackward::new(&self.device, self.next_op_is_cross_entropy_loss);
-        softmax_b.forward(inputs, outputs)
+        let instruction = Instruction::new(
+            Rc::new(SoftmaxBackward::new(
+                &self.device,
+                self.next_op_is_cross_entropy_loss,
+            )),
+            inputs,
+            outputs,
+        );
+        instruction.forward()
     }
 }
 
@@ -141,7 +148,7 @@ impl SoftmaxBackward {
 
 impl Operator for SoftmaxBackward {
     fn name(&self) -> &str {
-        todo!()
+        "SoftmaxBackward"
     }
 
     // TODO reverse inputs and outputs

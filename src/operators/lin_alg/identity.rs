@@ -42,8 +42,8 @@ impl Operator for Identity {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let identity_b = IdentityBackward::default();
-        identity_b.forward(inputs, outputs)
+        let instruction = Instruction::new(Rc::new(IdentityBackward::default()), inputs, outputs);
+        instruction.forward()
     }
 }
 

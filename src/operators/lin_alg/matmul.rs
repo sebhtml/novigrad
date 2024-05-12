@@ -56,8 +56,9 @@ impl Operator for MatMul {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let matmul_b = MatMulBackward::new(self.transb);
-        matmul_b.forward(outputs, inputs)
+        let instruction =
+            Instruction::new(Rc::new(MatMulBackward::new(self.transb)), outputs, inputs);
+        instruction.forward()
     }
 }
 

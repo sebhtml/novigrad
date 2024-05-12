@@ -47,8 +47,8 @@ impl Operator for Scale {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        let scale_b = ScaleBackward::new(self.alpha);
-        scale_b.forward(inputs, outputs)
+        let instrution = Instruction::new(Rc::new(ScaleBackward::new(self.alpha)), inputs, outputs);
+        instrution.forward()
     }
 }
 

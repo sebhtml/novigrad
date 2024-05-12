@@ -58,8 +58,8 @@ impl Operator for Concat {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let concat_b = ConcatBackward::default();
-        concat_b.forward(inputs, outputs)
+        let instruction = Instruction::new(Rc::new(ConcatBackward::default()), inputs, outputs);
+        instruction.forward()
     }
 }
 

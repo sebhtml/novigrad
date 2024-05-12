@@ -97,8 +97,12 @@ impl Operator for CrossEntropyLoss {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let cross_b = CrossEntropyLossBackward::default();
-        cross_b.forward(inputs, outputs)
+        let instruction = Instruction::new(
+            Rc::new(CrossEntropyLossBackward::default()),
+            inputs,
+            outputs,
+        );
+        instruction.forward()
     }
 }
 

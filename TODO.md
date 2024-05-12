@@ -1,5 +1,4 @@
 - Forward: pass inputs and outputs in correct order for Backward structs
-- Add Clone for Backward structs
 
 == Tensor clean-up ==
 

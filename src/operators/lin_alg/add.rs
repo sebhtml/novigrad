@@ -46,8 +46,8 @@ impl Operator for Add {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        let add_b = AddBackward::new();
-        add_b.forward(outputs, inputs)
+        let instruction = Instruction::new(Rc::new(AddBackward::new()), outputs, inputs);
+        instruction.forward()
     }
 }
 

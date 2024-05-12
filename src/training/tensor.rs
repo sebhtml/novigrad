@@ -1,4 +1,4 @@
-use crate::{Instruction, Operator, TensorF32};
+use crate::{Error, Instruction, Operator, TensorF32};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
@@ -47,6 +47,11 @@ impl Tensor {
         &self.gradient
     }
 
+    pub fn zero(&self) -> Result<(), Error> {
+        self.tensor().deref().borrow_mut().zero()?;
+        self.gradient().deref().borrow_mut().zero()?;
+        Ok(())
+    }
     pub fn resize(&self, new_size: &[usize]) {
         self.tensor.deref().borrow_mut().reallocate(new_size);
         self.gradient.deref().borrow_mut().reallocate(new_size);

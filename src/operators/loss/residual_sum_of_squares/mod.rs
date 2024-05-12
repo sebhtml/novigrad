@@ -83,8 +83,12 @@ impl Operator for ResidualSumOfSquares {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let res_b = ResidualSumOfSquaresBackward::default();
-        res_b.forward(inputs, outputs)
+        let instruction = Instruction::new(
+            Rc::new(ResidualSumOfSquaresBackward::default()),
+            inputs,
+            outputs,
+        );
+        instruction.forward()
     }
 }
 

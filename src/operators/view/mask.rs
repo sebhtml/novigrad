@@ -1,6 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{Add, BinaryOperator, Device, Error, Identity, Tensor, UnaryOperator};
+use crate::{Add, BinaryOperator, Device, Error, Tensor, UnaryOperator};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// Attention Is All You Need -> https://arxiv.org/abs/1706.03762
@@ -15,15 +15,7 @@ impl Mask {
         let len = mask_rows * mask_cols;
         let mask = vec![0.0; len];
 
-        let mask = device.tensor(
-            mask_rows,
-            mask_cols,
-            mask,
-            Rc::new(Identity::new(device)),
-            &vec![],
-            true,
-            true,
-        );
+        let mask = device.tensor(mask_rows, mask_cols, mask, true, true);
         let mut values = mask.tensor().deref().borrow().get_values()?;
         for row in 0..mask_rows {
             for col in 0..mask_cols {

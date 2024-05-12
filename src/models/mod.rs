@@ -4,9 +4,9 @@ mod mega_man;
 mod mega_man_attention;
 mod simple;
 use crate::NeuralMachine;
-use std::{fs, rc::Rc};
+use std::fs;
 
-use crate::{Device, Error, ErrorEnum, Identity, Tensor, Tokenizer, TokenizerTrait};
+use crate::{Device, Error, ErrorEnum, Tensor, Tokenizer, TokenizerTrait};
 
 pub enum Dataset {
     Simple,
@@ -51,15 +51,7 @@ pub fn into_one_hot_encoded_rows(
     for (index, token) in input_tokens.iter().enumerate() {
         result_values[result.index(index, *token)] = 1.0;
     }
-    Ok(device.tensor(
-        input_tokens.len(),
-        num_classes,
-        result_values,
-        Rc::new(Identity::new(device)),
-        &vec![],
-        false,
-        false,
-    ))
+    Ok(device.tensor(input_tokens.len(), num_classes, result_values, false, false))
 }
 
 fn load_examples(

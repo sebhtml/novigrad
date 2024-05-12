@@ -2,8 +2,7 @@ use super::load_examples;
 use crate::{BinaryOperator, CrossEntropyLoss, Device, NeuralMachine, Tokenizer, UnaryOperator};
 use crate::{DatasetDetails, Error};
 
-use crate::{Embedding, Identity, Linear, MatMul, Model, Reshape, Softmax, Tensor};
-use std::rc::Rc;
+use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, Tensor};
 
 struct MegaManModel {
     input_shape: Vec<usize>,
@@ -30,15 +29,7 @@ impl MegaManModel {
             output_shape: vec![output_rows, vocab_size],
             vocab_size,
             sequence_length,
-            parameters: device.tensor(
-                n_embd,
-                n_embd,
-                vec![0.0; n_embd * n_embd],
-                Rc::new(Identity::new(device)),
-                &vec![],
-                true,
-                true,
-            ),
+            parameters: device.tensor(n_embd, n_embd, vec![0.0; n_embd * n_embd], true, true),
             embedding: Embedding::new(device, vocab_size, n_embd),
             matmul: MatMul::new(device, true),
             reshape: Reshape::new(

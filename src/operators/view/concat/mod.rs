@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, NaryOperator, Operator, Tensor, TensorF32};
+use crate::{Device, Error, Instruction, NaryOperator, Operator, Tensor, TensorF32};
 
 #[cfg(test)]
 mod tests;
@@ -29,15 +29,12 @@ impl NaryOperator for Concat {
         let cols = inputs.len() * cols;
         let len = rows * cols;
         let values = vec![0.0; len];
-        let output = self.device.tensor(
-            rows,
-            cols,
-            values,
+        let output = self.device.tensor(rows, cols, values, true, false);
+        output.push_forward_instruction(Instruction::new(
             Rc::new(self.clone()),
             inputs,
-            true,
-            false,
-        );
+            &[&output],
+        ));
         Ok(output)
     }
 }

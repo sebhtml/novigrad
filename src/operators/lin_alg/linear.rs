@@ -1,8 +1,6 @@
-use std::rc::Rc;
-
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{Device, Error, Gemm, Identity, Tensor, TernaryOperator, UnaryOperator};
+use crate::{Device, Error, Gemm, Tensor, TernaryOperator, UnaryOperator};
 
 /// Linear is not a ONNX operator.
 /// https://onnx.ai/onnx/operators/index.html ???
@@ -31,26 +29,10 @@ impl Linear {
         for index in 0..weights.len() {
             weights[index] = rng.sample(uniform);
         }
-        let weights = device.tensor(
-            weights_rows,
-            weights_cols,
-            weights,
-            Rc::new(Identity::new(device)),
-            &vec![],
-            true,
-            true,
-        );
+        let weights = device.tensor(weights_rows, weights_cols, weights, true, true);
 
         let biases_len = bias_rows * weights_rows;
-        let biases = device.tensor(
-            bias_rows,
-            weights_rows,
-            vec![0.0; biases_len],
-            Rc::new(Identity::new(device)),
-            &vec![],
-            true,
-            true,
-        );
+        let biases = device.tensor(bias_rows, weights_rows, vec![0.0; biases_len], true, true);
 
         let gemm = Gemm::new(device, true);
         Self {

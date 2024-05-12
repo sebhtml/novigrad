@@ -15,7 +15,7 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{Operator, Tensor, TensorF32};
+use crate::{Tensor, TensorF32};
 mod buffer;
 pub use buffer::*;
 
@@ -165,15 +165,11 @@ impl Device {
         rows: usize,
         cols: usize,
         values: Vec<f32>,
-        operator: Rc<dyn Operator>,
-        inputs: &[&Tensor],
         requires_grad: bool,
         optimize: bool,
     ) -> Tensor {
         let len = rows * cols;
         let tensor = Tensor::new(
-            operator,
-            inputs,
             Rc::new(RefCell::new(Self::tensor_f32(&self, rows, cols, values))),
             Rc::new(RefCell::new(Self::tensor_f32(
                 &self,

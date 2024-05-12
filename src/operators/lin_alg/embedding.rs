@@ -1,8 +1,4 @@
-use std::rc::Rc;
-
-use crate::{
-    devices::Device, BinaryOperator, Error, Identity, MatMul, Tensor, TensorF32, UnaryOperator,
-};
+use crate::{devices::Device, BinaryOperator, Error, MatMul, Tensor, TensorF32, UnaryOperator};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 /// Embedding is not a ONNX operator.
@@ -25,8 +21,6 @@ impl Embedding {
             transposed.rows(),
             transposed.cols(),
             transposed.get_values().unwrap(),
-            Rc::new(Identity::new(device)),
-            &vec![],
             true,
             true,
         );

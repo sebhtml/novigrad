@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{BinaryOperator, Device, Error, Operator, Tensor, TensorF32};
+use crate::{BinaryOperator, Device, Error, Instruction, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Mul.html
 #[derive(Clone)]
@@ -24,15 +24,12 @@ impl BinaryOperator for Mul {
         let rows = input_0_t.rows();
         let cols = input_0_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor(
-            rows,
-            cols,
-            vec![0.0; len],
+        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
+        output.push_forward_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[input_0, input_1],
-            true,
-            false,
-        );
+            &[&output],
+        ));
         Ok(output)
     }
 }

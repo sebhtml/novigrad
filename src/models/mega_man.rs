@@ -1,5 +1,5 @@
 use super::load_examples;
-use crate::{BinaryOperator, CrossEntropyLoss, Device, Program, Tokenizer, UnaryOperator};
+use crate::{BinaryOperator, CrossEntropyLoss, Device, NeuralMachine, Tokenizer, UnaryOperator};
 use crate::{DatasetDetails, Error};
 
 use crate::{Embedding, Identity, Linear, MatMul, Model, Reshape, Softmax, Tensor};
@@ -101,7 +101,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
         &mut tokenizer,
     )?;
     let loss_operator = CrossEntropyLoss::new(device);
-    let program = Program::try_new(&device, &model, &loss_operator)?;
+    let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
 
     let details = DatasetDetails {
         device: device.clone(),

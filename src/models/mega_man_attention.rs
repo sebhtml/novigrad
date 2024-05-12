@@ -1,6 +1,7 @@
 use super::load_examples;
 use crate::{
-    CrossEntropyLoss, Device, Program, TernaryOperator, Tokenizer, TokenizerTrait, UnaryOperator,
+    CrossEntropyLoss, Device, NeuralMachine, TernaryOperator, Tokenizer, TokenizerTrait,
+    UnaryOperator,
 };
 use crate::{DatasetDetails, Error};
 
@@ -142,7 +143,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
 
     let model = model;
     let loss_operator = CrossEntropyLoss::new(device);
-    let program = Program::try_new(&device, &model, &loss_operator)?;
+    let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
 
     let details = DatasetDetails {
         device: device.clone(),

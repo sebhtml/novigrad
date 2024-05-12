@@ -6,11 +6,11 @@ mod optimizers;
 pub use optimizers::*;
 pub use train::*;
 mod tensor;
-use crate::{devices::Device, Error, Program, TensorF32, UnaryOperator};
+use crate::{devices::Device, Error, NeuralMachine, TensorF32, UnaryOperator};
 pub use tensor::*;
 
 pub fn train(
-    program: &Program,
+    program: &NeuralMachine,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
     learning_rate: f32,
@@ -33,7 +33,11 @@ pub fn train(
     Ok(())
 }
 
-pub fn total_loss(program: &Program, inputs: &[Tensor], outputs: &[Tensor]) -> Result<f32, Error> {
+pub fn total_loss(
+    program: &NeuralMachine,
+    inputs: &[Tensor],
+    outputs: &[Tensor],
+) -> Result<f32, Error> {
     let mut total_error = 0.0;
     for i in 0..inputs.len() {
         let _ = program.forward(&inputs[i])?;
@@ -48,7 +52,7 @@ pub fn total_loss(program: &Program, inputs: &[Tensor], outputs: &[Tensor]) -> R
 }
 
 fn train_back_propagation(
-    program: &Program,
+    program: &NeuralMachine,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
     learning_rate: f32,

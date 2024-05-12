@@ -4,7 +4,7 @@ use crate::{
     BinaryOperator, Device, Error, Identity, Model, Operator, Tensor, TensorF32, UnaryOperator,
 };
 
-pub struct Program {
+pub struct NeuralMachine {
     device: Device,
     example_input: Tensor,
     example_output: Tensor,
@@ -14,7 +14,7 @@ pub struct Program {
     backward_instructions: Vec<Tensor>,
 }
 
-impl Program {
+impl NeuralMachine {
     pub fn try_new(
         device: &Device,
         model: &(impl UnaryOperator + Model),
@@ -51,7 +51,7 @@ impl Program {
         let loss = BinaryOperator::forward(loss_operator, &example_output, &program_output)?;
         let backward_instructions = loss.get_tape().clone().into_iter().rev().collect();
 
-        let program = Program {
+        let program = NeuralMachine {
             device: device.clone(),
             example_input,
             example_output,
@@ -100,7 +100,7 @@ impl Program {
     }
 }
 
-impl UnaryOperator for Program {
+impl UnaryOperator for NeuralMachine {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
         // Copy input
         {

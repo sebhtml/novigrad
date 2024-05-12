@@ -3,7 +3,7 @@ pub use model::*;
 mod mega_man;
 mod mega_man_attention;
 mod simple;
-use crate::Program;
+use crate::NeuralMachine;
 use std::{fs, rc::Rc};
 
 use crate::{Device, Error, ErrorEnum, Identity, Tensor, Tokenizer, TokenizerTrait};
@@ -18,7 +18,7 @@ pub struct DatasetDetails {
     pub device: Device,
     pub tokenizer: Tokenizer,
     pub examples: Vec<(Tensor, Tensor)>,
-    pub program: Program,
+    pub program: NeuralMachine,
     pub learning_rate: f32,
     pub epochs: usize,
     pub progress: usize,

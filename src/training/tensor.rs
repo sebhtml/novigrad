@@ -6,6 +6,7 @@ use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 #[derive(Clone, Debug)]
 pub struct Tensor {
     forward_instructions: Rc<RefCell<Vec<Instruction>>>,
+    backward_instructions: Rc<RefCell<Vec<Instruction>>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
 }
@@ -14,6 +15,7 @@ impl Tensor {
     pub fn new(tensor: TensorF32, gradient: TensorF32) -> Self {
         Self {
             forward_instructions: Default::default(),
+            backward_instructions: Default::default(),
             tensor: Rc::new(RefCell::new(tensor)),
             gradient: Rc::new(RefCell::new(gradient)),
         }
@@ -32,9 +34,27 @@ impl Tensor {
             .push(instruction)
     }
 
+    pub fn push_backward_instruction(
+        &self,
+        operator: Rc<dyn Operator>,
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+    ) {
+        let instruction = Instruction::new(operator, inputs, outputs);
+        self.backward_instructions
+            .deref()
+            .borrow_mut()
+            .push(instruction)
+    }
+
     pub fn forward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
         &self.forward_instructions
     }
+
+    pub fn backward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
+        &self.backward_instructions
+    }
+
     pub fn requires_grad(&self) -> bool {
         self.gradient.deref().borrow().requires_grad()
     }

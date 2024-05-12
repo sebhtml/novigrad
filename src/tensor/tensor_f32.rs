@@ -458,19 +458,18 @@ impl TensorF32 {
     }
 
     // TODO use device to clip
-    pub fn clip(&self, min: f32, max: f32, result: &TensorF32) -> Result<(), Error> {
+    pub fn clip(&self, min: f32, max: f32) -> Result<(), Error> {
         let len = self.len();
         let mut index = 0;
-        let self_values = self.get_values()?;
-        let mut result_values = result.get_values()?;
+        let mut self_values = self.get_values()?;
         while index < len {
             let mut value = self_values[index];
             value = value.max(min);
             value = value.min(max);
-            result_values[index] = value;
+            self_values[index] = value;
             index += 1;
         }
-        result.set_values(result_values);
+        self.set_values(self_values);
         Ok(())
     }
 

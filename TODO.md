@@ -15,7 +15,6 @@
 
 == Fixes ==
 
-- clip in place
 - models return expected size in Error instead of inputsize and outputsize
 - make list of things that are using Tensorf32::setvalue
 - remove recycle

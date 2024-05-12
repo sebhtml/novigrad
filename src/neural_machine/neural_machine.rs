@@ -103,13 +103,8 @@ impl NeuralMachine {
                     continue;
                 }
                 let input_gradient: &mut TensorF32 = &mut input.gradient().deref().borrow_mut();
-                let input_gradient_tmp = self.device.tensor_f32(
-                    input_gradient.rows(),
-                    input_gradient.cols(),
-                    input_gradient.get_values()?,
-                );
                 // Clip the backward gradients.
-                input_gradient_tmp.clip(-1.0, 1.0, input_gradient)?;
+                input_gradient.clip(-1.0, 1.0)?;
             }
         }
         Ok(self.device.tensors_to_optimize().clone())

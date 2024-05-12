@@ -1,6 +1,10 @@
+- Forward: pass inputs and outputs in correct order for Backward structs
+- Add Clone for Backward structs
+- Refactor inputs / outputs in instructions
+- rename tensor_with_grad to tensors_to_optimize
+
 == Tensor clean-up ==
 
-- device.tensor should take a impl Operator, not a Rc
 - device.tensor should take size instead of rows, cols
 
 == Refactoring ==

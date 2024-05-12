@@ -10,5 +10,5 @@ mod operators;
 pub use operators::*;
 mod tokenizers;
 pub use tokenizers::*;
-mod program;
-pub use program::*;
+mod neural_machine;
+pub use neural_machine::*;

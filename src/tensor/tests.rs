@@ -60,7 +60,7 @@ fn multiplication_shape_compatibility() {
 #[test]
 fn reshape_result() {
     let device = Device::default();
-    let mut lhs = device.tensor_f32(
+    let lhs = device.tensor_f32(
         2,
         4,
         vec![
@@ -87,7 +87,7 @@ fn reshape_result() {
 #[test]
 fn reshape_error() {
     let device = Device::default();
-    let mut lhs = device.tensor_f32(
+    let lhs = device.tensor_f32(
         2,
         4,
         vec![
@@ -161,7 +161,7 @@ fn clip() {
 #[test]
 fn set_values() {
     let device = Device::default();
-    let mut tensor = device.tensor_f32(
+    let tensor = device.tensor_f32(
         2,
         2,
         vec![

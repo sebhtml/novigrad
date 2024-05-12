@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Operator, Tensor, TensorF32, UnaryOperator};
+use crate::{Device, Error, Instruction, Operator, Tensor, TensorF32, UnaryOperator};
 
 /// https://onnx.ai/onnx/operators/onnx__Identity.html
 #[derive(Clone)]
@@ -22,15 +22,12 @@ impl UnaryOperator for Identity {
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor(
+        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
+        output.push_forward_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[input],
-            rows,
-            cols,
-            vec![0.0; len],
-            true,
-            false,
-        );
+            &[&output],
+        ));
         Ok(output)
     }
 }
@@ -40,19 +37,43 @@ impl Operator for Identity {
         "Identity"
     }
 
-    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
-        TensorF32::copy(input, output)
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let input = inputs[0].tensor().deref().borrow();
+        let output = outputs[0].tensor().deref().borrow();
+        TensorF32::copy(&input, &output)
     }
 
-    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let identity_b = IdentityBackward::default();
+        identity_b.forward(inputs, outputs)
+    }
+}
+
+pub struct IdentityBackward {}
+
+impl Default for IdentityBackward {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl Operator for IdentityBackward {
+    fn name(&self) -> &str {
+        "IdentityBackward"
+    }
+
+    // TODO inverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+            let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
             TensorF32::copy(output_gradient, input_gradient)?;
         }
 
         Ok(())
+    }
+
+    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
+        todo!()
     }
 }

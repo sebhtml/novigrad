@@ -1,20 +1,20 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    BinaryOperator, Device, Error, Identity, Model, Operator, Tensor, TensorF32, UnaryOperator,
+    BinaryOperator, Device, Error, Instruction, Model, Operator, Tensor, TensorF32, UnaryOperator,
 };
 
-pub struct Program {
+pub struct NeuralMachine {
     device: Device,
     example_input: Tensor,
     example_output: Tensor,
     program_output: Tensor,
     loss: Tensor,
-    forward_instructions: Vec<Tensor>,
-    backward_instructions: Vec<Tensor>,
+    forward_instructions: Vec<Instruction>,
+    backward_instructions: Vec<Instruction>,
 }
 
-impl Program {
+impl NeuralMachine {
     pub fn try_new(
         device: &Device,
         model: &(impl UnaryOperator + Model),
@@ -24,8 +24,6 @@ impl Program {
         let input_shape = model.input_size();
         let input_len = input_shape[0] * input_shape[1];
         let example_input = device.tensor(
-            Rc::new(Identity::new(device)),
-            &vec![],
             input_shape[0],
             input_shape[1],
             vec![0.7; input_len],
@@ -36,8 +34,6 @@ impl Program {
         let output_shape = model.output_size();
         let output_len = output_shape[0] * output_shape[1];
         let example_output = device.tensor(
-            Rc::new(Identity::new(device)),
-            &vec![],
             output_shape[0],
             output_shape[1],
             vec![0.7; output_len],
@@ -46,12 +42,22 @@ impl Program {
         );
 
         let program_output = model.forward(&example_input)?;
-        let forward_instructions = program_output.get_tape();
+        let forward_instructions = program_output
+            .get_tape()
+            .into_iter()
+            .map(|x| x.forward_instructions().deref().borrow()[0].to_owned())
+            .collect();
 
         let loss = BinaryOperator::forward(loss_operator, &example_output, &program_output)?;
-        let backward_instructions = loss.get_tape().clone().into_iter().rev().collect();
+        let backward_instructions = loss
+            .get_tape()
+            .clone()
+            .into_iter()
+            .rev()
+            .map(|x| x.forward_instructions().deref().borrow()[0].to_owned())
+            .collect();
 
-        let program = Program {
+        let program = NeuralMachine {
             device: device.clone(),
             example_input,
             example_output,
@@ -72,16 +78,16 @@ impl Program {
             TensorF32::copy(expected_output, example_output)?;
         }
         let loss = &self.loss;
-        loss.forward()?;
+        loss.forward_instructions().deref().borrow()[0].forward()?;
         Ok(loss.clone())
     }
 
     /// Back-propagation
     pub fn backward(&self) -> Result<Rc<RefCell<Vec<Tensor>>>, Error> {
-        for output in self.backward_instructions.iter() {
-            output.backward()?;
+        for instruction in self.backward_instructions.iter() {
+            instruction.backward()?;
 
-            let inputs: Vec<_> = output.inputs().iter().collect();
+            let inputs: Vec<_> = instruction.inputs().iter().collect();
             for input in inputs {
                 if !input.requires_grad() {
                     continue;
@@ -100,8 +106,9 @@ impl Program {
     }
 }
 
-impl UnaryOperator for Program {
+impl UnaryOperator for NeuralMachine {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        //println!("NeuralMachine forward");
         // Copy input
         {
             let example_input: &mut TensorF32 =
@@ -110,8 +117,8 @@ impl UnaryOperator for Program {
             TensorF32::copy(input, example_input)?;
         }
         // Forward tensors
-        for tensor in self.forward_instructions.iter() {
-            tensor.forward()?;
+        for instruction in self.forward_instructions.iter() {
+            instruction.forward()?;
         }
         Ok(self.program_output.clone())
     }

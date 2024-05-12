@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Operator, Tensor, TensorF32, UnaryOperator};
+use crate::{Device, Instruction, Operator, Tensor, TensorF32, UnaryOperator};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// TODO implement broadcasting to use Mul instead
@@ -25,15 +25,12 @@ impl UnaryOperator for Scale {
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor(
+        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
+        output.push_forward_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[input],
-            rows,
-            cols,
-            vec![0.0; len],
-            true,
-            false,
-        );
+            &[&output],
+        ));
         Ok(output)
     }
 }
@@ -43,25 +40,52 @@ impl Operator for Scale {
         "Scale"
     }
 
-    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+        let input = &inputs[0].tensor().deref().borrow();
+        let output = &outputs[0].tensor().deref().borrow();
         TensorF32::copy(input, output)?;
         let alpha = self.alpha;
         TensorF32::scale(alpha, output)
     }
 
-    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+        let scale_b = ScaleBackward::new(self.alpha);
+        scale_b.forward(inputs, outputs)
+    }
+}
+
+pub struct ScaleBackward {
+    alpha: f32,
+}
+
+impl ScaleBackward {
+    pub fn new(alpha: f32) -> Self {
+        Self { alpha }
+    }
+}
+
+impl Operator for ScaleBackward {
+    fn name(&self) -> &str {
+        "ScaleBackward"
+    }
+
+    // TODO reverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
         debug_assert_eq!(inputs.len(), 1);
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+        let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
 
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             TensorF32::copy(output_gradient, input_gradient)?;
+            // TODO this looks wrong.
             let alpha = self.alpha;
             TensorF32::scale(alpha, input_gradient)?;
         }
 
         Ok(())
+    }
+
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+        todo!()
     }
 }

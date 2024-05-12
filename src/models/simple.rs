@@ -1,6 +1,6 @@
 use crate::{
-    into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, ErrorEnum, Program,
-    Tensor, Tokenizer, TokenizerTrait, UnaryOperator,
+    into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, ErrorEnum,
+    NeuralMachine, Tensor, Tokenizer, TokenizerTrait, UnaryOperator,
 };
 
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
@@ -114,7 +114,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let model = SimpleModel::new(device);
     let examples = load_examples(&device, &mut tokenizer, model.vocab_size())?;
     let loss_operator = CrossEntropyLoss::new(device);
-    let program = Program::try_new(&device, &model, &loss_operator)?;
+    let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
     let details = DatasetDetails {
         device: device.clone(),
         tokenizer,

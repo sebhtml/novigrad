@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    total_loss, train, DatasetDetails, Device, Error, GradientDescent, OptimizerTrait, Program,
-    Tensor, TensorF32, Tokenizer, TokenizerTrait, UnaryOperator,
+    total_loss, train, DatasetDetails, Device, Error, GradientDescent, NeuralMachine,
+    OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait, UnaryOperator,
 };
 
 pub fn print_expected_output_and_actual_output(
@@ -57,7 +57,7 @@ fn print_device_mem_info(device: &Device) -> Result<(), Error> {
 
 fn print_total_loss(
     device: &Device,
-    program: &Program,
+    program: &NeuralMachine,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
     last_total_loss: f32,
@@ -151,7 +151,7 @@ pub fn train_network_on_dataset(
 
 fn print_results(
     epoch: usize,
-    program: &Program,
+    program: &NeuralMachine,
     tokenizer: &mut Tokenizer,
     inputs: &[Tensor],
     outputs: &[Tensor],

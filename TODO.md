@@ -1,7 +1,10 @@
+- Forward: pass inputs and outputs in correct order for Backward structs
+- Add Clone for Backward structs
+- Refactor inputs / outputs in instructions
+- rename tensor_with_grad to tensors_to_optimize
+
 == Tensor clean-up ==
 
-- device.tensor should have the same first arguments as device.tensor_f32
-- device.tensor should take a impl Operator, not a Rc
 - device.tensor should take size instead of rows, cols
 
 == Refactoring ==
@@ -36,11 +39,6 @@
 == Program ==
 
 - implement parallel execution of certain branches in parallel using a execution_group_id
-
-== Tensor ==
-
-- don't allocate gradient when enable grad is false
-- don't allocate gradients until they are requested (like COW), because they are useless during inference
 
 == Datasets ==
 

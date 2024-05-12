@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Operator, TensorF32, UnaryOperator};
+use crate::{ActivationFunction, Instruction, Operator, TensorF32, UnaryOperator};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -20,7 +20,7 @@ impl Sigmoid {
 }
 
 impl ActivationFunction for Sigmoid {
-    fn activate(&self, product_matrix: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+    fn activate(product_matrix: &TensorF32, result: &TensorF32) -> Result<(), Error> {
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
         let values = product_matrix.get_values()?;
@@ -41,7 +41,6 @@ impl ActivationFunction for Sigmoid {
     }
 
     fn derive(
-        &self,
         _product_matrix: &TensorF32,
         activation_matrix: &TensorF32,
         result: &mut TensorF32,
@@ -73,15 +72,12 @@ impl UnaryOperator for Sigmoid {
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor(
+        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
+        output.push_forward_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[input],
-            rows,
-            cols,
-            vec![0.0; len],
-            true,
-            false,
-        );
+            &[&output],
+        ));
         Ok(output)
     }
 }
@@ -91,27 +87,54 @@ impl Operator for Sigmoid {
         "Sigmoid"
     }
 
-    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
-        self.activate(input, output)
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let input = inputs[0].tensor().deref().borrow();
+        let output = outputs[0].tensor().deref().borrow();
+        Self::activate(&input, &output)
     }
 
-    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
-        if inputs[0].requires_grad() {
-            let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let sigmoid_b = SigmoidBackward::new(&self.device);
+        sigmoid_b.forward(outputs, inputs)
+    }
+}
+
+pub struct SigmoidBackward {
+    device: Device,
+}
+
+impl SigmoidBackward {
+    pub fn new(device: &Device) -> Self {
+        Self {
+            device: device.clone(),
+        }
+    }
+}
+
+impl Operator for SigmoidBackward {
+    fn name(&self) -> &str {
+        "SigmoidBackward"
+    }
+
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        if outputs[0].requires_grad() {
+            let output_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
+            let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
             // Compute activation function derivative.
+            let output: &TensorF32 = &outputs[0].tensor().deref().borrow();
             let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-            let output: &TensorF32 = &output.tensor().deref().borrow();
-            let rows = input.rows();
-            let cols = input.cols();
+            let rows = output.rows();
+            let cols = output.cols();
             let len = rows * cols;
             let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            self.derive(input, output, &mut layer_f_derivative)?;
-            TensorF32::mul(&layer_f_derivative, output_gradient, input_gradient)?;
+            Sigmoid::derive(output, input, &mut layer_f_derivative)?;
+            TensorF32::mul(&layer_f_derivative, input_gradient, output_gradient)?;
         }
 
         Ok(())
+    }
+
+    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
+        panic!()
     }
 }

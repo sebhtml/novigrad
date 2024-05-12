@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Operator, TensorF32, UnaryOperator};
+use crate::{ActivationFunction, Instruction, Operator, TensorF32, UnaryOperator};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -22,7 +22,7 @@ impl Softmax {
 }
 
 impl ActivationFunction for Softmax {
-    fn activate(&self, product_matrix: &TensorF32, result: &mut TensorF32) -> Result<(), Error> {
+    fn activate(product_matrix: &TensorF32, result: &TensorF32) -> Result<(), Error> {
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
         let values = product_matrix.get_values()?;
@@ -69,7 +69,6 @@ impl ActivationFunction for Softmax {
     }
 
     fn derive(
-        &self,
         _product_matrix: &TensorF32,
         activation_matrix: &TensorF32,
         result: &mut TensorF32,
@@ -101,15 +100,12 @@ impl UnaryOperator for Softmax {
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor(
+        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
+        output.push_forward_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[input],
-            rows,
-            cols,
-            vec![0.0; len],
-            true,
-            false,
-        );
+            &[&output],
+        ));
         Ok(output)
     }
 }
@@ -119,16 +115,42 @@ impl Operator for Softmax {
         "Softmax"
     }
 
-    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
-        let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let output: &mut TensorF32 = &mut output.tensor().deref().borrow_mut();
-        self.activate(input, output)
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let input = inputs[0].tensor().deref().borrow();
+        let output = outputs[0].tensor().deref().borrow();
+        Self::activate(&input, &output)
     }
 
-    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let softmax_b = SoftmaxBackward::new(&self.device, self.next_op_is_cross_entropy_loss);
+        softmax_b.forward(inputs, outputs)
+    }
+}
+
+pub struct SoftmaxBackward {
+    device: Device,
+    next_op_is_cross_entropy_loss: bool,
+}
+
+impl SoftmaxBackward {
+    pub fn new(device: &Device, next_op_is_cross_entropy_loss: bool) -> Self {
+        Self {
+            device: device.clone(),
+            next_op_is_cross_entropy_loss,
+        }
+    }
+}
+
+impl Operator for SoftmaxBackward {
+    fn name(&self) -> &str {
+        todo!()
+    }
+
+    // TODO reverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+            let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
             // Compute activation function derivative.
             if self.next_op_is_cross_entropy_loss {
                 // Softmax and Cross Entropy Loss are best friends.
@@ -136,15 +158,19 @@ impl Operator for Softmax {
             }
 
             let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-            let output: &TensorF32 = &output.tensor().deref().borrow();
+            let output: &TensorF32 = &outputs[0].tensor().deref().borrow();
             let rows = input.rows();
             let cols = input.cols();
             let len = rows * cols;
             let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            self.derive(input, output, &mut layer_f_derivative)?;
+            Softmax::derive(input, output, &mut layer_f_derivative)?;
             TensorF32::mul(&layer_f_derivative, output_gradient, input_gradient)?;
         }
 
         Ok(())
+    }
+
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        todo!()
     }
 }

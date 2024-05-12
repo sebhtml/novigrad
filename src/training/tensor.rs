@@ -1,61 +1,36 @@
-use crate::{Error, Operator, TensorF32};
+use crate::{Instruction, TensorF32};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct Tensor {
-    operator: Rc<dyn Operator>,
-    inputs: Rc<Vec<Tensor>>,
+    forward_instructions: Rc<RefCell<Vec<Instruction>>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
-    requires_grad: bool,
 }
 
 impl Tensor {
-    pub fn new(
-        operator: Rc<dyn Operator>,
-        inputs: &[&Tensor],
-        tensor: Rc<RefCell<TensorF32>>,
-        gradient: Rc<RefCell<TensorF32>>,
-        requires_grad: bool,
-    ) -> Self {
-        let inputs: Vec<Tensor> = inputs.into_iter().map(|x| (**x).clone()).collect();
+    pub fn new(tensor: TensorF32, gradient: TensorF32) -> Self {
         Self {
-            operator,
-            inputs: Rc::new(inputs.to_owned()),
-            tensor,
-            gradient,
-            requires_grad,
+            forward_instructions: Default::default(),
+            tensor: Rc::new(RefCell::new(tensor)),
+            gradient: Rc::new(RefCell::new(gradient)),
         }
     }
 
-    pub fn operator(&self) -> &Rc<dyn Operator> {
-        &self.operator
+    pub fn push_forward_instruction(&self, instruction: Instruction) {
+        self.forward_instructions
+            .deref()
+            .borrow_mut()
+            .push(instruction)
     }
 
-    pub fn inputs(&self) -> &Vec<Tensor> {
-        &self.inputs
+    pub fn forward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
+        &self.forward_instructions
     }
-
     pub fn requires_grad(&self) -> bool {
-        self.requires_grad
-    }
-
-    pub fn forward(&self) -> Result<(), Error> {
-        let output = self;
-        output.tensor().deref().borrow_mut().zero()?;
-        output.gradient().deref().borrow_mut().zero()?;
-        let operator = output.operator();
-        let inputs: Vec<_> = output.inputs().iter().collect();
-        operator.forward(&inputs, output)
-    }
-
-    pub fn backward(&self) -> Result<(), Error> {
-        let output = self;
-        let operator = output.operator().deref();
-        let inputs: Vec<_> = output.inputs().iter().collect();
-        operator.backward(&inputs, output)
+        self.gradient.deref().borrow().requires_grad()
     }
 
     pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {
@@ -76,12 +51,21 @@ impl Tensor {
         let mut stack = LinkedList::new();
         stack.push_back(self.clone());
         while let Some(element) = stack.pop_back() {
-            if element.inputs.is_empty() {
-                continue;
+            {
+                let forward_instructions: &Vec<Instruction> =
+                    &element.forward_instructions().deref().borrow();
+                if forward_instructions.is_empty() {
+                    continue;
+                }
+                let inputs = forward_instructions[0].inputs();
+                if inputs.is_empty() {
+                    continue;
+                }
+                for input in inputs.deref().iter() {
+                    stack.push_back(input.clone());
+                }
             }
-            for input in element.inputs() {
-                stack.push_back(input.clone());
-            }
+
             tape.push(element);
         }
         tape.into_iter().rev().collect()
@@ -93,8 +77,12 @@ impl Tensor {
             println!(
                 "index {}  operator {}  inputs {}",
                 i,
-                element.operator().name(),
-                element.inputs().len()
+                element.forward_instructions.deref().borrow()[0]
+                    .operator()
+                    .name(),
+                element.forward_instructions.deref().borrow()[0]
+                    .inputs()
+                    .len()
             );
         }
     }

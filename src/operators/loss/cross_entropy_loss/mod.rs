@@ -1,7 +1,9 @@
 use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
-use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32};
+use crate::{
+    devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, Operator, Tensor, TensorF32,
+};
 
 /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
 #[derive(Clone)]
@@ -21,12 +23,7 @@ const EPSILON: f32 = 1e-8;
 
 impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(
-        &self,
-        _device: &Device,
-        expected: &TensorF32,
-        actual: &TensorF32,
-    ) -> Result<f32, Error> {
+    fn evaluate(_device: &Device, expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
         debug_assert_eq!(actual.size(), expected.size());
         let p = expected;
         let q = actual;
@@ -63,7 +60,6 @@ impl LossFunction for CrossEntropyLoss {
     /// The derivative of the Loss in respect to logits (before activation) is
     /// output of the softmax function - expected output (one-hot encoded)
     fn derive(
-        &self,
         expected: &TensorF32,
         actual: &TensorF32,
         result: &mut TensorF32,
@@ -75,15 +71,12 @@ impl LossFunction for CrossEntropyLoss {
 
 impl BinaryOperator for CrossEntropyLoss {
     fn forward(&self, input_1: &Tensor, input_2: &Tensor) -> Result<Tensor, Error> {
-        let output = self.device.tensor(
+        let output = self.device.tensor(1, 1, vec![0.0], true, false);
+        output.push_forward_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[input_1, input_2],
-            1,
-            1,
-            vec![0.0],
-            true,
-            false,
-        );
+            &[&output],
+        ));
         Ok(output)
     }
 }
@@ -93,26 +86,50 @@ impl Operator for CrossEntropyLoss {
         "CrossEntropyLoss"
     }
 
-    fn forward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
-        let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
-        let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
-        let loss = self.evaluate(&self.device, expected, actual)?;
-        output
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let expected = &inputs[0].tensor().deref().borrow();
+        let actual = &inputs[1].tensor().deref().borrow();
+        let loss = CrossEntropyLoss::evaluate(&self.device, expected, actual)?;
+        outputs[0]
             .tensor()
             .deref()
-            .borrow_mut()
+            .borrow()
             .set_values(vec![loss; 1]);
         Ok(())
     }
 
-    fn backward(&self, inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let cross_b = CrossEntropyLossBackward::default();
+        cross_b.forward(inputs, outputs)
+    }
+}
+
+pub struct CrossEntropyLossBackward {}
+
+impl Default for CrossEntropyLossBackward {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl Operator for CrossEntropyLossBackward {
+    fn name(&self) -> &str {
+        "CrossEntropyLossBackward"
+    }
+
+    // TODO reverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         if inputs[1].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
             let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
-            self.derive(expected, actual, input_gradient)?;
+            CrossEntropyLoss::derive(expected, actual, input_gradient)?;
         }
         Ok(())
+    }
+
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        todo!()
     }
 }

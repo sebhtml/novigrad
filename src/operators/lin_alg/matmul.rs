@@ -58,6 +58,27 @@ impl Operator for MatMul {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let matmul_b = MatMulBackward::new(self.transb);
+        matmul_b.forward(inputs, outputs)
+    }
+}
+
+pub struct MatMulBackward {
+    transb: bool,
+}
+
+impl MatMulBackward {
+    pub fn new(transb: bool) -> Self {
+        MatMulBackward { transb }
+    }
+}
+
+impl Operator for MatMulBackward {
+    fn name(&self) -> &str {
+        "MatMulBackward"
+    }
+
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
 
@@ -86,5 +107,9 @@ impl Operator for MatMul {
         }
 
         Ok(())
+    }
+
+    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
+        panic!()
     }
 }

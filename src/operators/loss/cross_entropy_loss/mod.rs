@@ -1,9 +1,7 @@
 use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
-use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, Operator, Tensor, TensorF32,
-};
+use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
 #[derive(Clone)]

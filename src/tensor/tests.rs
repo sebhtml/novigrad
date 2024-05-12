@@ -127,7 +127,7 @@ fn clip() {
     // Then the clipped tensor contains clipped values
 
     let epsilon = 1e-8;
-    let mut tensor = device.tensor_f32(
+    let tensor = device.tensor_f32(
         1,
         4,
         vec![

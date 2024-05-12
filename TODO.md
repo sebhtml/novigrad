@@ -1,5 +1,3 @@
-- unify forwawrd_instructions and backward_instructions in NeuralMachine
-- use Clip instruction
 - remove optimizer
 - fix ScaleBackward alpha use
 - add function to print a program instructions, inputs, output

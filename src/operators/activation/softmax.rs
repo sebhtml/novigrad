@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Instruction, Operator, TensorF32, UnaryOperator};
+use crate::{ActivationFunction, Operator, TensorF32, UnaryOperator};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;

@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, BinaryOperator, Error, Instruction, Operator, Tensor, TensorF32};
+use crate::{devices::Device, BinaryOperator, Error, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]

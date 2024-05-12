@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Instruction, NaryOperator, Operator, Tensor, TensorF32};
+use crate::{Device, Error, NaryOperator, Operator, Tensor, TensorF32};
 
 #[cfg(test)]
 mod tests;

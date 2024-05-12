@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     total_loss, train, DatasetDetails, Device, Error, GradientDescent, NeuralMachine,
-    OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait, UnaryOperator,
+    OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 pub fn print_expected_output_and_actual_output(

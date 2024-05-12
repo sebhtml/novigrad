@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Instruction, Operator, Tensor, TensorF32, UnaryOperator};
+use crate::{Device, Operator, Tensor, TensorF32, UnaryOperator};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// TODO implement broadcasting to use Mul instead

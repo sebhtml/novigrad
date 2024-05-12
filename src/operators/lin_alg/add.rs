@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{BinaryOperator, Device, Instruction, Operator, Tensor, TensorF32};
+use crate::{BinaryOperator, Device, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]

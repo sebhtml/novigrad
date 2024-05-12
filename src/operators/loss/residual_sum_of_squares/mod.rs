@@ -1,8 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, Operator, Tensor, TensorF32,
-};
+use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32};
 
 use super::LossFunction;
 

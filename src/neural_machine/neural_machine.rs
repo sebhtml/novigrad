@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{ops::Deref, rc::Rc};
 
 use crate::{
     BinaryOperator, Clip, Device, Error, Instruction, Model, Operator, Tensor, TensorF32,
@@ -6,7 +6,6 @@ use crate::{
 };
 
 pub struct NeuralMachine {
-    device: Device,
     example_input: Tensor,
     example_output: Tensor,
     program_output: Tensor,
@@ -67,7 +66,6 @@ impl NeuralMachine {
         }
 
         let program = NeuralMachine {
-            device: device.clone(),
             example_input,
             example_output,
             program_output,
@@ -100,7 +98,7 @@ impl NeuralMachine {
             TensorF32::copy(expected_output, example_output)?;
         }
         // Forward tensors
-        for (i, instruction) in self.instructions.iter().enumerate() {
+        for (_i, instruction) in self.instructions.iter().enumerate() {
             instruction.forward()?;
 
             // TODO impl Display

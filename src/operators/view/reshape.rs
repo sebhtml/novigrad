@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, Error, Instruction, Operator, Tensor, TensorF32, UnaryOperator};
+use crate::{devices::Device, Error, Operator, Tensor, TensorF32, UnaryOperator};
 
 /// https://onnx.ai/onnx/operators/onnx__Reshape.html
 #[derive(Clone)]

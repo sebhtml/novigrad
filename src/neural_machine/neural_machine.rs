@@ -102,7 +102,7 @@ impl NeuralMachine {
                 input_gradient_tmp.clip(-1.0, 1.0, input_gradient)?;
             }
         }
-        Ok(self.device.tensors_with_requires_grad().clone())
+        Ok(self.device.tensors_to_optimize().clone())
     }
 }
 

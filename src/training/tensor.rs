@@ -1,4 +1,4 @@
-use crate::{Instruction, TensorF32};
+use crate::{Error, Instruction, Operator, TensorF32};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
@@ -6,6 +6,7 @@ use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 #[derive(Clone, Debug)]
 pub struct Tensor {
     forward_instructions: Rc<RefCell<Vec<Instruction>>>,
+    backward_instructions: Rc<RefCell<Vec<Instruction>>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
 }
@@ -14,13 +15,33 @@ impl Tensor {
     pub fn new(tensor: TensorF32, gradient: TensorF32) -> Self {
         Self {
             forward_instructions: Default::default(),
+            backward_instructions: Default::default(),
             tensor: Rc::new(RefCell::new(tensor)),
             gradient: Rc::new(RefCell::new(gradient)),
         }
     }
 
-    pub fn push_forward_instruction(&self, instruction: Instruction) {
+    pub fn push_forward_instruction(
+        &self,
+        operator: Rc<dyn Operator>,
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+    ) {
+        let instruction = Instruction::new(operator, inputs, outputs);
         self.forward_instructions
+            .deref()
+            .borrow_mut()
+            .push(instruction)
+    }
+
+    pub fn push_backward_instruction(
+        &self,
+        operator: Rc<dyn Operator>,
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+    ) {
+        let instruction = Instruction::new(operator, inputs, outputs);
+        self.backward_instructions
             .deref()
             .borrow_mut()
             .push(instruction)
@@ -29,6 +50,11 @@ impl Tensor {
     pub fn forward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
         &self.forward_instructions
     }
+
+    pub fn backward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
+        &self.backward_instructions
+    }
+
     pub fn requires_grad(&self) -> bool {
         self.gradient.deref().borrow().requires_grad()
     }
@@ -41,6 +67,11 @@ impl Tensor {
         &self.gradient
     }
 
+    pub fn zero(&self) -> Result<(), Error> {
+        self.tensor().deref().borrow_mut().zero()?;
+        self.gradient().deref().borrow_mut().zero()?;
+        Ok(())
+    }
     pub fn resize(&self, new_size: &[usize]) {
         self.tensor.deref().borrow_mut().reallocate(new_size);
         self.gradient.deref().borrow_mut().reallocate(new_size);

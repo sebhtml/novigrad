@@ -135,7 +135,7 @@ impl Device {
 
     pub fn get_memory_info(&self) -> Result<MemoryInfo, Error> {
         let mut model_parameters = 0;
-        let gradients = self.tensors_with_requires_grad();
+        let gradients = self.tensors_to_optimize();
         for gradient in gradients.deref().borrow().iter() {
             let tensor_len = gradient.tensor().deref().borrow().len();
             model_parameters += tensor_len;
@@ -184,12 +184,12 @@ impl Device {
         tensor
     }
 
-    pub fn tensors_with_requires_grad(&self) -> &Rc<RefCell<Vec<Tensor>>> {
+    pub fn tensors_to_optimize(&self) -> &Rc<RefCell<Vec<Tensor>>> {
         &self.tensors_to_optimize
     }
 
     pub fn zero_grad(&self) -> Result<(), Error> {
-        let gradients: &[Tensor] = &self.tensors_with_requires_grad().deref().borrow();
+        let gradients: &[Tensor] = &self.tensors_to_optimize().deref().borrow();
         for gradient in gradients {
             let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
             gradient.zero()?;

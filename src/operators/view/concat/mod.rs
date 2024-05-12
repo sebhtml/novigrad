@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Instruction, NaryOperator, Operator, Tensor, TensorF32};
+use crate::{Device, Error, NaryOperator, Operator, Tensor, TensorF32};
 
 #[cfg(test)]
 mod tests;
@@ -30,11 +30,9 @@ impl NaryOperator for Concat {
         let len = rows * cols;
         let values = vec![0.0; len];
         let output = self.device.tensor(rows, cols, values, true, false);
-        output.push_forward_instruction(Instruction::new(
-            Rc::new(self.clone()),
-            inputs,
-            &[&output],
-        ));
+        let outputs = &[&output];
+        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(Rc::new(ConcatBackward::default()), outputs, inputs);
         Ok(output)
     }
 }
@@ -59,11 +57,6 @@ impl Operator for Concat {
         }
         Ok(())
     }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let concat_b = ConcatBackward::default();
-        concat_b.forward(inputs, outputs)
-    }
 }
 
 pub struct ConcatBackward {}
@@ -79,11 +72,10 @@ impl Operator for ConcatBackward {
         "ConcatBackward"
     }
 
-    // TODO reverse inputs and outputs
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let src: &TensorF32 = &outputs[0].gradient().deref().borrow_mut();
-        for input_index in 0..inputs.len() {
-            let dst: &mut TensorF32 = &mut inputs[input_index].gradient().deref().borrow_mut();
+        let src: &TensorF32 = &inputs[0].gradient().deref().borrow_mut();
+        for input_index in 0..outputs.len() {
+            let dst: &mut TensorF32 = &mut outputs[input_index].gradient().deref().borrow_mut();
             let dst_col = 0;
             let input_rows = dst.rows();
             let input_cols = dst.cols();
@@ -94,9 +86,5 @@ impl Operator for ConcatBackward {
             }
         }
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
     }
 }

@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{BinaryOperator, Device, Error, Instruction, Operator, Tensor, TensorF32};
+use crate::{BinaryOperator, Device, Error, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Mul.html
 #[derive(Clone)]
@@ -25,11 +25,10 @@ impl BinaryOperator for Mul {
         let cols = input_0_t.cols();
         let len = rows * cols;
         let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
-        output.push_forward_instruction(Instruction::new(
-            Rc::new(self.clone()),
-            &[input_0, input_1],
-            &[&output],
-        ));
+        let inputs = &[input_0, input_1];
+        let outputs = &[&output];
+        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(Rc::new(MulBackward::default()), outputs, inputs);
         Ok(output)
     }
 }
@@ -44,11 +43,6 @@ impl Operator for Mul {
         let input_1 = &inputs[1].tensor().deref().borrow();
         let output = &outputs[0].tensor().deref().borrow();
         TensorF32::mul(input_0, input_1, output)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let mul_b = MulBackward::default();
-        mul_b.forward(inputs, outputs)
     }
 }
 
@@ -65,27 +59,22 @@ impl Operator for MulBackward {
         "MulBackward"
     }
 
-    // TODO reverse inputs and outputs
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        debug_assert_eq!(inputs.len(), 2);
-        let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
+        debug_assert_eq!(outputs.len(), 2);
+        let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
 
-        if inputs[1].requires_grad() {
-            let input_1_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
-            let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
-            TensorF32::mul(input_0, output_gradient, input_1_gradient)?;
+        if outputs[1].requires_grad() {
+            let output_1_gradient: &mut TensorF32 = &mut outputs[1].gradient().deref().borrow_mut();
+            let output_0: &TensorF32 = &outputs[0].tensor().deref().borrow();
+            TensorF32::mul(output_0, input_gradient, output_1_gradient)?;
         }
 
-        if inputs[0].requires_grad() {
-            let input_0_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
-            TensorF32::mul(input_1, output_gradient, input_0_gradient)?;
+        if outputs[0].requires_grad() {
+            let output_0_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
+            let output: &TensorF32 = &outputs[1].tensor().deref().borrow();
+            TensorF32::mul(output, input_gradient, output_0_gradient)?;
         }
 
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
     }
 }

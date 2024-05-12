@@ -136,13 +136,7 @@ fn clip() {
         ],
     );
 
-    let rows = tensor.rows();
-    let cols = tensor.cols();
-    let len = rows * cols;
-    let mut clipped = device.tensor_f32(rows, cols, vec![0.0; len]);
-    tensor
-        .clip(0.0 + epsilon, 1.0 - epsilon, &mut clipped)
-        .unwrap();
+    tensor.clip(0.0 + epsilon, 1.0 - epsilon).unwrap();
 
     let expected = device.tensor_f32(
         1,
@@ -155,7 +149,7 @@ fn clip() {
         ],
     );
 
-    assert_eq!(clipped, expected);
+    assert_eq!(tensor, expected);
 }
 
 #[test]

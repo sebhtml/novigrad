@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, BinaryOperator, Error, Instruction, Operator, Tensor, TensorF32};
+use crate::{devices::Device, BinaryOperator, Error, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]
@@ -31,11 +31,14 @@ impl BinaryOperator for MatMul {
         };
         let len = rows * cols;
         let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
-        output.push_forward_instruction(Instruction::new(
-            Rc::new(self.clone()),
-            &[input_0, input_1],
-            &[&output],
-        ));
+        let inputs = &[input_0, input_1];
+        let outputs = &[&output];
+        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(
+            Rc::new(MatMulBackward::new(self.transb)),
+            outputs,
+            inputs,
+        );
         Ok(output)
     }
 }
@@ -55,11 +58,6 @@ impl Operator for MatMul {
         let c = output;
         let transb = self.transb;
         TensorF32::matmul(false, transb, a, b, c, false)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let matmul_b = MatMulBackward::new(self.transb);
-        matmul_b.forward(outputs, inputs)
     }
 }
 
@@ -107,9 +105,5 @@ impl Operator for MatMulBackward {
         }
 
         Ok(())
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
-        panic!()
     }
 }

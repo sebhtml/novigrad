@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Concat, Device, Instruction, NaryOperator, TensorF32};
+use crate::{Concat, ConcatBackward, Device, Instruction, NaryOperator, TensorF32};
 
 #[test]
 fn forward() {
@@ -74,22 +74,18 @@ fn backward() {
 
     let input_3 = device.tensor(2, 3, vec![0.0; 2 * 3], true, false);
 
-    let concat = Concat::new(&device);
+    let concat_b = ConcatBackward::default();
     let output = device.tensor(2, 9, vec![0.0; 2 * 9], true, false);
-    output.push_forward_instruction(Instruction::new(
-        Rc::new(concat),
-        &[&input_1, &input_2, &input_3],
-        &[&output],
-    ));
+    let inputs = &[&input_1, &input_2, &input_3];
+    let outputs = &[&output];
+    let instruction = Instruction::new(Rc::new(concat_b), outputs, inputs);
 
     output.gradient().deref().borrow_mut().set_values(vec![
         11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, //
         21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, //
     ]);
 
-    output.forward_instructions().deref().borrow()[0]
-        .backward()
-        .unwrap();
+    instruction.forward().unwrap();
 
     let expected_input_1_gradient = device.tensor_f32(
         2,

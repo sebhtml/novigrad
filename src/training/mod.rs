@@ -6,7 +6,7 @@ mod optimizers;
 pub use optimizers::*;
 pub use train::*;
 mod tensor;
-use crate::{devices::Device, Error, NeuralMachine, TensorF32, UnaryOperator};
+use crate::{devices::Device, Error, NeuralMachine, TensorF32};
 pub use tensor::*;
 
 pub fn train(
@@ -40,9 +40,9 @@ pub fn total_loss(
 ) -> Result<f32, Error> {
     let mut total_error = 0.0;
     for i in 0..inputs.len() {
-        let _ = program.forward(&inputs[i])?;
         let expected_output = &outputs[i];
-        let example_loss = program.loss(expected_output)?;
+        let _ = program.forward(&inputs[i], expected_output)?;
+        let example_loss = program.loss()?;
         let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
         let example_loss: f32 = example_loss.try_into()?;
         total_error += example_loss;
@@ -63,9 +63,9 @@ fn train_back_propagation(
 ) -> Result<(), Error> {
     device.zero_grad()?;
 
-    let _output = program.forward(&x)?;
-    let _loss = program.loss(y)?;
-    let gradients = program.backward()?;
+    let _output = program.forward(x, y)?;
+    let _loss = program.loss()?;
+    let gradients = device.tensors_to_optimize();
     let gradients: &[Tensor] = &gradients.deref().borrow();
 
     optimizer.optimize(&gradients, learning_rate)?;

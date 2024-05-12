@@ -1,4 +1,4 @@
-use std::{ops::Deref, rc::Rc};
+use std::rc::Rc;
 
 use crate::{Error, Operator, Tensor};
 
@@ -26,20 +26,12 @@ impl Instruction {
     pub fn inputs(&self) -> &Rc<Vec<Tensor>> {
         &self.inputs
     }
+    pub fn outputs(&self) -> &Rc<Vec<Tensor>> {
+        &self.outputs
+    }
     pub fn forward(&self) -> Result<(), Error> {
-        {
-            let output: &Tensor = &self.outputs[0];
-            output.tensor().deref().borrow_mut().zero()?;
-            output.gradient().deref().borrow_mut().zero()?;
-        }
         let inputs: Vec<&Tensor> = self.inputs.iter().collect();
         let outputs: Vec<&Tensor> = self.outputs.iter().collect();
         self.operator.forward(&inputs, &outputs)
-    }
-
-    pub fn backward(&self) -> Result<(), Error> {
-        let inputs: Vec<&Tensor> = self.inputs.iter().collect();
-        let outputs: Vec<&Tensor> = self.outputs.iter().collect();
-        self.operator.backward(&inputs, &outputs)
     }
 }

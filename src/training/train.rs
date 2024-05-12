@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     total_loss, train, DatasetDetails, Device, Error, GradientDescent, NeuralMachine,
-    OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait, UnaryOperator,
+    OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 pub fn print_expected_output_and_actual_output(
@@ -161,8 +161,9 @@ fn print_results(
 
     for i in 0..inputs.len() {
         let input = &inputs[i];
-        let actual_output = program.forward(&input)?;
-        let loss = program.loss(&outputs[i])?;
+        let expected_output = &outputs[i];
+        let actual_output = program.forward(input, expected_output)?;
+        let loss = program.loss()?;
         let loss: &TensorF32 = &loss.tensor().deref().borrow();
         let loss: f32 = loss.try_into()?;
 

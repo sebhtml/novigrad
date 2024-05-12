@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Instruction, Operator, TensorF32, UnaryOperator};
+use crate::{ActivationFunction, Operator, TensorF32, UnaryOperator};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -101,11 +101,17 @@ impl UnaryOperator for Softmax {
         let cols = input_t.cols();
         let len = rows * cols;
         let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
-        output.push_forward_instruction(Instruction::new(
-            Rc::new(self.clone()),
-            &[input],
-            &[&output],
-        ));
+        let inputs = &[input];
+        let outputs = &[&output];
+        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(
+            Rc::new(SoftmaxBackward::new(
+                &self.device,
+                self.next_op_is_cross_entropy_loss,
+            )),
+            outputs,
+            inputs,
+        );
         Ok(output)
     }
 }
@@ -119,11 +125,6 @@ impl Operator for Softmax {
         let input = inputs[0].tensor().deref().borrow();
         let output = outputs[0].tensor().deref().borrow();
         Self::activate(&input, &output)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let softmax_b = SoftmaxBackward::new(&self.device, self.next_op_is_cross_entropy_loss);
-        softmax_b.forward(inputs, outputs)
     }
 }
 
@@ -143,34 +144,29 @@ impl SoftmaxBackward {
 
 impl Operator for SoftmaxBackward {
     fn name(&self) -> &str {
-        todo!()
+        "SoftmaxBackward"
     }
 
-    // TODO reverse inputs and outputs
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        if inputs[0].requires_grad() {
-            let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
+        if outputs[0].requires_grad() {
+            let output_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
+            let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
             // Compute activation function derivative.
             if self.next_op_is_cross_entropy_loss {
                 // Softmax and Cross Entropy Loss are best friends.
-                return TensorF32::copy(output_gradient, input_gradient);
+                return TensorF32::copy(input_gradient, output_gradient);
             }
 
-            let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let output: &TensorF32 = &outputs[0].tensor().deref().borrow();
-            let rows = input.rows();
-            let cols = input.cols();
+            let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+            let rows = output.rows();
+            let cols = output.cols();
             let len = rows * cols;
             let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            Softmax::derive(input, output, &mut layer_f_derivative)?;
-            TensorF32::mul(&layer_f_derivative, output_gradient, input_gradient)?;
+            Softmax::derive(output, input, &mut layer_f_derivative)?;
+            TensorF32::mul(&layer_f_derivative, input_gradient, output_gradient)?;
         }
 
         Ok(())
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        todo!()
     }
 }

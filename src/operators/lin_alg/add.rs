@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{BinaryOperator, Device, Instruction, Operator, Tensor, TensorF32};
+use crate::{BinaryOperator, Device, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
@@ -25,11 +25,10 @@ impl BinaryOperator for Add {
         let cols = input_0_t.cols();
         let len = rows * cols;
         let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
-        output.push_forward_instruction(Instruction::new(
-            Rc::new(self.clone()),
-            &[input_1, input_2],
-            &[&output],
-        ));
+        let inputs = &[input_1, input_2];
+        let outputs = &[&output];
+        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_backward_instruction(Rc::new(AddBackward::new()), outputs, inputs);
         Ok(output)
     }
 }
@@ -45,11 +44,6 @@ impl Operator for Add {
         let output = outputs[0].tensor().deref().borrow();
         TensorF32::copy(&input_0, &output)?;
         TensorF32::add(&input_1, &output)
-    }
-
-    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        let add_b = AddBackward::new();
-        add_b.forward(outputs, inputs)
     }
 }
 
@@ -80,9 +74,5 @@ impl Operator for AddBackward {
         }
 
         Ok(())
-    }
-
-    fn backward(&self, _inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        panic!()
     }
 }

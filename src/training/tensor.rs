@@ -1,4 +1,4 @@
-use crate::{Instruction, TensorF32};
+use crate::{Instruction, Operator, TensorF32};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
@@ -19,7 +19,13 @@ impl Tensor {
         }
     }
 
-    pub fn push_forward_instruction(&self, instruction: Instruction) {
+    pub fn push_forward_instruction(
+        &self,
+        operator: Rc<dyn Operator>,
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+    ) {
+        let instruction = Instruction::new(operator, inputs, outputs);
         self.forward_instructions
             .deref()
             .borrow_mut()

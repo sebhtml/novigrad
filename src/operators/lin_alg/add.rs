@@ -25,11 +25,9 @@ impl BinaryOperator for Add {
         let cols = input_0_t.cols();
         let len = rows * cols;
         let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
-        output.push_forward_instruction(Instruction::new(
-            Rc::new(self.clone()),
-            &[input_1, input_2],
-            &[&output],
-        ));
+        let inputs = &[input_1, input_2];
+        let outputs = &[&output];
+        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
         Ok(output)
     }
 }

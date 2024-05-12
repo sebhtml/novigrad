@@ -76,11 +76,9 @@ fn backward() {
 
     let concat = Concat::new(&device);
     let output = device.tensor(2, 9, vec![0.0; 2 * 9], true, false);
-    output.push_forward_instruction(Instruction::new(
-        Rc::new(concat),
-        &[&input_1, &input_2, &input_3],
-        &[&output],
-    ));
+    let inputs = &[&input_1, &input_2, &input_3];
+    let outputs = &[&output];
+    output.push_forward_instruction(Rc::new(concat), inputs, outputs);
 
     output.gradient().deref().borrow_mut().set_values(vec![
         11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, //

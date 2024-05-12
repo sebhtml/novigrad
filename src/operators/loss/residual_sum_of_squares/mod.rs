@@ -79,14 +79,14 @@ impl Operator for ResidualSumOfSquares {
     }
 
     fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let expected: &TensorF32 = &inputs[0];
-        let actual: &TensorF32 = &inputs[1];
+        let expected = inputs[0];
+        let actual = inputs[1];
         let loss = self.evaluate(&self.device, expected, actual)?;
         outputs[0].set_values(vec![loss; 1]);
         Ok(())
     }
 
-    fn backward(&self, inputs: &[&Tensor], _output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], _outputs: &[&Tensor]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         if inputs[1].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();

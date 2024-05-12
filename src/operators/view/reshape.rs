@@ -43,16 +43,16 @@ impl Operator for Reshape {
     }
 
     fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input = &inputs[0];
+        let input = inputs[0];
         let output = outputs[0];
         TensorF32::copy(input, output)?;
         output.resize(&self.output_size)
     }
 
-    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+            let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
             TensorF32::copy(output_gradient, input_gradient)?;
             input_gradient.resize(&self.input_size)?;
         }

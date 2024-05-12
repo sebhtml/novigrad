@@ -41,16 +41,16 @@ impl Operator for Scale {
     }
 
     fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
-        let input: &TensorF32 = &inputs[0];
-        let output: &TensorF32 = outputs[0];
+        let input = inputs[0];
+        let output = outputs[0];
         TensorF32::copy(input, output)?;
         let alpha = self.alpha;
         TensorF32::scale(alpha, output)
     }
 
-    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
         debug_assert_eq!(inputs.len(), 1);
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+        let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
 
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();

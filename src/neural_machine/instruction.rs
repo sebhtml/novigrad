@@ -49,7 +49,7 @@ impl Instruction {
 
     pub fn backward(&self) -> Result<(), Error> {
         let inputs: Vec<&Tensor> = self.inputs.iter().collect();
-        let output: &Tensor = &self.outputs[0];
-        self.operator.backward(&inputs, output)
+        let outputs: Vec<&Tensor> = self.outputs.iter().collect();
+        self.operator.backward(&inputs, &outputs)
     }
 }

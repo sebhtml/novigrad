@@ -40,16 +40,16 @@ impl Operator for Add {
     }
 
     fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
-        let input_0 = &inputs[0];
-        let input_1 = &inputs[1];
+        let input_0 = inputs[0];
+        let input_1 = inputs[1];
         let output = outputs[0];
         TensorF32::copy(input_0, output)?;
         TensorF32::add(input_1, output)
     }
 
-    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), crate::Error> {
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+        let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
 
         if inputs[1].requires_grad() {
             let input_1_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();

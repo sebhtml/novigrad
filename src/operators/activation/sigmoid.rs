@@ -94,13 +94,13 @@ impl Operator for Sigmoid {
         self.activate(input, output)
     }
 
-    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+            let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
             // Compute activation function derivative.
             let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
-            let output: &TensorF32 = &output.tensor().deref().borrow();
+            let output: &TensorF32 = &outputs[0].tensor().deref().borrow();
             let rows = input.rows();
             let cols = input.cols();
             let len = rows * cols;

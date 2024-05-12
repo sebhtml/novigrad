@@ -46,9 +46,9 @@ impl Operator for Mul {
         TensorF32::mul(input_0, input_1, output)
     }
 
-    fn backward(&self, inputs: &[&Tensor], output: &Tensor) -> Result<(), Error> {
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let output_gradient: &TensorF32 = &output.gradient().deref().borrow();
+        let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
 
         if inputs[1].requires_grad() {
             let input_1_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();

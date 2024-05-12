@@ -30,7 +30,7 @@ impl Tensor {
         &self.forward_instructions
     }
     pub fn requires_grad(&self) -> bool {
-        self.gradient.deref().borrow().len() > 0
+        self.gradient.deref().borrow().requires_grad()
     }
 
     pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {

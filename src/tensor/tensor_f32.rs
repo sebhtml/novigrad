@@ -33,6 +33,10 @@ impl TensorF32 {
         }
     }
 
+    pub fn requires_grad(&self) -> bool {
+        self.len() > 0
+    }
+
     pub fn rows(&self) -> usize {
         if self.size.deref().borrow().len() == 2 {
             self.size.deref().borrow()[0]

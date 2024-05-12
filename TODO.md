@@ -36,11 +36,6 @@
 
 - implement parallel execution of certain branches in parallel using a execution_group_id
 
-== Tensor ==
-
-- don't allocate gradient when enable grad is false
-- don't allocate gradients until they are requested (like COW), because they are useless during inference
-
 == Datasets ==
 
 - serialize and deserialize model to ONNX format

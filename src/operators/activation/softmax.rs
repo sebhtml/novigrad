@@ -22,7 +22,7 @@ impl Softmax {
 }
 
 impl ActivationFunction for Softmax {
-    fn activate(&self, product_matrix: &TensorF32, result: &TensorF32) -> Result<(), Error> {
+    fn activate(product_matrix: &TensorF32, result: &TensorF32) -> Result<(), Error> {
         let rows = product_matrix.rows();
         let cols = product_matrix.cols();
         let values = product_matrix.get_values()?;
@@ -69,7 +69,6 @@ impl ActivationFunction for Softmax {
     }
 
     fn derive(
-        &self,
         _product_matrix: &TensorF32,
         activation_matrix: &TensorF32,
         result: &mut TensorF32,
@@ -119,7 +118,7 @@ impl Operator for Softmax {
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let input = inputs[0].tensor().deref().borrow();
         let output = outputs[0].tensor().deref().borrow();
-        self.activate(&input, &output)
+        Self::activate(&input, &output)
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
@@ -138,7 +137,7 @@ impl Operator for Softmax {
             let cols = input.cols();
             let len = rows * cols;
             let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            self.derive(input, output, &mut layer_f_derivative)?;
+            Softmax::derive(input, output, &mut layer_f_derivative)?;
             TensorF32::mul(&layer_f_derivative, output_gradient, input_gradient)?;
         }
 

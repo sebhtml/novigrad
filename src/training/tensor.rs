@@ -12,15 +12,11 @@ pub struct Tensor {
 }
 
 impl Tensor {
-    pub fn new(
-        tensor: Rc<RefCell<TensorF32>>,
-        gradient: Rc<RefCell<TensorF32>>,
-        requires_grad: bool,
-    ) -> Self {
+    pub fn new(tensor: TensorF32, gradient: TensorF32, requires_grad: bool) -> Self {
         Self {
             forward_instructions: Default::default(),
-            tensor,
-            gradient,
+            tensor: Rc::new(RefCell::new(tensor)),
+            gradient: Rc::new(RefCell::new(gradient)),
             requires_grad,
         }
     }

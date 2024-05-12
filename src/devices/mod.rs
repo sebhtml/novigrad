@@ -170,13 +170,8 @@ impl Device {
     ) -> Tensor {
         let len = rows * cols;
         let tensor = Tensor::new(
-            Rc::new(RefCell::new(Self::tensor_f32(&self, rows, cols, values))),
-            Rc::new(RefCell::new(Self::tensor_f32(
-                &self,
-                rows,
-                cols,
-                vec![0.0; len],
-            ))),
+            Self::tensor_f32(&self, rows, cols, values),
+            Self::tensor_f32(&self, rows, cols, vec![0.0; len]),
             requires_grad,
         );
         if optimize {

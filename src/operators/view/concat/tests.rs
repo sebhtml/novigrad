@@ -7,8 +7,6 @@ fn forward() {
     let device = Device::default();
 
     let input_1 = device.tensor(
-        Rc::new(Identity::new(&device)),
-        &vec![],
         2,
         3,
         vec![
@@ -16,13 +14,13 @@ fn forward() {
             11.0, 12.0, 13.0, //
             21.0, 22.0, 23.0, //
         ],
+        Rc::new(Identity::new(&device)),
+        &vec![],
         false,
         false,
     );
 
     let input_2 = device.tensor(
-        Rc::new(Identity::new(&device)),
-        &vec![],
         2,
         3,
         vec![
@@ -30,13 +28,13 @@ fn forward() {
             14.0, 15.0, 16.0, //
             24.0, 25.0, 26.0, //
         ],
+        Rc::new(Identity::new(&device)),
+        &vec![],
         false,
         false,
     );
 
     let input_3 = device.tensor(
-        Rc::new(Identity::new(&device)),
-        &vec![],
         2,
         3,
         vec![
@@ -44,6 +42,8 @@ fn forward() {
             17.0, 18.0, 19.0, //
             27.0, 28.0, 29.0, //
         ],
+        Rc::new(Identity::new(&device)),
+        &vec![],
         false,
         false,
     );
@@ -73,42 +73,42 @@ fn backward() {
     let device = Device::default();
 
     let input_1 = device.tensor(
-        Rc::new(Identity::new(&device)),
-        &vec![],
         2,
         3,
         vec![0.0; 2 * 3],
+        Rc::new(Identity::new(&device)),
+        &vec![],
         false,
         false,
     );
 
     let input_2 = device.tensor(
-        Rc::new(Identity::new(&device)),
-        &vec![],
         2,
         3,
         vec![0.0; 2 * 3],
+        Rc::new(Identity::new(&device)),
+        &vec![],
         false,
         false,
     );
 
     let input_3 = device.tensor(
-        Rc::new(Identity::new(&device)),
-        &vec![],
         2,
         3,
         vec![0.0; 2 * 3],
+        Rc::new(Identity::new(&device)),
+        &vec![],
         false,
         false,
     );
 
     let concat = Concat::new(&device);
     let output = device.tensor(
-        Rc::new(concat),
-        &vec![&input_1, &input_2, &input_3],
         2,
         9,
         vec![0.0; 2 * 9],
+        Rc::new(concat),
+        &vec![&input_1, &input_2, &input_3],
         false,
         false,
     );

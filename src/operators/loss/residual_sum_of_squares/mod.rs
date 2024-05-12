@@ -62,11 +62,11 @@ impl LossFunction for ResidualSumOfSquares {
 impl BinaryOperator for ResidualSumOfSquares {
     fn forward(&self, input_1: &Tensor, input_2: &Tensor) -> Result<Tensor, Error> {
         let output = self.device.tensor(
-            Rc::new(self.clone()),
-            &[input_1, input_2],
             1,
             1,
             vec![0.0],
+            Rc::new(self.clone()),
+            &[input_1, input_2],
             true,
             false,
         );

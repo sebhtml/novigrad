@@ -30,11 +30,11 @@ impl NaryOperator for Concat {
         let len = rows * cols;
         let values = vec![0.0; len];
         let output = self.device.tensor(
-            Rc::new(self.clone()),
-            inputs,
             rows,
             cols,
             values,
+            Rc::new(self.clone()),
+            inputs,
             true,
             false,
         );

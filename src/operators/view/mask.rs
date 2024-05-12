@@ -16,11 +16,11 @@ impl Mask {
         let mask = vec![0.0; len];
 
         let mask = device.tensor(
-            Rc::new(Identity::new(device)),
-            &vec![],
             mask_rows,
             mask_cols,
             mask,
+            Rc::new(Identity::new(device)),
+            &vec![],
             true,
             true,
         );

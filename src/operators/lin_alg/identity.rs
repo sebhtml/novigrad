@@ -23,11 +23,11 @@ impl UnaryOperator for Identity {
         let cols = input_t.cols();
         let len = rows * cols;
         let output = self.device.tensor(
-            Rc::new(self.clone()),
-            &[input],
             rows,
             cols,
             vec![0.0; len],
+            Rc::new(self.clone()),
+            &[input],
             true,
             false,
         );

@@ -25,11 +25,11 @@ impl BinaryOperator for Mul {
         let cols = input_0_t.cols();
         let len = rows * cols;
         let output = self.device.tensor(
-            Rc::new(self.clone()),
-            &[input_0, input_1],
             rows,
             cols,
             vec![0.0; len],
+            Rc::new(self.clone()),
+            &[input_0, input_1],
             true,
             false,
         );

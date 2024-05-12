@@ -52,11 +52,11 @@ pub fn into_one_hot_encoded_rows(
         result_values[result.index(index, *token)] = 1.0;
     }
     Ok(device.tensor(
-        Rc::new(Identity::new(device)),
-        &vec![],
         input_tokens.len(),
         num_classes,
         result_values,
+        Rc::new(Identity::new(device)),
+        &vec![],
         false,
         false,
     ))

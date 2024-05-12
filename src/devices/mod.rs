@@ -162,11 +162,11 @@ impl Device {
 
     pub fn tensor(
         &self,
-        operator: Rc<dyn Operator>,
-        inputs: &[&Tensor],
         rows: usize,
         cols: usize,
         values: Vec<f32>,
+        operator: Rc<dyn Operator>,
+        inputs: &[&Tensor],
         requires_grad: bool,
         optimize: bool,
     ) -> Tensor {

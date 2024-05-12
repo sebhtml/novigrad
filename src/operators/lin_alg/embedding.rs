@@ -22,11 +22,11 @@ impl Embedding {
         embedding_table.transpose(&mut transposed).unwrap();
         // TODO don't unwrap directly
         let embedding_table = device.tensor(
-            Rc::new(Identity::new(device)),
-            &vec![],
             transposed.rows(),
             transposed.cols(),
             transposed.get_values().unwrap(),
+            Rc::new(Identity::new(device)),
+            &vec![],
             true,
             true,
         );

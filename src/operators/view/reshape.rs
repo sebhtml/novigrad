@@ -28,11 +28,11 @@ impl UnaryOperator for Reshape {
         let cols = self.output_size[1];
         let len = rows * cols;
         let output = self.device.tensor(
-            Rc::new(self.clone()),
-            &[input],
             rows,
             cols,
             vec![0.0; len],
+            Rc::new(self.clone()),
+            &[input],
             true,
             false,
         );

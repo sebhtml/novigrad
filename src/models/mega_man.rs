@@ -31,11 +31,11 @@ impl MegaManModel {
             vocab_size,
             sequence_length,
             parameters: device.tensor(
-                Rc::new(Identity::new(device)),
-                &vec![],
                 n_embd,
                 n_embd,
                 vec![0.0; n_embd * n_embd],
+                Rc::new(Identity::new(device)),
+                &vec![],
                 true,
                 true,
             ),

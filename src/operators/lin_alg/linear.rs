@@ -32,22 +32,22 @@ impl Linear {
             weights[index] = rng.sample(uniform);
         }
         let weights = device.tensor(
-            Rc::new(Identity::new(device)),
-            &vec![],
             weights_rows,
             weights_cols,
             weights,
+            Rc::new(Identity::new(device)),
+            &vec![],
             true,
             true,
         );
 
         let biases_len = bias_rows * weights_rows;
         let biases = device.tensor(
-            Rc::new(Identity::new(device)),
-            &vec![],
             bias_rows,
             weights_rows,
             vec![0.0; biases_len],
+            Rc::new(Identity::new(device)),
+            &vec![],
             true,
             true,
         );

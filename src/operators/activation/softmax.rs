@@ -125,8 +125,8 @@ impl Operator for Softmax {
                 &self.device,
                 self.next_op_is_cross_entropy_loss,
             )),
-            inputs,
             outputs,
+            inputs,
         );
         instruction.forward()
     }
@@ -151,25 +151,24 @@ impl Operator for SoftmaxBackward {
         "SoftmaxBackward"
     }
 
-    // TODO reverse inputs and outputs
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        if inputs[0].requires_grad() {
-            let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
+        if outputs[0].requires_grad() {
+            let output_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
+            let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
             // Compute activation function derivative.
             if self.next_op_is_cross_entropy_loss {
                 // Softmax and Cross Entropy Loss are best friends.
-                return TensorF32::copy(output_gradient, input_gradient);
+                return TensorF32::copy(input_gradient, output_gradient);
             }
 
-            let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let output: &TensorF32 = &outputs[0].tensor().deref().borrow();
-            let rows = input.rows();
-            let cols = input.cols();
+            let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+            let rows = output.rows();
+            let cols = output.cols();
             let len = rows * cols;
             let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            Softmax::derive(input, output, &mut layer_f_derivative)?;
-            TensorF32::mul(&layer_f_derivative, output_gradient, input_gradient)?;
+            Softmax::derive(output, input, &mut layer_f_derivative)?;
+            TensorF32::mul(&layer_f_derivative, input_gradient, output_gradient)?;
         }
 
         Ok(())

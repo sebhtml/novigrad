@@ -1,4 +1,4 @@
-- Forward: pass inputs and outputs in correct order for Backward structs
+- fix ScaleBackward alpha use
 
 == Tensor clean-up ==
 

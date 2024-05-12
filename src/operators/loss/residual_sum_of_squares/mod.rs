@@ -85,8 +85,8 @@ impl Operator for ResidualSumOfSquares {
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let instruction = Instruction::new(
             Rc::new(ResidualSumOfSquaresBackward::default()),
-            inputs,
             outputs,
+            inputs,
         );
         instruction.forward()
     }
@@ -105,16 +105,14 @@ impl Operator for ResidualSumOfSquaresBackward {
         "ResidualSumOfSquaresBackward"
     }
 
-    // TODO reverse inputs and outputs
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        debug_assert_eq!(inputs.len(), 2);
-        if inputs[1].requires_grad() {
-            let input_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
-            let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
-            let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
-            ResidualSumOfSquares::derive(expected, actual, input_gradient)?;
+    fn forward(&self, _inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        debug_assert_eq!(outputs.len(), 2);
+        if outputs[1].requires_grad() {
+            let output_gradient: &mut TensorF32 = &mut outputs[1].gradient().deref().borrow_mut();
+            let expected: &TensorF32 = &outputs[0].tensor().deref().borrow();
+            let actual: &TensorF32 = &outputs[1].tensor().deref().borrow();
+            ResidualSumOfSquares::derive(expected, actual, output_gradient)?;
         }
-
         Ok(())
     }
 

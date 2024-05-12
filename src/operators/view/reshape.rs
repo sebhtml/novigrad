@@ -50,8 +50,8 @@ impl Operator for Reshape {
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let instruction = Instruction::new(
             Rc::new(ReshapeBackward::new(self.input_size.clone())),
-            inputs,
             outputs,
+            inputs,
         );
         instruction.forward()
     }
@@ -72,13 +72,12 @@ impl Operator for ReshapeBackward {
         "ReshapeBackward"
     }
 
-    // TODO reverse inputs and outputs
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        if inputs[0].requires_grad() {
-            let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
-            TensorF32::copy(output_gradient, input_gradient)?;
-            input_gradient.resize(&self.input_size)?;
+        if outputs[0].requires_grad() {
+            let output_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
+            let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
+            TensorF32::copy(input_gradient, output_gradient)?;
+            output_gradient.resize(&self.input_size)?;
         }
         Ok(())
     }

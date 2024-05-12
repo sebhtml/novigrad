@@ -42,7 +42,7 @@ impl Operator for Identity {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let instruction = Instruction::new(Rc::new(IdentityBackward::default()), inputs, outputs);
+        let instruction = Instruction::new(Rc::new(IdentityBackward::default()), outputs, inputs);
         instruction.forward()
     }
 }
@@ -60,12 +60,11 @@ impl Operator for IdentityBackward {
         "IdentityBackward"
     }
 
-    // TODO inverse inputs and outputs
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        if inputs[0].requires_grad() {
-            let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
-            TensorF32::copy(output_gradient, input_gradient)?;
+    fn forward(&self, inputs: &[&Tensor], outputs_: &[&Tensor]) -> Result<(), Error> {
+        if outputs_[0].requires_grad() {
+            let output_gradient: &mut TensorF32 = &mut outputs_[0].gradient().deref().borrow_mut();
+            let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
+            TensorF32::copy(input_gradient, output_gradient)?;
         }
 
         Ok(())

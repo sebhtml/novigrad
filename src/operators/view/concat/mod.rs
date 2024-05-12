@@ -44,17 +44,17 @@ impl Operator for Concat {
         "Concat"
     }
 
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let dst = outputs[0];
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let dst = outputs[0].tensor().deref().borrow();
         for input_index in 0..inputs.len() {
-            let src = inputs[input_index];
+            let src = inputs[input_index].tensor().deref().borrow();
             let src_col = 0;
             let input_rows = src.rows();
             let input_cols = src.cols();
             for src_row in 0..input_rows {
                 let dst_row = src_row;
                 let dst_col = input_index * input_cols;
-                TensorF32::copy_slice(src, src_row, src_col, dst, dst_row, dst_col)?;
+                TensorF32::copy_slice(&src, src_row, src_col, &dst, dst_row, dst_col)?;
             }
         }
         Ok(())

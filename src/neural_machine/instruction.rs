@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Error, Operator, Tensor, TensorF32};
+use crate::{Error, Operator, Tensor};
 
 #[derive(Clone, Debug)]
 pub struct Instruction {
@@ -32,18 +32,8 @@ impl Instruction {
             output.tensor().deref().borrow_mut().zero()?;
             output.gradient().deref().borrow_mut().zero()?;
         }
-        let inputs: Vec<TensorF32> = self
-            .inputs
-            .iter()
-            .map(|x| x.tensor().deref().borrow().to_owned())
-            .collect();
-        let outputs: Vec<TensorF32> = self
-            .outputs
-            .iter()
-            .map(|x| x.tensor().deref().borrow().to_owned())
-            .collect();
-        let inputs: Vec<&TensorF32> = inputs.iter().collect();
-        let outputs: Vec<&TensorF32> = outputs.iter().collect();
+        let inputs: Vec<&Tensor> = self.inputs.iter().collect();
+        let outputs: Vec<&Tensor> = self.outputs.iter().collect();
         self.operator.forward(&inputs, &outputs)
     }
 

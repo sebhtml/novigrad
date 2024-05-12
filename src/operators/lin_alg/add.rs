@@ -39,12 +39,12 @@ impl Operator for Add {
         "Add"
     }
 
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
-        let input_0 = inputs[0];
-        let input_1 = inputs[1];
-        let output = outputs[0];
-        TensorF32::copy(input_0, output)?;
-        TensorF32::add(input_1, output)
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+        let input_0 = inputs[0].tensor().deref().borrow();
+        let input_1 = inputs[1].tensor().deref().borrow();
+        let output = outputs[0].tensor().deref().borrow();
+        TensorF32::copy(&input_0, &output)?;
+        TensorF32::add(&input_1, &output)
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {

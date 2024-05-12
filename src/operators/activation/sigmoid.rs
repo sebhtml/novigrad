@@ -88,10 +88,10 @@ impl Operator for Sigmoid {
         "Sigmoid"
     }
 
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input = inputs[0];
-        let output = outputs[0];
-        self.activate(input, output)
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let input = inputs[0].tensor().deref().borrow();
+        let output = outputs[0].tensor().deref().borrow();
+        self.activate(&input, &output)
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {

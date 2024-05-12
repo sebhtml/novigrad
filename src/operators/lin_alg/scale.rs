@@ -49,16 +49,43 @@ impl Operator for Scale {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+        let scale_b = ScaleBackward::new(self.alpha);
+        scale_b.forward(inputs, outputs)
+    }
+}
+
+pub struct ScaleBackward {
+    alpha: f32,
+}
+
+impl ScaleBackward {
+    pub fn new(alpha: f32) -> Self {
+        Self { alpha }
+    }
+}
+
+impl Operator for ScaleBackward {
+    fn name(&self) -> &str {
+        "ScaleBackward"
+    }
+
+    // TODO reverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
         debug_assert_eq!(inputs.len(), 1);
         let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
 
         if inputs[0].requires_grad() {
             let input_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
             TensorF32::copy(output_gradient, input_gradient)?;
+            // TODO this looks wrong.
             let alpha = self.alpha;
             TensorF32::scale(alpha, input_gradient)?;
         }
 
         Ok(())
+    }
+
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+        todo!()
     }
 }

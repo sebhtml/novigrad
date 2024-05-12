@@ -47,6 +47,26 @@ impl Operator for Mul {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let mul_b = MulBackward::default();
+        mul_b.forward(inputs, outputs)
+    }
+}
+
+pub struct MulBackward {}
+
+impl Default for MulBackward {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl Operator for MulBackward {
+    fn name(&self) -> &str {
+        "MulBackward"
+    }
+
+    // TODO reverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
 
@@ -63,5 +83,9 @@ impl Operator for Mul {
         }
 
         Ok(())
+    }
+
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        todo!()
     }
 }

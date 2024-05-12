@@ -61,6 +61,26 @@ impl Operator for Concat {
     }
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let concat_b = ConcatBackward::default();
+        concat_b.forward(inputs, outputs)
+    }
+}
+
+pub struct ConcatBackward {}
+
+impl Default for ConcatBackward {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl Operator for ConcatBackward {
+    fn name(&self) -> &str {
+        "ConcatBackward"
+    }
+
+    // TODO reverse inputs and outputs
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let src: &TensorF32 = &outputs[0].gradient().deref().borrow_mut();
         for input_index in 0..inputs.len() {
             let dst: &mut TensorF32 = &mut inputs[input_index].gradient().deref().borrow_mut();
@@ -74,5 +94,9 @@ impl Operator for Concat {
             }
         }
         Ok(())
+    }
+
+    fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        todo!()
     }
 }

@@ -8,16 +8,14 @@ pub struct Tensor {
     forward_instructions: Rc<RefCell<Vec<Instruction>>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
-    requires_grad: bool,
 }
 
 impl Tensor {
-    pub fn new(tensor: TensorF32, gradient: TensorF32, requires_grad: bool) -> Self {
+    pub fn new(tensor: TensorF32, gradient: TensorF32) -> Self {
         Self {
             forward_instructions: Default::default(),
             tensor: Rc::new(RefCell::new(tensor)),
             gradient: Rc::new(RefCell::new(gradient)),
-            requires_grad,
         }
     }
 
@@ -32,7 +30,7 @@ impl Tensor {
         &self.forward_instructions
     }
     pub fn requires_grad(&self) -> bool {
-        self.requires_grad
+        self.gradient.deref().borrow().len() > 0
     }
 
     pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {

@@ -68,14 +68,14 @@ fn forward() {
 fn backward() {
     let device = Device::default();
 
-    let input_1 = device.tensor(2, 3, vec![0.0; 2 * 3], false, false);
+    let input_1 = device.tensor(2, 3, vec![0.0; 2 * 3], true, false);
 
-    let input_2 = device.tensor(2, 3, vec![0.0; 2 * 3], false, false);
+    let input_2 = device.tensor(2, 3, vec![0.0; 2 * 3], true, false);
 
-    let input_3 = device.tensor(2, 3, vec![0.0; 2 * 3], false, false);
+    let input_3 = device.tensor(2, 3, vec![0.0; 2 * 3], true, false);
 
     let concat = Concat::new(&device);
-    let output = device.tensor(2, 9, vec![0.0; 2 * 9], false, false);
+    let output = device.tensor(2, 9, vec![0.0; 2 * 9], true, false);
     output.push_forward_instruction(Instruction::new(
         Rc::new(concat),
         &[&input_1, &input_2, &input_3],

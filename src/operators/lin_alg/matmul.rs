@@ -59,7 +59,7 @@ impl Operator for MatMul {
 
     fn backward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let matmul_b = MatMulBackward::new(self.transb);
-        matmul_b.forward(inputs, outputs)
+        matmul_b.forward(outputs, inputs)
     }
 }
 
@@ -79,25 +79,25 @@ impl Operator for MatMulBackward {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        debug_assert_eq!(inputs.len(), 2);
-        let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
+        debug_assert_eq!(outputs.len(), 2);
+        let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
 
-        if inputs[1].requires_grad() {
-            let input_1_gradient: &mut TensorF32 = &mut inputs[1].gradient().deref().borrow_mut();
-            let input_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
-            let a: &TensorF32 = input_0;
-            let b: &TensorF32 = output_gradient;
-            let c: &mut TensorF32 = input_1_gradient;
+        if outputs[1].requires_grad() {
+            let output_1_gradient: &mut TensorF32 = &mut outputs[1].gradient().deref().borrow_mut();
+            let output_0: &TensorF32 = &outputs[0].tensor().deref().borrow();
+            let a: &TensorF32 = output_0;
+            let b: &TensorF32 = input_gradient;
+            let c: &mut TensorF32 = output_1_gradient;
             let transb = self.transb;
             TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, transb)?;
         }
 
-        if inputs[0].requires_grad() {
-            let input_0_gradient: &mut TensorF32 = &mut inputs[0].gradient().deref().borrow_mut();
-            let input_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
-            let a: &TensorF32 = input_1;
-            let b: &TensorF32 = output_gradient;
-            let c: &mut TensorF32 = input_0_gradient;
+        if outputs[0].requires_grad() {
+            let output_0_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
+            let output_1: &TensorF32 = &outputs[1].tensor().deref().borrow();
+            let a: &TensorF32 = output_1;
+            let b: &TensorF32 = input_gradient;
+            let c: &mut TensorF32 = output_0_gradient;
             let transb = self.transb;
             if transb {
                 TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;

@@ -14,5 +14,3 @@ mod scale;
 pub use scale::*;
 mod add;
 pub use add::*;
-mod zero;
-pub use zero::*;

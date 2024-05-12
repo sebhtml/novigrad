@@ -8,6 +8,8 @@ mod lin_alg;
 pub use lin_alg::*;
 mod attention;
 pub use attention::*;
+mod nullary;
+pub use nullary::*;
 
 use crate::{Error, Tensor};
 use core::fmt::Debug;

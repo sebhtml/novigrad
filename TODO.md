@@ -1,5 +1,8 @@
-- fix ScaleBackward alpha use
+- unify forwawrd_instructions and backward_instructions in NeuralMachine
+- use Clip instruction
 - remove optimizer
+- fix ScaleBackward alpha use
+- add function to print a program instructions, inputs, output
 
 == Tensor clean-up ==
 
@@ -17,12 +20,10 @@
 == Fixes ==
 
 - models return expected size in Error instead of inputsize and outputsize
-- make list of things that are using Tensorf32::setvalue
+- make list of things that are using Tensorf32::set_value
 - remove recycle
-- remove forward from Operator trait
 - remove random calls to unwrap()
 - return ErrNoGradient if output tensor has no gradient
-- add function to print a program instructions, inputs, output
 
 == Multi-Head Attention ==
 
@@ -63,7 +64,7 @@
 
 == Devices ==
 
-- use cuda stream to realize a tensor
+- use cuda stream to realize a tensor (is this useful ? CUDA execution is async by default)
 - implement a mul cuda kernel
 - Add support for Jim Keller's https://tenstorrent.com/cards/
 - Add support AMD GPUs (ROCm/rocBLAS)

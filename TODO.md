@@ -1,4 +1,5 @@
 - fix ScaleBackward alpha use
+- remove optimizer
 
 == Tensor clean-up ==
 

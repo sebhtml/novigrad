@@ -28,4 +28,5 @@ impl Error {
 pub enum ErrorEnum {
     IncompatibleTensorShapes,
     UnsupportedOperation,
+    IncorrectOperatorConfiguration,
 }

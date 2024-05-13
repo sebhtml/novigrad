@@ -10,12 +10,16 @@ pub struct AttentionHead {
 }
 
 impl AttentionHead {
-    pub fn try_new(device: &Device, rows: usize, cols: usize) -> Result<Self, Error> {
-        let q = Linear::new(device, cols, cols, rows);
-        let k = Linear::new(device, cols, cols, rows);
-        let v = Linear::new(device, cols, cols, rows);
-
-        let mask = true;
+    pub fn try_new(
+        device: &Device,
+        rows: usize,
+        cols: usize,
+        head_cols: usize,
+        mask: bool,
+    ) -> Result<Self, Error> {
+        let q = Linear::new(device, head_cols, cols, rows);
+        let k = Linear::new(device, head_cols, cols, rows);
+        let v = Linear::new(device, head_cols, cols, rows);
         let attention = ScaledDotProductAttention::try_new(device, rows, cols, mask).unwrap();
 
         let head = Self { q, k, v, attention };
@@ -23,11 +27,11 @@ impl AttentionHead {
     }
 }
 
-impl UnaryOperator for AttentionHead {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        let q = self.q.forward(input)?;
-        let k = self.k.forward(input)?;
-        let v = self.v.forward(input)?;
+impl TernaryOperator for AttentionHead {
+    fn forward(&self, q: &Tensor, k: &Tensor, v: &Tensor) -> Result<Tensor, Error> {
+        let q = self.q.forward(q)?;
+        let k = self.k.forward(k)?;
+        let v = self.v.forward(v)?;
         let attentions = self.attention.forward(&q, &k, &v)?;
         Ok(attentions)
     }

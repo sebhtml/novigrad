@@ -1,15 +1,12 @@
-== Multi-Head Attention ==
-
-- implement MultiHeadAttention
-
 - TensorF32 in instructions
 - use tensorf32 in operator trait
 - Bake optimizer instructions in neural machine
 
-- add function to print a program instructions, inputs, output
 - add tensor names
+- add function to print a program instructions, inputs, output
 
 - avoid conversion between vec tensor and vec &tensor
+- Clip must preserve the direction of the tensor
 
 == Tensor clean-up ==
 

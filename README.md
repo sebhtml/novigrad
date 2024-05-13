@@ -1,6 +1,11 @@
 # Novigrad: A forward pass is all you need
 
-A animal can do training and inference every day of its existence until the day of its death.
+An animal can do training and inference every day of its existence until the day of its death.
+
+Usually, neural networks like LLMs use the forward-backward algorithm during training, and a forward pass during inference.
+In 2022, Prof. Geoffrey Hinton invented the [forward-forward algorithm](https://arxiv.org/abs/2212.13345).
+His work is the inspiration for Novigrad.
+With Novigrad  ("New Town"), a forward pass is all you need for both training and inference.
 
 In AI, LLMs do their training once with a lot of data. Once this is done, they are deem ready for inference.
 At this point, they no longer learn. They look like they remember memories from the past. But that's simply because

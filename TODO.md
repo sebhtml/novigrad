@@ -20,7 +20,6 @@
 
 == Refactoring ==
 
-- models with no operator fields
 - merge the many load_examples functions
 - remove DatasetEnum
 - move code from training/mod.rs to training/train.rs

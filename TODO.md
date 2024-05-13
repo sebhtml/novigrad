@@ -1,6 +1,4 @@
-- docs: A forward pass is all you need #40 
 - remove optimizer
-- fix ScaleBackward alpha use
 - add function to print a program instructions, inputs, output
 
 == Tensor clean-up ==

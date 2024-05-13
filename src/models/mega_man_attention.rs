@@ -7,7 +7,7 @@ use crate::{DatasetDetails, Error};
 
 use std::ops::Deref;
 
-use crate::{CausalSelfAttention, Embedding, Linear, Model, Softmax, Tensor};
+use crate::{Embedding, Linear, Model, ScaledDotProductAttention, Softmax, Tensor};
 
 struct MegaManAttentionModel {
     input_shape: Vec<usize>,
@@ -18,7 +18,7 @@ struct MegaManAttentionModel {
     q: Linear,
     k: Linear,
     v: Linear,
-    attention: CausalSelfAttention,
+    attention: ScaledDotProductAttention,
     linear: Linear,
     softmax: Softmax,
 }
@@ -38,7 +38,8 @@ impl MegaManAttentionModel {
         let k = Linear::new(device, n_embd, n_embd, sequence_length);
         let v = Linear::new(device, n_embd, n_embd, sequence_length);
 
-        let attention = CausalSelfAttention::try_new(device, sequence_length, n_embd).unwrap();
+        let attention =
+            ScaledDotProductAttention::try_new(device, sequence_length, n_embd).unwrap();
 
         let linear = Linear::new(device, vocab_size, n_embd, sequence_length);
 

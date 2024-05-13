@@ -10,7 +10,7 @@ use crate::{
 /// Attention Is All You Need
 /// https://arxiv.org/abs/1706.03762
 #[derive(Clone)]
-pub struct CausalSelfAttention {
+pub struct ScaledDotProductAttention {
     qk_matmul: MatMul,
     scale: Scale,
     mask: Mask,
@@ -18,7 +18,7 @@ pub struct CausalSelfAttention {
     matmul: MatMul,
 }
 
-impl CausalSelfAttention {
+impl ScaledDotProductAttention {
     pub fn try_new(device: &Device, rows: usize, cols: usize) -> Result<Self, Error> {
         let qk_matmul = MatMul::new(device, true);
         let alpha = 1.0 / f32::sqrt(cols as f32);
@@ -41,43 +41,13 @@ impl CausalSelfAttention {
     }
 }
 
-impl TernaryOperator for CausalSelfAttention {
+impl TernaryOperator for ScaledDotProductAttention {
     fn forward(&self, q: &Tensor, k: &Tensor, v: &Tensor) -> Result<Tensor, Error> {
-        let debug = false;
-        if debug {
-            println!("Entering Attention");
-        }
-
         let weights = self.qk_matmul.forward(q, k)?;
-        if debug {
-            println!("Q*K^T weights {}", weights.tensor().deref().borrow());
-        }
-
         let scaled_weights = self.scale.forward(&weights)?;
-        if debug {
-            println!(
-                "scaled_weights {}",
-                scaled_weights.tensor().deref().borrow()
-            );
-        }
         let masked_weights = self.mask.forward(&scaled_weights)?;
-        if debug {
-            println!(
-                "masked_weights {}",
-                masked_weights.tensor().deref().borrow()
-            );
-        }
         let softmaxed_weights = self.softmax.forward(&masked_weights)?;
-        if debug {
-            println!(
-                "softmaxed_weights {}",
-                softmaxed_weights.tensor().deref().borrow()
-            );
-        }
         let attentions = self.matmul.forward(&softmaxed_weights, v)?;
-        if debug {
-            println!("attentions {}", attentions.tensor().deref().borrow());
-        }
         Ok(attentions)
     }
 }

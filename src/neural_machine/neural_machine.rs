@@ -26,6 +26,7 @@ impl NeuralMachine {
             input_shape[0],
             input_shape[1],
             vec![0.7; input_len],
+            &[],
             false,
             false,
         );
@@ -36,6 +37,7 @@ impl NeuralMachine {
             output_shape[0],
             output_shape[1],
             vec![0.7; output_len],
+            &[],
             false,
             false,
         );

@@ -55,7 +55,9 @@ impl LossFunction for ResidualSumOfSquares {
 
 impl BinaryOperator for ResidualSumOfSquares {
     fn forward(&self, input_1: &Tensor, input_2: &Tensor) -> Result<Tensor, Error> {
-        let output = self.device.tensor(1, 1, vec![0.0], true, false);
+        let output = self
+            .device
+            .tensor(1, 1, vec![0.0], &[input_1, input_2], true, false);
         let inputs = &[input_1, input_2];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);

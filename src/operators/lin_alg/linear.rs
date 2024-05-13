@@ -29,10 +29,17 @@ impl Linear {
         for index in 0..weights.len() {
             weights[index] = rng.sample(uniform);
         }
-        let weights = device.tensor(weights_rows, weights_cols, weights, true, true);
+        let weights = device.tensor(weights_rows, weights_cols, weights, &[], true, true);
 
         let biases_len = bias_rows * weights_rows;
-        let biases = device.tensor(bias_rows, weights_rows, vec![0.0; biases_len], true, true);
+        let biases = device.tensor(
+            bias_rows,
+            weights_rows,
+            vec![0.0; biases_len],
+            &[],
+            true,
+            true,
+        );
 
         let gemm = Gemm::new(device, true);
         Self {

@@ -15,7 +15,7 @@ impl Mask {
         let len = mask_rows * mask_cols;
         let mask = vec![0.0; len];
 
-        let mask = device.tensor(mask_rows, mask_cols, mask, true, true);
+        let mask = device.tensor(mask_rows, mask_cols, mask, &[], true, true);
         let mut values = mask.tensor().deref().borrow().get_values()?;
         for row in 0..mask_rows {
             for col in 0..mask_cols {

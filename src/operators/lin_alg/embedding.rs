@@ -21,6 +21,7 @@ impl Embedding {
             transposed.rows(),
             transposed.cols(),
             transposed.get_values().unwrap(),
+            &[],
             true,
             true,
         );

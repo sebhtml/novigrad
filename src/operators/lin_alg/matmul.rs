@@ -51,7 +51,9 @@ impl BinaryOperator for MatMul {
             input_1_tensor.cols()
         };
         let len = rows * cols;
-        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
+        let output =
+            self.device
+                .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
         let inputs = &[input_0, input_1];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);

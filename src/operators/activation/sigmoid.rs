@@ -72,7 +72,9 @@ impl UnaryOperator for Sigmoid {
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
+        let output = self
+            .device
+            .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = &[input];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);

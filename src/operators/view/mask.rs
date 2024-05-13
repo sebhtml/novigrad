@@ -27,9 +27,11 @@ impl Mask {
         }
         mask.tensor().deref().borrow_mut().set_values(values);
 
+        /*
         {
             println!("mask {}", &mask.tensor().deref().borrow());
         }
+         */
 
         let add = Add::new(device);
         let mask = Self { mask, add };

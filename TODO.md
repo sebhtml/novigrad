@@ -1,14 +1,22 @@
-- remove optimizer
-- fix ScaleBackward alpha use
+- TensorF32 in instructions
+- use tensorf32 in operator trait
+- Bake optimizer instructions in neural machine
+
+- add tensor names
 - add function to print a program instructions, inputs, output
 
+- avoid conversion between vec tensor and vec &tensor
+- Clip must preserve the direction of the tensor
+
 == Tensor clean-up ==
+
+- move concat and unconcat code to functions
+- copy -> copy_from
 
 - device.tensor should take size instead of rows, cols
 
 == Refactoring ==
 
-- models with no operator fields
 - merge the many load_examples functions
 - remove DatasetEnum
 - move code from training/mod.rs to training/train.rs
@@ -23,14 +31,17 @@
 - remove random calls to unwrap()
 - return ErrNoGradient if output tensor has no gradient
 
-== Multi-Head Attention ==
-
-- implement MultiHeadAttention
-
 == Mini Batch ==
 
 - implement mini batch
 - shuffle examples in each epoch
+
+- image transformer
+
+== Datasets ==
+
+- CIFAR-10
+- MNIST
 
 == Program ==
 

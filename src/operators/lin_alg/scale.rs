@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Operator, Tensor, TensorF32, UnaryOperator};
+use crate::{Device, Identity, Operator, Tensor, TensorF32, UnaryOperator};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// TODO implement broadcasting to use Mul instead
@@ -29,7 +29,7 @@ impl UnaryOperator for Scale {
         let inputs = &[input];
         let outputs = &[&output];
         output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
-        output.push_backward_instruction(Rc::new(ScaleBackward::new(self.alpha)), outputs, inputs);
+        output.push_backward_instruction(Rc::new(Identity::new(&self.device)), outputs, inputs);
         Ok(output)
     }
 }
@@ -45,36 +45,5 @@ impl Operator for Scale {
         TensorF32::copy(input, output)?;
         let alpha = self.alpha;
         TensorF32::scale(alpha, output)
-    }
-}
-
-pub struct ScaleBackward {
-    alpha: f32,
-}
-
-impl ScaleBackward {
-    pub fn new(alpha: f32) -> Self {
-        Self { alpha }
-    }
-}
-
-impl Operator for ScaleBackward {
-    fn name(&self) -> &str {
-        "ScaleBackward"
-    }
-
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        debug_assert_eq!(outputs.len(), 1);
-        let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
-
-        if outputs[0].requires_grad() {
-            let output_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
-            TensorF32::copy(input_gradient, output_gradient)?;
-            // TODO this looks wrong.
-            let alpha = self.alpha;
-            TensorF32::scale(alpha, output_gradient)?;
-        }
-
-        Ok(())
     }
 }

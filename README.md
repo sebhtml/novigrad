@@ -1,11 +1,28 @@
+# Novigrad: A forward pass is all you need
+
+A animal can do training and inference every day of its existence until the day of its death.
+
+In AI, LLMs do their training once with a lot of data. Once this is done, they are deem ready for inference.
+At this point, they no longer learn. They look like they remember memories from the past. But that's simply because
+we provide them with a context buffer of things of the past in an auto-regressive way.
+LLMs remember the things that they saw during training. But they don't do it during inference.
+
+A true neural machine can train and do inference, always. There is no difference between those activities.
+Both training and inference are just simulating the future.
+
+Novigrad is a system that compiles a neural network model to neural instructions.
+These neural instructions are the basis of neural machines.
+
+There is no backward pass. A forward pass is all you need.
+The computing machinery required to do the things that usually occur during the backward pass are simply baked in the generated neural machine.
+
+It aims to be a minimalist neural network framework written in Rust.
+
 # Project goals
 
+- Design and implement a neural system framework that generates neural networks that can always train and infer. (most animals do that everyday)
 - Implement from scratch in Rust the [GPT-1](https://en.wikipedia.org/wiki/GPT-1) architecture (117 million parameters).
-
-# Novigrad
-
-Novigrad is a automatic differentiation engine with a backward (reverse) mode and a forward mode.
-It aims to be a minimalist neural network framework written in Rust.
+- Teach an AI to read and write by interacting with a user on a daily basis.
 
 # Other frameworks
 

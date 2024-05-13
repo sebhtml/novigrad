@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, BinaryOperator, Error, Operator, Tensor, TensorF32};
+use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]
@@ -20,14 +20,35 @@ impl MatMul {
 
 impl BinaryOperator for MatMul {
     fn forward(&self, input_0: &Tensor, input_1: &Tensor) -> Result<Tensor, Error> {
-        let input_0_t: &TensorF32 = &input_0.tensor().deref().borrow();
-        let input_1_t: &TensorF32 = &input_1.tensor().deref().borrow();
-        let rows = input_0_t.rows();
+        let input_0_tensor: &TensorF32 = &input_0.tensor().deref().borrow();
+        let input_1_tensor: &TensorF32 = &input_1.tensor().deref().borrow();
+        let compatible = match self.transb {
+            false => input_0_tensor.cols() == input_1_tensor.rows(),
+            true => input_0_tensor.cols() == input_1_tensor.cols(),
+        };
+        if !compatible {
+            println!("Incompatible shapes in matrix multiplication");
+            println!("transa: {}, transb: {}", false, self.transb);
+            println!(
+                "Between A {:?} and B^T {:?}",
+                input_0_tensor.size(),
+                input_1_tensor.size(),
+            );
+            debug_assert!(false);
+            return Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::IncompatibleTensorShapes,
+            ));
+        }
+
+        let rows = input_0_tensor.rows();
         let transb = self.transb;
         let cols = if transb {
-            input_1_t.rows()
+            input_1_tensor.rows()
         } else {
-            input_1_t.cols()
+            input_1_tensor.cols()
         };
         let len = rows * cols;
         let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);

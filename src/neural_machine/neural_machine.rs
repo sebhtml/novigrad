@@ -72,6 +72,8 @@ impl NeuralMachine {
             loss,
             instructions,
         };
+
+        program.print();
         Ok(program)
     }
 
@@ -82,7 +84,7 @@ impl NeuralMachine {
 
 impl NeuralMachine {
     pub fn forward(&self, input: &Tensor, expected_output: &Tensor) -> Result<Tensor, Error> {
-        println!("NeuralMachine forward");
+        //println!("NeuralMachine forward");
         // Copy input
         {
             let example_input: &mut TensorF32 =
@@ -112,16 +114,29 @@ impl NeuralMachine {
             );
             println!("outputs");
 
-            instruction.forward()?;
-
             for output in instruction.outputs().deref().iter() {
                 let output_t: &TensorF32 = &output.tensor().deref().borrow();
                 let output_g: &TensorF32 = &output.gradient().deref().borrow();
                 println!("output_t {}", output_t);
                 println!("output_g {}", output_g);
             }
-             */
+                 */
         }
         Ok(self.program_output.clone())
+    }
+
+    pub fn print(&self) {
+        println!("------------------------------");
+        println!("Neural Machine Instructions");
+        println!("------------------------------");
+        for (i, instruction) in self.instructions.iter().enumerate() {
+            println!(
+                "{} -> {}, {} inputs, {} outputs",
+                i,
+                instruction.operator().name(),
+                instruction.inputs().len(),
+                instruction.outputs().len()
+            );
+        }
     }
 }

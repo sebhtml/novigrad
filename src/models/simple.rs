@@ -6,35 +6,26 @@ use crate::{
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
 
 struct SimpleModel {
-    device: Device,
     sequence_length: usize,
     vocab_size: usize,
-    n_embd: usize,
     output_rows: usize,
+
+    embedding: Embedding,
+    linear_0: Linear,
+    sigmoid_0: Sigmoid,
+    reshape: Reshape,
+    linear_1: Linear,
+    sigmoid_1: Sigmoid,
+    linear_2: Linear,
+    softmax: Softmax,
 }
 
 impl SimpleModel {
     pub fn new(device: &Device) -> Self {
-        Self {
-            device: device.clone(),
-            sequence_length: 6,
-            vocab_size: 256,
-            n_embd: 384,
-            output_rows: 1,
-        }
-    }
-    pub fn vocab_size(&self) -> usize {
-        self.vocab_size
-    }
-}
-
-impl UnaryOperator for SimpleModel {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        let device = &self.device;
-        let sequence_length = self.sequence_length;
-        let vocab_size = self.vocab_size;
-        let n_embd = self.n_embd;
-        let output_rows = self.output_rows;
+        let sequence_length = 6;
+        let vocab_size = 256;
+        let n_embd = 384;
+        let output_rows = 1;
 
         let embedding = Embedding::new(device, vocab_size, n_embd);
         let linear_0 = Linear::new(device, n_embd, n_embd, sequence_length);
@@ -49,14 +40,35 @@ impl UnaryOperator for SimpleModel {
         let linear_2 = Linear::new(device, vocab_size, n_embd, output_rows);
         let softmax = Softmax::new(device, true);
 
-        let state_0 = embedding.forward(input)?;
-        let state_1 = linear_0.forward(&state_0)?;
-        let state_2 = sigmoid_0.forward(&state_1)?;
-        let state_3 = reshape.forward(&state_2)?;
-        let state_4 = linear_1.forward(&state_3)?;
-        let state_5 = sigmoid_1.forward(&state_4)?;
-        let state_6 = linear_2.forward(&state_5)?;
-        let state_7 = softmax.forward(&state_6)?;
+        Self {
+            sequence_length,
+            vocab_size,
+            output_rows,
+            embedding,
+            linear_0,
+            sigmoid_0,
+            reshape,
+            linear_1,
+            sigmoid_1,
+            linear_2,
+            softmax,
+        }
+    }
+    pub fn vocab_size(&self) -> usize {
+        self.vocab_size
+    }
+}
+
+impl UnaryOperator for SimpleModel {
+    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+        let state_0 = self.embedding.forward(input)?;
+        let state_1 = self.linear_0.forward(&state_0)?;
+        let state_2 = self.sigmoid_0.forward(&state_1)?;
+        let state_3 = self.reshape.forward(&state_2)?;
+        let state_4 = self.linear_1.forward(&state_3)?;
+        let state_5 = self.sigmoid_1.forward(&state_4)?;
+        let state_6 = self.linear_2.forward(&state_5)?;
+        let state_7 = self.softmax.forward(&state_6)?;
         Ok(state_7)
     }
 }

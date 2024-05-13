@@ -54,13 +54,11 @@ impl BinaryOperator for MatMul {
         let output =
             self.device
                 .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
-        let inputs = &[input_0, input_1];
-        let outputs = &[&output];
-        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_forward_instruction(Rc::new(self.clone()), &[input_0, input_1], &[&output]);
         output.push_backward_instruction(
             Rc::new(MatMulBackward::new(self.transb)),
-            outputs,
-            inputs,
+            &[&output],
+            &[input_0, input_1],
         );
         Ok(output)
     }

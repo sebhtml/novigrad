@@ -75,13 +75,11 @@ impl UnaryOperator for Sigmoid {
         let output = self
             .device
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
-        let inputs = &[input];
-        let outputs = &[&output];
-        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        output.push_forward_instruction(Rc::new(self.clone()), &[input], &[&output]);
         output.push_backward_instruction(
             Rc::new(SigmoidBackward::new(&self.device)),
-            outputs,
-            inputs,
+            &[&output],
+            &[input],
         );
         Ok(output)
     }

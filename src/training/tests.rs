@@ -42,7 +42,7 @@ fn mega_man_dataset_cuda() {
     test_network_on_dataset(Dataset::MegaMan, &device);
 }
 
-#[ignore]
+//#[ignore]
 #[test]
 fn mega_man_attention_dataset_cuda() {
     let device = Device::cuda().unwrap();

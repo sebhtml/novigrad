@@ -1,13 +1,11 @@
 use super::load_examples;
 use crate::{
-    CrossEntropyLoss, Device, NeuralMachine, TernaryOperator, Tokenizer, TokenizerTrait,
+    AttentionHead, CrossEntropyLoss, Device, NeuralMachine, Tokenizer, TokenizerTrait,
     UnaryOperator,
 };
 use crate::{DatasetDetails, Error};
 
-use std::ops::Deref;
-
-use crate::{Embedding, Linear, Model, ScaledDotProductAttention, Softmax, Tensor};
+use crate::{Embedding, Linear, Model, Softmax, Tensor};
 
 struct MegaManAttentionModel {
     input_shape: Vec<usize>,
@@ -15,10 +13,7 @@ struct MegaManAttentionModel {
     vocab_size: usize,
     sequence_length: usize,
     embedding: Embedding,
-    q: Linear,
-    k: Linear,
-    v: Linear,
-    attention: ScaledDotProductAttention,
+    attention_head: AttentionHead,
     linear: Linear,
     softmax: Softmax,
 }
@@ -28,19 +23,13 @@ impl MegaManAttentionModel {
         let _batch_size = 1;
         let sequence_length = 6;
         let vocab_size = 20;
-        let n_embd = 4;
+        let n_embd = 384;
         let _num_heads = 1;
         let _n_layer = 1;
         let _dropout = 0.1;
         let _block_size = 2048;
 
-        let q = Linear::new(device, n_embd, n_embd, sequence_length);
-        let k = Linear::new(device, n_embd, n_embd, sequence_length);
-        let v = Linear::new(device, n_embd, n_embd, sequence_length);
-
-        let attention =
-            ScaledDotProductAttention::try_new(device, sequence_length, n_embd, true).unwrap();
-
+        let attention_head = AttentionHead::try_new(device, sequence_length, n_embd).unwrap();
         let linear = Linear::new(device, vocab_size, n_embd, sequence_length);
 
         Self {
@@ -49,10 +38,7 @@ impl MegaManAttentionModel {
             vocab_size,
             sequence_length,
             embedding: Embedding::new(device, vocab_size, n_embd),
-            q,
-            k,
-            v,
-            attention,
+            attention_head,
             linear,
             softmax: Softmax::new(device, true),
         }
@@ -69,41 +55,10 @@ impl MegaManAttentionModel {
 
 impl UnaryOperator for MegaManAttentionModel {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        let debug = false;
-        if debug {
-            println!("----");
-        }
-        if debug {
-            println!("input {}", input.tensor().deref().borrow());
-        }
-        let embeddings = self.embedding.forward(input)?;
-        if debug {
-            println!("embedding {}", &embeddings.tensor().deref().borrow());
-        }
-        let q = self.q.forward(&embeddings)?;
-        if debug {
-            println!("q {}", &q.tensor().deref().borrow());
-        }
-        let k = self.k.forward(&embeddings)?;
-        if debug {
-            println!("k {}", &k.tensor().deref().borrow());
-        }
-        let v = self.v.forward(&embeddings)?;
-        if debug {
-            println!("v {}", &v.tensor().deref().borrow());
-        }
-        let attended = self.attention.forward(&q, &k, &v)?;
-        if debug {
-            println!("attended {}", &attended.tensor().deref().borrow());
-        }
+        let embedding = self.embedding.forward(input)?;
+        let attended = self.attention_head.forward(&embedding)?;
         let linearized = self.linear.forward(&attended)?;
-        if debug {
-            println!("linearized {}", &linearized.tensor().deref().borrow());
-        }
         let probabilities = self.softmax.forward(&linearized)?;
-        if debug {
-            println!("probabilities {}", &probabilities.tensor().deref().borrow());
-        }
         Ok(probabilities)
     }
 }

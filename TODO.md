@@ -1,17 +1,15 @@
 - TensorF32 in instructions
 - use tensorf32 in operator trait
+
 - Bake optimizer instructions in neural machine
-
-- add tensor names
-- add function to print a program instructions, inputs, output
-
-- avoid conversion between vec tensor and vec &tensor
-- Clip must preserve the direction of the tensor
-
-== Tensor clean-up ==
 
 - move concat and unconcat code to functions
 - copy -> copy_from
+- remove recycle
+
+- Clip must preserve the direction of the tensor
+
+== Tensor clean-up ==
 
 - device.tensor should take size instead of rows, cols
 
@@ -25,9 +23,7 @@
 
 == Fixes ==
 
-- models return expected size in Error instead of inputsize and outputsize
 - make list of things that are using Tensorf32::set_value
-- remove recycle
 - remove random calls to unwrap()
 - return ErrNoGradient if output tensor has no gradient
 
@@ -66,10 +62,6 @@
 == Positional Encoding ==
 
 - implement positional encoding
-
-== Refactoring ==
-
-- determine the value of using_cross_entropy_loss at run time
 
 == Devices ==
 

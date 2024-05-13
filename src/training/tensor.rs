@@ -5,6 +5,8 @@ use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct Tensor {
+    name: usize,
+    inputs: Rc<Vec<Tensor>>,
     forward_instructions: Rc<RefCell<Vec<Instruction>>>,
     backward_instructions: Rc<RefCell<Vec<Instruction>>>,
     tensor: Rc<RefCell<TensorF32>>,
@@ -12,13 +14,20 @@ pub struct Tensor {
 }
 
 impl Tensor {
-    pub fn new(tensor: TensorF32, gradient: TensorF32) -> Self {
+    pub fn new(name: usize, tensor: TensorF32, gradient: TensorF32, inputs: &[&Tensor]) -> Self {
+        let inputs: Vec<Tensor> = inputs.iter().map(|x| (*x).to_owned()).collect();
         Self {
+            name,
+            inputs: Rc::new(inputs),
             forward_instructions: Default::default(),
             backward_instructions: Default::default(),
             tensor: Rc::new(RefCell::new(tensor)),
             gradient: Rc::new(RefCell::new(gradient)),
         }
+    }
+
+    pub fn name(&self) -> String {
+        "r".to_owned() + self.name.to_string().as_str()
     }
 
     pub fn push_forward_instruction(
@@ -88,10 +97,7 @@ impl Tensor {
                 if forward_instructions.is_empty() {
                     continue;
                 }
-                let inputs = forward_instructions[0].inputs();
-                if inputs.is_empty() {
-                    continue;
-                }
+                let inputs = element.inputs.deref();
                 for input in inputs.deref().iter() {
                     stack.push_back(input.clone());
                 }

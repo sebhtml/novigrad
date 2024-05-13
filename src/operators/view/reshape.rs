@@ -27,14 +27,14 @@ impl UnaryOperator for Reshape {
         let rows = self.output_size[0];
         let cols = self.output_size[1];
         let len = rows * cols;
-        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
-        let inputs = &[input];
-        let outputs = &[&output];
-        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        let output = self
+            .device
+            .tensor(rows, cols, vec![0.0; len], &[input], true, false);
+        output.push_forward_instruction(Rc::new(self.clone()), &[input], &[&output]);
         output.push_backward_instruction(
             Rc::new(ReshapeBackward::new(self.input_size.clone())),
-            outputs,
-            inputs,
+            &[&output],
+            &[input],
         );
         Ok(output)
     }

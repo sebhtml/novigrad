@@ -1,8 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
 use crate::{
-    BinaryOperator, Clip, Device, Error, Instruction, Model, Operator, Tensor, TensorF32,
-    UnaryOperator, Zero,
+    BinaryOperator, Clip, Device, Error, IdentityBackward, Instruction, Model, Operator, Tensor,
+    TensorF32, UnaryOperator, Zero,
 };
 
 pub struct NeuralMachine {
@@ -26,6 +26,7 @@ impl NeuralMachine {
             input_shape[0],
             input_shape[1],
             vec![0.7; input_len],
+            &[],
             false,
             false,
         );
@@ -36,6 +37,7 @@ impl NeuralMachine {
             output_shape[0],
             output_shape[1],
             vec![0.7; output_len],
+            &[],
             false,
             false,
         );
@@ -64,6 +66,8 @@ impl NeuralMachine {
             instructions.push(instruction);
             instructions.push(clip_instruction);
         }
+
+        let instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
 
         let program = NeuralMachine {
             example_input,
@@ -129,14 +133,59 @@ impl NeuralMachine {
         println!("------------------------------");
         println!("Neural Machine Instructions");
         println!("------------------------------");
-        for (i, instruction) in self.instructions.iter().enumerate() {
+        for (_i, instruction) in self.instructions.iter().enumerate() {
             println!(
-                "{} -> {}, {} inputs, {} outputs",
-                i,
+                "INSTRUCTION    {}    {}    {}",
                 instruction.operator().name(),
-                instruction.inputs().len(),
-                instruction.outputs().len()
+                instruction
+                    .inputs()
+                    .iter()
+                    .map(|x| x.name())
+                    .collect::<Vec<_>>()
+                    .join(" "),
+                instruction
+                    .outputs()
+                    .iter()
+                    .map(|x| x.name())
+                    .collect::<Vec<_>>()
+                    .join(" ")
             );
         }
+        println!("------------------------------");
+    }
+
+    pub fn optimize_softmax_and_cross_entropy_loss(
+        _device: &Device,
+        instructions: &Vec<Instruction>,
+    ) -> Vec<Instruction> {
+        let mut new_instructions = vec![];
+        let mut i = 0;
+        while i < instructions.len() {
+            if i + 3 < instructions.len() {
+                if instructions[i + 0].operator().name() == "CrossEntropyLossBackward"
+                    && instructions[i + 1].operator().name() == "Clip"
+                    && instructions[i + 2].operator().name() == "SoftmaxBackward"
+                    && instructions[i + 3].operator().name() == "Clip"
+                    && true
+                {
+                    new_instructions.push(instructions[i + 0].clone());
+                    new_instructions.push(instructions[i + 1].clone());
+                    new_instructions.push(Instruction::new(
+                        Rc::new(IdentityBackward::default()),
+                        &instructions[i + 2].inputs().iter().collect::<Vec<_>>(),
+                        &instructions[i + 2].outputs().iter().collect::<Vec<_>>(),
+                    ));
+                    new_instructions.push(instructions[i + 3].clone());
+                    i += 4;
+                } else {
+                    new_instructions.push(instructions[i].clone());
+                    i += 1;
+                }
+            } else {
+                new_instructions.push(instructions[i].clone());
+                i += 1;
+            }
+        }
+        new_instructions
     }
 }

@@ -29,7 +29,7 @@ impl MegaManModel {
             output_shape: vec![output_rows, vocab_size],
             vocab_size,
             sequence_length,
-            parameters: device.tensor(n_embd, n_embd, vec![0.0; n_embd * n_embd], true, true),
+            parameters: device.tensor(n_embd, n_embd, vec![0.0; n_embd * n_embd], &[], true, true),
             embedding: Embedding::new(device, vocab_size, n_embd),
             matmul: MatMul::new(device, true),
             reshape: Reshape::new(
@@ -38,7 +38,7 @@ impl MegaManModel {
                 vec![output_rows, sequence_length * n_embd],
             ),
             linear: Linear::new(device, vocab_size, sequence_length * n_embd, output_rows),
-            softmax: Softmax::new(device, true),
+            softmax: Softmax::new(device),
         }
     }
 

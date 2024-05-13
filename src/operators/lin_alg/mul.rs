@@ -24,11 +24,15 @@ impl BinaryOperator for Mul {
         let rows = input_0_t.rows();
         let cols = input_0_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
-        let inputs = &[input_0, input_1];
-        let outputs = &[&output];
-        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
-        output.push_backward_instruction(Rc::new(MulBackward::default()), outputs, inputs);
+        let output =
+            self.device
+                .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
+        output.push_forward_instruction(Rc::new(self.clone()), &[input_0, input_1], &[&output]);
+        output.push_backward_instruction(
+            Rc::new(MulBackward::default()),
+            &[&output],
+            &[input_0, input_1],
+        );
         Ok(output)
     }
 }

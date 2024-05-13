@@ -9,14 +9,12 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub struct Softmax {
     device: Device,
-    next_op_is_cross_entropy_loss: bool,
 }
 
 impl Softmax {
-    pub fn new(device: &Device, next_op_is_cross_entropy_loss: bool) -> Self {
+    pub fn new(device: &Device) -> Self {
         Self {
             device: device.clone(),
-            next_op_is_cross_entropy_loss,
         }
     }
 }
@@ -100,17 +98,14 @@ impl UnaryOperator for Softmax {
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor(rows, cols, vec![0.0; len], true, false);
-        let inputs = &[input];
-        let outputs = &[&output];
-        output.push_forward_instruction(Rc::new(self.clone()), inputs, outputs);
+        let output = self
+            .device
+            .tensor(rows, cols, vec![0.0; len], &[input], true, false);
+        output.push_forward_instruction(Rc::new(self.clone()), &[input], &[&output]);
         output.push_backward_instruction(
-            Rc::new(SoftmaxBackward::new(
-                &self.device,
-                self.next_op_is_cross_entropy_loss,
-            )),
-            outputs,
-            inputs,
+            Rc::new(SoftmaxBackward::new(&self.device)),
+            &[&output],
+            &[input],
         );
         Ok(output)
     }
@@ -130,14 +125,12 @@ impl Operator for Softmax {
 
 pub struct SoftmaxBackward {
     device: Device,
-    next_op_is_cross_entropy_loss: bool,
 }
 
 impl SoftmaxBackward {
-    pub fn new(device: &Device, next_op_is_cross_entropy_loss: bool) -> Self {
+    pub fn new(device: &Device) -> Self {
         Self {
             device: device.clone(),
-            next_op_is_cross_entropy_loss,
         }
     }
 }
@@ -152,11 +145,6 @@ impl Operator for SoftmaxBackward {
             let output_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
             let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
             // Compute activation function derivative.
-            if self.next_op_is_cross_entropy_loss {
-                // Softmax and Cross Entropy Loss are best friends.
-                return TensorF32::copy(input_gradient, output_gradient);
-            }
-
             let output: &TensorF32 = &outputs[0].tensor().deref().borrow();
             let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let rows = output.rows();

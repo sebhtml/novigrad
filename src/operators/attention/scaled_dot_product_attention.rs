@@ -30,8 +30,7 @@ impl ScaledDotProductAttention {
                 Some(mask)
             }
         };
-        let next_op_is_cross_entropy_loss = false;
-        let softmax = Softmax::new(device, next_op_is_cross_entropy_loss);
+        let softmax = Softmax::new(device);
         let matmul = MatMul::new(device, false);
 
         let attention = Self {

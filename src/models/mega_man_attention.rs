@@ -39,7 +39,7 @@ impl MegaManAttentionModel {
         let v = Linear::new(device, n_embd, n_embd, sequence_length);
 
         let attention =
-            ScaledDotProductAttention::try_new(device, sequence_length, n_embd).unwrap();
+            ScaledDotProductAttention::try_new(device, sequence_length, n_embd, true).unwrap();
 
         let linear = Linear::new(device, vocab_size, n_embd, sequence_length);
 

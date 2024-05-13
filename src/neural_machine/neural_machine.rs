@@ -176,13 +176,11 @@ impl NeuralMachine {
                         &instructions[i + 2].outputs().iter().collect::<Vec<_>>(),
                     ));
                     new_instructions.push(instructions[i + 3].clone());
+                    i += 4;
                 } else {
-                    new_instructions.push(instructions[i + 0].clone());
-                    new_instructions.push(instructions[i + 1].clone());
-                    new_instructions.push(instructions[i + 2].clone());
-                    new_instructions.push(instructions[i + 3].clone());
+                    new_instructions.push(instructions[i].clone());
+                    i += 1;
                 }
-                i += 4;
             } else {
                 new_instructions.push(instructions[i].clone());
                 i += 1;

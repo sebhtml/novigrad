@@ -1,3 +1,7 @@
+== Multi-Head Attention ==
+
+- implement MultiHeadAttention
+
 - remove optimizer
 - add function to print a program instructions, inputs, output
 
@@ -21,10 +25,6 @@
 - remove recycle
 - remove random calls to unwrap()
 - return ErrNoGradient if output tensor has no gradient
-
-== Multi-Head Attention ==
-
-- implement MultiHeadAttention
 
 == Mini Batch ==
 

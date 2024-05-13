@@ -1,31 +1,52 @@
-# Novigrad: A forward pass is all you need
+# TLDR
 
 An animal can do training and inference every day of its existence until the day of its death.
+A forward pass is all you need.
+
+# Background
 
 Usually, neural networks like LLMs use the forward-backward algorithm during training, and a forward pass during inference.
+In AI, LLMs do their training once with a lot of data.
+LLMs remember the things that they saw during training.
+
+Once this is done, they are deemed ready for inference.
+
+At this point when they are ready for inference in production, they no longer learn.
+They look like they remember memories from the past. But that's simply because
+they are given context of the past in an auto-regressive way.
+But they don't really learn during inference.
+
+A true neural machine should do training and do inference, always. 
+There is no difference between those activities.
+Both training and inference are about simulating the future.
+
 In 2022, Prof. Geoffrey Hinton invented the [forward-forward algorithm](https://arxiv.org/abs/2212.13345).
-His work is the inspiration for Novigrad.
+In the forward-forward algorithm, there is no forward pass. But it's not time-efficient.
+
+The work of Prof. Geoffrey Hinton is the starting point for Novigrad.
+
+# A forward pass is all you need
+
+Novigrad is a system that compiles a neural network model (described in terms of ONNX forward operators) to neural instructions (described in terms of forward operators).
+A neural machine is simply a stream of neural instructions, like a amd64 program is a stream of amd64 instructions.
+
 With Novigrad  ("New Town"), a forward pass is all you need, for both training and inference.
-
-In AI, LLMs do their training once with a lot of data. Once this is done, they are deemed ready for inference.
-At this point, they no longer learn. They look like they remember memories from the past. But that's simply because
-we provide them with a context buffer of things of the past in an auto-regressive way.
-LLMs remember the things that they saw during training. But they don't really do it during inference.
-
-A true neural machine should do training and do inference, always. There is no difference between those activities.
-Both training and inference are just simulating the future.
-
-Novigrad is a system that compiles a neural network model to neural instructions.
-These neural instructions are the basis of neural machines.
 
 There is no backward pass. A forward pass is all you need.
 To achieve the goal, the computing machinery required to do the things that usually occur during the backward pass is simply baked in the generated neural machine. A consequence of this is that resulting neural networks have the computing machinery for training and inference.
 Animal brains are probably like that.
 
-Novigrad aims to be a minimalist neural network framework written in Rust.
+# Why a new neural network frameworks ?
 
-# Project goals
+There are many off-the-shelve neural network frameworks.
+The list includes PyTorch (Meta AI), Tensorflow (Google), tinygrad (Tiny Corp), candle (Hugging Face), Burn (Tracel AI), dfdx (Corey Lowman), and so on.
+As far I understand, I don't think that any framework in the list can learn using only a forward pass. 
+They all do back-propagation using a forward-backward algorithm.
 
+# Goals
+
+- Design a minimalist neural network framework
+- Write it in Rust
 - Design and implement a neural system framework that generates neural networks that can always train and infer. (most animals do that everyday)
 - Implement from scratch in Rust the [GPT-1](https://en.wikipedia.org/wiki/GPT-1) architecture (117 million parameters).
 - Teach an AI to read and write by interacting with a user on a daily basis.
@@ -107,3 +128,4 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 - [gemm](https://docs.rs/cublas/latest/cublas/struct.API.html#method.gemm)
 - [arrayfire::CublasMathMode](https://arrayfire.org/arrayfire-rust/arrayfire/enum.CublasMathMode.html)
 - [cuBLAS](https://docs.nvidia.com/cuda/cublas/)
+

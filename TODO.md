@@ -1,3 +1,4 @@
+- chore: write loss gradient to loss
 - TensorF32 in instructions
 - use tensorf32 in operator trait
 

@@ -2,10 +2,19 @@
 
 - implement MultiHeadAttention
 
-- remove optimizer
+- TensorF32 in instructions
+- use tensorf32 in operator trait
+- Bake optimizer instructions in neural machine
+
 - add function to print a program instructions, inputs, output
+- add tensor names
+
+- avoid conversion between vec tensor and vec &tensor
 
 == Tensor clean-up ==
+
+- move concat and unconcat code to functions
+- copy -> copy_from
 
 - device.tensor should take size instead of rows, cols
 
@@ -30,6 +39,13 @@
 
 - implement mini batch
 - shuffle examples in each epoch
+
+- image transformer
+
+== Datasets ==
+
+- CIFAR-10
+- MNIST
 
 == Program ==
 

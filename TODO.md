@@ -2,9 +2,6 @@
 - use tensorf32 in operator trait
 - Bake optimizer instructions in neural machine
 
-- add tensor names
-- add function to print a program instructions, inputs, output
-
 - avoid conversion between vec tensor and vec &tensor
 - Clip must preserve the direction of the tensor
 

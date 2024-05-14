@@ -1,6 +1,8 @@
 - use tensorf32 in operator trait
 - TensorF32 in instructions
 
+- investigate calls to Device::tensor_f32
+- test if Zero is really needed
 - Bake optimizer instructions in neural machine
 
 - move concat and unconcat code to functions

@@ -91,8 +91,15 @@ impl Operator for Sigmoid {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let input = inputs[0].tensor().deref().borrow();
-        let output = outputs[0].tensor().deref().borrow();
+        self.forward_f32(
+            &[&inputs[0].tensor().deref().borrow()],
+            &[&outputs[0].tensor().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
         Self::activate(&input, &output)
     }
 }
@@ -115,12 +122,23 @@ impl Operator for SigmoidBackward {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        self.forward_f32(
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &outputs[0].tensor().deref().borrow(),
+                &inputs[0].gradient().deref().borrow(),
+            ],
+            &[&outputs[0].gradient().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         if outputs[0].requires_grad() {
-            let output_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
-            let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
+            let output_gradient = outputs[0];
+            let input_gradient = inputs[2];
             // Compute activation function derivative.
-            let output: &TensorF32 = &outputs[0].tensor().deref().borrow();
-            let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+            let output = inputs[1];
+            let input = inputs[0];
             let rows = output.rows();
             let cols = output.cols();
             let len = rows * cols;

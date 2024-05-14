@@ -27,7 +27,7 @@ impl Tensor {
     }
 
     pub fn name(&self) -> String {
-        "r".to_owned() + self.name.to_string().as_str()
+        "t".to_owned() + self.name.to_string().as_str()
     }
 
     pub fn push_forward_instruction(

@@ -117,9 +117,16 @@ impl Operator for Softmax {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let input = inputs[0].tensor().deref().borrow();
-        let output = outputs[0].tensor().deref().borrow();
-        Self::activate(&input, &output)
+        self.forward_f32(
+            &[&inputs[0].tensor().deref().borrow()],
+            &[&outputs[0].tensor().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+        Self::activate(input, output)
     }
 }
 
@@ -141,15 +148,26 @@ impl Operator for SoftmaxBackward {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        self.forward_f32(
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[0].gradient().deref().borrow(),
+                &outputs[0].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].gradient().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         if outputs[0].requires_grad() {
-            let output_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
-            let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
-            // Compute activation function derivative.
-            let output: &TensorF32 = &outputs[0].tensor().deref().borrow();
-            let input: &TensorF32 = &inputs[0].tensor().deref().borrow();
+            let output_gradient = outputs[0];
+            let input_gradient = inputs[0];
+            let output = inputs[2];
+            let input = inputs[0];
             let rows = output.rows();
             let cols = output.cols();
             let len = rows * cols;
+            // Compute activation function derivative.
             let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
             Softmax::derive(output, input, &mut layer_f_derivative)?;
             TensorF32::mul(&layer_f_derivative, input_gradient, output_gradient)?;

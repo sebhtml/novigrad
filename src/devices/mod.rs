@@ -159,7 +159,8 @@ impl Device {
     }
 
     pub fn tensor_f32(&self, rows: usize, cols: usize, values: Vec<f32>) -> TensorF32 {
-        TensorF32::new(rows, cols, values, self)
+        let name = *self.next_name.deref().borrow();
+        TensorF32::new(name, rows, cols, values, self)
     }
 
     pub fn tensor(
@@ -188,6 +189,18 @@ impl Device {
                 .push(tensor.clone())
         }
         tensor
+    }
+
+    pub fn tensor_count(&self) -> usize {
+        *self.next_name.deref().borrow()
+    }
+
+    pub fn parameter_count(&self) -> usize {
+        let mut count = 0;
+        for t in self.tensors_to_optimize.deref().borrow().iter() {
+            count += t.tensor().deref().borrow().len();
+        }
+        count
     }
 
     pub fn tensors_to_optimize(&self) -> &Rc<RefCell<Vec<Tensor>>> {

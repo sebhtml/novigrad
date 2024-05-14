@@ -8,6 +8,7 @@ use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct TensorF32 {
+    name: usize,
     device: Device,
     size: Rc<RefCell<Vec<usize>>>,
     buffer: Rc<RefCell<DevBuffer>>,
@@ -22,15 +23,20 @@ impl PartialEq for TensorF32 {
 }
 
 impl TensorF32 {
-    pub fn new(rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
+    pub fn new(name: usize, rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
         let mut buffer = device.buffer(values.len());
         buffer.set_values(values);
         Self {
+            name,
             device: device.clone(),
             size: Rc::new(RefCell::new(vec![rows, cols])),
             buffer: Rc::new(RefCell::new(buffer)),
         }
+    }
+
+    pub fn name(&self) -> String {
+        "t".to_owned() + self.name.to_string().as_str()
     }
 
     pub fn requires_grad(&self) -> bool {

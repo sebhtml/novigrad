@@ -6,9 +6,5 @@ pub use cross_entropy_loss::*;
 
 pub trait LossFunction {
     fn evaluate(device: &Device, expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error>;
-    fn derive(
-        expected: &TensorF32,
-        actual: &TensorF32,
-        result: &mut TensorF32,
-    ) -> Result<(), Error>;
+    fn derive(expected: &TensorF32, actual: &TensorF32, result: &TensorF32) -> Result<(), Error>;
 }

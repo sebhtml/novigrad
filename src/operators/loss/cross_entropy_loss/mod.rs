@@ -57,11 +57,7 @@ impl LossFunction for CrossEntropyLoss {
     /// then we don't need to derive the softmax activations.
     /// The derivative of the Loss in respect to logits (before activation) is
     /// output of the softmax function - expected output (one-hot encoded)
-    fn derive(
-        expected: &TensorF32,
-        actual: &TensorF32,
-        result: &mut TensorF32,
-    ) -> Result<(), Error> {
+    fn derive(expected: &TensorF32, actual: &TensorF32, result: &TensorF32) -> Result<(), Error> {
         TensorF32::copy(actual, result)?;
         TensorF32::sub(expected, result)
     }
@@ -75,8 +71,8 @@ impl BinaryOperator for CrossEntropyLoss {
         output.push_forward_instruction(Rc::new(self.clone()), &[input_1, input_2], &[&output]);
         output.push_backward_instruction(
             Rc::new(CrossEntropyLossBackward::default()),
-            &[&output],
             &[input_1, input_2],
+            &[input_2],
         );
         Ok(output)
     }
@@ -88,14 +84,20 @@ impl Operator for CrossEntropyLoss {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let expected = &inputs[0].tensor().deref().borrow();
-        let actual = &inputs[1].tensor().deref().borrow();
+        self.forward_f32(
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].tensor().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let expected = inputs[0];
+        let actual = inputs[1];
         let loss = CrossEntropyLoss::evaluate(&self.device, expected, actual)?;
-        outputs[0]
-            .tensor()
-            .deref()
-            .borrow()
-            .set_values(vec![loss; 1]);
+        outputs[0].set_values(vec![loss; 1]);
         Ok(())
     }
 }
@@ -113,12 +115,23 @@ impl Operator for CrossEntropyLossBackward {
         "CrossEntropyLossBackward"
     }
 
-    fn forward(&self, _inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        debug_assert_eq!(outputs.len(), 2);
-        if outputs[1].requires_grad() {
-            let output_gradient: &mut TensorF32 = &mut outputs[1].gradient().deref().borrow_mut();
-            let expected: &TensorF32 = &outputs[0].tensor().deref().borrow();
-            let actual: &TensorF32 = &outputs[1].tensor().deref().borrow();
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        self.forward_f32(
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].gradient().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        debug_assert_eq!(inputs.len(), 2);
+        debug_assert_eq!(outputs.len(), 1);
+        if outputs[0].requires_grad() {
+            let output_gradient = outputs[0];
+            let expected = inputs[0];
+            let actual = inputs[1];
             CrossEntropyLoss::derive(expected, actual, output_gradient)?;
         }
         Ok(())

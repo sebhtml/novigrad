@@ -70,10 +70,20 @@ impl Operator for MatMul {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        self.forward_f32(
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].tensor().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
-        let input_0 = &inputs[0].tensor().deref().borrow();
-        let input_1 = &inputs[1].tensor().deref().borrow();
-        let output = &outputs[0].tensor().deref().borrow();
+        let input_0 = inputs[0];
+        let input_1 = inputs[1];
+        let output = outputs[0];
         let a = input_0;
         let b = input_1;
         let c = output;

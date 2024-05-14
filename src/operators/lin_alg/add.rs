@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{BinaryOperator, Device, Operator, Tensor, TensorF32};
+use crate::{BinaryOperator, Device, Error, Operator, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
@@ -17,7 +17,7 @@ impl Add {
 }
 
 impl BinaryOperator for Add {
-    fn forward(&self, input_1: &Tensor, input_2: &Tensor) -> Result<Tensor, crate::Error> {
+    fn forward(&self, input_1: &Tensor, input_2: &Tensor) -> Result<Tensor, Error> {
         let input_0_t: &TensorF32 = &input_1.tensor().deref().borrow();
         let input_1_t: &TensorF32 = &input_1.tensor().deref().borrow();
         debug_assert_eq!(input_0_t.size(), input_1_t.size());
@@ -42,12 +42,22 @@ impl Operator for Add {
         "Add"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        let input_0 = inputs[0].tensor().deref().borrow();
-        let input_1 = inputs[1].tensor().deref().borrow();
-        let output = outputs[0].tensor().deref().borrow();
-        TensorF32::copy(&input_0, &output)?;
-        TensorF32::add(&input_1, &output)
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        self.forward_f32(
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].tensor().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input_0 = inputs[0];
+        let input_1 = inputs[1];
+        let output = outputs[0];
+        TensorF32::copy(input_0, output)?;
+        TensorF32::add(input_1, output)
     }
 }
 
@@ -63,17 +73,27 @@ impl Operator for AddBackward {
         "AddBackward"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        self.forward_f32(
+            &[&inputs[0].gradient().deref().borrow()],
+            &[
+                &outputs[0].gradient().deref().borrow(),
+                &outputs[1].gradient().deref().borrow_mut(),
+            ],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(outputs.len(), 2);
-        let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
+        let input_gradient = inputs[0];
 
         if outputs[1].requires_grad() {
-            let output_1_gradient: &mut TensorF32 = &mut outputs[1].gradient().deref().borrow_mut();
+            let output_1_gradient = outputs[1];
             TensorF32::copy(input_gradient, output_1_gradient)?;
         }
 
         if outputs[0].requires_grad() {
-            let output_0_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
+            let output_0_gradient = outputs[0];
             TensorF32::copy(input_gradient, output_0_gradient)?;
         }
 

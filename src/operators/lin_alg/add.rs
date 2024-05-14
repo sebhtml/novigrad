@@ -27,12 +27,12 @@ impl BinaryOperator for Add {
         let output =
             self.device
                 .tensor(rows, cols, vec![0.0; len], &[input_1, input_2], true, false);
-        output.push_forward_instruction(Rc::new(self.clone()), &[input_1, input_2], &[&output]);
-        output.push_backward_instruction(
-            Rc::new(AddBackward::new()),
-            &[&output],
-            &[input_1, input_2],
-        );
+        let inputs = [input_1, input_2];
+        let outputs = [&output];
+        output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
+        let inputs = [&output];
+        let outputs = [input_1, input_2];
+        output.push_backward_instruction(Rc::new(AddBackward::new()), &inputs, &outputs);
         Ok(output)
     }
 }

@@ -19,19 +19,25 @@ impl Concat {
 }
 
 impl NaryOperator for Concat {
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        let rows = inputs[0].tensor().deref().borrow().rows();
-        let cols = inputs[0].tensor().deref().borrow().cols();
-        for input in inputs.iter() {
+    fn forward(&self, inputs_n: &[&Tensor]) -> Result<Tensor, Error> {
+        let rows = inputs_n[0].tensor().deref().borrow().rows();
+        let cols = inputs_n[0].tensor().deref().borrow().cols();
+        for input in inputs_n.iter() {
             debug_assert_eq!(input.tensor().deref().borrow().rows(), rows);
             debug_assert_eq!(input.tensor().deref().borrow().cols(), cols);
         }
-        let cols = inputs.len() * cols;
+        let cols = inputs_n.len() * cols;
         let len = rows * cols;
         let values = vec![0.0; len];
-        let output = self.device.tensor(rows, cols, values, inputs, true, false);
-        output.push_forward_instruction(Rc::new(self.clone()), inputs, &[&output]);
-        output.push_backward_instruction(Rc::new(ConcatBackward::default()), &[&output], inputs);
+        let output = self
+            .device
+            .tensor(rows, cols, values, inputs_n, true, false);
+        let inputs = inputs_n;
+        let outputs = [&output];
+        output.push_forward_instruction(Rc::new(self.clone()), inputs, &outputs);
+        let inputs = [&output];
+        let outputs = inputs_n;
+        output.push_backward_instruction(Rc::new(ConcatBackward::default()), &inputs, outputs);
         Ok(output)
     }
 }

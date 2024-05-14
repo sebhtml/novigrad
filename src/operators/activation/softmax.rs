@@ -101,11 +101,15 @@ impl UnaryOperator for Softmax {
         let output = self
             .device
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
-        output.push_forward_instruction(Rc::new(self.clone()), &[input], &[&output]);
+        let inputs = [input];
+        let outputs = [&output];
+        output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
+        let inputs = [&output];
+        let outputs = [input];
         output.push_backward_instruction(
             Rc::new(SoftmaxBackward::new(&self.device)),
-            &[&output],
-            &[input],
+            &inputs,
+            &outputs,
         );
         Ok(output)
     }

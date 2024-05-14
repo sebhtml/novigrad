@@ -27,12 +27,12 @@ impl BinaryOperator for Mul {
         let output =
             self.device
                 .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
-        output.push_forward_instruction(Rc::new(self.clone()), &[input_0, input_1], &[&output]);
-        output.push_backward_instruction(
-            Rc::new(MulBackward::default()),
-            &[&output],
-            &[input_0, input_1],
-        );
+        let inputs = [input_0, input_1];
+        let outputs = [&output];
+        output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
+        let inputs = [&output];
+        let outputs = [input_0, input_1];
+        output.push_backward_instruction(Rc::new(MulBackward::default()), &inputs, &outputs);
         Ok(output)
     }
 }

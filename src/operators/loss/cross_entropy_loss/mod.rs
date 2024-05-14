@@ -68,11 +68,15 @@ impl BinaryOperator for CrossEntropyLoss {
         let output = self
             .device
             .tensor(1, 1, vec![0.0], &[input_1, input_2], true, false);
-        output.push_forward_instruction(Rc::new(self.clone()), &[input_1, input_2], &[&output]);
+        let inputs = [input_1, input_2];
+        let outputs = [&output];
+        output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
+        let inputs = [input_1, input_2];
+        let outputs = [input_2];
         output.push_backward_instruction(
             Rc::new(CrossEntropyLossBackward::default()),
-            &[input_1, input_2],
-            &[input_2],
+            &inputs,
+            &outputs,
         );
         Ok(output)
     }

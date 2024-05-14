@@ -43,9 +43,19 @@ impl Operator for Mul {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let input_0 = &inputs[0].tensor().deref().borrow();
-        let input_1 = &inputs[1].tensor().deref().borrow();
-        let output = &outputs[0].tensor().deref().borrow();
+        self.forward_f32(
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].tensor().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input_0 = inputs[0];
+        let input_1 = inputs[1];
+        let output = outputs[0];
         TensorF32::mul(input_0, input_1, output)
     }
 }
@@ -64,18 +74,32 @@ impl Operator for MulBackward {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        self.forward_f32(
+            &[
+                &outputs[0].tensor().deref().borrow(),
+                &outputs[1].tensor().deref().borrow(),
+                &inputs[2].gradient().deref().borrow(),
+            ],
+            &[
+                &outputs[0].gradient().deref().borrow(),
+                &outputs[1].gradient().deref().borrow(),
+            ],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(outputs.len(), 2);
-        let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
+        let input_gradient = inputs[2];
 
         if outputs[1].requires_grad() {
-            let output_1_gradient: &mut TensorF32 = &mut outputs[1].gradient().deref().borrow_mut();
-            let output_0: &TensorF32 = &outputs[0].tensor().deref().borrow();
+            let output_1_gradient = outputs[1];
+            let output_0 = inputs[0];
             TensorF32::mul(output_0, input_gradient, output_1_gradient)?;
         }
 
         if outputs[0].requires_grad() {
-            let output_0_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
-            let output: &TensorF32 = &outputs[1].tensor().deref().borrow();
+            let output_0_gradient = outputs[0];
+            let output = inputs[1];
             TensorF32::mul(output, input_gradient, output_0_gradient)?;
         }
 

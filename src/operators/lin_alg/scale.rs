@@ -44,8 +44,19 @@ impl Operator for Scale {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        let input = &inputs[0].tensor().deref().borrow();
-        let output = &outputs[0].tensor().deref().borrow();
+        self.forward_f32(
+            &[&inputs[0].tensor().deref().borrow()],
+            &[&outputs[0].tensor().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(
+        &self,
+        inputs: &[&TensorF32],
+        outputs: &[&TensorF32],
+    ) -> Result<(), crate::Error> {
+        let input = inputs[0];
+        let output = outputs[0];
         TensorF32::copy(input, output)?;
         let alpha = self.alpha;
         TensorF32::scale(alpha, output)

@@ -4,6 +4,22 @@
 - TensorF32 in instructions
 - Bake optimizer instructions in neural machine
 
+== perceptron ==
+
+- add perceptron model with additin of numbers , Linear, Rms
+
+== Clean-up ==
+
+- Remove TensorF32 matmul because of double zero
+- remoze zero and name from tensor
+- sigmoidGrad and softmaxBackward are Mul
+- remove most of the Backward ops
+
+== Things ==
+
+- rename DatasetDetails to ModelTrainingDetails
+- backward has no parameters
+
 == Other things ==
 
 - investigate calls to Device::tensor_f32
@@ -13,6 +29,9 @@
 - copy -> copy_from
 - remove recycle
 
+== Clipping ==
+
+- clip gradient correctly
 - Clip must preserve the direction of the tensor
 
 == Tensor clean-up ==

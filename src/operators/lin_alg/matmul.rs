@@ -57,7 +57,7 @@ impl BinaryOperator for MatMul {
         output.push_forward_instruction(Rc::new(self.clone()), &[input_0, input_1], &[&output]);
         output.push_backward_instruction(
             Rc::new(MatMulBackward::new(self.transb)),
-            &[&output],
+            &[input_0, input_1, &output],
             &[input_0, input_1],
         );
         Ok(output)
@@ -109,11 +109,11 @@ impl Operator for MatMulBackward {
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         debug_assert_eq!(outputs.len(), 2);
-        let input_gradient: &TensorF32 = &inputs[0].gradient().deref().borrow();
+        let input_gradient: &TensorF32 = &inputs[2].gradient().deref().borrow();
 
         if outputs[1].requires_grad() {
             let output_1_gradient: &mut TensorF32 = &mut outputs[1].gradient().deref().borrow_mut();
-            let output_0: &TensorF32 = &outputs[0].tensor().deref().borrow();
+            let output_0: &TensorF32 = &inputs[0].tensor().deref().borrow();
             let a: &TensorF32 = output_0;
             let b: &TensorF32 = input_gradient;
             let c: &mut TensorF32 = output_1_gradient;
@@ -123,7 +123,7 @@ impl Operator for MatMulBackward {
 
         if outputs[0].requires_grad() {
             let output_0_gradient: &mut TensorF32 = &mut outputs[0].gradient().deref().borrow_mut();
-            let output_1: &TensorF32 = &outputs[1].tensor().deref().borrow();
+            let output_1: &TensorF32 = &inputs[1].tensor().deref().borrow();
             let a: &TensorF32 = output_1;
             let b: &TensorF32 = input_gradient;
             let c: &mut TensorF32 = output_0_gradient;

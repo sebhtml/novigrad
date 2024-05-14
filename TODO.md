@@ -1,6 +1,5 @@
-- chore: write loss gradient to loss
-- TensorF32 in instructions
 - use tensorf32 in operator trait
+- TensorF32 in instructions
 
 - Bake optimizer instructions in neural machine
 

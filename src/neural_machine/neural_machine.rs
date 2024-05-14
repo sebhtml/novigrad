@@ -6,6 +6,7 @@ use crate::{
 };
 
 pub struct NeuralMachine {
+    device: Device,
     example_input: Tensor,
     example_output: Tensor,
     program_output: Tensor,
@@ -70,6 +71,7 @@ impl NeuralMachine {
         let instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
 
         let program = NeuralMachine {
+            device: device.clone(),
             example_input,
             example_output,
             program_output,
@@ -131,7 +133,49 @@ impl NeuralMachine {
 
     pub fn print(&self) {
         println!("------------------------------");
-        println!("Neural Machine Instructions");
+        println!("Booting Neural Machine...");
+        println!("Neural program compiled with Novigrad");
+
+        println!("Tensors: {}", self.device.tensor_count());
+        println!("Parameters: {}", self.device.parameter_count());
+
+        let input_size: Vec<usize> = self
+            .example_input
+            .tensor()
+            .deref()
+            .borrow()
+            .size()
+            .deref()
+            .borrow()
+            .clone();
+        println!(
+            "Input size: [{}]",
+            input_size
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+
+        let output_size: Vec<usize> = self
+            .example_output
+            .tensor()
+            .deref()
+            .borrow()
+            .size()
+            .deref()
+            .borrow()
+            .clone();
+        println!(
+            "Output size: [{}]",
+            output_size
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+
+        println!("Instructions: {}", self.instructions.len());
         println!("------------------------------");
         for (_i, instruction) in self.instructions.iter().enumerate() {
             println!(

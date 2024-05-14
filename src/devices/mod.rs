@@ -191,6 +191,18 @@ impl Device {
         tensor
     }
 
+    pub fn tensor_count(&self) -> usize {
+        *self.next_name.deref().borrow()
+    }
+
+    pub fn parameter_count(&self) -> usize {
+        let mut count = 0;
+        for t in self.tensors_to_optimize.deref().borrow().iter() {
+            count += t.tensor().deref().borrow().len();
+        }
+        count
+    }
+
     pub fn tensors_to_optimize(&self) -> &Rc<RefCell<Vec<Tensor>>> {
         &self.tensors_to_optimize
     }

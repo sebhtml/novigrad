@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{Error, Operator, Tensor};
+use crate::{Error, Operator, Tensor, TensorF32};
 
 pub struct Clip {
     min: f32,
@@ -19,12 +19,16 @@ impl Operator for Clip {
     }
 
     fn forward(&self, _inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        let outputs: Vec<TensorF32> = outputs
+            .iter()
+            .map(|t| t.gradient().deref().borrow().clone())
+            .collect();
+        self.forward_f32(&[], &outputs.iter().collect::<Vec<_>>())
+    }
+
+    fn forward_f32(&self, _inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         for output in outputs {
-            (*output)
-                .gradient()
-                .deref()
-                .borrow_mut()
-                .clip(self.min, self.max)?;
+            output.clip(self.min, self.max)?;
         }
         Ok(())
     }

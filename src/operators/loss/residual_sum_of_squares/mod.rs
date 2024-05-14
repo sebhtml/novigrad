@@ -70,14 +70,20 @@ impl Operator for ResidualSumOfSquares {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let expected = &inputs[0].tensor().deref().borrow();
-        let actual = &inputs[1].tensor().deref().borrow();
+        self.forward_f32(
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].tensor().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let expected = inputs[0];
+        let actual = inputs[1];
         let loss = ResidualSumOfSquares::evaluate(&self.device, expected, actual)?;
-        outputs[0]
-            .tensor()
-            .deref()
-            .borrow()
-            .set_values(vec![loss; 1]);
+        outputs[0].set_values(vec![loss; 1]);
         Ok(())
     }
 }
@@ -96,12 +102,22 @@ impl Operator for ResidualSumOfSquaresBackward {
     }
 
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+        self.forward_f32(
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].gradient().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);
         if outputs[0].requires_grad() {
-            let output_gradient: &TensorF32 = &outputs[0].gradient().deref().borrow();
-            let expected: &TensorF32 = &inputs[0].tensor().deref().borrow();
-            let actual: &TensorF32 = &inputs[1].tensor().deref().borrow();
+            let output_gradient = outputs[0];
+            let expected = inputs[0];
+            let actual = inputs[1];
             ResidualSumOfSquares::derive(expected, actual, output_gradient)?;
         }
         Ok(())

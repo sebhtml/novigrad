@@ -1,9 +1,13 @@
+== Instructions that use TensorF32 ==
+
 - use tensorf32 in operator trait
 - TensorF32 in instructions
+- Bake optimizer instructions in neural machine
+
+== Other things ==
 
 - investigate calls to Device::tensor_f32
 - test if Zero is really needed
-- Bake optimizer instructions in neural machine
 
 - move concat and unconcat code to functions
 - copy -> copy_from

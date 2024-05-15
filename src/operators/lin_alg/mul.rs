@@ -30,7 +30,7 @@ impl BinaryOperator for Mul {
         let inputs = [input_0, input_1];
         let outputs = [&output];
         output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
-        let inputs = [&output];
+        let inputs = [input_0, input_1, &output];
         let outputs = [input_0, input_1];
         output.push_backward_instruction(Rc::new(MulBackward::default()), &inputs, &outputs);
         Ok(output)
@@ -76,8 +76,8 @@ impl Operator for MulBackward {
     fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         self.forward_f32(
             &[
-                &outputs[0].tensor().deref().borrow(),
-                &outputs[1].tensor().deref().borrow(),
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
                 &inputs[2].gradient().deref().borrow(),
             ],
             &[

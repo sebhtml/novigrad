@@ -102,7 +102,7 @@ impl NeuralMachine {
             TensorF32::copy(expected_output, example_output)?;
         }
         // Forward tensors
-        for (i, instruction) in self.instructions.iter().enumerate() {
+        for (_i, instruction) in self.instructions.iter().enumerate() {
             //println!("Forward instruction {} {}", i, instruction.operator().name(),);
             instruction.forward()?;
 

@@ -4,15 +4,12 @@
 - TensorF32 in instructions
 
 - fix inverted weight_rows and weights_cols in Linear
-== perceptron ==
-
-- add perceptron model with additin of numbers , Linear, Rms
 
 - Bake optimizer instructions in neural machine
 
 == Clean-up ==
 
-- Remove TensorF32 matmul because of double zero
+- Remove TensorF32 matmul
 - remoze zero and name from tensor
 - sigmoidGrad and softmaxBackward are Mul
 - remove most of the Backward ops

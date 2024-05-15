@@ -145,7 +145,6 @@ impl TensorF32 {
         }
 
         debug_assert_eq!(result.size(), left.size());
-        result.zero()?;
 
         let mut result_values = result.get_values()?;
         let left_values = left.get_values()?;
@@ -229,7 +228,6 @@ impl TensorF32 {
         c: &TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
-        c.zero()?;
         let alpha = 1.0;
         let beta = 0.0;
         TensorF32::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)

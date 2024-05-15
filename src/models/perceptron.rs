@@ -1,11 +1,10 @@
 use std::ops::Deref;
 
 use crate::{
-    into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, ErrorEnum,
-    NeuralMachine, ResidualSumOfSquares, Tensor, Tokenizer, TokenizerTrait, UnaryOperator,
+    DatasetDetails, Device, Error, NeuralMachine, ResidualSumOfSquares, Tensor, UnaryOperator,
 };
 
-use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
+use crate::{Linear, Model};
 
 struct PerceptronModel {
     linear: Linear,

@@ -5,6 +5,33 @@ use crate::{
     OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
+
+trait IsPrintable{
+    fn is_printable(&self) -> bool;
+}
+
+impl IsPrintable for char {
+    fn is_printable(&self) -> bool {
+        let code = *self as usize;
+        if (code >= 32 && code <= 126) || code == 9 || code == 10 || code == 13 {
+            return true;
+        }
+        return false;
+    }
+}
+
+fn as_printable(output: String, replacement: char) -> String {
+    let mut printable: String = String::new();
+    for char in output.as_str().chars() {
+        if char.is_printable() {
+            printable += String::from(char).as_str();
+        } else {
+            printable += String::from(replacement).as_str();
+        }
+    }
+    printable
+}
+
 pub fn print_expected_output_and_actual_output(
     epoch: usize,
     tokenizer: &mut Tokenizer,
@@ -29,9 +56,11 @@ pub fn print_expected_output_and_actual_output(
         tokenizer.decode(&[expected_output_token])?
     );
 
+    let actual_output_text: String = tokenizer.decode(&[actual_output_token])?;
+
     println!(
         "  actual_output_text: {}",
-        tokenizer.decode(&[actual_output_token])?
+        as_printable(actual_output_text, '?'),
     );
 
     println!("  input_tokens: {:?}", &input_tokens);

@@ -26,6 +26,9 @@ impl LossFunction for CrossEntropyLoss {
         let p = expected;
         let q = actual;
         if p.size() != q.size() {
+            println!("Incompatible sizes");
+            println!("p {}", p);
+            println!("q {}", q);
             return Err(Error::new(
                 file!(),
                 line!(),

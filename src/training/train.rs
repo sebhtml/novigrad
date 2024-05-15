@@ -31,9 +31,25 @@ fn as_printable(output: String, replacement: char) -> String {
     printable
 }
 
+fn tokens_to_text(
+    input_tokens: &[usize],
+    tokenizer: &mut Option<Tokenizer>,
+) -> Result<String, Error> {
+    let input_text = match tokenizer {
+        Some(tokenizer) => tokenizer.decode(&input_tokens)?,
+        None => input_tokens
+            .to_vec()
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<_>>()
+            .join(", "),
+    };
+    Ok(input_text)
+}
+
 pub fn print_expected_output_and_actual_output(
     epoch: usize,
-    tokenizer: &mut Tokenizer,
+    tokenizer: &mut Option<Tokenizer>,
     example: usize,
     input: &TensorF32,
     expected_output: &TensorF32,
@@ -48,14 +64,17 @@ pub fn print_expected_output_and_actual_output(
     println!("Epoch {} Example {}", epoch, example);
     println!("Loss {}", loss);
 
-    println!("  input_text: {}", tokenizer.decode(&input_tokens)?);
+    println!(
+        "  input_text: {}",
+        tokens_to_text(&input_tokens, tokenizer)?
+    );
 
     println!(
         "  expected_output_text: {}",
-        tokenizer.decode(&[expected_output_token])?
+        tokens_to_text(&[expected_output_token], tokenizer)?
     );
 
-    let actual_output_text: String = tokenizer.decode(&[actual_output_token])?;
+    let actual_output_text: String = tokens_to_text(&[actual_output_token], tokenizer)?;
 
     println!(
         "  actual_output_text: {}",
@@ -180,7 +199,7 @@ pub fn train_network_on_dataset(
 fn print_results(
     epoch: usize,
     program: &NeuralMachine,
-    tokenizer: &mut Tokenizer,
+    tokenizer: &mut Option<Tokenizer>,
     inputs: &[Tensor],
     outputs: &[Tensor],
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {

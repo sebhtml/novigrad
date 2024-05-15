@@ -2,8 +2,10 @@ mod model;
 pub use model::*;
 mod mega_man;
 mod mega_man_attention;
+mod perceptron;
 mod simple;
 use crate::NeuralMachine;
+pub use perceptron::*;
 use std::fs;
 
 use crate::{Device, Error, ErrorEnum, Tensor, Tokenizer, TokenizerTrait};
@@ -16,7 +18,7 @@ pub enum Dataset {
 
 pub struct DatasetDetails {
     pub device: Device,
-    pub tokenizer: Tokenizer,
+    pub tokenizer: Option<Tokenizer>,
     pub examples: Vec<(Tensor, Tensor)>,
     pub program: NeuralMachine,
     pub learning_rate: f32,

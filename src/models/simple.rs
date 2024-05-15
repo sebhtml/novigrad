@@ -129,7 +129,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer,
+        tokenizer: Some(tokenizer),
         examples,
         program,
         epochs: 1000,

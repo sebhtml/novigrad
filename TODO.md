@@ -3,6 +3,7 @@
 - use tensorf32 in operator trait
 - TensorF32 in instructions
 
+- fix inverted weight_rows and weights_cols in Linear
 == perceptron ==
 
 - add perceptron model with additin of numbers , Linear, Rms

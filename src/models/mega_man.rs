@@ -96,7 +96,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
 
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer,
+        tokenizer: Some(tokenizer),
         examples,
         program,
         epochs: 300,

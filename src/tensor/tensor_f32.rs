@@ -506,7 +506,7 @@ impl TensorF32 {
 impl Display for TensorF32 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let self_values = self.get_values().map_err(|_| std::fmt::Error)?;
-        _ = write!(f, "Shape: {:?}", self.size);
+        _ = write!(f, "Tensor name: {}, size: {:?}", self.name(), self.size.deref().borrow());
         _ = write!(f, "\n");
         for row in 0..self.rows() {
             for col in 0..self.cols() {

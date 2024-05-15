@@ -5,8 +5,7 @@ use crate::{
     OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
-
-trait IsPrintable{
+trait IsPrintable {
     fn is_printable(&self) -> bool;
 }
 

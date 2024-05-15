@@ -103,7 +103,7 @@ impl NeuralMachine {
             TensorF32::copy(expected_output, example_output)?;
         }
         // Forward tensors
-        for (_i, instruction) in self.instructions.iter().enumerate() {
+        for (i, instruction) in self.instructions.iter().enumerate() {
             instruction.forward()?;
 
             // TODO impl Display
@@ -115,13 +115,17 @@ impl NeuralMachine {
                 instruction.inputs().len(),
                 instruction.outputs().len()
             );
-            println!("outputs");
+
+            println!("inputs:");
+
+            for inputs in instruction.inputs().deref().iter() {
+                println!("inputs {}", inputs);
+            }
+
+            println!("outputs:");
 
             for output in instruction.outputs().deref().iter() {
-                let output_t: &TensorF32 = &output.tensor().deref().borrow();
-                let output_g: &TensorF32 = &output.gradient().deref().borrow();
-                println!("output_t {}", output_t);
-                println!("output_g {}", output_g);
+                println!("output {}", output);
             }
                  */
         }

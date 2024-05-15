@@ -96,8 +96,8 @@ pub fn print_expected_output_and_actual_output(
 fn print_device_mem_info(device: &Device) -> Result<(), Error> {
     let mem_info = &device.get_memory_info()?;
     println!(
-        "Device memory  used: {}, free: {}, total: {}, model_parameters: {}",
-        mem_info.used, mem_info.free, mem_info.total, mem_info.model_parameters,
+        "Device memory  used: {}, free: {}, total: {}",
+        mem_info.used, mem_info.free, mem_info.total,
     );
     Ok(())
 }

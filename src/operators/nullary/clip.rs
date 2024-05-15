@@ -3,13 +3,12 @@ use std::ops::Deref;
 use crate::{Error, Operator, Tensor, TensorF32};
 
 pub struct Clip {
-    min: f32,
-    max: f32,
+    norm: f32,
 }
 
 impl Clip {
-    pub fn new(min: f32, max: f32) -> Self {
-        Self { min, max }
+    pub fn new(norm: f32) -> Self {
+        Self { norm }
     }
 }
 
@@ -28,7 +27,7 @@ impl Operator for Clip {
 
     fn forward_f32(&self, _inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         for output in outputs {
-            output.clip(self.min, self.max)?;
+            output.clip(self.norm)?;
         }
         Ok(())
     }

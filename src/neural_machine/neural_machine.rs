@@ -58,9 +58,8 @@ impl NeuralMachine {
             let instruction = tensor.backward_instructions().deref().borrow()[0].to_owned();
             let outputs: Vec<Tensor> = instruction.outputs().deref().clone().into_iter().collect();
             let outputs: Vec<&Tensor> = outputs.iter().collect();
-            let min = -1.0;
-            let max = 1.0;
-            let clip_instruction = Instruction::new(Rc::new(Clip::new(min, max)), &[], &outputs);
+            let norm = 1.0;
+            let clip_instruction = Instruction::new(Rc::new(Clip::new(norm)), &[], &outputs);
             instructions.push(instruction);
             instructions.push(clip_instruction);
         }
@@ -104,6 +103,7 @@ impl NeuralMachine {
         }
         // Forward tensors
         for (i, instruction) in self.instructions.iter().enumerate() {
+            //println!("Forward instruction {} {}", i, instruction.operator().name(),);
             instruction.forward()?;
 
             // TODO impl Display
@@ -127,7 +127,7 @@ impl NeuralMachine {
             for output in instruction.outputs().deref().iter() {
                 println!("output {}", output);
             }
-                 */
+              */
         }
         Ok(self.program_output.clone())
     }

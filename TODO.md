@@ -29,11 +29,6 @@
 - copy -> copy_from
 - remove recycle
 
-== Clipping ==
-
-- clip gradient correctly
-- Clip must preserve the direction of the tensor
-
 == Tensor clean-up ==
 
 - device.tensor should take size instead of rows, cols

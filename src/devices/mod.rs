@@ -160,6 +160,7 @@ impl Device {
 
     pub fn tensor_f32(&self, rows: usize, cols: usize, values: Vec<f32>) -> TensorF32 {
         let name = *self.next_name.deref().borrow();
+        *self.next_name.deref().borrow_mut() += 1;
         TensorF32::new(name, rows, cols, values, self)
     }
 

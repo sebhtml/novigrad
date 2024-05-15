@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Operator, TensorF32, UnaryOperator};
+use crate::{ActivationFunction, Operator, TensorF32, UnaryOperator, Zero};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -103,6 +103,7 @@ impl UnaryOperator for Softmax {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs);
         output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
         let inputs = [&output];
         let outputs = [input];

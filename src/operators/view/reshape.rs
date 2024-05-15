@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, Error, Operator, Tensor, TensorF32, UnaryOperator};
+use crate::{devices::Device, Error, Operator, Tensor, TensorF32, UnaryOperator, Zero};
 
 /// https://onnx.ai/onnx/operators/onnx__Reshape.html
 #[derive(Clone)]
@@ -32,6 +32,7 @@ impl UnaryOperator for Reshape {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs);
         output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
         let inputs = [&output];
         let outputs = [input];

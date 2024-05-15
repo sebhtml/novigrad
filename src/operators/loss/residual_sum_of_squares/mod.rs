@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32};
+use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero};
 
 use super::LossFunction;
 
@@ -56,6 +56,7 @@ impl BinaryOperator for ResidualSumOfSquares {
             .tensor(1, 1, vec![0.0], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs);
         output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
         let inputs = [input_1, input_2];
         let outputs = [input_2];

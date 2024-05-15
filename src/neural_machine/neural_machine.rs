@@ -2,7 +2,7 @@ use std::{ops::Deref, rc::Rc};
 
 use crate::{
     BinaryOperator, Clip, Device, Error, IdentityBackward, Instruction, Model, Operator, Tensor,
-    TensorF32, UnaryOperator, Zero,
+    TensorF32, UnaryOperator,
 };
 
 pub struct NeuralMachine {
@@ -49,12 +49,9 @@ impl NeuralMachine {
         let mut instructions = vec![];
 
         for tensor in tape.iter() {
-            let instruction = tensor.forward_instructions().deref().borrow()[0].to_owned();
-            let outputs: Vec<Tensor> = instruction.outputs().deref().clone().into_iter().collect();
-            let outputs: Vec<&Tensor> = outputs.iter().collect();
-            let zero_instruction = Instruction::new(Rc::new(Zero::default()), &[], &outputs);
-            instructions.push(zero_instruction);
-            instructions.push(instruction);
+            for instruction in tensor.forward_instructions().deref().borrow().iter() {
+                instructions.push(instruction.clone());
+            }
         }
 
         for tensor in tape.iter().rev() {

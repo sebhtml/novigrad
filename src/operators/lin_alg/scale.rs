@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Identity, Operator, Tensor, TensorF32, UnaryOperator};
+use crate::{Device, Identity, Operator, Tensor, TensorF32, UnaryOperator, Zero};
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// TODO implement broadcasting to use Mul instead
@@ -30,6 +30,7 @@ impl UnaryOperator for Scale {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs);
         output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
         let inputs = [&output];
         let outputs = [input];

@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32};
+use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero};
 
 /// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]
@@ -57,6 +57,7 @@ impl BinaryOperator for MatMul {
 
         let inputs = [input_0, input_1];
         let outputs = [&output];
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs);
         output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
 
         let inputs = [input_0, input_1, &output];

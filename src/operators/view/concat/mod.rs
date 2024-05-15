@@ -16,6 +16,38 @@ impl Concat {
             device: device.clone(),
         }
     }
+
+    pub fn concat(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let dst = outputs[0];
+        for input_index in 0..inputs.len() {
+            let src = inputs[input_index];
+            let src_col = 0;
+            let input_rows = src.rows();
+            let input_cols = src.cols();
+            for src_row in 0..input_rows {
+                let dst_row = src_row;
+                let dst_col = input_index * input_cols;
+                TensorF32::copy_slice(&src, src_row, src_col, &dst, dst_row, dst_col)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn unconcat(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let src = inputs[0];
+        for input_index in 0..outputs.len() {
+            let dst = outputs[input_index];
+            let dst_col = 0;
+            let input_rows = dst.rows();
+            let input_cols = dst.cols();
+            for dst_row in 0..input_rows {
+                let src_row = dst_row;
+                let src_col = input_index * input_cols;
+                TensorF32::copy_slice(src, src_row, src_col, dst, dst_row, dst_col)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl NaryOperator for Concat {
@@ -59,19 +91,7 @@ impl Operator for Concat {
     }
 
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let dst = outputs[0];
-        for input_index in 0..inputs.len() {
-            let src = inputs[input_index];
-            let src_col = 0;
-            let input_rows = src.rows();
-            let input_cols = src.cols();
-            for src_row in 0..input_rows {
-                let dst_row = src_row;
-                let dst_col = input_index * input_cols;
-                TensorF32::copy_slice(&src, src_row, src_col, &dst, dst_row, dst_col)?;
-            }
-        }
-        Ok(())
+        Self::concat(inputs, outputs)
     }
 }
 
@@ -100,18 +120,6 @@ impl Operator for ConcatBackward {
     }
 
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let src = inputs[0];
-        for input_index in 0..outputs.len() {
-            let dst = outputs[input_index];
-            let dst_col = 0;
-            let input_rows = dst.rows();
-            let input_cols = dst.cols();
-            for dst_row in 0..input_rows {
-                let src_row = dst_row;
-                let src_col = input_index * input_cols;
-                TensorF32::copy_slice(src, src_row, src_col, dst, dst_row, dst_col)?;
-            }
-        }
-        Ok(())
+        Concat::unconcat(inputs, outputs)
     }
 }

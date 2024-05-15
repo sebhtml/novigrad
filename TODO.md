@@ -2,11 +2,12 @@
 
 - use tensorf32 in operator trait
 - TensorF32 in instructions
-- Bake optimizer instructions in neural machine
 
 == perceptron ==
 
 - add perceptron model with additin of numbers , Linear, Rms
+
+- Bake optimizer instructions in neural machine
 
 == Clean-up ==
 
@@ -25,7 +26,6 @@
 - investigate calls to Device::tensor_f32
 - test if Zero is really needed
 
-- move concat and unconcat code to functions
 - copy -> copy_from
 - remove recycle
 
@@ -90,10 +90,10 @@
 
 == Devices ==
 
+- Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
 - use cuda stream to realize a tensor (is this useful ? CUDA execution is async by default)
 - implement a mul cuda kernel
 - Add support for Jim Keller's https://tenstorrent.com/cards/
-- Add support AMD GPUs (ROCm/rocBLAS)
 - Add support for Google TPU
 - Add support for Apple Metal
 - Add support for Intel Arc

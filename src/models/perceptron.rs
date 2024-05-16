@@ -12,7 +12,7 @@ struct PerceptronModel {
 
 impl PerceptronModel {
     pub fn new(device: &Device) -> Self {
-        let linear = Linear::new(device, 1, 2, 1);
+        let linear = Linear::new(device, 1, 2, false, 1);
 
         Self { linear }
     }
@@ -20,18 +20,6 @@ impl PerceptronModel {
 
 impl UnaryOperator for PerceptronModel {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        println!("linear forward");
-        assert_eq!(
-            &vec![1, 2],
-            &input
-                .tensor()
-                .deref()
-                .borrow()
-                .size()
-                .deref()
-                .borrow()
-                .clone(),
-        );
         self.linear.forward(input)
     }
 }
@@ -76,8 +64,8 @@ pub fn load_perceptron(device: &Device) -> Result<DatasetDetails, Error> {
         program,
         epochs: 100,
         progress: 10,
-        initial_total_error_min: 15.0,
-        final_total_error_max: 10.0,
+        initial_total_error_min: 50.0,
+        final_total_error_max: 0.005,
         learning_rate: 0.5,
     };
     Ok(details)

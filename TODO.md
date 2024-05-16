@@ -3,9 +3,13 @@
 - use tensorf32 in operator trait
 - TensorF32 in instructions
 
-- fix inverted weight_rows and weights_cols in Linear
-
 - Bake optimizer instructions in neural machine
+
+== Initialization ==
+
+- use Kaiming uniform initialization
+- revisit initialization of weights and biases in Linear
+- revisit initialization of embedding_table in Embedding
 
 == Clean-up ==
 
@@ -61,14 +65,6 @@
 
 - implement parallel execution of certain branches in parallel using a execution_group_id
 
-== Datasets ==
-
-- serialize and deserialize model to ONNX format
-
-== Initialization ==
-
-- revisit initialization of weights and biases in Linear
-- revisit initialization of embedding_table in Embedding
 
 == GPT-1 Transformer ==
 
@@ -81,9 +77,16 @@
 
 - implement positional encoding
 
-== Devices ==
+== AMD ==
 
 - Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
+
+== Datasets ==
+
+- serialize and deserialize model to ONNX format
+
+== Devices ==
+
 - use cuda stream to realize a tensor (is this useful ? CUDA execution is async by default)
 - implement a mul cuda kernel
 - Add support for Jim Keller's https://tenstorrent.com/cards/

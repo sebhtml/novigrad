@@ -32,7 +32,7 @@ impl MegaManAttentionModel {
         let embedding = Embedding::new(device, vocab_size, n_embd);
         let multi_head_attention =
             MultiHeadAttention::try_new(device, sequence_length, n_embd, true, num_heads).unwrap();
-        let linear = Linear::new(device, vocab_size, n_embd, sequence_length);
+        let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length);
         let softmax = Softmax::new(device);
 
         Self {

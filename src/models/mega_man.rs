@@ -37,7 +37,13 @@ impl MegaManModel {
                 vec![sequence_length, n_embd],
                 vec![output_rows, sequence_length * n_embd],
             ),
-            linear: Linear::new(device, vocab_size, sequence_length * n_embd, output_rows),
+            linear: Linear::new(
+                device,
+                vocab_size,
+                sequence_length * n_embd,
+                true,
+                output_rows,
+            ),
             softmax: Softmax::new(device),
         }
     }

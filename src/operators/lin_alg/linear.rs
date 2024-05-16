@@ -16,6 +16,7 @@ impl Linear {
         device: &Device,
         weights_rows: usize,
         weights_cols: usize,
+        weights_random: bool,
         bias_rows: usize,
     ) -> Self {
         // Xavier Initialization, or Glorot Initialization,
@@ -26,8 +27,10 @@ impl Linear {
 
         let mut weights = Vec::new();
         weights.resize(weights_rows * weights_cols, 0.0);
-        for index in 0..weights.len() {
-            weights[index] = rng.sample(uniform);
+        if weights_random {
+            for index in 0..weights.len() {
+                weights[index] = rng.sample(uniform);
+            }
         }
         let weights = device.tensor(weights_rows, weights_cols, weights, &[], true, true);
 

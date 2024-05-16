@@ -30,11 +30,20 @@ impl UnaryOperator for Scale {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs);
-        output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
+        output.push_forward_instruction(
+            Rc::new(self.clone()),
+            &inputs,  //
+            &outputs, //
+        );
         let inputs = [&output];
         let outputs = [input];
-        output.push_backward_instruction(Rc::new(Identity::new(&self.device)), &inputs, &outputs);
+        output.push_backward_instruction(
+            Rc::new(Identity::new(&self.device)),
+            &inputs,  //
+            &outputs, //
+        );
         Ok(output)
     }
 }

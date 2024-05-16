@@ -56,14 +56,19 @@ impl BinaryOperator for ResidualSumOfSquares {
             .tensor(1, 1, vec![0.0], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs);
-        output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
+        output.push_forward_instruction(
+            Rc::new(self.clone()),
+            &inputs,  //
+            &outputs, //
+        );
         let inputs = [input_1, input_2];
         let outputs = [input_2];
         output.push_backward_instruction(
             Rc::new(ResidualSumOfSquaresBackward::default()),
-            &inputs,
-            &outputs,
+            &inputs,  //
+            &outputs, //
         );
         Ok(output)
     }

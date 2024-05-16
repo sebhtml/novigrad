@@ -66,11 +66,20 @@ impl NaryOperator for Concat {
             .tensor(rows, cols, values, inputs_n, true, false);
         let inputs = inputs_n;
         let outputs = [&output];
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs);
-        output.push_forward_instruction(Rc::new(self.clone()), inputs, &outputs);
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
+        output.push_forward_instruction(
+            Rc::new(self.clone()),
+            inputs,   //
+            &outputs, //
+        );
         let inputs = [&output];
         let outputs = inputs_n;
-        output.push_backward_instruction(Rc::new(ConcatBackward::default()), &inputs, outputs);
+        output.push_backward_instruction(
+            Rc::new(ConcatBackward::default()),
+            &inputs, //
+            outputs, //
+        );
         Ok(output)
     }
 }

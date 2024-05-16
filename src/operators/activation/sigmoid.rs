@@ -78,14 +78,19 @@ impl UnaryOperator for Sigmoid {
 
         let inputs = [input];
         let outputs = [&output];
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs);
-        output.push_forward_instruction(Rc::new(self.clone()), &inputs, &outputs);
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
+        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
+        output.push_forward_instruction(
+            Rc::new(self.clone()),
+            &inputs,  //
+            &outputs, //
+        );
         let inputs = [&output];
         let outputs = [input];
         output.push_backward_instruction(
             Rc::new(SigmoidBackward::new(&self.device)),
-            &inputs,
-            &outputs,
+            &inputs,  //
+            &outputs, //
         );
         Ok(output)
     }

@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     DatasetDetails, Device, Error, NeuralMachine, ResidualSumOfSquares, Tensor, UnaryOperator,
 };
@@ -13,7 +11,6 @@ struct PerceptronModel {
 impl PerceptronModel {
     pub fn new(device: &Device) -> Self {
         let linear = Linear::new(device, 1, 2, false, 1);
-
         Self { linear }
     }
 }
@@ -28,7 +25,6 @@ impl Model for PerceptronModel {
     fn input_size(&self) -> Vec<usize> {
         vec![1, 2]
     }
-
     fn output_size(&self) -> Vec<usize> {
         vec![1, 1]
     }

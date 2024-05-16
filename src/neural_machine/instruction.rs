@@ -5,40 +5,33 @@ use crate::{Error, Operator, TensorF32};
 #[derive(Clone, Debug)]
 pub struct Instruction {
     operator: Rc<dyn Operator>,
-    inputs_f32: Rc<Vec<TensorF32>>,
-    outputs_f32: Rc<Vec<TensorF32>>,
+    inputs: Rc<Vec<TensorF32>>,
+    outputs: Rc<Vec<TensorF32>>,
 }
 
 impl Instruction {
-    pub fn new_f32(
-        operator: Rc<dyn Operator>,
-        inputs_f32: &[&TensorF32],
-        outputs_f32: &[&TensorF32],
-    ) -> Self {
-        let inputs_f32: Vec<TensorF32> = inputs_f32.into_iter().map(|x| (*x).clone()).collect();
-        let outputs_f32: Vec<TensorF32> = outputs_f32.into_iter().map(|x| (*x).clone()).collect();
+    pub fn new(operator: Rc<dyn Operator>, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Self {
+        let inputs: Vec<TensorF32> = inputs.into_iter().map(|x| (*x).clone()).collect();
+        let outputs: Vec<TensorF32> = outputs.into_iter().map(|x| (*x).clone()).collect();
         Self {
             operator,
-            inputs_f32: inputs_f32.into(),
-            outputs_f32: outputs_f32.into(),
+            inputs: inputs.into(),
+            outputs: outputs.into(),
         }
     }
 
     pub fn operator(&self) -> &Rc<dyn Operator> {
         &self.operator
     }
-    pub fn inputs_f32(&self) -> &Rc<Vec<TensorF32>> {
-        &self.inputs_f32
+    pub fn inputs(&self) -> &Rc<Vec<TensorF32>> {
+        &self.inputs
     }
-    pub fn outputs_f32(&self) -> &Rc<Vec<TensorF32>> {
-        &self.outputs_f32
+    pub fn outputs(&self) -> &Rc<Vec<TensorF32>> {
+        &self.outputs
     }
-    pub fn forward_f32(&self) -> Result<(), Error> {
-        let inputs_f32: Vec<&TensorF32> = self.inputs_f32.iter().collect();
-        let outputs_f32: Vec<&TensorF32> = self.outputs_f32.iter().collect();
-        if inputs_f32.len() > 0 || outputs_f32.len() > 0 {
-            self.operator.forward_f32(&inputs_f32, &outputs_f32)?;
-        }
-        Ok(())
+    pub fn forward(&self) -> Result<(), Error> {
+        let inputs: Vec<&TensorF32> = self.inputs.iter().collect();
+        let outputs_f32: Vec<&TensorF32> = self.outputs.iter().collect();
+        self.operator.forward_f32(&inputs, &outputs_f32)
     }
 }

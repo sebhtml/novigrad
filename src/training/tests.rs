@@ -24,6 +24,14 @@ fn test_network_on_dataset(dataset: Dataset, device: &Device) {
     }
 }
 
+/*
+#[test]
+fn perceptron_model_cpu() {
+    let device = Device::cpu();
+    test_network_on_dataset(Dataset::Perceptron, &device);
+}
+*/
+
 #[test]
 fn simple_dataset_cpu() {
     let device = Device::cpu();

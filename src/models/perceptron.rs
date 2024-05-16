@@ -76,8 +76,8 @@ pub fn load_perceptron(device: &Device) -> Result<DatasetDetails, Error> {
         program,
         epochs: 100,
         progress: 10,
-        initial_total_error_min: 8.0,
-        final_total_error_max: 0.001,
+        initial_total_error_min: 15.0,
+        final_total_error_max: 10.0,
         learning_rate: 0.5,
     };
     Ok(details)

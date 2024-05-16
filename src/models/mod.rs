@@ -11,6 +11,7 @@ use std::fs;
 use crate::{Device, Error, ErrorEnum, Tensor, Tokenizer, TokenizerTrait};
 
 pub enum Dataset {
+    Perceptron,
     Simple,
     MegaMan,
     MegaManAttention,
@@ -30,6 +31,7 @@ pub struct DatasetDetails {
 
 pub fn load_dataset(dataset: Dataset, device: &Device) -> Result<DatasetDetails, Error> {
     match dataset {
+        Dataset::Perceptron => load_perceptron(device),
         Dataset::Simple => simple::load_dataset(device),
         Dataset::MegaMan => mega_man::load_dataset(device),
         Dataset::MegaManAttention => mega_man_attention::load_dataset(device),

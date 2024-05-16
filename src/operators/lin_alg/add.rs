@@ -29,19 +29,33 @@ impl BinaryOperator for Add {
                 .tensor(rows, cols, vec![0.0; len], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
-        output.push_forward_instruction(
+        output.push_forward_instruction_f32(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].tensor().deref().borrow()],
+        ); //
+        output.push_forward_instruction_f32(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].gradient().deref().borrow()],
+        ); //
+        output.push_forward_instruction_f32(
             Rc::new(self.clone()),
-            &inputs,  //
-            &outputs, //
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].tensor().deref().borrow()],
         );
         let inputs = [&output];
         let outputs = [input_1, input_2];
-        output.push_backward_instruction(
+        output.push_backward_instruction_f32(
             Rc::new(AddBackward::new()),
-            &inputs,  //
-            &outputs, //
+            &[&inputs[0].gradient().deref().borrow()],
+            &[
+                &outputs[0].gradient().deref().borrow(),
+                &outputs[1].gradient().deref().borrow_mut(),
+            ],
         );
         Ok(output)
     }

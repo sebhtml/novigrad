@@ -4,7 +4,7 @@ use crate::{
 };
 use crate::{DevBuffer, ErrorEnum};
 
-use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc};
+use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc, vec};
 
 #[derive(Clone, Debug)]
 pub struct TensorF32 {
@@ -182,6 +182,16 @@ impl TensorF32 {
             }
         }
         true
+    }
+
+    pub fn is_nan(&self) -> Result<bool, Error> {
+        let values = self.get_values()?;
+        for value in values {
+            if value.is_nan() {
+                return Ok(true);
+            }
+        }
+        Ok(false)
     }
 
     pub fn dot_product(x: &TensorF32, y: &TensorF32) -> Result<f32, Error> {

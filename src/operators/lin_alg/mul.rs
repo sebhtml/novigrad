@@ -50,7 +50,7 @@ impl BinaryOperator for Mul {
         let inputs = [input_0, input_1, &output];
         let outputs = [input_0, input_1];
         output.push_backward_instruction_f32(
-            Rc::new(MulBackward::default()),
+            Rc::new(MulBackward::new(&self.device)),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -88,11 +88,15 @@ impl Operator for Mul {
     }
 }
 
-pub struct MulBackward {}
+pub struct MulBackward {
+    device: Device,
+}
 
-impl Default for MulBackward {
-    fn default() -> Self {
-        Self {}
+impl MulBackward {
+    pub fn new(device: &Device) -> Self {
+        Self {
+            device: device.clone(),
+        }
     }
 }
 
@@ -118,17 +122,24 @@ impl Operator for MulBackward {
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(outputs.len(), 2);
         let input_gradient = inputs[2];
+        let rows = input_gradient.rows();
+        let cols = input_gradient.cols();
+        let len = rows * cols;
 
         if outputs[1].requires_grad() {
             let output_1_gradient = outputs[1];
             let output_0 = inputs[0];
-            TensorF32::mul(output_0, input_gradient, output_1_gradient)?;
+            let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+            TensorF32::mul(output_0, input_gradient, &mut tmp)?;
+            TensorF32::add(&tmp, output_1_gradient)?;
         }
 
         if outputs[0].requires_grad() {
             let output_0_gradient = outputs[0];
             let output = inputs[1];
-            TensorF32::mul(output, input_gradient, output_0_gradient)?;
+            let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+            TensorF32::mul(output, input_gradient, &mut tmp)?;
+            TensorF32::add(&tmp, output_0_gradient)?;
         }
 
         Ok(())

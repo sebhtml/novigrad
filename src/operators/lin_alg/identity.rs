@@ -96,7 +96,7 @@ impl Operator for IdentityBackward {
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
             let input_gradient = inputs[0];
-            TensorF32::copy(input_gradient, output_gradient)?;
+            TensorF32::add(input_gradient, output_gradient)?;
         }
 
         Ok(())

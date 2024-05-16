@@ -167,7 +167,9 @@ impl Operator for SigmoidBackward {
             // Compute activation function derivative.
             let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
             Sigmoid::derive(output, input, &mut layer_f_derivative)?;
-            TensorF32::mul(&layer_f_derivative, input_gradient, output_gradient)?;
+            let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+            TensorF32::mul(&layer_f_derivative, input_gradient, &mut tmp)?;
+            TensorF32::add(&tmp, output_gradient)?;
         }
 
         Ok(())

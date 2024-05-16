@@ -113,12 +113,12 @@ impl Operator for AddBackward {
 
         if outputs[1].requires_grad() {
             let output_1_gradient = outputs[1];
-            TensorF32::copy(input_gradient, output_1_gradient)?;
+            TensorF32::add(input_gradient, output_1_gradient)?;
         }
 
         if outputs[0].requires_grad() {
             let output_0_gradient = outputs[0];
-            TensorF32::copy(input_gradient, output_0_gradient)?;
+            TensorF32::add(input_gradient, output_0_gradient)?;
         }
 
         Ok(())

@@ -110,15 +110,17 @@ impl NeuralMachine {
         }
         // Forward tensors
         for (i, instruction) in self.instructions.iter().enumerate() {
-            //println!("Forward instruction {} {}", i, instruction.operator().name(),);
+            //cprintln!("Forward instruction {} {}", i, instruction.operator().name(),);
             #[cfg(debug_assertions)]
             for input in instruction.inputs().deref() {
-                debug_assert!(
-                    input.is_finite(),
-                    "instruction {} {} read not-finite input {}",
+                debug_assert_eq!(
+                    input.is_nan()?,
+                    false,
+                    "instruction {} {} read nan input {} {}",
                     i,
                     instruction.operator().name(),
                     input.name(),
+                    input,
                 );
             }
 
@@ -126,12 +128,14 @@ impl NeuralMachine {
 
             #[cfg(debug_assertions)]
             for output in instruction.outputs().deref() {
-                debug_assert!(
-                    output.is_finite(),
-                    "instruction {} {} wrote not-finite output {}",
+                debug_assert_eq!(
+                    output.is_nan()?,
+                    false,
+                    "instruction {} {} wrote nan output {} {}",
                     i,
                     instruction.operator().name(),
                     output.name(),
+                    output,
                 );
             }
 
@@ -156,7 +160,7 @@ impl NeuralMachine {
             for output in instruction.outputs().deref().iter() {
                 println!("output {}", output);
             }
-              */
+             */
         }
         Ok(self.program_output.clone())
     }
@@ -207,9 +211,10 @@ impl NeuralMachine {
 
         println!("Instructions: {}", self.instructions.len());
         println!("------------------------------");
-        for (_i, instruction) in self.instructions.iter().enumerate() {
+        for (i, instruction) in self.instructions.iter().enumerate() {
             println!(
-                "INSTRUCTION    {}    {}    {}",
+                "{}: INSTRUCTION    {}    {}    {}",
+                i,
                 instruction.operator().name(),
                 instruction
                     .inputs()

@@ -3,7 +3,10 @@
 - use tensorf32 in operator trait
 - TensorF32 in instructions
 
+- Make sure that backward instruction add on top of existing gradients (no overwrite)
 - Bake optimizer instructions in neural machine
+- make clip_norm a parameter
+- diag in mask to -inf
 
 == Initialization ==
 

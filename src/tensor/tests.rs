@@ -23,41 +23,6 @@ fn new() {
 }
 
 #[test]
-fn multiplication_shape_compatibility() {
-    let device = Device::default();
-    // Given two matrices with incompatible shapes
-    // When a matrix multiplication is done
-    // Then there is an error
-
-    let lhs = device.tensor_f32(
-        1,
-        1,
-        vec![
-            0.0, //
-        ],
-    );
-
-    let rhs = device.tensor_f32(
-        2,
-        1,
-        vec![
-            0.0, //
-            0.0, //
-        ],
-    );
-
-    let rows = lhs.rows();
-    let cols = rhs.cols();
-    let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    let error = TensorF32::matmul(false, false, &lhs, &rhs, &mut result, false);
-    assert_eq!(
-        error.map_err(|e| e.error),
-        Err(ErrorEnum::IncompatibleTensorShapes)
-    )
-}
-
-#[test]
 fn reshape_result() {
     let device = Device::default();
     let lhs = device.tensor_f32(

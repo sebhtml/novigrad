@@ -43,19 +43,6 @@ impl Tensor {
             .push(instruction)
     }
 
-    pub fn push_backward_instruction(
-        &self,
-        operator: Rc<dyn Operator>,
-        inputs: &[&Tensor],
-        outputs: &[&Tensor],
-    ) {
-        let instruction = Instruction::new(operator, inputs, outputs);
-        self.backward_instructions
-            .deref()
-            .borrow_mut()
-            .push(instruction)
-    }
-
     pub fn push_backward_instruction_f32(
         &self,
         operator: Rc<dyn Operator>,

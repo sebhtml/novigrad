@@ -43,6 +43,19 @@ impl Tensor {
             .push(instruction)
     }
 
+    pub fn push_forward_instruction_f32(
+        &self,
+        operator: Rc<dyn Operator>,
+        inputs_f32: &[&TensorF32],
+        outputs_f32: &[&TensorF32],
+    ) {
+        let instruction_f32 = Instruction::new_f32(operator, inputs_f32, outputs_f32);
+        self.forward_instructions
+            .deref()
+            .borrow_mut()
+            .push(instruction_f32)
+    }
+
     pub fn push_backward_instruction(
         &self,
         operator: Rc<dyn Operator>,
@@ -54,6 +67,19 @@ impl Tensor {
             .deref()
             .borrow_mut()
             .push(instruction)
+    }
+
+    pub fn push_backward_instruction_f32(
+        &self,
+        operator: Rc<dyn Operator>,
+        inputs_f32: &[&TensorF32],
+        outputs_f32: &[&TensorF32],
+    ) {
+        let instruction_f32 = Instruction::new_f32(operator, inputs_f32, outputs_f32);
+        self.backward_instructions
+            .deref()
+            .borrow_mut()
+            .push(instruction_f32)
     }
 
     pub fn forward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {

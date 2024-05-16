@@ -60,8 +60,21 @@ impl NeuralMachine {
             let outputs: Vec<&Tensor> = outputs.iter().collect();
             let norm = 1.0;
             let clip_instruction = Instruction::new(Rc::new(Clip::new(norm)), &[], &outputs);
+
+            let outputs_f32: Vec<TensorF32> = instruction
+                .outputs_f32()
+                .deref()
+                .clone()
+                .into_iter()
+                .collect();
+            let outputs_f32: Vec<&TensorF32> = outputs_f32.iter().collect();
+            let norm = 1.0;
+            let clip_instruction_f32 =
+                Instruction::new_f32(Rc::new(Clip::new(norm)), &[], &outputs_f32);
+
             instructions.push(instruction);
             instructions.push(clip_instruction);
+            //instructions.push(clip_instruction_f32);
         }
 
         let instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
@@ -105,6 +118,7 @@ impl NeuralMachine {
         for (_i, instruction) in self.instructions.iter().enumerate() {
             //println!("Forward instruction {} {}", i, instruction.operator().name(),);
             instruction.forward()?;
+            instruction.forward_f32()?;
 
             // TODO impl Display
             /*

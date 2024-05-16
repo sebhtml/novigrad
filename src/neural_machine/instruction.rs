@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{ops::Deref, rc::Rc};
 
 use crate::{Error, Operator, Tensor, TensorF32};
 

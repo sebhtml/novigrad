@@ -87,10 +87,14 @@ impl NaryOperator for Concat {
         );
         let inputs = [&output];
         let outputs = inputs_n;
-        output.push_backward_instruction(
+        let outputs: Vec<TensorF32> = outputs
+            .iter()
+            .map(|t| t.gradient().deref().borrow().clone())
+            .collect();
+        output.push_backward_instruction_f32(
             Rc::new(ConcatBackward::default()),
-            &inputs, //
-            outputs, //
+            &[&inputs[0].gradient().deref().borrow_mut()],
+            &outputs.iter().collect::<Vec<_>>(),
         );
         Ok(output)
     }

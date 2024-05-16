@@ -1,8 +1,4 @@
-== Instructions that use TensorF32 ==
-
-- use tensorf32 in operator trait
-- TensorF32 in instructions
-
+- in Tensor, store just one Vec<Instruction> with bool flag for_gradient
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 - Bake optimizer instructions in neural machine
 - make clip_norm a parameter

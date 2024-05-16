@@ -44,7 +44,7 @@ impl UnaryOperator for Identity {
         );
         let inputs = [&output];
         let outputs = [input];
-        output.push_backward_instruction_f32(
+        output.push_backward_instruction(
             Rc::new(IdentityBackward::default()),
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],

@@ -83,7 +83,7 @@ impl BinaryOperator for MatMul {
 
         let inputs = [input_0, input_1, &output];
         let outputs = [input_0, input_1];
-        output.push_backward_instruction_f32(
+        output.push_backward_instruction(
             Rc::new(MatMulBackward::new(self.transb)),
             &[
                 &inputs[0].tensor().deref().borrow(),

@@ -49,7 +49,7 @@ impl BinaryOperator for Mul {
         );
         let inputs = [input_0, input_1, &output];
         let outputs = [input_0, input_1];
-        output.push_backward_instruction_f32(
+        output.push_backward_instruction(
             Rc::new(MulBackward::new(&self.device)),
             &[
                 &inputs[0].tensor().deref().borrow(),

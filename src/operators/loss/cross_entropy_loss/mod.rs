@@ -93,7 +93,7 @@ impl BinaryOperator for CrossEntropyLoss {
         );
         let inputs = [input_1, input_2];
         let outputs = [input_2];
-        output.push_backward_instruction_f32(
+        output.push_backward_instruction(
             Rc::new(CrossEntropyLossBackward::default()),
             &[
                 &inputs[0].tensor().deref().borrow(),

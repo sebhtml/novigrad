@@ -120,7 +120,7 @@ impl UnaryOperator for Softmax {
         );
         let inputs = [&output];
         let outputs = [input];
-        output.push_backward_instruction_f32(
+        output.push_backward_instruction(
             Rc::new(SoftmaxBackward::new(&self.device)),
             &[
                 &inputs[0].tensor().deref().borrow(),

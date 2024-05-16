@@ -95,7 +95,7 @@ impl UnaryOperator for Sigmoid {
         );
         let inputs = [&output];
         let outputs = [input];
-        output.push_backward_instruction_f32(
+        output.push_backward_instruction(
             Rc::new(SigmoidBackward::new(&self.device)),
             &[
                 &inputs[0].tensor().deref().borrow(),

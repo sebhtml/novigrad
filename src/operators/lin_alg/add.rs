@@ -49,7 +49,7 @@ impl BinaryOperator for Add {
         );
         let inputs = [&output];
         let outputs = [input_1, input_2];
-        output.push_backward_instruction_f32(
+        output.push_backward_instruction(
             Rc::new(AddBackward::new()),
             &[&inputs[0].gradient().deref().borrow()],
             &[

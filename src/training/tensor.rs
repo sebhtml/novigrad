@@ -43,7 +43,7 @@ impl Tensor {
             .push(instruction)
     }
 
-    pub fn push_backward_instruction_f32(
+    pub fn push_backward_instruction(
         &self,
         operator: Rc<dyn Operator>,
         inputs_f32: &[&TensorF32],

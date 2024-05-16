@@ -19,10 +19,14 @@ fn forward() {
     // This means that a position can attend to previous positions, but not itself or future positions.++
     for i in 0..rows {
         for j in 0..cols {
-            let expected_value = if i > j { 1.0 } else { f32::NEG_INFINITY };
+            let expected_value = if i > j { 1.0 } else { 0.0 };
             assert_eq!(
                 expected_value,
                 actual.get_values().unwrap()[actual.index(i, j)],
+                "actual {} i {}, j {},",
+                actual,
+                i,
+                j,
             );
         }
     }

@@ -103,17 +103,17 @@ impl UnaryOperator for Softmax {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_forward_instruction_f32(
+        output.push_forward_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
         );
-        output.push_forward_instruction_f32(
+        output.push_forward_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
         );
-        output.push_forward_instruction_f32(
+        output.push_forward_instruction(
             Rc::new(self.clone()),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],

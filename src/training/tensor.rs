@@ -30,17 +30,17 @@ impl Tensor {
         "t".to_owned() + self.name.to_string().as_str()
     }
 
-    pub fn push_forward_instruction_f32(
+    pub fn push_forward_instruction(
         &self,
         operator: Rc<dyn Operator>,
-        inputs_f32: &[&TensorF32],
-        outputs_f32: &[&TensorF32],
+        inputs: &[&TensorF32],
+        outputs: &[&TensorF32],
     ) {
-        let instruction_f32 = Instruction::new_f32(operator, inputs_f32, outputs_f32);
+        let instruction = Instruction::new_f32(operator, inputs, outputs);
         self.forward_instructions
             .deref()
             .borrow_mut()
-            .push(instruction_f32)
+            .push(instruction)
     }
 
     pub fn push_backward_instruction(

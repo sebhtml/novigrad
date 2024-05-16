@@ -56,10 +56,8 @@ impl NeuralMachine {
 
         for tensor in tape.iter().rev() {
             let instruction = tensor.backward_instructions().deref().borrow()[0].to_owned();
-            let outputs: Vec<Tensor> = instruction.outputs().deref().clone().into_iter().collect();
-            let _outputs: Vec<&Tensor> = outputs.iter().collect();
             let norm = 1.0;
-            let clip_instruction = Instruction::new(Rc::new(Clip::new(norm)), &[], &[]);
+            let clip_instruction = Instruction::new_f32(Rc::new(Clip::new(norm)), &[], &[]);
 
             let outputs_f32: Vec<TensorF32> = instruction
                 .outputs_f32()

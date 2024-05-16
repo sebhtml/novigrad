@@ -27,19 +27,27 @@ impl UnaryOperator for Identity {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
-        output.push_forward_instruction(
+        output.push_forward_instruction_f32(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].tensor().deref().borrow()],
+        ); //
+        output.push_forward_instruction_f32(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].gradient().deref().borrow()],
+        ); //
+        output.push_forward_instruction_f32(
             Rc::new(self.clone()),
-            &inputs,  //
-            &outputs, //
+            &[&inputs[0].tensor().deref().borrow()],
+            &[&outputs[0].tensor().deref().borrow()],
         );
         let inputs = [&output];
         let outputs = [input];
-        output.push_backward_instruction(
+        output.push_backward_instruction_f32(
             Rc::new(IdentityBackward::default()),
-            &inputs,  //
-            &outputs, //
+            &[&inputs[0].gradient().deref().borrow()],
+            &[&outputs[0].gradient().deref().borrow()],
         );
         Ok(output)
     }

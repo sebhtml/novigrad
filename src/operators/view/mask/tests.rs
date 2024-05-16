@@ -7,10 +7,10 @@ fn forward() {
     let device = Device::default();
     let rows = 3;
     let cols = 3;
-    let input_1 = device.tensor(rows, cols, vec![1.0; rows * cols], &[], false, false);
+    let input = device.tensor(rows, cols, vec![1.0; rows * cols], &[], false, false);
     let mask = Mask::try_new(&device, rows, cols).unwrap();
 
-    let output = mask.forward(&input_1).unwrap();
+    let output = mask.forward(&input).unwrap();
     output.forward().unwrap();
 
     let actual: &TensorF32 = &output.tensor().deref().borrow();

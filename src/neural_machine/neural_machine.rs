@@ -109,9 +109,31 @@ impl NeuralMachine {
             TensorF32::copy(expected_output, example_output)?;
         }
         // Forward tensors
-        for (_i, instruction) in self.instructions.iter().enumerate() {
+        for (i, instruction) in self.instructions.iter().enumerate() {
             //println!("Forward instruction {} {}", i, instruction.operator().name(),);
+            #[cfg(debug_assertions)]
+            for input in instruction.inputs().deref() {
+                debug_assert!(
+                    input.is_finite(),
+                    "instruction {} {} read not-finite input {}",
+                    i,
+                    instruction.operator().name(),
+                    input.name(),
+                );
+            }
+
             instruction.forward()?;
+
+            #[cfg(debug_assertions)]
+            for output in instruction.outputs().deref() {
+                debug_assert!(
+                    output.is_finite(),
+                    "instruction {} {} wrote not-finite output {}",
+                    i,
+                    instruction.operator().name(),
+                    output.name(),
+                );
+            }
 
             // TODO impl Display
             /*

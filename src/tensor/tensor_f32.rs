@@ -164,7 +164,6 @@ impl TensorF32 {
                 let left = *left_cell;
                 let right = *right_cell;
                 let value = left * right;
-                //debug_assert!(value.is_finite());
                 *result_cell = value;
                 index += 1;
             }
@@ -173,6 +172,16 @@ impl TensorF32 {
         result.set_values(result_values);
 
         Ok(())
+    }
+
+    pub fn is_finite(&self) -> bool {
+        let values = self.get_values().unwrap();
+        for value in values {
+            if !value.is_finite() {
+                return false;
+            }
+        }
+        true
     }
 
     pub fn dot_product(x: &TensorF32, y: &TensorF32) -> Result<f32, Error> {

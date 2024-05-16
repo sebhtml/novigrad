@@ -5,8 +5,8 @@ use crate::{Device, ScaledDotProductAttention, TensorF32, TernaryOperator};
 #[test]
 fn forward() {
     let device = Device::default();
-    let rows = 3;
-    let cols = 3;
+    let rows = 16;
+    let cols = 384;
     let mask = true;
     let input = device.tensor(rows, cols, vec![1.0; rows * cols], &[], false, false);
     let attention = ScaledDotProductAttention::try_new(&device, rows, cols, mask).unwrap();

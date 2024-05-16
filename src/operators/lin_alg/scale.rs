@@ -46,10 +46,10 @@ impl UnaryOperator for Scale {
         );
         let inputs = [&output];
         let outputs = [input];
-        output.push_backward_instruction(
+        output.push_backward_instruction_f32(
             Rc::new(ScaleBackward::default()),
-            &inputs,  //
-            &outputs, //
+            &[&inputs[0].gradient().deref().borrow()],
+            &[&outputs[0].gradient().deref().borrow()],
         );
         Ok(output)
     }

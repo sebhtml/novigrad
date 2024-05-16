@@ -2,6 +2,9 @@ use std::ops::Deref;
 
 use crate::{Add, BinaryOperator, Device, Error, Tensor, UnaryOperator};
 
+#[cfg(test)]
+mod tests;
+
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// Attention Is All You Need -> https://arxiv.org/abs/1706.03762
 #[derive(Clone)]
@@ -19,19 +22,13 @@ impl Mask {
         let mut values = mask.tensor().deref().borrow().get_values()?;
         for row in 0..mask_rows {
             for col in 0..mask_cols {
-                if row < col {
+                if row <= col {
                     let index = mask.tensor().deref().borrow().index(row, col);
                     values[index] = f32::NEG_INFINITY;
                 }
             }
         }
         mask.tensor().deref().borrow_mut().set_values(values);
-
-        /*
-        {
-            println!("mask {}", &mask.tensor().deref().borrow());
-        }
-         */
 
         let add = Add::new(device);
         let mask = Self { mask, add };

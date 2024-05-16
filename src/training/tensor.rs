@@ -107,6 +107,13 @@ impl Tensor {
         }
         tape.into_iter().rev().collect()
     }
+
+    pub fn forward(&self) -> Result<(), Error> {
+        for inst in self.forward_instructions.deref().borrow().iter() {
+            inst.forward()?;
+        }
+        Ok(())
+    }
 }
 
 impl PartialEq for Tensor {

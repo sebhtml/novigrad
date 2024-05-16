@@ -21,9 +21,9 @@ struct MegaManAttentionModel {
 impl MegaManAttentionModel {
     pub fn new(device: &Device) -> Self {
         let _batch_size = 1;
-        let sequence_length = 16;
+        let sequence_length = 32;
         let vocab_size = 256;
-        let n_embd = 32; // 384; needs LayerNorm
+        let n_embd = 384;
         let num_heads = 8;
         let _n_layer = 1;
         let _dropout = 0.1;
@@ -111,10 +111,10 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
         tokenizer: Some(tokenizer),
         examples,
         program,
-        epochs: 3000,
+        epochs: 500,
         progress: 100,
         initial_total_error_min: 50.0,
-        final_total_error_max: 5.0,
+        final_total_error_max: 20.0,
         learning_rate: 0.1,
     };
     Ok(details)

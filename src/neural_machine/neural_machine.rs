@@ -197,13 +197,13 @@ impl NeuralMachine {
                 "INSTRUCTION    {}    {}    {}",
                 instruction.operator().name(),
                 instruction
-                    .inputs()
+                    .inputs_f32()
                     .iter()
                     .map(|x| x.name())
                     .collect::<Vec<_>>()
                     .join(" "),
                 instruction
-                    .outputs()
+                    .outputs_f32()
                     .iter()
                     .map(|x| x.name())
                     .collect::<Vec<_>>()
@@ -231,10 +231,10 @@ impl NeuralMachine {
                     new_instructions.push(instructions[i + 0].clone());
                     new_instructions.push(instructions[i + 1].clone());
                     new_instructions.push(instructions[i + 2].clone());
-                    new_instructions.push(Instruction::new(
+                    new_instructions.push(Instruction::new_f32(
                         Rc::new(IdentityBackward::default()),
-                        &instructions[i + 3].inputs().iter().collect::<Vec<_>>(),
-                        &instructions[i + 3].outputs().iter().collect::<Vec<_>>(),
+                        &[&instructions[i + 3].inputs_f32().deref()[1]],
+                        &instructions[i + 3].outputs_f32().iter().collect::<Vec<_>>(),
                     ));
                     new_instructions.push(instructions[i + 4].clone());
                     i += 5;

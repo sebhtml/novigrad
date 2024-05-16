@@ -1,19 +1,35 @@
-== Instructions that use TensorF32 ==
-
-- use tensorf32 in operator trait
-- TensorF32 in instructions
+- diag in mask to -inf
 - Bake optimizer instructions in neural machine
+- in Tensor, store just one Vec<Instruction> with bool flag for_gradient
+
+- Make sure that backward instruction add on top of existing gradients (no overwrite)
+- make clip_norm a parameter
+
+== Initialization ==
+
+- use Kaiming uniform initialization
+- revisit initialization of weights and biases in Linear
+- revisit initialization of embedding_table in Embedding
+
+== Clean-up ==
+
+- Remove TensorF32 matmul in favor of Gemm
+- remoze zero and name from tensor
+- sigmoidGrad and softmaxBackward are Mul
+- remove most of the Backward ops
+
+== Things ==
+
+- rename DatasetDetails to ModelTrainingDetails
+- backward has no parameters
 
 == Other things ==
 
 - investigate calls to Device::tensor_f32
 - test if Zero is really needed
 
-- move concat and unconcat code to functions
 - copy -> copy_from
 - remove recycle
-
-- Clip must preserve the direction of the tensor
 
 == Tensor clean-up ==
 
@@ -49,14 +65,6 @@
 
 - implement parallel execution of certain branches in parallel using a execution_group_id
 
-== Datasets ==
-
-- serialize and deserialize model to ONNX format
-
-== Initialization ==
-
-- revisit initialization of weights and biases in Linear
-- revisit initialization of embedding_table in Embedding
 
 == GPT-1 Transformer ==
 
@@ -69,12 +77,19 @@
 
 - implement positional encoding
 
+== AMD ==
+
+- Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
+
+== Datasets ==
+
+- serialize and deserialize model to ONNX format
+
 == Devices ==
 
 - use cuda stream to realize a tensor (is this useful ? CUDA execution is async by default)
 - implement a mul cuda kernel
 - Add support for Jim Keller's https://tenstorrent.com/cards/
-- Add support AMD GPUs (ROCm/rocBLAS)
 - Add support for Google TPU
 - Add support for Apple Metal
 - Add support for Intel Arc

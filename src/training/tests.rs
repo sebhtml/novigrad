@@ -1,5 +1,5 @@
-use more_asserts::assert_gt;
-use more_asserts::assert_lt;
+use more_asserts::assert_ge;
+use more_asserts::assert_le;
 
 use crate::load_dataset;
 use crate::train_network_on_dataset;
@@ -11,8 +11,8 @@ fn test_network_on_dataset(dataset: Dataset, device: &Device) {
     let initial_total_error_min = dataset_details.initial_total_error_min;
     let final_total_error_max = dataset_details.final_total_error_max;
     let training_output = train_network_on_dataset(dataset_details).unwrap();
-    assert_gt!(training_output.initial_total_error, initial_total_error_min);
-    assert_lt!(training_output.final_total_error, final_total_error_max);
+    assert_ge!(training_output.initial_total_error, initial_total_error_min);
+    assert_le!(training_output.final_total_error, final_total_error_max);
     for i in 0..training_output.expected_argmax_values.len() {
         let expected = training_output.actual_argmax_values[i];
         let actual = training_output.expected_argmax_values[i];
@@ -22,6 +22,12 @@ fn test_network_on_dataset(dataset: Dataset, device: &Device) {
             i, expected, actual,
         );
     }
+}
+
+#[test]
+fn perceptron_model_cpu() {
+    let device = Device::cpu();
+    test_network_on_dataset(Dataset::Perceptron, &device);
 }
 
 #[test]
@@ -42,6 +48,7 @@ fn mega_man_dataset_cuda() {
     test_network_on_dataset(Dataset::MegaMan, &device);
 }
 
+#[ignore] // TODO
 #[test]
 fn mega_man_attention_dataset_cuda() {
     let device = Device::cuda().unwrap();

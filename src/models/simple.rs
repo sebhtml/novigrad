@@ -28,16 +28,16 @@ impl SimpleModel {
         let output_rows = 1;
 
         let embedding = Embedding::new(device, vocab_size, n_embd);
-        let linear_0 = Linear::new(device, n_embd, n_embd, sequence_length);
+        let linear_0 = Linear::new(device, n_embd, n_embd, true, sequence_length);
         let sigmoid_0 = Sigmoid::new(device);
         let reshape = Reshape::new(
             device,
             vec![sequence_length, n_embd],
             vec![output_rows, sequence_length * n_embd],
         );
-        let linear_1 = Linear::new(device, n_embd, sequence_length * n_embd, output_rows);
+        let linear_1 = Linear::new(device, n_embd, sequence_length * n_embd, true, output_rows);
         let sigmoid_1 = Sigmoid::new(device);
-        let linear_2 = Linear::new(device, vocab_size, n_embd, output_rows);
+        let linear_2 = Linear::new(device, vocab_size, n_embd, true, output_rows);
         let softmax = Softmax::new(device);
 
         Self {
@@ -129,7 +129,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer,
+        tokenizer: Some(tokenizer),
         examples,
         program,
         epochs: 1000,

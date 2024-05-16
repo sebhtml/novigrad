@@ -145,7 +145,6 @@ impl TensorF32 {
         }
 
         debug_assert_eq!(result.size(), left.size());
-        result.zero()?;
 
         let mut result_values = result.get_values()?;
         let left_values = left.get_values()?;
@@ -229,7 +228,6 @@ impl TensorF32 {
         c: &TensorF32,
         transpose_result: bool,
     ) -> Result<(), Error> {
-        c.zero()?;
         let alpha = 1.0;
         let beta = 0.0;
         TensorF32::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)
@@ -450,6 +448,9 @@ impl TensorF32 {
     pub fn a_x_plus_y(alpha: f32, x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
+            println!("Incompatible sizes");
+            println!("x {}", x);
+            println!("y {}", y);
             return Err(Error::new(
                 file!(),
                 line!(),
@@ -463,17 +464,28 @@ impl TensorF32 {
         device.saxpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
     }
 
+    pub fn l2_norm(&self) -> Result<f32, Error> {
+        let mut l2_norm = 0.0;
+        let self_values = self.get_values()?;
+        for index in 0..self.len() {
+            let value = self_values[index];
+            l2_norm += value * value;
+        }
+        l2_norm = l2_norm.sqrt();
+        Ok(l2_norm)
+    }
+
     // TODO use device to clip
-    pub fn clip(&self, min: f32, max: f32) -> Result<(), Error> {
-        let len = self.len();
-        let mut index = 0;
+    pub fn clip(&self, norm: f32) -> Result<(), Error> {
+        let l2_norm = self.l2_norm()?;
+        if l2_norm == 0.0 {
+            return Ok(());
+        }
         let mut self_values = self.get_values()?;
-        while index < len {
-            let mut value = self_values[index];
-            value = value.max(min);
-            value = value.min(max);
+        for index in 0..self.len() {
+            let value = self_values[index];
+            let value = value / l2_norm * norm;
             self_values[index] = value;
-            index += 1;
         }
         self.set_values(self_values);
         Ok(())
@@ -506,7 +518,12 @@ impl TensorF32 {
 impl Display for TensorF32 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let self_values = self.get_values().map_err(|_| std::fmt::Error)?;
-        _ = write!(f, "Shape: {:?}", self.size);
+        _ = write!(
+            f,
+            "Tensor name: {}, size: {:?}",
+            self.name(),
+            self.size.deref().borrow()
+        );
         _ = write!(f, "\n");
         for row in 0..self.rows() {
             for col in 0..self.cols() {

@@ -39,8 +39,7 @@ pub trait NaryOperator {
 
 pub trait Operator {
     fn name(&self) -> &str;
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error>;
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error>;
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error>;
 }
 
 impl Debug for dyn Operator {

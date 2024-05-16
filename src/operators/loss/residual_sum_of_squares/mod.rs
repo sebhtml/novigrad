@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32};
+use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero};
 
 use super::LossFunction;
 
@@ -54,11 +54,35 @@ impl BinaryOperator for ResidualSumOfSquares {
         let output = self
             .device
             .tensor(1, 1, vec![0.0], &[input_1, input_2], true, false);
-        output.push_forward_instruction(Rc::new(self.clone()), &[input_1, input_2], &[&output]);
+        let inputs = [input_1, input_2];
+        let outputs = [&output];
+        output.push_forward_instruction(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].tensor().deref().borrow()],
+        );
+        output.push_forward_instruction(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].gradient().deref().borrow()],
+        );
+        output.push_forward_instruction(
+            Rc::new(self.clone()),
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].tensor().deref().borrow()],
+        );
+        let inputs = [input_1, input_2];
+        let outputs = [input_2];
         output.push_backward_instruction(
             Rc::new(ResidualSumOfSquaresBackward::default()),
-            &[input_1, input_2],
-            &[input_2],
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].gradient().deref().borrow()],
         );
         Ok(output)
     }
@@ -69,17 +93,7 @@ impl Operator for ResidualSumOfSquares {
         "ResidualSumOfSquares"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = ResidualSumOfSquares::evaluate(&self.device, expected, actual)?;
@@ -101,17 +115,7 @@ impl Operator for ResidualSumOfSquaresBackward {
         "ResidualSumOfSquaresBackward"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].gradient().deref().borrow()],
-        )
-    }
-
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);
         if outputs[0].requires_grad() {

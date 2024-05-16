@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32};
+use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero};
 
 /// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]
@@ -22,6 +22,11 @@ impl BinaryOperator for MatMul {
     fn forward(&self, input_0: &Tensor, input_1: &Tensor) -> Result<Tensor, Error> {
         let input_0_tensor: &TensorF32 = &input_0.tensor().deref().borrow();
         let input_1_tensor: &TensorF32 = &input_1.tensor().deref().borrow();
+        /*println!("a size {:?}, b size {:?} transb {}",
+            input_0_tensor.size().deref().borrow(),
+                    input_1_tensor.size().deref().borrow(),
+                self.transb);
+        */
         let compatible = match self.transb {
             false => input_0_tensor.cols() == input_1_tensor.rows(),
             true => input_0_tensor.cols() == input_1_tensor.cols(),
@@ -30,9 +35,9 @@ impl BinaryOperator for MatMul {
             println!("Incompatible shapes in matrix multiplication");
             println!("transa: {}, transb: {}", false, self.transb);
             println!(
-                "Between A {:?} and B^T {:?}",
-                input_0_tensor.size(),
-                input_1_tensor.size(),
+                "Between A {:?} and B {:?}",
+                input_0_tensor.size().deref().borrow(),
+                input_1_tensor.size().deref().borrow(),
             );
             debug_assert!(false);
             return Err(Error::new(
@@ -54,11 +59,41 @@ impl BinaryOperator for MatMul {
         let output =
             self.device
                 .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
-        output.push_forward_instruction(Rc::new(self.clone()), &[input_0, input_1], &[&output]);
+
+        let inputs = [input_0, input_1];
+        let outputs = [&output];
+        output.push_forward_instruction(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].tensor().deref().borrow()],
+        );
+        output.push_forward_instruction(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].gradient().deref().borrow()],
+        );
+        output.push_forward_instruction(
+            Rc::new(self.clone()),
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].tensor().deref().borrow()],
+        );
+
+        let inputs = [input_0, input_1, &output];
+        let outputs = [input_0, input_1];
         output.push_backward_instruction(
             Rc::new(MatMulBackward::new(self.transb)),
-            &[input_0, input_1, &output],
-            &[input_0, input_1],
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+                &inputs[2].gradient().deref().borrow(),
+            ],
+            &[
+                &outputs[0].gradient().deref().borrow(),
+                &outputs[1].gradient().deref().borrow(),
+            ],
         );
         Ok(output)
     }
@@ -69,17 +104,7 @@ impl Operator for MatMul {
         "MatMul"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0 = inputs[0];
         let input_1 = inputs[1];
@@ -107,21 +132,7 @@ impl Operator for MatMulBackward {
         "MatMulBackward"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-                &inputs[2].gradient().deref().borrow(),
-            ],
-            &[
-                &outputs[0].gradient().deref().borrow(),
-                &outputs[1].gradient().deref().borrow(),
-            ],
-        )
-    }
-
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(outputs.len(), 2);
         let input_gradient = inputs[2];
 

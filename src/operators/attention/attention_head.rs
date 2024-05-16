@@ -17,9 +17,9 @@ impl AttentionHead {
         head_cols: usize,
         mask: bool,
     ) -> Result<Self, Error> {
-        let q = Linear::new(device, head_cols, cols, rows);
-        let k = Linear::new(device, head_cols, cols, rows);
-        let v = Linear::new(device, head_cols, cols, rows);
+        let q = Linear::new(device, head_cols, cols, true, rows);
+        let k = Linear::new(device, head_cols, cols, true, rows);
+        let v = Linear::new(device, head_cols, cols, true, rows);
         let attention = ScaledDotProductAttention::try_new(device, rows, cols, mask).unwrap();
 
         let head = Self { q, k, v, attention };

@@ -33,8 +33,8 @@ impl Tensor {
     pub fn push_forward_instruction(
         &self,
         operator: Rc<dyn Operator>,
-        inputs: &[&Tensor],
-        outputs: &[&Tensor],
+        inputs: &[&TensorF32],
+        outputs: &[&TensorF32],
     ) {
         let instruction = Instruction::new(operator, inputs, outputs);
         self.forward_instructions
@@ -46,14 +46,14 @@ impl Tensor {
     pub fn push_backward_instruction(
         &self,
         operator: Rc<dyn Operator>,
-        inputs: &[&Tensor],
-        outputs: &[&Tensor],
+        inputs_f32: &[&TensorF32],
+        outputs_f32: &[&TensorF32],
     ) {
-        let instruction = Instruction::new(operator, inputs, outputs);
+        let instruction_f32 = Instruction::new(operator, inputs_f32, outputs_f32);
         self.backward_instructions
             .deref()
             .borrow_mut()
-            .push(instruction)
+            .push(instruction_f32)
     }
 
     pub fn forward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
@@ -106,22 +106,6 @@ impl Tensor {
             tape.push(element);
         }
         tape.into_iter().rev().collect()
-    }
-
-    pub fn print_tape(tape: &[Tensor]) {
-        println!("Tape");
-        for (i, element) in tape.iter().enumerate() {
-            println!(
-                "index {}  operator {}  inputs {}",
-                i,
-                element.forward_instructions.deref().borrow()[0]
-                    .operator()
-                    .name(),
-                element.forward_instructions.deref().borrow()[0]
-                    .inputs()
-                    .len()
-            );
-        }
     }
 }
 

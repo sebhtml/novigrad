@@ -23,41 +23,6 @@ fn new() {
 }
 
 #[test]
-fn multiplication_shape_compatibility() {
-    let device = Device::default();
-    // Given two matrices with incompatible shapes
-    // When a matrix multiplication is done
-    // Then there is an error
-
-    let lhs = device.tensor_f32(
-        1,
-        1,
-        vec![
-            0.0, //
-        ],
-    );
-
-    let rhs = device.tensor_f32(
-        2,
-        1,
-        vec![
-            0.0, //
-            0.0, //
-        ],
-    );
-
-    let rows = lhs.rows();
-    let cols = rhs.cols();
-    let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    let error = TensorF32::matmul(false, false, &lhs, &rhs, &mut result, false);
-    assert_eq!(
-        error.map_err(|e| e.error),
-        Err(ErrorEnum::IncompatibleTensorShapes)
-    )
-}
-
-#[test]
 fn reshape_result() {
     let device = Device::default();
     let lhs = device.tensor_f32(
@@ -122,11 +87,6 @@ fn index() {
 #[test]
 fn clip() {
     let device = Device::default();
-    // Given a tensor with 0.0 and 1.0 values
-    // When it is clipped
-    // Then the clipped tensor contains clipped values
-
-    let epsilon = 1e-8;
     let tensor = device.tensor_f32(
         1,
         4,
@@ -136,20 +96,10 @@ fn clip() {
         ],
     );
 
-    tensor.clip(0.0 + epsilon, 1.0 - epsilon).unwrap();
-
-    let expected = device.tensor_f32(
-        1,
-        4,
-        vec![
-            0.0 + epsilon,
-            1.0 - epsilon, //
-            0.5,
-            0.7, //
-        ],
-    );
-
-    assert_eq!(tensor, expected);
+    let norm = 1.0;
+    assert_ne!(tensor.l2_norm().unwrap(), norm);
+    tensor.clip(norm).unwrap();
+    assert_eq!(tensor.l2_norm().unwrap(), norm);
 }
 
 #[test]

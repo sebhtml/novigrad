@@ -2,7 +2,7 @@ use std::{ops::Deref, rc::Rc};
 
 use crate::{
     BinaryOperator, Clip, Device, Error, IdentityBackward, Instruction, Model, Operator, Tensor,
-    TensorF32, UnaryOperator, Zero,
+    TensorF32, UnaryOperator,
 };
 
 pub struct NeuralMachine {
@@ -49,23 +49,26 @@ impl NeuralMachine {
         let mut instructions = vec![];
 
         for tensor in tape.iter() {
-            let instruction = tensor.forward_instructions().deref().borrow()[0].to_owned();
-            let outputs: Vec<Tensor> = instruction.outputs().deref().clone().into_iter().collect();
-            let outputs: Vec<&Tensor> = outputs.iter().collect();
-            let zero_instruction = Instruction::new(Rc::new(Zero::default()), &[], &outputs);
-            instructions.push(zero_instruction);
-            instructions.push(instruction);
+            for instruction in tensor.forward_instructions().deref().borrow().iter() {
+                instructions.push(instruction.clone());
+            }
         }
 
         for tensor in tape.iter().rev() {
             let instruction = tensor.backward_instructions().deref().borrow()[0].to_owned();
-            let outputs: Vec<Tensor> = instruction.outputs().deref().clone().into_iter().collect();
-            let outputs: Vec<&Tensor> = outputs.iter().collect();
-            let min = -1.0;
-            let max = 1.0;
-            let clip_instruction = Instruction::new(Rc::new(Clip::new(min, max)), &[], &outputs);
+            let norm = 1.0;
+            let clip_instruction = Instruction::new(Rc::new(Clip::new(norm)), &[], &[]);
+
+            let outputs_f32: Vec<TensorF32> =
+                instruction.outputs().deref().clone().into_iter().collect();
+            let outputs_f32: Vec<&TensorF32> = outputs_f32.iter().collect();
+            let norm = 1.0;
+            let clip_instruction_f32 =
+                Instruction::new(Rc::new(Clip::new(norm)), &[], &outputs_f32);
+
             instructions.push(instruction);
             instructions.push(clip_instruction);
+            instructions.push(clip_instruction_f32);
         }
 
         let instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
@@ -107,6 +110,7 @@ impl NeuralMachine {
         }
         // Forward tensors
         for (_i, instruction) in self.instructions.iter().enumerate() {
+            //println!("Forward instruction {} {}", i, instruction.operator().name(),);
             instruction.forward()?;
 
             // TODO impl Display
@@ -118,15 +122,19 @@ impl NeuralMachine {
                 instruction.inputs().len(),
                 instruction.outputs().len()
             );
-            println!("outputs");
+
+            println!("inputs:");
+
+            for inputs in instruction.inputs().deref().iter() {
+                println!("inputs {}", inputs);
+            }
+
+            println!("outputs:");
 
             for output in instruction.outputs().deref().iter() {
-                let output_t: &TensorF32 = &output.tensor().deref().borrow();
-                let output_g: &TensorF32 = &output.gradient().deref().borrow();
-                println!("output_t {}", output_t);
-                println!("output_g {}", output_g);
+                println!("output {}", output);
             }
-                 */
+              */
         }
         Ok(self.program_output.clone())
     }
@@ -205,22 +213,24 @@ impl NeuralMachine {
         let mut new_instructions = vec![];
         let mut i = 0;
         while i < instructions.len() {
-            if i + 3 < instructions.len() {
+            if i + 4 < instructions.len() {
                 if instructions[i + 0].operator().name() == "CrossEntropyLossBackward"
                     && instructions[i + 1].operator().name() == "Clip"
-                    && instructions[i + 2].operator().name() == "SoftmaxBackward"
-                    && instructions[i + 3].operator().name() == "Clip"
-                    && true
+                    && instructions[i + 2].operator().name() == "Clip"
+                    && instructions[i + 3].operator().name() == "SoftmaxBackward"
+                    && instructions[i + 4].operator().name() == "Clip"
                 {
                     new_instructions.push(instructions[i + 0].clone());
                     new_instructions.push(instructions[i + 1].clone());
+                    new_instructions.push(instructions[i + 2].clone());
+                    let softmax_backward_input_gradient = &instructions[i + 3].inputs().deref()[1];
                     new_instructions.push(Instruction::new(
                         Rc::new(IdentityBackward::default()),
-                        &instructions[i + 2].inputs().iter().collect::<Vec<_>>(),
-                        &instructions[i + 2].outputs().iter().collect::<Vec<_>>(),
+                        &[softmax_backward_input_gradient],
+                        &instructions[i + 3].outputs().iter().collect::<Vec<_>>(),
                     ));
-                    new_instructions.push(instructions[i + 3].clone());
-                    i += 4;
+                    new_instructions.push(instructions[i + 4].clone());
+                    i += 5;
                 } else {
                     new_instructions.push(instructions[i].clone());
                     i += 1;

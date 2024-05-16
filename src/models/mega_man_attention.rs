@@ -21,9 +21,9 @@ struct MegaManAttentionModel {
 impl MegaManAttentionModel {
     pub fn new(device: &Device) -> Self {
         let _batch_size = 1;
-        let sequence_length = 6;
-        let vocab_size = 20;
-        let n_embd = 64; // 384; needs LayerNorm
+        let sequence_length = 16;
+        let vocab_size = 256;
+        let n_embd = 32; // 384; needs LayerNorm
         let num_heads = 8;
         let _n_layer = 1;
         let _dropout = 0.1;
@@ -32,7 +32,7 @@ impl MegaManAttentionModel {
         let embedding = Embedding::new(device, vocab_size, n_embd);
         let multi_head_attention =
             MultiHeadAttention::try_new(device, sequence_length, n_embd, true, num_heads).unwrap();
-        let linear = Linear::new(device, vocab_size, n_embd, sequence_length);
+        let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length);
         let softmax = Softmax::new(device);
 
         Self {
@@ -80,12 +80,12 @@ impl Model for MegaManAttentionModel {
 
 pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let file_path = "data/Mega_Man.txt";
-    let max_chars = Some(30);
+    let max_chars = None;
     let max_number_of_examples = 10;
     // TODO vocab_size should be a new argument
     let model = MegaManAttentionModel::new(device);
     let vocab_size = model.vocab_size();
-    let mut tokenizer = Tokenizer::byte_pair_encoding();
+    let mut tokenizer = Tokenizer::ascii_tokenizer();
 
     let input_sequence_length = model.sequence_length();
     let output_sequence_length = input_sequence_length;
@@ -108,14 +108,14 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
 
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer,
+        tokenizer: Some(tokenizer),
         examples,
         program,
-        epochs: 1000,
+        epochs: 3000,
         progress: 100,
-        initial_total_error_min: 25.0,
-        final_total_error_max: 100.0, // The loss may be bad but the next token prediction is good and it's tested separately
-        learning_rate: 0.5,
+        initial_total_error_min: 50.0,
+        final_total_error_max: 5.0,
+        learning_rate: 0.1,
     };
     Ok(details)
 }

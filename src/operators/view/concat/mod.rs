@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, NaryOperator, Operator, Tensor, TensorF32};
+use crate::{Device, Error, NaryOperator, Operator, Tensor, TensorF32, Zero};
 
 #[cfg(test)]
 mod tests;
@@ -16,43 +16,8 @@ impl Concat {
             device: device.clone(),
         }
     }
-}
 
-impl NaryOperator for Concat {
-    fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error> {
-        let rows = inputs[0].tensor().deref().borrow().rows();
-        let cols = inputs[0].tensor().deref().borrow().cols();
-        for input in inputs.iter() {
-            debug_assert_eq!(input.tensor().deref().borrow().rows(), rows);
-            debug_assert_eq!(input.tensor().deref().borrow().cols(), cols);
-        }
-        let cols = inputs.len() * cols;
-        let len = rows * cols;
-        let values = vec![0.0; len];
-        let output = self.device.tensor(rows, cols, values, inputs, true, false);
-        output.push_forward_instruction(Rc::new(self.clone()), inputs, &[&output]);
-        output.push_backward_instruction(Rc::new(ConcatBackward::default()), &[&output], inputs);
-        Ok(output)
-    }
-}
-
-impl Operator for Concat {
-    fn name(&self) -> &str {
-        "Concat"
-    }
-
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let inputs: Vec<TensorF32> = inputs
-            .iter()
-            .map(|t| t.tensor().deref().borrow().clone())
-            .collect();
-        self.forward_f32(
-            &inputs.iter().collect::<Vec<_>>(),
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn concat(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let dst = outputs[0];
         for input_index in 0..inputs.len() {
             let src = inputs[input_index];
@@ -66,6 +31,82 @@ impl Operator for Concat {
             }
         }
         Ok(())
+    }
+
+    pub fn unconcat(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let src = inputs[0];
+        for input_index in 0..outputs.len() {
+            let dst = outputs[input_index];
+            let dst_col = 0;
+            let input_rows = dst.rows();
+            let input_cols = dst.cols();
+            for dst_row in 0..input_rows {
+                let src_row = dst_row;
+                let src_col = input_index * input_cols;
+                TensorF32::copy_slice(src, src_row, src_col, dst, dst_row, dst_col)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl NaryOperator for Concat {
+    fn forward(&self, inputs_n: &[&Tensor]) -> Result<Tensor, Error> {
+        let rows = inputs_n[0].tensor().deref().borrow().rows();
+        let cols = inputs_n[0].tensor().deref().borrow().cols();
+        for input in inputs_n.iter() {
+            debug_assert_eq!(input.tensor().deref().borrow().rows(), rows);
+            debug_assert_eq!(input.tensor().deref().borrow().cols(), cols);
+        }
+        let cols = inputs_n.len() * cols;
+        let len = rows * cols;
+        let values = vec![0.0; len];
+        let output = self
+            .device
+            .tensor(rows, cols, values, inputs_n, true, false);
+        let inputs = inputs_n;
+        let outputs = [&output];
+        let inputs: Vec<TensorF32> = inputs
+            .iter()
+            .map(|t| t.tensor().deref().borrow().clone())
+            .collect();
+        output.push_forward_instruction(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].tensor().deref().borrow()],
+        );
+        output.push_forward_instruction(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].gradient().deref().borrow()],
+        );
+        output.push_forward_instruction(
+            Rc::new(self.clone()),
+            &inputs.iter().collect::<Vec<_>>(),
+            &[&outputs[0].tensor().deref().borrow()],
+        );
+        let inputs = [&output];
+        let outputs = inputs_n;
+        let outputs: Vec<TensorF32> = outputs
+            .iter()
+            .map(|t| t.gradient().deref().borrow().clone())
+            .collect();
+        output.push_backward_instruction(
+            Rc::new(ConcatBackward::default()),
+            &[&inputs[0].gradient().deref().borrow_mut()],
+            &outputs.iter().collect::<Vec<_>>(),
+        );
+        Ok(output)
+    }
+}
+
+impl Operator for Concat {
+    fn name(&self) -> &str {
+        "Concat"
+    }
+
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        Self::concat(inputs, outputs)
     }
 }
 
@@ -82,30 +123,7 @@ impl Operator for ConcatBackward {
         "ConcatBackward"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let outputs: Vec<TensorF32> = outputs
-            .iter()
-            .map(|t| t.gradient().deref().borrow().clone())
-            .collect();
-        self.forward_f32(
-            &[&inputs[0].gradient().deref().borrow_mut()],
-            &outputs.iter().collect::<Vec<_>>(),
-        )
-    }
-
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let src = inputs[0];
-        for input_index in 0..outputs.len() {
-            let dst = outputs[input_index];
-            let dst_col = 0;
-            let input_rows = dst.rows();
-            let input_cols = dst.cols();
-            for dst_row in 0..input_rows {
-                let src_row = dst_row;
-                let src_col = input_index * input_cols;
-                TensorF32::copy_slice(src, src_row, src_col, dst, dst_row, dst_col)?;
-            }
-        }
-        Ok(())
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        Concat::unconcat(inputs, outputs)
     }
 }

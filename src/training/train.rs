@@ -5,9 +5,51 @@ use crate::{
     OptimizerTrait, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
+trait IsPrintable {
+    fn is_printable(&self) -> bool;
+}
+
+impl IsPrintable for char {
+    fn is_printable(&self) -> bool {
+        let code = *self as usize;
+        if (code >= 32 && code <= 126) || code == 9 || code == 10 || code == 13 {
+            return true;
+        }
+        return false;
+    }
+}
+
+fn as_printable(output: String, replacement: char) -> String {
+    let mut printable: String = String::new();
+    for char in output.as_str().chars() {
+        if char.is_printable() {
+            printable += String::from(char).as_str();
+        } else {
+            printable += String::from(replacement).as_str();
+        }
+    }
+    printable
+}
+
+fn tokens_to_text(
+    input_tokens: &[usize],
+    tokenizer: &mut Option<Tokenizer>,
+) -> Result<String, Error> {
+    let input_text = match tokenizer {
+        Some(tokenizer) => tokenizer.decode(&input_tokens)?,
+        None => input_tokens
+            .to_vec()
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<_>>()
+            .join(", "),
+    };
+    Ok(input_text)
+}
+
 pub fn print_expected_output_and_actual_output(
     epoch: usize,
-    tokenizer: &mut Tokenizer,
+    tokenizer: &mut Option<Tokenizer>,
     example: usize,
     input: &TensorF32,
     expected_output: &TensorF32,
@@ -22,16 +64,21 @@ pub fn print_expected_output_and_actual_output(
     println!("Epoch {} Example {}", epoch, example);
     println!("Loss {}", loss);
 
-    println!("  input_text: {}", tokenizer.decode(&input_tokens)?);
-
     println!(
-        "  expected_output_text: {}",
-        tokenizer.decode(&[expected_output_token])?
+        "  input_text: {}",
+        tokens_to_text(&input_tokens, tokenizer)?
     );
 
     println!(
+        "  expected_output_text: {}",
+        tokens_to_text(&[expected_output_token], tokenizer)?
+    );
+
+    let actual_output_text: String = tokens_to_text(&[actual_output_token], tokenizer)?;
+
+    println!(
         "  actual_output_text: {}",
-        tokenizer.decode(&[actual_output_token])?
+        as_printable(actual_output_text, '?'),
     );
 
     println!("  input_tokens: {:?}", &input_tokens);
@@ -49,8 +96,8 @@ pub fn print_expected_output_and_actual_output(
 fn print_device_mem_info(device: &Device) -> Result<(), Error> {
     let mem_info = &device.get_memory_info()?;
     println!(
-        "Device memory  used: {}, free: {}, total: {}, model_parameters: {}",
-        mem_info.used, mem_info.free, mem_info.total, mem_info.model_parameters,
+        "Device memory  used: {}, free: {}, total: {}",
+        mem_info.used, mem_info.free, mem_info.total,
     );
     Ok(())
 }
@@ -152,7 +199,7 @@ pub fn train_network_on_dataset(
 fn print_results(
     epoch: usize,
     program: &NeuralMachine,
-    tokenizer: &mut Tokenizer,
+    tokenizer: &mut Option<Tokenizer>,
     inputs: &[Tensor],
     outputs: &[Tensor],
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {

@@ -1,46 +1,43 @@
 use std::ops::Deref;
 
-use crate::{Add, BinaryOperator, Device, Error, Tensor, UnaryOperator};
+use crate::{BinaryOperator, Device, Error, Mul, Tensor, UnaryOperator};
+
+#[cfg(test)]
+mod tests;
 
 /// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 /// Attention Is All You Need -> https://arxiv.org/abs/1706.03762
 #[derive(Clone)]
 pub struct Mask {
     mask: Tensor,
-    add: Add,
+    mul: Mul,
 }
 
 impl Mask {
     pub fn try_new(device: &Device, mask_rows: usize, mask_cols: usize) -> Result<Self, Error> {
         let len = mask_rows * mask_cols;
-        let mask = vec![0.0; len];
+        let mask = vec![1.0; len];
 
         let mask = device.tensor(mask_rows, mask_cols, mask, &[], true, true);
         let mut values = mask.tensor().deref().borrow().get_values()?;
         for row in 0..mask_rows {
             for col in 0..mask_cols {
-                if row < col {
+                if row <= col {
                     let index = mask.tensor().deref().borrow().index(row, col);
-                    values[index] = f32::NEG_INFINITY;
+                    values[index] = 0.0;
                 }
             }
         }
         mask.tensor().deref().borrow_mut().set_values(values);
 
-        /*
-        {
-            println!("mask {}", &mask.tensor().deref().borrow());
-        }
-         */
-
-        let add = Add::new(device);
-        let mask = Self { mask, add };
+        let mul = Mul::new(device);
+        let mask = Self { mask, mul };
         Ok(mask)
     }
 }
 
 impl UnaryOperator for Mask {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        self.add.forward(input, &self.mask)
+        self.mul.forward(input, &self.mask)
     }
 }

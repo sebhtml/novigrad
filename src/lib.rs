@@ -12,3 +12,5 @@ mod tokenizers;
 pub use tokenizers::*;
 mod neural_machine;
 pub use neural_machine::*;
+
+const EPSILON: f32 = 1e-8;

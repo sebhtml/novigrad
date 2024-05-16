@@ -109,9 +109,35 @@ impl NeuralMachine {
             TensorF32::copy(expected_output, example_output)?;
         }
         // Forward tensors
-        for (_i, instruction) in self.instructions.iter().enumerate() {
-            //println!("Forward instruction {} {}", i, instruction.operator().name(),);
+        for (i, instruction) in self.instructions.iter().enumerate() {
+            //cprintln!("Forward instruction {} {}", i, instruction.operator().name(),);
+            #[cfg(debug_assertions)]
+            for input in instruction.inputs().deref() {
+                debug_assert_eq!(
+                    input.is_nan()?,
+                    false,
+                    "instruction {} {} read nan input {} {}",
+                    i,
+                    instruction.operator().name(),
+                    input.name(),
+                    input,
+                );
+            }
+
             instruction.forward()?;
+
+            #[cfg(debug_assertions)]
+            for output in instruction.outputs().deref() {
+                debug_assert_eq!(
+                    output.is_nan()?,
+                    false,
+                    "instruction {} {} wrote nan output {} {}",
+                    i,
+                    instruction.operator().name(),
+                    output.name(),
+                    output,
+                );
+            }
 
             // TODO impl Display
             /*
@@ -134,7 +160,7 @@ impl NeuralMachine {
             for output in instruction.outputs().deref().iter() {
                 println!("output {}", output);
             }
-              */
+             */
         }
         Ok(self.program_output.clone())
     }
@@ -185,9 +211,10 @@ impl NeuralMachine {
 
         println!("Instructions: {}", self.instructions.len());
         println!("------------------------------");
-        for (_i, instruction) in self.instructions.iter().enumerate() {
+        for (i, instruction) in self.instructions.iter().enumerate() {
             println!(
-                "INSTRUCTION    {}    {}    {}",
+                "{}: INSTRUCTION    {}    {}    {}",
+                i,
                 instruction.operator().name(),
                 instruction
                     .inputs()

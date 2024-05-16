@@ -3,6 +3,9 @@ use crate::{
     UnaryOperator,
 };
 
+#[cfg(test)]
+mod tests;
+
 /// MaskedScaledDotProductAttention is not a ONNX operator.
 /// https://onnx.ai/onnx/operators/index.html ???
 /// Attention Is All You Need

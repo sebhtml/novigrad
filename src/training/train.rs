@@ -62,7 +62,6 @@ pub fn print_expected_output_and_actual_output(
 
     println!("----");
     println!("Epoch {} Example {}", epoch, example);
-    println!("Loss {}", loss);
 
     println!(
         "  input_text: {}",
@@ -87,8 +86,10 @@ pub fn print_expected_output_and_actual_output(
         epoch, example, loss, expected_output_token, actual_output_token
     );
 
-    println!("expected_output {}", expected_output);
-    println!("actual_output {}", actual_output);
+    if expected_output.cols() < 10 {
+        println!("expected_output {}", expected_output);
+        println!("actual_output {}", actual_output);
+    }
 
     Ok(())
 }

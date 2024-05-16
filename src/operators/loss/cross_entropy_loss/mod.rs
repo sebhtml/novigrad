@@ -1,7 +1,9 @@
 use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
-use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero};
+use crate::{
+    devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero, EPSILON,
+};
 
 /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
 #[derive(Clone)]
@@ -16,8 +18,6 @@ impl CrossEntropyLoss {
         }
     }
 }
-
-const EPSILON: f32 = 1e-8;
 
 impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))

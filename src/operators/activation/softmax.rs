@@ -45,7 +45,9 @@ impl ActivationFunction for Softmax {
             let mut col = 0;
             while col < cols {
                 let x = values[product_matrix.index(row, col)];
+                debug_assert_eq!(false, x.is_nan());
                 let y = E.powf(x - max);
+                debug_assert_eq!(false, y.is_nan(), "x: {}, max: {}, y: {}", x, max, y,);
                 result_values[result.index(row, col)] = y;
                 sum += y;
                 col += 1;
@@ -56,7 +58,10 @@ impl ActivationFunction for Softmax {
             let mut col = 0;
             while col < cols {
                 let x = result_values[result.index(row, col)];
+                debug_assert_eq!(false, x.is_nan());
+                debug_assert_ne!(0.0, sum);
                 let y = x / sum;
+                debug_assert_eq!(false, y.is_nan());
                 result_values[result.index(row, col)] = y;
                 col += 1;
             }
@@ -141,7 +146,11 @@ impl Operator for Softmax {
     fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        Self::activate(input, output)
+        debug_assert_eq!(false, input.is_nan()?,);
+        debug_assert_eq!(false, input.is_nan()?,);
+        Self::activate(input, output)?;
+        debug_assert_eq!(false, output.is_nan()?,);
+        Ok(())
     }
 }
 

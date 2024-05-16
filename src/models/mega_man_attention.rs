@@ -23,7 +23,7 @@ impl MegaManAttentionModel {
         let _batch_size = 1;
         let sequence_length = 6;
         let vocab_size = 20;
-        let n_embd = 64; // 384; needs LayerNorm
+        let n_embd = 32; // 384; needs LayerNorm
         let num_heads = 8;
         let _n_layer = 1;
         let _dropout = 0.1;

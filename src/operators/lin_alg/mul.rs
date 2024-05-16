@@ -49,10 +49,17 @@ impl BinaryOperator for Mul {
         );
         let inputs = [input_0, input_1, &output];
         let outputs = [input_0, input_1];
-        output.push_backward_instruction(
+        output.push_backward_instruction_f32(
             Rc::new(MulBackward::default()),
-            &inputs,  //
-            &outputs, //
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+                &inputs[2].gradient().deref().borrow(),
+            ],
+            &[
+                &outputs[0].gradient().deref().borrow(),
+                &outputs[1].gradient().deref().borrow(),
+            ],
         );
         Ok(output)
     }

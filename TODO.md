@@ -46,7 +46,6 @@
 
 - merge the many load_examples functions
 - remove DatasetEnum
-- move code from training/mod.rs to training/train.rs
 - remove DeviceEnum
 - restore simple Errors (no line etc.)
 

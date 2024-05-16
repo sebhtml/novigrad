@@ -70,16 +70,6 @@ impl Operator for Mul {
         "Mul"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
@@ -103,20 +93,6 @@ impl MulBackward {
 impl Operator for MulBackward {
     fn name(&self) -> &str {
         "MulBackward"
-    }
-
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-                &inputs[2].gradient().deref().borrow(),
-            ],
-            &[
-                &outputs[0].gradient().deref().borrow(),
-                &outputs[1].gradient().deref().borrow(),
-            ],
-        )
     }
 
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {

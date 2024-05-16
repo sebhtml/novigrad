@@ -1,8 +1,9 @@
-- in Tensor, store just one Vec<Instruction> with bool flag for_gradient
-- Make sure that backward instruction add on top of existing gradients (no overwrite)
-- Bake optimizer instructions in neural machine
-- make clip_norm a parameter
 - diag in mask to -inf
+- Bake optimizer instructions in neural machine
+- in Tensor, store just one Vec<Instruction> with bool flag for_gradient
+
+- Make sure that backward instruction add on top of existing gradients (no overwrite)
+- make clip_norm a parameter
 
 == Initialization ==
 
@@ -12,7 +13,7 @@
 
 == Clean-up ==
 
-- Remove TensorF32 matmul
+- Remove TensorF32 matmul in favor of Gemm
 - remoze zero and name from tensor
 - sigmoidGrad and softmaxBackward are Mul
 - remove most of the Backward ops

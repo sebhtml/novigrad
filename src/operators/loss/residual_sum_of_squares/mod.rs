@@ -93,16 +93,6 @@ impl Operator for ResidualSumOfSquares {
         "ResidualSumOfSquares"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
@@ -123,16 +113,6 @@ impl Default for ResidualSumOfSquaresBackward {
 impl Operator for ResidualSumOfSquaresBackward {
     fn name(&self) -> &str {
         "ResidualSumOfSquaresBackward"
-    }
-
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].gradient().deref().borrow()],
-        )
     }
 
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {

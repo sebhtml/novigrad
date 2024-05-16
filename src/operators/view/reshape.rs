@@ -63,13 +63,6 @@ impl Operator for Reshape {
         "Reshape"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[&inputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
@@ -91,13 +84,6 @@ impl ReshapeBackward {
 impl Operator for ReshapeBackward {
     fn name(&self) -> &str {
         "ReshapeBackward"
-    }
-
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[&inputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
-        )
     }
 
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {

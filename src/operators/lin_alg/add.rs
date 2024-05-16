@@ -66,16 +66,6 @@ impl Operator for Add {
         "Add"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
@@ -95,16 +85,6 @@ impl AddBackward {
 impl Operator for AddBackward {
     fn name(&self) -> &str {
         "AddBackward"
-    }
-
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[&inputs[0].gradient().deref().borrow()],
-            &[
-                &outputs[0].gradient().deref().borrow(),
-                &outputs[1].gradient().deref().borrow_mut(),
-            ],
-        )
     }
 
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {

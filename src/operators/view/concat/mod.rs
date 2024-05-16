@@ -105,17 +105,6 @@ impl Operator for Concat {
         "Concat"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let inputs: Vec<TensorF32> = inputs
-            .iter()
-            .map(|t| t.tensor().deref().borrow().clone())
-            .collect();
-        self.forward_f32(
-            &inputs.iter().collect::<Vec<_>>(),
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         Self::concat(inputs, outputs)
     }
@@ -132,17 +121,6 @@ impl Default for ConcatBackward {
 impl Operator for ConcatBackward {
     fn name(&self) -> &str {
         "ConcatBackward"
-    }
-
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        let outputs: Vec<TensorF32> = outputs
-            .iter()
-            .map(|t| t.gradient().deref().borrow().clone())
-            .collect();
-        self.forward_f32(
-            &[&inputs[0].gradient().deref().borrow_mut()],
-            &outputs.iter().collect::<Vec<_>>(),
-        )
     }
 
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {

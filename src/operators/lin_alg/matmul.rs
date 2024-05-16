@@ -104,16 +104,6 @@ impl Operator for MatMul {
         "MatMul"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0 = inputs[0];
@@ -140,20 +130,6 @@ impl MatMulBackward {
 impl Operator for MatMulBackward {
     fn name(&self) -> &str {
         "MatMulBackward"
-    }
-
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
-        self.forward_f32(
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-                &inputs[2].gradient().deref().borrow(),
-            ],
-            &[
-                &outputs[0].gradient().deref().borrow(),
-                &outputs[1].gradient().deref().borrow(),
-            ],
-        )
     }
 
     fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {

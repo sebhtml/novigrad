@@ -60,13 +60,6 @@ impl Operator for Scale {
         "Scale"
     }
 
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        self.forward_f32(
-            &[&inputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
-        )
-    }
-
     fn forward_f32(
         &self,
         inputs: &[&TensorF32],
@@ -91,13 +84,6 @@ impl Default for ScaleBackward {
 impl Operator for ScaleBackward {
     fn name(&self) -> &str {
         "ScaleBackward"
-    }
-
-    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
-        self.forward_f32(
-            &[&inputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
-        )
     }
 
     fn forward_f32(

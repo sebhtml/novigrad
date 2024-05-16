@@ -1,6 +1,16 @@
-- diag in mask to -inf
+- Remove TensorF32 matmul in favor of Gemm
+- remoze zero and name from tensor
 - Bake optimizer instructions in neural machine
 - in Tensor, store just one Vec<Instruction> with bool flag for_gradient
+
+== GPT-1 Transformer ==
+
+- implement Dropout
+- implement Gelu
+- implement LayerNorm
+- implement Transformer
+
+- implement a mul cuda kernel
 
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 - make clip_norm a parameter
@@ -13,15 +23,12 @@
 
 == Clean-up ==
 
-- Remove TensorF32 matmul in favor of Gemm
-- remoze zero and name from tensor
 - sigmoidGrad and softmaxBackward are Mul
 - remove most of the Backward ops
 
 == Things ==
 
 - rename DatasetDetails to ModelTrainingDetails
-- backward has no parameters
 
 == Other things ==
 
@@ -65,14 +72,6 @@
 
 - implement parallel execution of certain branches in parallel using a execution_group_id
 
-
-== GPT-1 Transformer ==
-
-- implement Dropout
-- implement Gelu
-- implement LayerNorm
-- implement Transformer
-
 == Positional Encoding ==
 
 - implement positional encoding
@@ -87,8 +86,6 @@
 
 == Devices ==
 
-- use cuda stream to realize a tensor (is this useful ? CUDA execution is async by default)
-- implement a mul cuda kernel
 - Add support for Jim Keller's https://tenstorrent.com/cards/
 - Add support for Google TPU
 - Add support for Apple Metal

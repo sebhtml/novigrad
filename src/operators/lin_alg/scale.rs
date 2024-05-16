@@ -60,11 +60,7 @@ impl Operator for Scale {
         "Scale"
     }
 
-    fn forward_f32(
-        &self,
-        inputs: &[&TensorF32],
-        outputs: &[&TensorF32],
-    ) -> Result<(), crate::Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
         let input = inputs[0];
         let output = outputs[0];
         TensorF32::copy(input, output)?;
@@ -86,11 +82,7 @@ impl Operator for ScaleBackward {
         "ScaleBackward"
     }
 
-    fn forward_f32(
-        &self,
-        inputs: &[&TensorF32],
-        outputs: &[&TensorF32],
-    ) -> Result<(), crate::Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
         let input = inputs[0];
         let output = outputs[0];
         TensorF32::add(input, output)

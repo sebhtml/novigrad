@@ -105,7 +105,7 @@ impl Operator for Concat {
         "Concat"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         Self::concat(inputs, outputs)
     }
 }
@@ -123,7 +123,7 @@ impl Operator for ConcatBackward {
         "ConcatBackward"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         Concat::unconcat(inputs, outputs)
     }
 }

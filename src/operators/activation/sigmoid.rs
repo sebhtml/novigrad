@@ -113,7 +113,7 @@ impl Operator for Sigmoid {
         "Sigmoid"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
         Self::activate(&input, &output)
@@ -137,7 +137,7 @@ impl Operator for SigmoidBackward {
         "SigmoidBackward"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
             let input_gradient = inputs[1];

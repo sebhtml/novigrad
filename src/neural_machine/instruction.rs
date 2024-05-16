@@ -32,6 +32,6 @@ impl Instruction {
     pub fn forward(&self) -> Result<(), Error> {
         let inputs: Vec<&TensorF32> = self.inputs.iter().collect();
         let outputs_f32: Vec<&TensorF32> = self.outputs.iter().collect();
-        self.operator.forward_f32(&inputs, &outputs_f32)
+        self.operator.forward(&inputs, &outputs_f32)
     }
 }

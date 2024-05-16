@@ -66,7 +66,7 @@ impl Operator for Add {
         "Add"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];
@@ -87,7 +87,7 @@ impl Operator for AddBackward {
         "AddBackward"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(outputs.len(), 2);
         let input_gradient = inputs[0];
 

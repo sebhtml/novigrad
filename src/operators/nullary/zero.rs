@@ -13,7 +13,7 @@ impl Operator for Zero {
         "Zero"
     }
 
-    fn forward_f32(&self, _inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, _inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         for output in outputs {
             output.zero()?;
         }

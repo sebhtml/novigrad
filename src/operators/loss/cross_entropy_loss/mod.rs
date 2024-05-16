@@ -110,7 +110,7 @@ impl Operator for CrossEntropyLoss {
         "CrossEntropyLoss"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = CrossEntropyLoss::evaluate(&self.device, expected, actual)?;
@@ -132,7 +132,7 @@ impl Operator for CrossEntropyLossBackward {
         "CrossEntropyLossBackward"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);
         if outputs[0].requires_grad() {

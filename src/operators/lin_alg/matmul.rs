@@ -104,7 +104,7 @@ impl Operator for MatMul {
         "MatMul"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         let input_0 = inputs[0];
         let input_1 = inputs[1];
@@ -132,7 +132,7 @@ impl Operator for MatMulBackward {
         "MatMulBackward"
     }
 
-    fn forward_f32(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(outputs.len(), 2);
         let input_gradient = inputs[2];
 

@@ -66,12 +66,24 @@ impl NaryOperator for Concat {
             .tensor(rows, cols, values, inputs_n, true, false);
         let inputs = inputs_n;
         let outputs = [&output];
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
-        output.push_forward_instruction(
+        let inputs: Vec<TensorF32> = inputs
+            .iter()
+            .map(|t| t.tensor().deref().borrow().clone())
+            .collect();
+        output.push_forward_instruction_f32(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].tensor().deref().borrow()],
+        ); //
+        output.push_forward_instruction_f32(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].gradient().deref().borrow()],
+        ); //
+        output.push_forward_instruction_f32(
             Rc::new(self.clone()),
-            inputs,   //
-            &outputs, //
+            &inputs.iter().collect::<Vec<_>>(),
+            &[&outputs[0].tensor().deref().borrow()],
         );
         let inputs = [&output];
         let outputs = inputs_n;

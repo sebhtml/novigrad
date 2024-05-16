@@ -29,12 +29,23 @@ impl BinaryOperator for Mul {
                 .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
-        output.push_forward_instruction(Rc::new(Zero::default()), &[], &outputs); //
-        output.push_forward_instruction(
+        output.push_forward_instruction_f32(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].tensor().deref().borrow()],
+        );
+        output.push_forward_instruction_f32(
+            Rc::new(Zero::default()),
+            &[],
+            &[&outputs[0].gradient().deref().borrow()],
+        );
+        output.push_forward_instruction_f32(
             Rc::new(self.clone()),
-            &inputs,  //
-            &outputs, //
+            &[
+                &inputs[0].tensor().deref().borrow(),
+                &inputs[1].tensor().deref().borrow(),
+            ],
+            &[&outputs[0].tensor().deref().borrow()],
         );
         let inputs = [input_0, input_1, &output];
         let outputs = [input_0, input_1];

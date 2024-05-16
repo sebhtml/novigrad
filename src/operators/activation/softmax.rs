@@ -107,12 +107,12 @@ impl UnaryOperator for Softmax {
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
-        ); //
+        );
         output.push_forward_instruction_f32(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
-        ); //
+        );
         output.push_forward_instruction_f32(
             Rc::new(self.clone()),
             &[&inputs[0].tensor().deref().borrow()],

@@ -30,19 +30,6 @@ impl Tensor {
         "t".to_owned() + self.name.to_string().as_str()
     }
 
-    pub fn push_forward_instruction(
-        &self,
-        operator: Rc<dyn Operator>,
-        inputs: &[&Tensor],
-        outputs: &[&Tensor],
-    ) {
-        let instruction = Instruction::new(operator, inputs, outputs);
-        self.forward_instructions
-            .deref()
-            .borrow_mut()
-            .push(instruction)
-    }
-
     pub fn push_forward_instruction_f32(
         &self,
         operator: Rc<dyn Operator>,

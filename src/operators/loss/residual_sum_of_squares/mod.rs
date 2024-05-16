@@ -60,12 +60,12 @@ impl BinaryOperator for ResidualSumOfSquares {
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
-        ); //
+        );
         output.push_forward_instruction_f32(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
-        ); //
+        );
         output.push_forward_instruction_f32(
             Rc::new(self.clone()),
             &[

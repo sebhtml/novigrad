@@ -1,9 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Identity, Operator, Tensor, TensorF32, UnaryOperator, Zero};
+use crate::{Device, Operator, Tensor, TensorF32, UnaryOperator, Zero};
 
-/// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
-/// TODO implement broadcasting to use Mul instead
+/// Scale is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
 pub struct Scale {
     device: Device,
@@ -48,7 +47,7 @@ impl UnaryOperator for Scale {
         let inputs = [&output];
         let outputs = [input];
         output.push_backward_instruction(
-            Rc::new(Identity::new(&self.device)),
+            Rc::new(ScaleBackward::default()),
             &inputs,  //
             &outputs, //
         );
@@ -78,5 +77,36 @@ impl Operator for Scale {
         TensorF32::copy(input, output)?;
         let alpha = self.alpha;
         TensorF32::scale(alpha, output)
+    }
+}
+
+pub struct ScaleBackward {}
+
+impl Default for ScaleBackward {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl Operator for ScaleBackward {
+    fn name(&self) -> &str {
+        "ScaleBackward"
+    }
+
+    fn forward(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+        self.forward_f32(
+            &[&inputs[0].gradient().deref().borrow()],
+            &[&outputs[0].gradient().deref().borrow()],
+        )
+    }
+
+    fn forward_f32(
+        &self,
+        inputs: &[&TensorF32],
+        outputs: &[&TensorF32],
+    ) -> Result<(), crate::Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+        TensorF32::add(input, output)
     }
 }

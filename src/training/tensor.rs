@@ -107,22 +107,6 @@ impl Tensor {
         }
         tape.into_iter().rev().collect()
     }
-
-    pub fn print_tape(tape: &[Tensor]) {
-        println!("Tape");
-        for (i, element) in tape.iter().enumerate() {
-            println!(
-                "index {}  operator {}  inputs {}",
-                i,
-                element.forward_instructions.deref().borrow()[0]
-                    .operator()
-                    .name(),
-                element.forward_instructions.deref().borrow()[0]
-                    .inputs()
-                    .len()
-            );
-        }
-    }
 }
 
 impl PartialEq for Tensor {

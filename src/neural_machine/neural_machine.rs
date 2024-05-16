@@ -117,7 +117,6 @@ impl NeuralMachine {
         // Forward tensors
         for (_i, instruction) in self.instructions.iter().enumerate() {
             //println!("Forward instruction {} {}", i, instruction.operator().name(),);
-            instruction.forward()?;
             instruction.forward_f32()?;
 
             // TODO impl Display

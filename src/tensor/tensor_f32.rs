@@ -451,7 +451,7 @@ impl TensorF32 {
         Self::a_x_plus_y(alpha, x, y)
     }
 
-    pub fn a_x_plus_y(alpha: f32, x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
+    fn a_x_plus_y(alpha: f32, x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
             println!("Incompatible sizes");

@@ -30,6 +30,7 @@ pub struct ModelDetails {
     pub loss_operator: Box<dyn LossOperator>,
     pub optimizer: Box<dyn OptimizerTrait>,
     pub learning_rate: f32,
+    pub shuffle_examples: bool,
     pub clipped_gradient_norm: f32,
     pub epochs: usize,
     pub progress: usize,

@@ -139,6 +139,7 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     let clipped_gradient_norm = details.clipped_gradient_norm;
     let mut tokenizer = details.tokenizer;
     let device = details.device;
+    let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
     let program = NeuralMachine::try_new(
         &device,
@@ -175,7 +176,15 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
                 break;
             }
         }
-        train(&program, &device, &optimizer, epoch, &inputs, &outputs)?;
+        train(
+            &program,
+            &device,
+            shuffle_examples,
+            &optimizer,
+            epoch,
+            &inputs,
+            &outputs,
+        )?;
     }
     let final_total_error = print_total_loss(
         &device,
@@ -264,13 +273,16 @@ fn get_row_argmaxes(tensor: &TensorF32) -> Result<Vec<usize>, Error> {
 pub fn train(
     program: &NeuralMachine,
     device: &Device,
+    shuffle_examples: bool,
     optimizer: &Box<dyn OptimizerTrait>,
     epoch: usize,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
 ) -> Result<(), Error> {
     let mut indices: Vec<usize> = (0..inputs.len()).collect();
-    indices.shuffle(&mut thread_rng());
+    if shuffle_examples {
+        indices.shuffle(&mut thread_rng());
+    }
     for i in indices.into_iter() {
         train_with_one_example(
             program,

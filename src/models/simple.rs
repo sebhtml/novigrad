@@ -141,6 +141,7 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
         initial_total_error_min: 8.0,
         final_total_error_max: 0.0,
         learning_rate,
+        shuffle_examples: true,
         clipped_gradient_norm: 1.0,
     };
     Ok(details)

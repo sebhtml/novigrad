@@ -68,6 +68,7 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
         initial_total_error_min: 50.0,
         final_total_error_max: 2.0,
         learning_rate,
+        shuffle_examples: false,
         clipped_gradient_norm: 1.0,
     };
     Ok(details)

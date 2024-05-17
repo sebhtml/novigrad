@@ -1,6 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, Error, Operator, Tensor, TensorF32, UnaryOperator, Zero};
+use crate::{
+    devices::Device, Error, Instruction, Operator, Tensor, TensorF32, UnaryOperator, Zero,
+};
 
 /// https://onnx.ai/onnx/operators/onnx__Reshape.html
 #[derive(Clone)]
@@ -32,28 +34,32 @@ impl UnaryOperator for Reshape {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_forward_instruction(
+        output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
-        );
-        output.push_forward_instruction(
+            false,
+        ));
+        output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
-        );
-        output.push_forward_instruction(
+            false,
+        ));
+        output.push_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-        );
+            false,
+        ));
         let inputs = [&output];
         let outputs = [input];
-        output.push_backward_instruction(
+        output.push_instruction(Instruction::new(
             Rc::new(ReshapeBackward::new(self.input_size.clone())),
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-        );
+            true,
+        ));
         Ok(output)
     }
 }

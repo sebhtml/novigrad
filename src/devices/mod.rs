@@ -165,8 +165,6 @@ impl Device {
         requires_grad: bool,
         optimize: bool,
     ) -> Tensor {
-        let name = *self.next_name.deref().borrow();
-        *self.next_name.deref().borrow_mut() += 1;
         let len = rows * cols;
         let gradient = if requires_grad {
             Self::tensor_f32(&self, rows, cols, vec![0.0; len])
@@ -174,7 +172,7 @@ impl Device {
             Self::tensor_f32(&self, 0, 0, vec![])
         };
         let tensor = Self::tensor_f32(&self, rows, cols, values);
-        let tensor = Tensor::new(name, tensor, gradient, inputs);
+        let tensor = Tensor::new(tensor, gradient, inputs);
         if optimize {
             self.tensors_to_optimize
                 .deref()

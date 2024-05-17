@@ -1,71 +1,49 @@
-use crate::{Error, Instruction, Operator, TensorF32};
+use crate::{Error, Instruction, TensorF32};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct Tensor {
-    name: usize,
     inputs: Rc<Vec<Tensor>>,
-    forward_instructions: Rc<RefCell<Vec<Instruction>>>,
-    backward_instructions: Rc<RefCell<Vec<Instruction>>>,
+    instructions: Rc<RefCell<Vec<Instruction>>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
 }
 
 impl Tensor {
-    pub fn new(name: usize, tensor: TensorF32, gradient: TensorF32, inputs: &[&Tensor]) -> Self {
+    pub fn new(tensor: TensorF32, gradient: TensorF32, inputs: &[&Tensor]) -> Self {
         let inputs: Vec<Tensor> = inputs.iter().map(|x| (*x).to_owned()).collect();
         Self {
-            name,
             inputs: Rc::new(inputs),
-            forward_instructions: Default::default(),
-            backward_instructions: Default::default(),
+            instructions: Default::default(),
             tensor: Rc::new(RefCell::new(tensor)),
             gradient: Rc::new(RefCell::new(gradient)),
         }
     }
 
-    pub fn name(&self) -> String {
-        "t".to_owned() + self.name.to_string().as_str()
+    pub fn push_instruction(&self, instruction: Instruction) {
+        self.instructions.deref().borrow_mut().push(instruction)
     }
 
-    pub fn push_forward_instruction(
-        &self,
-        operator: Rc<dyn Operator>,
-        inputs: &[&TensorF32],
-        outputs: &[&TensorF32],
-    ) {
-        let instruction = Instruction::new(operator, inputs, outputs);
-        self.forward_instructions
+    pub fn forward_instructions(&self) -> Vec<Instruction> {
+        self.instructions
             .deref()
-            .borrow_mut()
-            .push(instruction)
+            .borrow()
+            .clone()
+            .into_iter()
+            .filter(|i| !i.gradient_pathway())
+            .collect()
     }
 
-    pub fn push_backward_instruction(
-        &self,
-        operator: Rc<dyn Operator>,
-        inputs: &[&TensorF32],
-        outputs: &[&TensorF32],
-    ) {
-        let instruction = Instruction::new(operator, inputs, outputs);
-        self.backward_instructions
+    pub fn backward_instructions(&self) -> Vec<Instruction> {
+        self.instructions
             .deref()
-            .borrow_mut()
-            .push(instruction)
-    }
-
-    pub fn forward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
-        &self.forward_instructions
-    }
-
-    pub fn backward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
-        &self.backward_instructions
-    }
-
-    pub fn requires_grad(&self) -> bool {
-        self.gradient.deref().borrow().requires_grad()
+            .borrow()
+            .clone()
+            .into_iter()
+            .filter(|i| i.gradient_pathway())
+            .collect()
     }
 
     pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {
@@ -76,24 +54,13 @@ impl Tensor {
         &self.gradient
     }
 
-    pub fn zero(&self) -> Result<(), Error> {
-        self.tensor().deref().borrow_mut().zero()?;
-        self.gradient().deref().borrow_mut().zero()?;
-        Ok(())
-    }
-    pub fn resize(&self, new_size: &[usize]) {
-        self.tensor.deref().borrow_mut().reallocate(new_size);
-        self.gradient.deref().borrow_mut().reallocate(new_size);
-    }
-
     pub fn get_tape(&self) -> Vec<Tensor> {
         let mut tape = vec![];
         let mut stack = LinkedList::new();
         stack.push_back(self.clone());
         while let Some(element) = stack.pop_back() {
             {
-                let forward_instructions: &Vec<Instruction> =
-                    &element.forward_instructions().deref().borrow();
+                let forward_instructions: Vec<Instruction> = element.forward_instructions();
                 if forward_instructions.is_empty() {
                     continue;
                 }
@@ -109,7 +76,7 @@ impl Tensor {
     }
 
     pub fn forward(&self) -> Result<(), Error> {
-        for inst in self.forward_instructions.deref().borrow().iter() {
+        for inst in self.forward_instructions().iter() {
             inst.forward()?;
         }
         Ok(())

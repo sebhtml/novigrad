@@ -50,18 +50,22 @@ impl NeuralMachine {
         let mut instructions = vec![];
 
         for tensor in tape.iter() {
-            for instruction in tensor.forward_instructions().deref().borrow().iter() {
-                instructions.push(instruction.clone());
+            for instruction in tensor.forward_instructions().into_iter() {
+                instructions.push(instruction);
             }
         }
 
         for tensor in tape.iter().rev() {
-            for instruction in tensor.backward_instructions().deref().borrow().iter() {
+            for instruction in tensor.backward_instructions().into_iter() {
                 let outputs: Vec<TensorF32> =
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
-                let clip_instruction =
-                    Instruction::new(Rc::new(Clip::new(clipped_gradient_norm)), &[], &outputs);
+                let clip_instruction = Instruction::new(
+                    Rc::new(Clip::new(clipped_gradient_norm)),
+                    &[],
+                    &outputs,
+                    instruction.gradient_pathway(),
+                );
 
                 instructions.push(instruction.clone());
                 instructions.push(clip_instruction);
@@ -251,6 +255,7 @@ impl NeuralMachine {
                         Rc::new(IdentityBackward::default()),
                         &[softmax_backward_input_gradient],
                         &instructions[i + 2].outputs().iter().collect::<Vec<_>>(),
+                        instructions[i + 2].gradient_pathway(),
                     ));
                     new_instructions.push(instructions[i + 3].clone());
                     i += 4;

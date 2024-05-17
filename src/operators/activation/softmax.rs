@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Operator, TensorF32, UnaryOperator, Zero};
+use crate::{ActivationFunction, Instruction, Operator, TensorF32, UnaryOperator, Zero};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -108,24 +108,27 @@ impl UnaryOperator for Softmax {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_forward_instruction(
+        output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
-        );
-        output.push_forward_instruction(
+            false,
+        ));
+        output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
-        );
-        output.push_forward_instruction(
+            false,
+        ));
+        output.push_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-        );
+            false,
+        ));
         let inputs = [&output];
         let outputs = [input];
-        output.push_backward_instruction(
+        output.push_instruction(Instruction::new(
             Rc::new(SoftmaxBackward::new(&self.device)),
             &[
                 &inputs[0].tensor().deref().borrow(),
@@ -133,7 +136,8 @@ impl UnaryOperator for Softmax {
                 &outputs[0].tensor().deref().borrow(),
             ],
             &[&outputs[0].gradient().deref().borrow()],
-        );
+            true,
+        ));
         Ok(output)
     }
 }

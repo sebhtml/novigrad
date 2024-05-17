@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, NaryOperator, Operator, Tensor, TensorF32, Zero};
+use crate::{Device, Error, Instruction, NaryOperator, Operator, Tensor, TensorF32, Zero};
 
 #[cfg(test)]
 mod tests;
@@ -70,32 +70,36 @@ impl NaryOperator for Concat {
             .iter()
             .map(|t| t.tensor().deref().borrow().clone())
             .collect();
-        output.push_forward_instruction(
+        output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
-        );
-        output.push_forward_instruction(
+            false,
+        ));
+        output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
-        );
-        output.push_forward_instruction(
+            false,
+        ));
+        output.push_instruction(Instruction::new(
             Rc::new(self.clone()),
             &inputs.iter().collect::<Vec<_>>(),
             &[&outputs[0].tensor().deref().borrow()],
-        );
+            false,
+        ));
         let inputs = [&output];
         let outputs = inputs_n;
         let outputs: Vec<TensorF32> = outputs
             .iter()
             .map(|t| t.gradient().deref().borrow().clone())
             .collect();
-        output.push_backward_instruction(
+        output.push_instruction(Instruction::new(
             Rc::new(ConcatBackward::default()),
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),
-        );
+            true,
+        ));
         Ok(output)
     }
 }

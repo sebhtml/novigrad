@@ -113,7 +113,7 @@ impl Operator for MatMul {
         let b = input_1;
         let c = output;
         let transb = self.transb;
-        TensorF32::matmul(false, transb, a, b, c, false)
+        TensorF32::gemm(false, transb, 1.0, a, b, 1.0, c, false)
     }
 }
 

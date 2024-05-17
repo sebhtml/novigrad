@@ -239,19 +239,6 @@ impl TensorF32 {
         device.scopy(n, x, incx, y, incy)
     }
 
-    pub fn matmul(
-        transa: bool,
-        transb: bool,
-        a: &TensorF32,
-        b: &TensorF32,
-        c: &TensorF32,
-        transpose_result: bool,
-    ) -> Result<(), Error> {
-        let alpha = 1.0;
-        let beta = 0.0;
-        TensorF32::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)
-    }
-
     pub fn gemm(
         transa: bool,
         transb: bool,

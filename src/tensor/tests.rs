@@ -192,7 +192,7 @@ fn matrix_multiplication_result() {
     let cols = rhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::matmul(false, false, &lhs, &rhs, &mut result, false).unwrap();
+    TensorF32::gemm(false, false, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -242,7 +242,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     let cols = rhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::matmul(true, false, &lhs, &rhs, &mut result, false).unwrap();
+    TensorF32::gemm(true, false, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -292,7 +292,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     let cols = rhs.rows();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::matmul(false, true, &lhs, &rhs, &mut result, false).unwrap();
+    TensorF32::gemm(false, true, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -340,7 +340,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let cols = rhs.rows();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::matmul(true, true, &lhs, &rhs, &mut result, false).unwrap();
+    TensorF32::gemm(true, true, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -397,7 +397,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let cols = lhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::matmul(true, true, &lhs, &rhs, &mut result, true).unwrap();
+    TensorF32::gemm(true, true, 1.0, &lhs, &rhs, 1.0, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -451,7 +451,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let cols = lhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::matmul(true, false, &lhs, &rhs, &mut result, true).unwrap();
+    TensorF32::gemm(true, false, 1.0, &lhs, &rhs, 1.0, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -597,7 +597,7 @@ fn big_matrix_multiplication() {
     let cols = m.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::matmul(false, false, &m, &m, &mut result, false).unwrap();
+    TensorF32::gemm(false, false, 1.0, &m, &m, 1.0, &mut result, false).unwrap();
 }
 
 #[test]

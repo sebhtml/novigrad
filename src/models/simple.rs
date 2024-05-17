@@ -1,6 +1,6 @@
 use crate::{
-    into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, ModelDetails, Tensor,
-    Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
+    into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, GradientDescent,
+    ModelDetails, Tensor, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
 };
 
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
@@ -134,6 +134,7 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
         examples,
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
+        optimizer: Box::new(GradientDescent::default()),
         epochs: 500,
         progress: 100,
         initial_total_error_min: 8.0,

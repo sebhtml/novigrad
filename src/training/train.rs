@@ -3,8 +3,8 @@ use rand::thread_rng;
 use std::{ops::Deref, time::SystemTime};
 
 use crate::{
-    Device, Error, GradientDescent, ModelDetails, NeuralMachine, OptimizerTrait, Tensor, TensorF32,
-    Tokenizer, TokenizerTrait,
+    Device, Error, ModelDetails, NeuralMachine, OptimizerTrait, Tensor, TensorF32, Tokenizer,
+    TokenizerTrait,
 };
 
 trait IsPrintable {
@@ -140,7 +140,7 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     let clipped_gradient_norm = details.clipped_gradient_norm;
     let mut tokenizer = details.tokenizer;
     let device = details.device;
-    let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::default());
+    let optimizer = details.optimizer;
     let program = NeuralMachine::try_new(&device, &model, &loss_operator, clipped_gradient_norm)?;
 
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();

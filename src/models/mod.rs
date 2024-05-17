@@ -4,7 +4,7 @@ mod mega_man;
 mod mega_man_attention;
 mod perceptron;
 mod simple;
-use crate::LossOperator;
+use crate::{LossOperator, OptimizerTrait};
 pub use perceptron::*;
 use std::fs;
 
@@ -28,6 +28,7 @@ pub struct ModelDetails {
     pub examples: Vec<(Tensor, Tensor)>,
     pub model: Box<dyn UnaryModel>,
     pub loss_operator: Box<dyn LossOperator>,
+    pub optimizer: Box<dyn OptimizerTrait>,
     pub learning_rate: f32,
     pub clipped_gradient_norm: f32,
     pub epochs: usize,

@@ -1,7 +1,7 @@
 use super::load_examples;
 use crate::{
-    CrossEntropyLoss, Device, MultiHeadAttention, TernaryOperator, Tokenizer, UnaryModel,
-    UnaryOperator,
+    CrossEntropyLoss, Device, GradientDescent, MultiHeadAttention, TernaryOperator, Tokenizer,
+    UnaryModel, UnaryOperator,
 };
 use crate::{Error, ModelDetails};
 
@@ -110,6 +110,7 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         examples,
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
+        optimizer: Box::new(GradientDescent::default()),
         epochs: 200,
         progress: 10,
         initial_total_error_min: 50.0,

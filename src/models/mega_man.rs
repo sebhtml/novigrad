@@ -1,5 +1,7 @@
 use super::load_examples;
-use crate::{BinaryOperator, CrossEntropyLoss, Device, Tokenizer, UnaryModel, UnaryOperator};
+use crate::{
+    BinaryOperator, CrossEntropyLoss, Device, GradientDescent, Tokenizer, UnaryModel, UnaryOperator,
+};
 use crate::{Error, ModelDetails};
 
 use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, Tensor};
@@ -107,6 +109,7 @@ pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails, Error> {
         examples,
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
+        optimizer: Box::new(GradientDescent::default()),
         epochs: 100,
         progress: 10,
         initial_total_error_min: 50.0,

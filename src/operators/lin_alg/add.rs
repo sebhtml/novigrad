@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{BinaryOperator, Device, Error, Operator, Tensor, TensorF32, Zero};
+use crate::{BinaryOperator, Device, Error, Instruction, Operator, Tensor, TensorF32, Zero};
 
 /// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
@@ -29,19 +29,19 @@ impl BinaryOperator for Add {
                 .tensor(rows, cols, vec![0.0; len], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        output.push_instruction(
+        output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             false,
-        );
-        output.push_instruction(
+        ));
+        output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             false,
-        );
-        output.push_instruction(
+        ));
+        output.push_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[
                 &inputs[0].tensor().deref().borrow(),
@@ -49,10 +49,10 @@ impl BinaryOperator for Add {
             ],
             &[&outputs[0].tensor().deref().borrow()],
             false,
-        );
+        ));
         let inputs = [&output];
         let outputs = [input_1, input_2];
-        output.push_instruction(
+        output.push_instruction(Instruction::new(
             Rc::new(AddBackward::new()),
             &[&inputs[0].gradient().deref().borrow()],
             &[
@@ -60,7 +60,7 @@ impl BinaryOperator for Add {
                 &outputs[1].gradient().deref().borrow(),
             ],
             true,
-        );
+        ));
         Ok(output)
     }
 }

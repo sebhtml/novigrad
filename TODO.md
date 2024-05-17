@@ -1,10 +1,10 @@
 - Bake optimizer instructions in neural machine
-- use Scale instead of Zero
-- rename Scale to ScalarMul
 - add interesting example
 
 - Use Add instead of AddBackward
-- sigmoidGrad and softmaxBackward are Mul
+- use Scale instead of Zero
+- rename Scale to ScalarMul
+- SigmoidBackward and SoftmaxBackward are Mul
 
 == GPT-1 Transformer ==
 

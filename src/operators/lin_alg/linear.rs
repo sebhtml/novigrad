@@ -1,6 +1,6 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{Device, Error, Gemm, Tensor, TernaryOperator, UnaryOperator};
+use crate::{Add, BinaryOperator, Device, Error, MatMul, Tensor, UnaryOperator};
 
 /// Linear is not a ONNX operator.
 /// https://onnx.ai/onnx/operators/index.html ???
@@ -8,7 +8,8 @@ use crate::{Device, Error, Gemm, Tensor, TernaryOperator, UnaryOperator};
 pub struct Linear {
     weights: Tensor,
     biases: Tensor,
-    gemm: Gemm,
+    matmul: MatMul,
+    add: Add,
 }
 
 impl Linear {
@@ -44,17 +45,20 @@ impl Linear {
             true,
         );
 
-        let gemm = Gemm::new(device, true);
+        let transb = true;
         Self {
             weights,
             biases,
-            gemm,
+            matmul: MatMul::new(device, transb),
+            add: Add::new(device),
         }
     }
 }
 
 impl UnaryOperator for Linear {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        self.gemm.forward(input, &self.weights, &self.biases)
+        let product = self.matmul.forward(input, &self.weights)?;
+        let sum = self.add.forward(&product, &self.biases)?;
+        Ok(sum)
     }
 }

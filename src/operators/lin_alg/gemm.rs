@@ -21,9 +21,7 @@ impl Gemm {
 
 impl TernaryOperator for Gemm {
     fn forward(&self, input: &Tensor, weights: &Tensor, biases: &Tensor) -> Result<Tensor, Error> {
-        //println!("matmul forward");
         let product = self.matmul.forward(input, weights)?;
-        //println!("add forward");
         let sum = self.add.forward(&product, biases)?;
         Ok(sum)
     }

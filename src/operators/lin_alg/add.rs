@@ -1,8 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{
-    BinaryOperator, Device, Error, Instruction, OpCode, Operator, Tensor, TensorF32, Zero,
-};
+use crate::{BinaryOperator, Device, Error, Instruction, OpCode, Tensor, TensorF32, Zero};
 
 /// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
@@ -63,7 +61,7 @@ impl BinaryOperator for Add {
         let inputs = [&output];
         let outputs = [input_1, input_2];
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(AddBackward::new())),
+            OpCode::AddBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[
                 &outputs[0].gradient().deref().borrow(),
@@ -78,16 +76,7 @@ impl BinaryOperator for Add {
 pub struct AddBackward {}
 
 impl AddBackward {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-impl Operator for AddBackward {
-    fn name(&self) -> &str {
-        "AddBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(outputs.len(), 2);
         let input_gradient = inputs[0];
 

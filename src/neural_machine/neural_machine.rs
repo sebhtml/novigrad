@@ -56,15 +56,16 @@ impl NeuralMachine {
         }
 
         for tensor in tape.iter().rev() {
-            let instruction = tensor.backward_instructions().deref().borrow()[0].to_owned();
-            let outputs: Vec<TensorF32> =
-                instruction.outputs().deref().clone().into_iter().collect();
-            let outputs: Vec<&TensorF32> = outputs.iter().collect();
-            let clip_instruction =
-                Instruction::new(Rc::new(Clip::new(clipped_gradient_norm)), &[], &outputs);
+            for instruction in tensor.backward_instructions().deref().borrow().iter() {
+                let outputs: Vec<TensorF32> =
+                    instruction.outputs().deref().clone().into_iter().collect();
+                let outputs: Vec<&TensorF32> = outputs.iter().collect();
+                let clip_instruction =
+                    Instruction::new(Rc::new(Clip::new(clipped_gradient_norm)), &[], &outputs);
 
-            instructions.push(instruction);
-            instructions.push(clip_instruction);
+                instructions.push(instruction.clone());
+                instructions.push(clip_instruction);
+            }
         }
 
         let instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);

@@ -173,7 +173,7 @@ impl Operator for SoftmaxBackward {
     fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
-            let input_gradient = inputs[0];
+            let input_gradient = inputs[1];
             let output = inputs[2];
             let input = inputs[0];
             let rows = output.rows();

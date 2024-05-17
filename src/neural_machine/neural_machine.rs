@@ -105,6 +105,7 @@ impl NeuralMachine {
             TensorF32::copy(expected_output, example_output)?;
         }
         // Forward tensors
+        #[allow(unused_variables)]
         for (i, instruction) in self.instructions.iter().enumerate() {
             //cprintln!("Forward instruction {} {}", i, instruction.operator().name(),);
             #[cfg(debug_assertions)]

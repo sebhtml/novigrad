@@ -111,10 +111,10 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
         epochs: 100,
-        progress: 100,
+        progress: 10,
         initial_total_error_min: 50.0,
         final_total_error_max: 20.0,
-        learning_rate: 0.1,
+        learning_rate: 0.05,
         clipped_gradient_norm: 1.0,
     };
     Ok(details)

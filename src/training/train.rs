@@ -1,3 +1,5 @@
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 use std::{ops::Deref, time::SystemTime};
 
 use crate::{
@@ -271,7 +273,9 @@ pub fn train(
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
 ) -> Result<(), Error> {
-    for i in 0..inputs.len() {
+    let mut indices: Vec<usize> = (0..inputs.len()).collect();
+    indices.shuffle(&mut thread_rng());
+    for i in indices.into_iter() {
         train_back_propagation(
             program,
             device,

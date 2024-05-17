@@ -1,6 +1,9 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero};
+use crate::{
+    devices::Device, BinaryOperator, Error, ErrorEnum, LossOperator, Operator, Tensor, TensorF32,
+    Zero,
+};
 
 use super::LossFunction;
 
@@ -13,6 +16,8 @@ mod tests;
 pub struct ResidualSumOfSquares {
     device: Device,
 }
+
+impl LossOperator for ResidualSumOfSquares {}
 
 impl ResidualSumOfSquares {
     pub fn new(device: &Device) -> Self {

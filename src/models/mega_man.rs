@@ -1,5 +1,7 @@
 use super::load_examples;
-use crate::{BinaryOperator, CrossEntropyLoss, Device, NeuralMachine, Tokenizer, UnaryOperator};
+use crate::{
+    BinaryOperator, CrossEntropyLoss, Device, NeuralMachine, Tokenizer, UnaryModel, UnaryOperator,
+};
 use crate::{Error, ModelDetails};
 
 use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, Tensor};
@@ -16,6 +18,8 @@ struct MegaManModel {
     linear: Linear,
     softmax: Softmax,
 }
+
+impl UnaryModel for MegaManModel {}
 
 impl MegaManModel {
     pub fn new(device: &Device) -> Self {

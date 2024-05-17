@@ -10,7 +10,10 @@ use std::fs;
 
 use crate::{Device, Error, ErrorEnum, Tensor, Tokenizer, TokenizerTrait};
 
-use self::{mega_man::load_mega_man_model, simple::load_simple_model};
+use self::{
+    mega_man::load_mega_man_model, mega_man_attention::load_mega_man_attention_model,
+    simple::load_simple_model,
+};
 
 pub enum ModelEnum {
     Perceptron,
@@ -36,7 +39,7 @@ pub fn load_model_details(model: ModelEnum, device: &Device) -> Result<ModelDeta
         ModelEnum::Perceptron => load_perceptron(device),
         ModelEnum::Simple => load_simple_model(device),
         ModelEnum::MegaMan => load_mega_man_model(device),
-        ModelEnum::MegaManAttention => mega_man_attention::load_mega_man_attention_model(device),
+        ModelEnum::MegaManAttention => load_mega_man_attention_model(device),
     }
 }
 

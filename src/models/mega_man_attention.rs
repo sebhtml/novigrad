@@ -1,7 +1,7 @@
 use super::load_examples;
 use crate::{
     CrossEntropyLoss, Device, MultiHeadAttention, NeuralMachine, TernaryOperator, Tokenizer,
-    TokenizerTrait, UnaryOperator,
+    TokenizerTrait, UnaryModel, UnaryOperator,
 };
 use crate::{Error, ModelDetails};
 
@@ -17,6 +17,8 @@ struct MegaManAttentionModel {
     linear: Linear,
     softmax: Softmax,
 }
+
+impl UnaryModel for MegaManAttentionModel {}
 
 impl MegaManAttentionModel {
     pub fn new(device: &Device) -> Self {

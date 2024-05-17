@@ -1,5 +1,6 @@
 use crate::{
-    Device, Error, ModelDetails, NeuralMachine, ResidualSumOfSquares, Tensor, UnaryOperator,
+    Device, Error, ModelDetails, NeuralMachine, ResidualSumOfSquares, Tensor, UnaryModel,
+    UnaryOperator,
 };
 
 use crate::{Linear, Model};
@@ -7,6 +8,8 @@ use crate::{Linear, Model};
 struct PerceptronModel {
     linear: Linear,
 }
+
+impl UnaryModel for PerceptronModel {}
 
 impl PerceptronModel {
     pub fn new(device: &Device) -> Self {

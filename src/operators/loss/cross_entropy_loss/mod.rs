@@ -2,7 +2,8 @@ use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
 use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero, EPSILON,
+    devices::Device, BinaryOperator, Error, ErrorEnum, LossOperator, Operator, Tensor, TensorF32,
+    Zero, EPSILON,
 };
 
 /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
@@ -10,6 +11,8 @@ use crate::{
 pub struct CrossEntropyLoss {
     device: Device,
 }
+
+impl LossOperator for CrossEntropyLoss {}
 
 impl CrossEntropyLoss {
     pub fn new(device: &Device) -> Self {

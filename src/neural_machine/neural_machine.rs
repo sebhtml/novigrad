@@ -1,8 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
 use crate::{
-    BinaryOperator, Clip, Device, Error, IdentityBackward, Instruction, Model, Operator, Tensor,
-    TensorF32, UnaryOperator,
+    BinaryOperator, Clip, Device, Error, IdentityBackward, Instruction, LossOperator, Tensor,
+    TensorF32, UnaryModel,
 };
 
 pub struct NeuralMachine {
@@ -17,8 +17,8 @@ pub struct NeuralMachine {
 impl NeuralMachine {
     pub fn try_new(
         device: &Device,
-        model: &(impl UnaryOperator + Model),
-        loss_operator: &(impl BinaryOperator + Operator),
+        model: &impl UnaryModel,
+        loss_operator: &impl LossOperator,
     ) -> Result<Self, Error> {
         // input
         let input_shape = model.input_size();

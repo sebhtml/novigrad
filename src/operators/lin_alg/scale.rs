@@ -1,6 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{Device, Instruction, OpCode, Tensor, TensorF32, UnaryOperator, Zero};
+use crate::{Device, Instruction, OpCode, Tensor, TensorF32, UnaryOperator};
 
 /// Scale is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
@@ -41,13 +41,13 @@ impl UnaryOperator for Scale {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,

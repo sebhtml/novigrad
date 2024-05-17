@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Instruction, NaryOperator, OpCode, Operator, Tensor, TensorF32, Zero};
+use crate::{Device, Error, Instruction, NaryOperator, OpCode, Operator, Tensor, TensorF32};
 
 #[cfg(test)]
 mod tests;
@@ -71,13 +71,13 @@ impl NaryOperator for Concat {
             .map(|t| t.tensor().deref().borrow().clone())
             .collect();
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,

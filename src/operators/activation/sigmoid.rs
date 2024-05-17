@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Instruction, OpCode, Operator, TensorF32, UnaryOperator, Zero};
+use crate::{ActivationFunction, Instruction, OpCode, Operator, TensorF32, UnaryOperator};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -79,13 +79,13 @@ impl UnaryOperator for Sigmoid {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,

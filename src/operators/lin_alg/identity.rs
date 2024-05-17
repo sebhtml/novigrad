@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Error, Instruction, OpCode, Operator, Tensor, TensorF32, UnaryOperator, Zero};
+use crate::{Device, Error, Instruction, OpCode, Operator, Tensor, TensorF32, UnaryOperator};
 
 /// https://onnx.ai/onnx/operators/onnx__Identity.html
 #[derive(Clone)]
@@ -28,13 +28,13 @@ impl UnaryOperator for Identity {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,

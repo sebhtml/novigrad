@@ -1,5 +1,4 @@
 - Use Add instead of AddBackward
-- use Scale instead of Zero
 - rename Scale to ScalarMul
 - SigmoidBackward and SoftmaxBackward are Mul
 - simplify execute method arguments

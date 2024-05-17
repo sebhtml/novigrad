@@ -2,7 +2,7 @@ use std::{ops::Deref, rc::Rc};
 
 use crate::{
     devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, LossOperator, OpCode, Operator,
-    Tensor, TensorF32, Zero,
+    Tensor, TensorF32,
 };
 
 use super::LossFunction;
@@ -80,13 +80,13 @@ impl BinaryOperator for ResidualSumOfSquares {
         let inputs = [input_1, input_2];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Loss,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,

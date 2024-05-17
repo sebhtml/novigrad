@@ -1,6 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{BinaryOperator, Device, Error, Instruction, OpCode, Tensor, TensorF32, Zero};
+use crate::{BinaryOperator, Device, Error, Instruction, OpCode, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
@@ -38,13 +38,13 @@ impl BinaryOperator for Add {
         let inputs = [input_1, input_2];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Zero::default())),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,

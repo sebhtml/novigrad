@@ -278,13 +278,14 @@ pub fn train(
     epoch: usize,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
-) -> Result<(), Error> {
+) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let mut indices: Vec<usize> = (0..inputs.len()).collect();
     if shuffle_examples {
         indices.shuffle(&mut thread_rng());
     }
+    let mut outputs_and_losses = vec![];
     for i in indices.into_iter() {
-        train_with_one_example(
+        let (output, loss) = train_with_one_example(
             program,
             device,
             optimizer,
@@ -293,8 +294,13 @@ pub fn train(
             &inputs[i],
             &outputs[i],
         )?;
+        outputs_and_losses.push((i, output, loss));
     }
-    Ok(())
+    outputs_and_losses.sort_by(|(i, _, _), (j, _, _)| i.cmp(j));
+    Ok(outputs_and_losses
+        .into_iter()
+        .map(|(_, output, loss)| (output, loss))
+        .collect())
 }
 
 pub fn total_loss(
@@ -323,9 +329,9 @@ fn train_with_one_example(
     _example_index: usize,
     input: &Tensor,
     output: &Tensor,
-) -> Result<(), Error> {
-    let _output = program.forward(input, output)?;
-    let _loss = program.loss()?;
+) -> Result<(Tensor, Tensor), Error> {
+    let output = program.forward(input, output)?;
+    let loss = program.loss()?;
     let tensors = device.tensors_to_optimize();
     let tensors: &[Tensor] = &tensors.deref().borrow();
 
@@ -335,7 +341,7 @@ fn train_with_one_example(
         instruction.forward()?;
     }
 
-    Ok(())
+    Ok((output, loss))
 }
 
 pub fn time_it<F: Fn() -> T, T>(text: &str, f: F) -> T {

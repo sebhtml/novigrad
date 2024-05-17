@@ -3,7 +3,7 @@ use crate::{
     CrossEntropyLoss, Device, MultiHeadAttention, NeuralMachine, TernaryOperator, Tokenizer,
     TokenizerTrait, UnaryOperator,
 };
-use crate::{DatasetDetails, Error};
+use crate::{Error, ModelDetails};
 
 use crate::{Embedding, Linear, Model, Softmax, Tensor};
 
@@ -78,7 +78,7 @@ impl Model for MegaManAttentionModel {
     }
 }
 
-pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
+pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Error> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -106,7 +106,7 @@ pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
     let loss_operator = CrossEntropyLoss::new(device);
     let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
 
-    let details = DatasetDetails {
+    let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,

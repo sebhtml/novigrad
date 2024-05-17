@@ -1,8 +1,8 @@
-use rs_brain::{load_dataset, train_network_on_dataset, Dataset, Device};
+use rs_brain::{load_model_details, train_model, Device, ModelEnum};
 
 fn main() {
     let device = Device::cuda().unwrap();
-    let dataset = Dataset::MegaMan;
-    let dataset_details = load_dataset(dataset, &device).unwrap();
-    train_network_on_dataset(dataset_details).unwrap();
+    let model = ModelEnum::MegaMan;
+    let details = load_model_details(model, &device).unwrap();
+    train_model(details).unwrap();
 }

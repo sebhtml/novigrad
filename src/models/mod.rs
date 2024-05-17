@@ -10,14 +10,16 @@ use std::fs;
 
 use crate::{Device, Error, ErrorEnum, Tensor, Tokenizer, TokenizerTrait};
 
-pub enum Dataset {
+use self::{mega_man::load_mega_man_model, simple::load_simple_model};
+
+pub enum ModelEnum {
     Perceptron,
     Simple,
     MegaMan,
     MegaManAttention,
 }
 
-pub struct DatasetDetails {
+pub struct ModelDetails {
     pub device: Device,
     pub tokenizer: Option<Tokenizer>,
     pub examples: Vec<(Tensor, Tensor)>,
@@ -29,12 +31,12 @@ pub struct DatasetDetails {
     pub final_total_error_max: f32,
 }
 
-pub fn load_dataset(dataset: Dataset, device: &Device) -> Result<DatasetDetails, Error> {
-    match dataset {
-        Dataset::Perceptron => load_perceptron(device),
-        Dataset::Simple => simple::load_dataset(device),
-        Dataset::MegaMan => mega_man::load_dataset(device),
-        Dataset::MegaManAttention => mega_man_attention::load_dataset(device),
+pub fn load_model_details(model: ModelEnum, device: &Device) -> Result<ModelDetails, Error> {
+    match model {
+        ModelEnum::Perceptron => load_perceptron(device),
+        ModelEnum::Simple => load_simple_model(device),
+        ModelEnum::MegaMan => load_mega_man_model(device),
+        ModelEnum::MegaManAttention => mega_man_attention::load_mega_man_attention_model(device),
     }
 }
 

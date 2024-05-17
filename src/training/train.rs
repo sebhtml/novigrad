@@ -1,8 +1,8 @@
 use std::{ops::Deref, time::SystemTime};
 
 use crate::{
-    DatasetDetails, Device, Error, GradientDescent, NeuralMachine, OptimizerTrait, Tensor,
-    TensorF32, Tokenizer, TokenizerTrait,
+    Device, Error, GradientDescent, ModelDetails, NeuralMachine, OptimizerTrait, Tensor, TensorF32,
+    Tokenizer, TokenizerTrait,
 };
 
 trait IsPrintable {
@@ -129,22 +129,20 @@ pub struct NetworkTestOutput {
     pub actual_argmax_values: Vec<usize>,
 }
 
-pub fn train_network_on_dataset(
-    dataset_details: DatasetDetails,
-) -> Result<NetworkTestOutput, Error> {
+pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
-    let examples = &dataset_details.examples;
-    let learning_rate = dataset_details.learning_rate;
-    let program = dataset_details.program;
-    let mut tokenizer = dataset_details.tokenizer;
-    let device = dataset_details.device;
+    let examples = &details.examples;
+    let learning_rate = details.learning_rate;
+    let program = details.program;
+    let mut tokenizer = details.tokenizer;
+    let device = details.device;
     let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::default());
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
 
     let mut last_total_error = f32::NAN;
-    let epochs = dataset_details.epochs;
-    let progress = dataset_details.progress;
+    let epochs = details.epochs;
+    let progress = details.progress;
 
     let (_, _) = print_results(0, &program, &mut tokenizer, &inputs, &outputs)?;
 

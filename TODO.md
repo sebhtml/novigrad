@@ -1,5 +1,5 @@
 - Remove TensorF32 matmul in favor of Gemm
-- remoze zero and name from tensor
+- remome zero and name from tensor
 - Bake optimizer instructions in neural machine
 - in Tensor, store just one Vec<Instruction> with bool flag for_gradient
 
@@ -26,17 +26,12 @@
 - sigmoidGrad and softmaxBackward are Mul
 - remove most of the Backward ops
 
-== Things ==
-
-- rename DatasetDetails to ModelTrainingDetails
-
 == Other things ==
 
 - investigate calls to Device::tensor_f32
 - test if Zero is really needed
 
 - copy -> copy_from
-- remove recycle
 
 == Tensor clean-up ==
 
@@ -45,7 +40,6 @@
 == Refactoring ==
 
 - merge the many load_examples functions
-- remove DatasetEnum
 - remove DeviceEnum
 - restore simple Errors (no line etc.)
 
@@ -79,7 +73,7 @@
 
 - Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
 
-== Datasets ==
+== Import / Export ==
 
 - serialize and deserialize model to ONNX format
 

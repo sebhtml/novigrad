@@ -1,16 +1,16 @@
 use more_asserts::assert_ge;
 use more_asserts::assert_le;
 
-use crate::load_dataset;
-use crate::train_network_on_dataset;
-use crate::Dataset;
+use crate::load_model_details;
+use crate::train_model;
 use crate::Device;
+use crate::ModelEnum;
 
-fn test_network_on_dataset(dataset: Dataset, device: &Device) {
-    let dataset_details = load_dataset(dataset, device).unwrap();
-    let initial_total_error_min = dataset_details.initial_total_error_min;
-    let final_total_error_max = dataset_details.final_total_error_max;
-    let training_output = train_network_on_dataset(dataset_details).unwrap();
+fn test_model(model: ModelEnum, device: &Device) {
+    let details = load_model_details(model, device).unwrap();
+    let initial_total_error_min = details.initial_total_error_min;
+    let final_total_error_max = details.final_total_error_max;
+    let training_output = train_model(details).unwrap();
     assert_ge!(training_output.initial_total_error, initial_total_error_min);
     assert_le!(training_output.final_total_error, final_total_error_max);
     for i in 0..training_output.expected_argmax_values.len() {
@@ -27,29 +27,29 @@ fn test_network_on_dataset(dataset: Dataset, device: &Device) {
 #[test]
 fn perceptron_model_cpu() {
     let device = Device::cpu();
-    test_network_on_dataset(Dataset::Perceptron, &device);
+    test_model(ModelEnum::Perceptron, &device);
 }
 
 #[test]
-fn simple_dataset_cpu() {
+fn simple_model_cpu() {
     let device = Device::cpu();
-    test_network_on_dataset(Dataset::Simple, &device);
+    test_model(ModelEnum::Simple, &device);
 }
 
 #[test]
-fn simple_dataset_cuda() {
+fn simple_model_cuda() {
     let device = Device::cuda().unwrap();
-    test_network_on_dataset(Dataset::Simple, &device);
+    test_model(ModelEnum::Simple, &device);
 }
 
 #[test]
-fn mega_man_dataset_cuda() {
+fn mega_man_model_cuda() {
     let device = Device::cuda().unwrap();
-    test_network_on_dataset(Dataset::MegaMan, &device);
+    test_model(ModelEnum::MegaMan, &device);
 }
 
 #[test]
-fn mega_man_attention_dataset_cuda() {
+fn mega_man_attention_model_cuda() {
     let device = Device::cuda().unwrap();
-    test_network_on_dataset(Dataset::MegaManAttention, &device);
+    test_model(ModelEnum::MegaManAttention, &device);
 }

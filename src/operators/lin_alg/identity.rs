@@ -1,6 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{Device, Error, Instruction, OpCode, Operator, Tensor, TensorF32, UnaryOperator};
+use crate::{Device, Error, Instruction, OpCode, Tensor, TensorF32, UnaryOperator};
 
 /// https://onnx.ai/onnx/operators/onnx__Identity.html
 #[derive(Clone)]
@@ -54,7 +54,7 @@ impl UnaryOperator for Identity {
         let inputs = [&output];
         let outputs = [input];
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(IdentityBackward::default())),
+            OpCode::IdentityBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Gradient,
@@ -65,18 +65,8 @@ impl UnaryOperator for Identity {
 
 pub struct IdentityBackward {}
 
-impl Default for IdentityBackward {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Operator for IdentityBackward {
-    fn name(&self) -> &str {
-        "IdentityBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+impl IdentityBackward {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
             let input_gradient = inputs[0];

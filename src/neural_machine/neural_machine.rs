@@ -1,8 +1,8 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
 use crate::{
-    BinaryOperator, Category, Device, Error, IdentityBackward, Instruction, LossOperator, OpCode,
-    Operator, OptimizerTrait, Tensor, TensorF32, UnaryModel,
+    BinaryOperator, Category, Device, Error, Instruction, LossOperator, OpCode, Operator,
+    OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
 pub struct NeuralMachine {
@@ -299,7 +299,7 @@ impl NeuralMachine {
                     new_instructions.push(instructions[i + 1].clone());
                     let softmax_backward_input_gradient = &instructions[i + 2].inputs().deref()[1];
                     new_instructions.push(Instruction::new(
-                        OpCode::DynOperator(Rc::new(IdentityBackward::default())),
+                        OpCode::IdentityBackward,
                         &[softmax_backward_input_gradient],
                         &instructions[i + 2].outputs().iter().collect::<Vec<_>>(),
                         instructions[i + 2].category(),

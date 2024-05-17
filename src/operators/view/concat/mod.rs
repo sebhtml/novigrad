@@ -48,6 +48,10 @@ impl Concat {
         }
         Ok(())
     }
+
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        Self::concat(inputs, outputs)
+    }
 }
 
 impl NaryOperator for Concat {
@@ -83,7 +87,7 @@ impl NaryOperator for Concat {
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::Concat,
             &inputs.iter().collect::<Vec<_>>(),
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
@@ -101,16 +105,6 @@ impl NaryOperator for Concat {
             crate::Category::Gradient,
         ));
         Ok(output)
-    }
-}
-
-impl Operator for Concat {
-    fn name(&self) -> &str {
-        "Concat"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        Self::concat(inputs, outputs)
     }
 }
 

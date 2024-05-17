@@ -1,7 +1,7 @@
 use std::{ops::Deref, rc::Rc};
 
 use crate::{
-    BinaryOperator, Clip, Device, Error, IdentityBackward, Instruction, LossOperator,
+    BinaryOperator, Category, Clip, Device, Error, IdentityBackward, Instruction, LossOperator,
     OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
@@ -58,7 +58,7 @@ impl NeuralMachine {
         }
 
         for tensor in tape.iter().rev() {
-            for instruction in tensor.backward_instructions().into_iter() {
+            for instruction in tensor.gradient_instructions().into_iter() {
                 let outputs: Vec<TensorF32> =
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
@@ -96,25 +96,7 @@ impl NeuralMachine {
         Ok(program)
     }
 
-    pub fn loss(&self) -> Result<Tensor, Error> {
-        Ok(self.loss.clone())
-    }
-}
-
-impl NeuralMachine {
-    pub fn forward(&self, input: &Tensor, expected_output: &Tensor) -> Result<Tensor, Error> {
-        let debug = false;
-        if debug {
-            println!("Debugger for NeuralMachine forward pass");
-        }
-
-        // Copy input
-        {
-            let example_input: &mut TensorF32 =
-                &mut self.example_input.tensor().deref().borrow_mut();
-            let input: &TensorF32 = &input.tensor().deref().borrow_mut();
-            TensorF32::copy(input, example_input)?;
-        }
+    pub fn loss(&self, expected_output: &Tensor) -> Result<Tensor, Error> {
         // Copy expected output
         {
             let example_output: &mut TensorF32 =
@@ -122,9 +104,32 @@ impl NeuralMachine {
             let expected_output: &TensorF32 = &expected_output.tensor().deref().borrow_mut();
             TensorF32::copy(expected_output, example_output)?;
         }
+
+        self.forward(Category::Loss)?;
+
+        Ok(self.loss.clone())
+    }
+
+    pub fn backward(&self) -> Result<(), Error> {
+        self.forward(Category::Gradient)?;
+
+        Ok(())
+    }
+
+    fn forward(&self, category: Category) -> Result<(), Error> {
+        let debug = false;
+        if debug {
+            println!("Debugger for NeuralMachine forward pass");
+        }
+
         // Forward tensors
         #[allow(unused_variables)]
-        for (i, instruction) in self.instructions.iter().enumerate() {
+        for (i, instruction) in self
+            .instructions
+            .iter()
+            .filter(|i| i.category() == category)
+            .enumerate()
+        {
             if debug {
                 println!("----------------------------------");
                 println!("Debugging instruction {}", i);
@@ -170,6 +175,21 @@ impl NeuralMachine {
                 self.print_instruction_inputs_outputs(instruction);
             }
         }
+
+        Ok(())
+    }
+
+    pub fn infer(&self, input: &Tensor) -> Result<Tensor, Error> {
+        // Copy input
+        {
+            let example_input: &mut TensorF32 =
+                &mut self.example_input.tensor().deref().borrow_mut();
+            let input: &TensorF32 = &input.tensor().deref().borrow_mut();
+            TensorF32::copy(input, example_input)?;
+        }
+
+        self.forward(Category::Inference)?;
+
         Ok(self.program_output.clone())
     }
 

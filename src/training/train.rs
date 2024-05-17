@@ -221,8 +221,8 @@ fn print_results(
     for i in 0..inputs.len() {
         let input = &inputs[i];
         let expected_output = &outputs[i];
-        let actual_output = program.forward(input, expected_output)?;
-        let loss = program.loss()?;
+        let actual_output = program.infer(input)?;
+        let loss = program.loss(expected_output)?;
         let loss: &TensorF32 = &loss.tensor().deref().borrow();
         let loss: f32 = loss.try_into()?;
 
@@ -305,8 +305,8 @@ pub fn total_loss(
     let mut total_error = 0.0;
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
-        let _ = program.forward(&inputs[i], expected_output)?;
-        let example_loss = program.loss()?;
+        let _ = program.infer(&inputs[i])?;
+        let example_loss = program.loss(expected_output)?;
         let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
         let example_loss: f32 = example_loss.try_into()?;
         total_error += example_loss;
@@ -324,8 +324,9 @@ fn train_with_one_example(
     input: &Tensor,
     output: &Tensor,
 ) -> Result<(), Error> {
-    let _output = program.forward(input, output)?;
-    let _loss = program.loss()?;
+    let _output = program.infer(input)?;
+    let _loss = program.loss(output)?;
+    program.backward()?;
     let tensors = device.tensors_to_optimize();
     let tensors: &[Tensor] = &tensors.deref().borrow();
 

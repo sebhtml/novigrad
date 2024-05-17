@@ -37,7 +37,7 @@ impl Tensor {
             .collect()
     }
 
-    pub fn backward_instructions(&self) -> Vec<Instruction> {
+    pub fn gradient_instructions(&self) -> Vec<Instruction> {
         self.instructions()
             .into_iter()
             .filter(|i| i.category() == Category::Gradient)

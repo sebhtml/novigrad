@@ -50,13 +50,13 @@ impl NeuralMachine {
         let mut instructions = vec![];
 
         for tensor in tape.iter() {
-            for instruction in tensor.forward_instructions().deref().borrow().iter() {
-                instructions.push(instruction.clone());
+            for instruction in tensor.forward_instructions().into_iter() {
+                instructions.push(instruction);
             }
         }
 
         for tensor in tape.iter().rev() {
-            for instruction in tensor.backward_instructions().deref().borrow().iter() {
+            for instruction in tensor.backward_instructions().into_iter() {
                 let outputs: Vec<TensorF32> =
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();

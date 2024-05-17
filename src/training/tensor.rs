@@ -6,8 +6,7 @@ use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 #[derive(Clone, Debug)]
 pub struct Tensor {
     inputs: Rc<Vec<Tensor>>,
-    forward_instructions: Rc<RefCell<Vec<Instruction>>>,
-    backward_instructions: Rc<RefCell<Vec<Instruction>>>,
+    instructions: Rc<RefCell<Vec<Instruction>>>,
     tensor: Rc<RefCell<TensorF32>>,
     gradient: Rc<RefCell<TensorF32>>,
 }
@@ -17,8 +16,7 @@ impl Tensor {
         let inputs: Vec<Tensor> = inputs.iter().map(|x| (*x).to_owned()).collect();
         Self {
             inputs: Rc::new(inputs),
-            forward_instructions: Default::default(),
-            backward_instructions: Default::default(),
+            instructions: Default::default(),
             tensor: Rc::new(RefCell::new(tensor)),
             gradient: Rc::new(RefCell::new(gradient)),
         }
@@ -32,10 +30,7 @@ impl Tensor {
     ) {
         let gradient_pathway = false;
         let instruction = Instruction::new(operator, inputs, outputs, gradient_pathway);
-        self.forward_instructions
-            .deref()
-            .borrow_mut()
-            .push(instruction)
+        self.instructions.deref().borrow_mut().push(instruction)
     }
 
     pub fn push_backward_instruction(
@@ -46,18 +41,27 @@ impl Tensor {
     ) {
         let gradient_pathway = true;
         let instruction = Instruction::new(operator, inputs, outputs, gradient_pathway);
-        self.backward_instructions
+        self.instructions.deref().borrow_mut().push(instruction)
+    }
+
+    pub fn forward_instructions(&self) -> Vec<Instruction> {
+        self.instructions
             .deref()
-            .borrow_mut()
-            .push(instruction)
+            .borrow()
+            .clone()
+            .into_iter()
+            .filter(|i| !i.gradient_pathway())
+            .collect()
     }
 
-    pub fn forward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
-        &self.forward_instructions
-    }
-
-    pub fn backward_instructions(&self) -> &Rc<RefCell<Vec<Instruction>>> {
-        &self.backward_instructions
+    pub fn backward_instructions(&self) -> Vec<Instruction> {
+        self.instructions
+            .deref()
+            .borrow()
+            .clone()
+            .into_iter()
+            .filter(|i| i.gradient_pathway())
+            .collect()
     }
 
     pub fn requires_grad(&self) -> bool {
@@ -83,8 +87,7 @@ impl Tensor {
         stack.push_back(self.clone());
         while let Some(element) = stack.pop_back() {
             {
-                let forward_instructions: &Vec<Instruction> =
-                    &element.forward_instructions().deref().borrow();
+                let forward_instructions: Vec<Instruction> = element.forward_instructions();
                 if forward_instructions.is_empty() {
                     continue;
                 }
@@ -100,7 +103,7 @@ impl Tensor {
     }
 
     pub fn forward(&self) -> Result<(), Error> {
-        for inst in self.forward_instructions.deref().borrow().iter() {
+        for inst in self.forward_instructions().iter() {
             inst.forward()?;
         }
         Ok(())

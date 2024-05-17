@@ -14,7 +14,6 @@
 - implement a mul cuda kernel
 
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
-- make clip_norm a parameter
 
 == Initialization ==
 

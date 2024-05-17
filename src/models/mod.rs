@@ -29,6 +29,7 @@ pub struct ModelDetails {
     pub model: Box<dyn UnaryModel>,
     pub loss_operator: Box<dyn LossOperator>,
     pub learning_rate: f32,
+    pub clipped_gradient_norm: f32,
     pub epochs: usize,
     pub progress: usize,
     pub initial_total_error_min: f32,

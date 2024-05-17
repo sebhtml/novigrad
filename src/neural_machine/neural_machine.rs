@@ -19,6 +19,7 @@ impl NeuralMachine {
         device: &Device,
         model: &impl UnaryModel,
         loss_operator: &impl LossOperator,
+        clipped_gradient_norm: f32,
     ) -> Result<Self, Error> {
         // input
         let input_shape = model.input_size();
@@ -56,15 +57,14 @@ impl NeuralMachine {
 
         for tensor in tape.iter().rev() {
             let instruction = tensor.backward_instructions().deref().borrow()[0].to_owned();
-            let norm = 1.0;
-            let clip_instruction = Instruction::new(Rc::new(Clip::new(norm)), &[], &[]);
+            let clip_instruction =
+                Instruction::new(Rc::new(Clip::new(clipped_gradient_norm)), &[], &[]);
 
             let outputs_f32: Vec<TensorF32> =
                 instruction.outputs().deref().clone().into_iter().collect();
             let outputs_f32: Vec<&TensorF32> = outputs_f32.iter().collect();
-            let norm = 1.0;
             let clip_instruction_f32 =
-                Instruction::new(Rc::new(Clip::new(norm)), &[], &outputs_f32);
+                Instruction::new(Rc::new(Clip::new(clipped_gradient_norm)), &[], &outputs_f32);
 
             instructions.push(instruction);
             instructions.push(clip_instruction);

@@ -128,18 +128,19 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
     let model = SimpleModel::new(device);
     let examples = load_examples(&device, &mut tokenizer, model.vocab_size())?;
     let loss_operator = CrossEntropyLoss::new(device);
+    let learning_rate = 0.5;
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(GradientDescent::default()),
+        optimizer: Box::new(GradientDescent::new(learning_rate)),
         epochs: 500,
         progress: 100,
         initial_total_error_min: 8.0,
         final_total_error_max: 0.0,
-        learning_rate: 0.5,
+        learning_rate,
         clipped_gradient_norm: 1.0,
     };
     Ok(details)

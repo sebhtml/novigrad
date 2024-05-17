@@ -134,7 +134,6 @@ pub struct NetworkTestOutput {
 pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
     let examples = &details.examples;
-    let learning_rate = details.learning_rate;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let clipped_gradient_norm = details.clipped_gradient_norm;
@@ -170,15 +169,7 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
                 break;
             }
         }
-        train(
-            &program,
-            &device,
-            &optimizer,
-            learning_rate,
-            epoch,
-            &inputs,
-            &outputs,
-        )?;
+        train(&program, &device, &optimizer, epoch, &inputs, &outputs)?;
     }
     let final_total_error = print_total_loss(
         &device,
@@ -268,7 +259,6 @@ pub fn train(
     program: &NeuralMachine,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
-    learning_rate: f32,
     epoch: usize,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
@@ -280,7 +270,6 @@ pub fn train(
             program,
             device,
             optimizer,
-            learning_rate,
             epoch,
             i,
             &inputs[i],
@@ -312,18 +301,17 @@ fn train_with_one_example(
     program: &NeuralMachine,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,
-    learning_rate: f32,
     _epoch: usize,
     _example_index: usize,
-    x: &Tensor,
-    y: &Tensor,
+    input: &Tensor,
+    output: &Tensor,
 ) -> Result<(), Error> {
-    let _output = program.forward(x, y)?;
+    let _output = program.forward(input, output)?;
     let _loss = program.loss()?;
-    let gradients = device.tensors_to_optimize();
-    let gradients: &[Tensor] = &gradients.deref().borrow();
+    let tensors = device.tensors_to_optimize();
+    let tensors: &[Tensor] = &tensors.deref().borrow();
 
-    optimizer.optimize(&gradients, learning_rate)?;
+    optimizer.optimize(&tensors)?;
 
     Ok(())
 }

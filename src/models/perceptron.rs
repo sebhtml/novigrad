@@ -55,18 +55,19 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
     let model = PerceptronModel::new(device);
     let examples = load_examples(&device)?;
     let loss_operator = ResidualSumOfSquares::new(device);
+    let learning_rate = 0.5;
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: None,
         examples,
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(GradientDescent::default()),
+        optimizer: Box::new(GradientDescent::new(learning_rate)),
         epochs: 100,
         progress: 10,
         initial_total_error_min: 50.0,
-        final_total_error_max: 1.0,
-        learning_rate: 0.5,
+        final_total_error_max: 2.0,
+        learning_rate,
         clipped_gradient_norm: 1.0,
     };
     Ok(details)

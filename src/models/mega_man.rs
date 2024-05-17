@@ -102,19 +102,19 @@ pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails, Error> {
         &mut tokenizer,
     )?;
     let loss_operator = CrossEntropyLoss::new(device);
-
+    let learning_rate = 0.5;
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(GradientDescent::default()),
+        optimizer: Box::new(GradientDescent::new(learning_rate)),
         epochs: 100,
         progress: 10,
         initial_total_error_min: 50.0,
         final_total_error_max: 0.0,
-        learning_rate: 0.5,
+        learning_rate,
         clipped_gradient_norm: 1.0,
     };
     Ok(details)

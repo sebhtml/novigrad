@@ -1,8 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Gemm, Operator, Tensor, TensorF32, Zero,
-};
+use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Gemm, Tensor, TensorF32, Zero};
 
 /// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]
@@ -83,63 +81,28 @@ impl BinaryOperator for MatMul {
             &[&outputs[0].tensor().deref().borrow()],
         );
 
-        let inputs = [input_0, input_1, &output];
-        let outputs = [input_0, input_1];
-        output.push_backward_instruction(
-            Rc::new(MatMulBackward::new(self.transb)),
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-                &inputs[2].gradient().deref().borrow(),
-            ],
-            &[
-                &outputs[0].gradient().deref().borrow(),
-                &outputs[1].gradient().deref().borrow(),
-            ],
-        );
+        if input_1.gradient().deref().borrow().requires_grad() {
+            output.push_backward_instruction(
+                Rc::new(Gemm::new(&self.device, true, false, transb)),
+                &[
+                    &input_0.tensor().deref().borrow(),
+                    &output.gradient().deref().borrow(),
+                ],
+                &[&input_1.gradient().deref().borrow()],
+            );
+        }
+
+        if input_0.gradient().deref().borrow().requires_grad() {
+            output.push_backward_instruction(
+                Rc::new(Gemm::new(&self.device, true, transb, true)),
+                &[
+                    &input_1.tensor().deref().borrow(),
+                    &output.gradient().deref().borrow(),
+                ],
+                &[&input_0.gradient().deref().borrow()],
+            );
+        }
+
         Ok(output)
-    }
-}
-
-pub struct MatMulBackward {
-    transb: bool,
-}
-
-impl MatMulBackward {
-    pub fn new(transb: bool) -> Self {
-        MatMulBackward { transb }
-    }
-}
-
-impl Operator for MatMulBackward {
-    fn name(&self) -> &str {
-        "MatMulBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        debug_assert_eq!(outputs.len(), 2);
-        let input_gradient = inputs[2];
-
-        if outputs[1].requires_grad() {
-            let output_1_gradient = outputs[1];
-            let output_0 = inputs[0];
-            let a = output_0;
-            let b = input_gradient;
-            let c = output_1_gradient;
-            let transb = self.transb;
-            TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, transb)?;
-        }
-
-        if outputs[0].requires_grad() {
-            let output_0_gradient = outputs[0];
-            let output_1 = inputs[1];
-            let a = output_1;
-            let b = input_gradient;
-            let c = output_0_gradient;
-            let transb = self.transb;
-            TensorF32::gemm(true, transb, 1.0, a, b, 1.0, c, true)?;
-        }
-
-        Ok(())
     }
 }

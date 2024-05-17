@@ -1,8 +1,8 @@
 - remome zero and name from tensor
 - in Tensor, store just one Vec<Instruction> with bool flag for_gradient
+- add interesting example
 
 - Use add instead of AddBackward
-- use Gemm instead of MatMulBackward
 - sigmoidGrad and softmaxBackward are Mul
 - Bake optimizer instructions in neural machine
 

@@ -33,16 +33,6 @@ impl Tensor {
         self.instructions.deref().borrow_mut().push(instruction)
     }
 
-    pub fn push_backward_instruction(
-        &self,
-        operator: Rc<dyn Operator>,
-        inputs: &[&TensorF32],
-        outputs: &[&TensorF32],
-        gradient_pathway: bool,
-    ) {
-        self.push_instruction(operator, inputs, outputs, gradient_pathway)
-    }
-
     pub fn forward_instructions(&self) -> Vec<Instruction> {
         self.instructions
             .deref()

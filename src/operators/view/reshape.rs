@@ -52,7 +52,7 @@ impl UnaryOperator for Reshape {
         );
         let inputs = [&output];
         let outputs = [input];
-        output.push_backward_instruction(
+        output.push_instruction(
             Rc::new(ReshapeBackward::new(self.input_size.clone())),
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],

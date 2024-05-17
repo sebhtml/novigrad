@@ -94,7 +94,7 @@ impl NaryOperator for Concat {
             .iter()
             .map(|t| t.gradient().deref().borrow().clone())
             .collect();
-        output.push_backward_instruction(
+        output.push_instruction(
             Rc::new(ConcatBackward::default()),
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),

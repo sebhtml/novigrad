@@ -102,7 +102,7 @@ impl BinaryOperator for ResidualSumOfSquares {
         );
         let inputs = [input_1, input_2];
         let outputs = [input_2];
-        output.push_backward_instruction(
+        output.push_instruction(
             Rc::new(ResidualSumOfSquaresBackward::default()),
             &[
                 &inputs[0].tensor().deref().borrow(),

@@ -5,7 +5,6 @@ use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct Tensor {
-    name: usize,
     inputs: Rc<Vec<Tensor>>,
     forward_instructions: Rc<RefCell<Vec<Instruction>>>,
     backward_instructions: Rc<RefCell<Vec<Instruction>>>,
@@ -14,20 +13,15 @@ pub struct Tensor {
 }
 
 impl Tensor {
-    pub fn new(name: usize, tensor: TensorF32, gradient: TensorF32, inputs: &[&Tensor]) -> Self {
+    pub fn new(tensor: TensorF32, gradient: TensorF32, inputs: &[&Tensor]) -> Self {
         let inputs: Vec<Tensor> = inputs.iter().map(|x| (*x).to_owned()).collect();
         Self {
-            name,
             inputs: Rc::new(inputs),
             forward_instructions: Default::default(),
             backward_instructions: Default::default(),
             tensor: Rc::new(RefCell::new(tensor)),
             gradient: Rc::new(RefCell::new(gradient)),
         }
-    }
-
-    pub fn name(&self) -> String {
-        "t".to_owned() + self.name.to_string().as_str()
     }
 
     pub fn push_forward_instruction(
@@ -78,11 +72,6 @@ impl Tensor {
         &self.gradient
     }
 
-    pub fn zero(&self) -> Result<(), Error> {
-        self.tensor().deref().borrow_mut().zero()?;
-        self.gradient().deref().borrow_mut().zero()?;
-        Ok(())
-    }
     pub fn resize(&self, new_size: &[usize]) {
         self.tensor.deref().borrow_mut().reallocate(new_size);
         self.gradient.deref().borrow_mut().reallocate(new_size);

@@ -1,4 +1,3 @@
-- remome zero and name from tensor
 - use Scale instead of Zero
 - rename Scale to ScalarMul
 - add interesting example

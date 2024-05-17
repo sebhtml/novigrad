@@ -5,8 +5,6 @@ use crate::{
     OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
-use super::instruction;
-
 pub struct NeuralMachine {
     device: Device,
     example_input: Tensor,
@@ -107,7 +105,7 @@ impl NeuralMachine {
     pub fn forward(&self, input: &Tensor, expected_output: &Tensor) -> Result<Tensor, Error> {
         let debug = false;
         if debug {
-            println!("NeuralMachine forward");
+            println!("Debugger for NeuralMachine forward pass");
         }
 
         // Copy input
@@ -127,7 +125,11 @@ impl NeuralMachine {
         // Forward tensors
         #[allow(unused_variables)]
         for (i, instruction) in self.instructions.iter().enumerate() {
-            //cprintln!("Forward instruction {} {}", i, instruction.operator().name(),);
+            if debug {
+                println!("----------------------------------");
+                println!("Debugging instruction {}", i);
+            }
+
             #[cfg(debug_assertions)]
             for input in instruction.inputs().deref() {
                 debug_assert_eq!(
@@ -139,6 +141,12 @@ impl NeuralMachine {
                     input.name(),
                     input,
                 );
+            }
+
+            if debug {
+                println!("BEFORE FORWARD");
+                self.print_instruction(i, instruction);
+                self.print_instruction_inputs_outputs(instruction);
             }
 
             instruction.forward()?;
@@ -156,21 +164,10 @@ impl NeuralMachine {
                 );
             }
 
-            // TODO impl Display
             if debug {
+                println!("AFTER FORWARD");
                 self.print_instruction(i, instruction);
-
-                println!("inputs: {}", instruction.inputs().deref().len());
-
-                for (j, input) in instruction.inputs().deref().iter().enumerate() {
-                    println!("input {}: {}", j, input);
-                }
-
-                println!("outputs: {}", instruction.outputs().deref().len());
-
-                for (j, output) in instruction.outputs().deref().iter().enumerate() {
-                    println!("output {}: {}", j, output);
-                }
+                self.print_instruction_inputs_outputs(instruction);
             }
         }
         Ok(self.program_output.clone())
@@ -246,6 +243,20 @@ impl NeuralMachine {
                 .collect::<Vec<_>>()
                 .join(" ")
         );
+    }
+
+    fn print_instruction_inputs_outputs(&self, instruction: &Instruction) {
+        println!("inputs: {}", instruction.inputs().deref().len());
+
+        for (j, input) in instruction.inputs().deref().iter().enumerate() {
+            println!("input {}: {}", j, input);
+        }
+
+        println!("outputs: {}", instruction.outputs().deref().len());
+
+        for (j, output) in instruction.outputs().deref().iter().enumerate() {
+            println!("output {}: {}", j, output);
+        }
     }
 
     pub fn optimize_softmax_and_cross_entropy_loss(

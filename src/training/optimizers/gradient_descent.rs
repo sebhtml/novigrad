@@ -52,17 +52,6 @@ impl OptimizerTrait for GradientDescent {
             ));
         }
 
-        for instruction in instructions.iter() {
-            instruction.forward()?;
-        }
-
-        println!(
-            "GradientDescent: Generated {} instructions for {} optimizable tensors",
-            instructions.len(),
-            tensors.len()
-        );
-
-        //Ok(instructions) // TODO enable this
-        Ok(vec![]) // TODO remove me
+        Ok(instructions)
     }
 }

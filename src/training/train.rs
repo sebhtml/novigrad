@@ -318,7 +318,10 @@ fn train_with_one_example(
     let tensors: &[Tensor] = &tensors.deref().borrow();
 
     // TODO remove me
-    optimizer.optimize(device, &tensors)?;
+    let instructions = optimizer.optimize(device, &tensors)?;
+    for instruction in instructions.iter() {
+        instruction.forward()?;
+    }
 
     Ok(())
 }

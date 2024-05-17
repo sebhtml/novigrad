@@ -62,19 +62,19 @@ impl BinaryOperator for MatMul {
 
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        output.push_forward_instruction(
+        output.push_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             false,
         );
-        output.push_forward_instruction(
+        output.push_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             false,
         );
-        output.push_forward_instruction(
+        output.push_instruction(
             Rc::new(Gemm::new(&self.device, false, transb, false)),
             &[
                 &inputs[0].tensor().deref().borrow(),

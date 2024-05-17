@@ -22,7 +22,7 @@ impl Tensor {
         }
     }
 
-    pub fn push_forward_instruction(
+    pub fn push_instruction(
         &self,
         operator: Rc<dyn Operator>,
         inputs: &[&TensorF32],
@@ -40,8 +40,7 @@ impl Tensor {
         outputs: &[&TensorF32],
         gradient_pathway: bool,
     ) {
-        let instruction = Instruction::new(operator, inputs, outputs, gradient_pathway);
-        self.instructions.deref().borrow_mut().push(instruction)
+        self.push_instruction(operator, inputs, outputs, gradient_pathway)
     }
 
     pub fn forward_instructions(&self) -> Vec<Instruction> {

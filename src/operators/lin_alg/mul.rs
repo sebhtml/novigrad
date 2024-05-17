@@ -29,19 +29,19 @@ impl BinaryOperator for Mul {
                 .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        output.push_forward_instruction(
+        output.push_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             false,
         );
-        output.push_forward_instruction(
+        output.push_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             false,
         );
-        output.push_forward_instruction(
+        output.push_instruction(
             Rc::new(self.clone()),
             &[
                 &inputs[0].tensor().deref().borrow(),

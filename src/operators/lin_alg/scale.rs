@@ -29,19 +29,19 @@ impl UnaryOperator for Scale {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_forward_instruction(
+        output.push_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             false,
         );
-        output.push_forward_instruction(
+        output.push_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             false,
         );
-        output.push_forward_instruction(
+        output.push_instruction(
             Rc::new(self.clone()),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],

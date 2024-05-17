@@ -1,7 +1,5 @@
 use crate::devices::Device;
-use crate::{
-    ActivationFunction, Category, Instruction, OpCode, Operator, TensorF32, UnaryOperator,
-};
+use crate::{Category, Instruction, OpCode, Operator, TensorF32, UnaryOperator};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -31,9 +29,7 @@ impl Softmax {
         debug_assert_eq!(false, output.is_nan()?,);
         Ok(())
     }
-}
 
-impl ActivationFunction for Softmax {
     fn activate(input: &TensorF32, output: &TensorF32) -> Result<(), Error> {
         let rows = input.rows();
         let cols = input.cols();
@@ -82,14 +78,6 @@ impl ActivationFunction for Softmax {
             row += 1;
         }
         output.set_values(result_values);
-        Ok(())
-    }
-
-    fn derive(
-        _input: &TensorF32,
-        activation_output: &TensorF32,
-        output: &mut TensorF32,
-    ) -> Result<(), Error> {
         Ok(())
     }
 }

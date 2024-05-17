@@ -1,6 +1,6 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Instruction, OpCode, Operator, TensorF32, UnaryOperator};
 use crate::{Error, Tensor};
+use crate::{Instruction, OpCode, Operator, TensorF32, UnaryOperator};
 use std::f32::consts::E;
 use std::ops::Deref;
 use std::rc::Rc;
@@ -17,9 +17,7 @@ impl Sigmoid {
             device: device.clone(),
         }
     }
-}
 
-impl ActivationFunction for Sigmoid {
     fn activate(input: &TensorF32, output: &TensorF32) -> Result<(), Error> {
         let rows = input.rows();
         let cols = input.cols();
@@ -36,31 +34,6 @@ impl ActivationFunction for Sigmoid {
             }
             row += 1;
         }
-        output.set_values(result_values);
-        Ok(())
-    }
-
-    fn derive(
-        _input: &TensorF32,
-        activation_output: &TensorF32,
-        output: &mut TensorF32,
-    ) -> Result<(), Error> {
-        let rows = activation_output.rows();
-        let cols = activation_output.cols();
-        let values = activation_output.get_values()?;
-        let mut result_values = output.get_values()?;
-        let mut row = 0;
-        while row < rows {
-            let mut col = 0;
-            while col < cols {
-                let x = values[activation_output.index(row, col)];
-                let y = x * (1.0 - x);
-                result_values[output.index(row, col)] = y;
-                col += 1;
-            }
-            row += 1;
-        }
-
         output.set_values(result_values);
         Ok(())
     }

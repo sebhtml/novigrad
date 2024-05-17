@@ -17,6 +17,16 @@ impl Softmax {
             device: device.clone(),
         }
     }
+
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+        debug_assert_eq!(false, input.is_nan()?,);
+        debug_assert_eq!(false, input.is_nan()?,);
+        Self::activate(input, output)?;
+        debug_assert_eq!(false, output.is_nan()?,);
+        Ok(())
+    }
 }
 
 impl ActivationFunction for Softmax {
@@ -121,7 +131,7 @@ impl UnaryOperator for Softmax {
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::Softmax,
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
@@ -139,22 +149,6 @@ impl UnaryOperator for Softmax {
             crate::Category::Gradient,
         ));
         Ok(output)
-    }
-}
-
-impl Operator for Softmax {
-    fn name(&self) -> &str {
-        "Softmax"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input = inputs[0];
-        let output = outputs[0];
-        debug_assert_eq!(false, input.is_nan()?,);
-        debug_assert_eq!(false, input.is_nan()?,);
-        Self::activate(input, output)?;
-        debug_assert_eq!(false, output.is_nan()?,);
-        Ok(())
     }
 }
 

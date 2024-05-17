@@ -1,6 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{BinaryOperator, Device, Error, Instruction, OpCode, Operator, Tensor, TensorF32};
+use crate::{BinaryOperator, Category, Device, Error, Instruction, OpCode, Tensor, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Mul.html
 #[derive(Clone)]
@@ -57,65 +57,69 @@ impl BinaryOperator for Mul {
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
-        let inputs = [input_0, input_1, &output];
-        let outputs = [input_0, input_1];
-        output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(MulBackward::new(&self.device))),
-            &[
+
+        {
+            let inputs = [input_0, input_1, &output];
+            let outputs = [input_0, input_1];
+
+            let inputs = &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
                 &inputs[2].gradient().deref().borrow(),
-            ],
-            &[
+            ];
+
+            let outputs = &[
                 &outputs[0].gradient().deref().borrow(),
                 &outputs[1].gradient().deref().borrow(),
-            ],
-            crate::Category::Gradient,
-        ));
+            ];
+
+            debug_assert_eq!(outputs.len(), 2);
+            let input_gradient = inputs[2];
+            let rows = input_gradient.rows();
+            let cols = input_gradient.cols();
+            let len = rows * cols;
+
+            if outputs[1].requires_grad() {
+                let output_1_gradient = outputs[1];
+                let output_0 = inputs[0];
+                let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+
+                output.push_instruction(Instruction::new(
+                    OpCode::Mul,
+                    &[output_0, input_gradient],
+                    &[&mut tmp],
+                    Category::Gradient,
+                ));
+
+                output.push_instruction(Instruction::new(
+                    OpCode::Add,
+                    &[&tmp, output_1_gradient],
+                    &[output_1_gradient],
+                    Category::Gradient,
+                ));
+            }
+
+            if outputs[0].requires_grad() {
+                let output_0_gradient = outputs[0];
+                let output_ = inputs[1];
+                let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+
+                output.push_instruction(Instruction::new(
+                    OpCode::Mul,
+                    &[output_, input_gradient],
+                    &[&mut tmp],
+                    Category::Gradient,
+                ));
+
+                output.push_instruction(Instruction::new(
+                    OpCode::Add,
+                    &[&tmp, output_0_gradient],
+                    &[output_0_gradient],
+                    Category::Gradient,
+                ));
+            }
+        }
+
         Ok(output)
-    }
-}
-
-pub struct MulBackward {
-    device: Device,
-}
-
-impl MulBackward {
-    pub fn new(device: &Device) -> Self {
-        Self {
-            device: device.clone(),
-        }
-    }
-}
-
-impl Operator for MulBackward {
-    fn name(&self) -> &str {
-        "MulBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        debug_assert_eq!(outputs.len(), 2);
-        let input_gradient = inputs[2];
-        let rows = input_gradient.rows();
-        let cols = input_gradient.cols();
-        let len = rows * cols;
-
-        if outputs[1].requires_grad() {
-            let output_1_gradient = outputs[1];
-            let output_0 = inputs[0];
-            let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            TensorF32::mul(output_0, input_gradient, &mut tmp)?;
-            TensorF32::add(&tmp, output_1_gradient)?;
-        }
-
-        if outputs[0].requires_grad() {
-            let output_0_gradient = outputs[0];
-            let output = inputs[1];
-            let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            TensorF32::mul(output, input_gradient, &mut tmp)?;
-            TensorF32::add(&tmp, output_0_gradient)?;
-        }
-
-        Ok(())
     }
 }

@@ -2,7 +2,7 @@ use std::{ops::Deref, rc::Rc};
 
 use crate::{
     BinaryOperator, Category, Clip, Device, Error, IdentityBackward, Instruction, LossOperator,
-    OptimizerTrait, Tensor, TensorF32, UnaryModel,
+    OpCode, Operator, OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
 pub struct NeuralMachine {
@@ -63,7 +63,7 @@ impl NeuralMachine {
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
                 let clip_instruction = Instruction::new(
-                    Rc::new(Clip::new(clipped_gradient_norm)),
+                    OpCode::DynOperator(Rc::new(Clip::new(clipped_gradient_norm))),
                     &[],
                     &outputs,
                     instruction.category(),
@@ -145,7 +145,7 @@ impl NeuralMachine {
                     false,
                     "instruction {} {} read nan input {} {}",
                     i,
-                    instruction.operator().name(),
+                    instruction.opcode().name(),
                     input.name(),
                     input,
                 );
@@ -166,7 +166,7 @@ impl NeuralMachine {
                     false,
                     "instruction {} {} wrote nan output {} {}",
                     i,
-                    instruction.operator().name(),
+                    instruction.opcode().name(),
                     output.name(),
                     output,
                 );
@@ -252,7 +252,7 @@ impl NeuralMachine {
         println!(
             "{}: INSTRUCTION    {}    {}    {}",
             i,
-            instruction.operator().name(),
+            instruction.opcode().name(),
             instruction
                 .inputs()
                 .iter()
@@ -290,16 +290,16 @@ impl NeuralMachine {
         let mut i = 0;
         while i < instructions.len() {
             if i + 3 < instructions.len() {
-                if instructions[i + 0].operator().name() == "CrossEntropyLossBackward"
-                    && instructions[i + 1].operator().name() == "Clip"
-                    && instructions[i + 2].operator().name() == "SoftmaxBackward"
-                    && instructions[i + 3].operator().name() == "Clip"
+                if instructions[i + 0].opcode().name() == "CrossEntropyLossBackward"
+                    && instructions[i + 1].opcode().name() == "Clip"
+                    && instructions[i + 2].opcode().name() == "SoftmaxBackward"
+                    && instructions[i + 3].opcode().name() == "Clip"
                 {
                     new_instructions.push(instructions[i + 0].clone());
                     new_instructions.push(instructions[i + 1].clone());
                     let softmax_backward_input_gradient = &instructions[i + 2].inputs().deref()[1];
                     new_instructions.push(Instruction::new(
-                        Rc::new(IdentityBackward::default()),
+                        OpCode::DynOperator(Rc::new(IdentityBackward::default())),
                         &[softmax_backward_input_gradient],
                         &instructions[i + 2].outputs().iter().collect::<Vec<_>>(),
                         instructions[i + 2].category(),

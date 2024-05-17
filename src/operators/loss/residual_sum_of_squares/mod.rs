@@ -1,8 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
 use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, LossOperator, Operator, Tensor,
-    TensorF32, Zero,
+    devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, LossOperator, OpCode, Operator,
+    Tensor, TensorF32, Zero,
 };
 
 use super::LossFunction;
@@ -80,19 +80,19 @@ impl BinaryOperator for ResidualSumOfSquares {
         let inputs = [input_1, input_2];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Loss,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(self.clone()),
+            OpCode::DynOperator(Rc::new(self.clone())),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -103,7 +103,7 @@ impl BinaryOperator for ResidualSumOfSquares {
         let inputs = [input_1, input_2];
         let outputs = [input_2];
         output.push_instruction(Instruction::new(
-            Rc::new(ResidualSumOfSquaresBackward::default()),
+            OpCode::DynOperator(Rc::new(ResidualSumOfSquaresBackward::default())),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),

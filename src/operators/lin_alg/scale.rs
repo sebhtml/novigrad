@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Instruction, Operator, Tensor, TensorF32, UnaryOperator, Zero};
+use crate::{Device, Instruction, OpCode, Operator, Tensor, TensorF32, UnaryOperator, Zero};
 
 /// Scale is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
@@ -30,19 +30,19 @@ impl UnaryOperator for Scale {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(self.clone()),
+            OpCode::DynOperator(Rc::new(self.clone())),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
@@ -50,7 +50,7 @@ impl UnaryOperator for Scale {
         let inputs = [&output];
         let outputs = [input];
         output.push_instruction(Instruction::new(
-            Rc::new(ScaleBackward::default()),
+            OpCode::DynOperator(Rc::new(ScaleBackward::default())),
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Gradient,

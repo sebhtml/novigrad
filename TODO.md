@@ -1,5 +1,3 @@
-- put op codes in a OpCode enum
-
 - Use Add instead of AddBackward
 - use Scale instead of Zero
 - rename Scale to ScalarMul

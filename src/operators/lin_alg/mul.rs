@@ -1,6 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{BinaryOperator, Device, Error, Instruction, Operator, Tensor, TensorF32, Zero};
+use crate::{
+    BinaryOperator, Device, Error, Instruction, OpCode, Operator, Tensor, TensorF32, Zero,
+};
 
 /// https://onnx.ai/onnx/operators/onnx__Mul.html
 #[derive(Clone)]
@@ -30,19 +32,19 @@ impl BinaryOperator for Mul {
         let inputs = [input_0, input_1];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(self.clone()),
+            OpCode::DynOperator(Rc::new(self.clone())),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -53,7 +55,7 @@ impl BinaryOperator for Mul {
         let inputs = [input_0, input_1, &output];
         let outputs = [input_0, input_1];
         output.push_instruction(Instruction::new(
-            Rc::new(MulBackward::new(&self.device)),
+            OpCode::DynOperator(Rc::new(MulBackward::new(&self.device))),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),

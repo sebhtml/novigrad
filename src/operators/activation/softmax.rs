@@ -1,5 +1,5 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Instruction, Operator, TensorF32, UnaryOperator, Zero};
+use crate::{ActivationFunction, Instruction, OpCode, Operator, TensorF32, UnaryOperator, Zero};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -109,19 +109,19 @@ impl UnaryOperator for Softmax {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(self.clone()),
+            OpCode::DynOperator(Rc::new(self.clone())),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
@@ -129,7 +129,7 @@ impl UnaryOperator for Softmax {
         let inputs = [&output];
         let outputs = [input];
         output.push_instruction(Instruction::new(
-            Rc::new(SoftmaxBackward::new(&self.device)),
+            OpCode::DynOperator(Rc::new(SoftmaxBackward::new(&self.device))),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[0].gradient().deref().borrow(),

@@ -1,7 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
 use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Gemm, Instruction, Tensor, TensorF32, Zero,
+    devices::Device, BinaryOperator, Error, ErrorEnum, Gemm, Instruction, OpCode, Tensor,
+    TensorF32, Zero,
 };
 
 /// https://onnx.ai/onnx/operators/onnx__MatMul.html
@@ -65,19 +66,19 @@ impl BinaryOperator for MatMul {
         let inputs = [input_0, input_1];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::DynOperator(Rc::new(Zero::default())),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Gemm::new(&self.device, false, transb, false)),
+            OpCode::DynOperator(Rc::new(Gemm::new(&self.device, false, transb, false))),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -88,7 +89,7 @@ impl BinaryOperator for MatMul {
 
         if input_1.gradient().deref().borrow().requires_grad() {
             output.push_instruction(Instruction::new(
-                Rc::new(Gemm::new(&self.device, true, false, transb)),
+                OpCode::DynOperator(Rc::new(Gemm::new(&self.device, true, false, transb))),
                 &[
                     &input_0.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
@@ -100,7 +101,7 @@ impl BinaryOperator for MatMul {
 
         if input_0.gradient().deref().borrow().requires_grad() {
             output.push_instruction(Instruction::new(
-                Rc::new(Gemm::new(&self.device, true, transb, true)),
+                OpCode::DynOperator(Rc::new(Gemm::new(&self.device, true, transb, true))),
                 &[
                     &input_1.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),

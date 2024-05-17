@@ -276,7 +276,7 @@ pub fn train(
     let mut indices: Vec<usize> = (0..inputs.len()).collect();
     indices.shuffle(&mut thread_rng());
     for i in indices.into_iter() {
-        train_back_propagation(
+        train_with_one_example(
             program,
             device,
             optimizer,
@@ -308,7 +308,7 @@ pub fn total_loss(
     Ok(total_error)
 }
 
-fn train_back_propagation(
+fn train_with_one_example(
     program: &NeuralMachine,
     device: &Device,
     optimizer: &Box<dyn OptimizerTrait>,

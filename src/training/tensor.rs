@@ -53,21 +53,12 @@ impl Tensor {
             .collect()
     }
 
-    pub fn requires_grad(&self) -> bool {
-        self.gradient.deref().borrow().requires_grad()
-    }
-
     pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {
         &self.tensor
     }
 
     pub fn gradient(&self) -> &Rc<RefCell<TensorF32>> {
         &self.gradient
-    }
-
-    pub fn resize(&self, new_size: &[usize]) {
-        self.tensor.deref().borrow_mut().reallocate(new_size);
-        self.gradient.deref().borrow_mut().reallocate(new_size);
     }
 
     pub fn get_tape(&self) -> Vec<Tensor> {

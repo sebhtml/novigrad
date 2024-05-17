@@ -317,9 +317,8 @@ fn train_with_one_example(
     let tensors = device.tensors_to_optimize();
     let tensors: &[Tensor] = &tensors.deref().borrow();
 
-    if true {
-        optimizer.optimize(device, &tensors)?;
-    }
+    // TODO remove me
+    optimizer.optimize(device, &tensors)?;
 
     Ok(())
 }

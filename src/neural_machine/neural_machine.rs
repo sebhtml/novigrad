@@ -78,9 +78,8 @@ impl NeuralMachine {
 
         let mut instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
 
-        if false
-        // TODO
-        {
+        // TODO enable this
+        if false {
             let tensors = device.tensors_to_optimize().deref().borrow();
             let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
             instructions.append(&mut optimizer_instructions);

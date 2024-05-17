@@ -23,16 +23,12 @@ impl OptimizerTrait for GradientDescent {
             let scaled_gradient =
                 device.tensor_f32(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()]);
 
-            //TensorF32::scale(0.0, &scaled_gradient)?;
-
             instructions.push(Instruction::new(
                 Rc::new(Scale::new(device, 0.0)),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
                 false,
             ));
-
-            //TensorF32::add(gradient, &scaled_gradient)?;
 
             instructions.push(Instruction::new(
                 Rc::new(Add::new(device)),
@@ -41,8 +37,6 @@ impl OptimizerTrait for GradientDescent {
                 false,
             ));
 
-            //TensorF32::scale(-self.learning_rate, &scaled_gradient)?;
-
             instructions.push(Instruction::new(
                 Rc::new(Scale::new(device, -self.learning_rate)),
                 &[&scaled_gradient],
@@ -50,7 +44,6 @@ impl OptimizerTrait for GradientDescent {
                 false,
             ));
 
-            //TensorF32::add(&scaled_gradient, tensor)?;
             instructions.push(Instruction::new(
                 Rc::new(Add::new(device)),
                 &[tensor, &scaled_gradient],
@@ -62,13 +55,14 @@ impl OptimizerTrait for GradientDescent {
         for instruction in instructions.iter() {
             instruction.forward()?;
         }
+
         println!(
             "GradientDescent: Generated {} instructions for {} optimizable tensors",
             instructions.len(),
             tensors.len()
         );
 
-        //Ok(instructions)
-        Ok(vec![])
+        //Ok(instructions) // TODO enable this
+        Ok(vec![]) // TODO remove me
     }
 }

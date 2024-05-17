@@ -1,8 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
 use crate::{
-    BinaryOperator, Clip, Device, Error, IdentityBackward, Instruction, LossOperator, Tensor,
-    TensorF32, UnaryModel,
+    BinaryOperator, Clip, Device, Error, IdentityBackward, Instruction, LossOperator,
+    OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
 pub struct NeuralMachine {
@@ -20,6 +20,7 @@ impl NeuralMachine {
         model: &Box<dyn UnaryModel>,
         loss_operator: &Box<dyn LossOperator>,
         clipped_gradient_norm: f32,
+        optimizer: &Box<dyn OptimizerTrait>,
     ) -> Result<Self, Error> {
         // input
         let input_shape = model.input_size();
@@ -73,7 +74,15 @@ impl NeuralMachine {
             }
         }
 
-        let instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
+        let mut instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
+
+        if false
+        // TODO
+        {
+            let tensors = device.tensors_to_optimize().deref().borrow();
+            let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
+            instructions.append(&mut optimizer_instructions);
+        }
 
         let program = NeuralMachine {
             device: device.clone(),

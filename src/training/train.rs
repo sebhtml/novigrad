@@ -140,7 +140,13 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     let mut tokenizer = details.tokenizer;
     let device = details.device;
     let optimizer = details.optimizer;
-    let program = NeuralMachine::try_new(&device, &model, &loss_operator, clipped_gradient_norm)?;
+    let program = NeuralMachine::try_new(
+        &device,
+        &model,
+        &loss_operator,
+        clipped_gradient_norm,
+        &optimizer,
+    )?;
 
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();

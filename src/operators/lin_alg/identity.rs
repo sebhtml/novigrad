@@ -14,6 +14,12 @@ impl Identity {
             device: device.clone(),
         }
     }
+
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+        TensorF32::copy(&input, &output)
+    }
 }
 
 impl UnaryOperator for Identity {
@@ -40,7 +46,7 @@ impl UnaryOperator for Identity {
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::Identity,
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
@@ -54,18 +60,6 @@ impl UnaryOperator for Identity {
             crate::Category::Gradient,
         ));
         Ok(output)
-    }
-}
-
-impl Operator for Identity {
-    fn name(&self) -> &str {
-        "Identity"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input = inputs[0];
-        let output = outputs[0];
-        TensorF32::copy(&input, &output)
     }
 }
 

@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
-    Add, AddBackward, Clip, Error, Gemm, Mul, Operator, Scale, ScaleBackward, TensorF32, Zero,
+    Add, AddBackward, Clip, Error, Gemm, Identity, Mul, Operator, Scale, ScaleBackward, TensorF32,
+    Zero,
 };
 
 #[derive(Clone, Debug)]
@@ -15,6 +16,7 @@ pub enum OpCode {
     Zero,
     Clip(f32),
     Mul,
+    Identity,
 }
 
 impl Operator for OpCode {
@@ -29,6 +31,7 @@ impl Operator for OpCode {
             OpCode::Zero => "Zero",
             OpCode::Clip(_) => "Clip",
             OpCode::Mul => "Mul",
+            OpCode::Identity => "Identity",
         }
     }
 
@@ -45,6 +48,7 @@ impl Operator for OpCode {
             OpCode::Zero => Zero::execute(inputs, outputs),
             OpCode::Clip(clipped_norm) => Clip::execute(*clipped_norm, inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
+            OpCode::Identity => Identity::execute(inputs, outputs),
         }
     }
 }

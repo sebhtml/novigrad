@@ -14,6 +14,13 @@ impl Mul {
             device: device.clone(),
         }
     }
+
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input_0 = inputs[0];
+        let input_1 = inputs[1];
+        let output = outputs[0];
+        TensorF32::mul(input_0, input_1, output)
+    }
 }
 
 impl BinaryOperator for Mul {
@@ -42,7 +49,7 @@ impl BinaryOperator for Mul {
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::Mul,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -66,19 +73,6 @@ impl BinaryOperator for Mul {
             crate::Category::Gradient,
         ));
         Ok(output)
-    }
-}
-
-impl Operator for Mul {
-    fn name(&self) -> &str {
-        "Mul"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input_0 = inputs[0];
-        let input_1 = inputs[1];
-        let output = outputs[0];
-        TensorF32::mul(input_0, input_1, output)
     }
 }
 

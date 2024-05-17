@@ -1,12 +1,12 @@
-- Bake optimizer instructions in neural machine
 - put op codes in a OpCode enum
-- add interesting example
-- simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
 
 - Use Add instead of AddBackward
 - use Scale instead of Zero
 - rename Scale to ScalarMul
 - SigmoidBackward and SoftmaxBackward are Mul
+
+- simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
+- add interesting example
 
 == GPT-1 Transformer ==
 

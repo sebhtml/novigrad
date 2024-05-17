@@ -106,6 +106,7 @@ impl UnaryOperator for Sigmoid {
                 &outputs[0].tensor().deref().borrow(),
             ],
             &[&outputs[0].gradient().deref().borrow()],
+            true,
         );
         Ok(output)
     }

@@ -124,6 +124,7 @@ impl BinaryOperator for CrossEntropyLoss {
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].gradient().deref().borrow()],
+            true,
         );
         Ok(output)
     }

@@ -57,8 +57,9 @@ impl BinaryOperator for Add {
             &[&inputs[0].gradient().deref().borrow()],
             &[
                 &outputs[0].gradient().deref().borrow(),
-                &outputs[1].gradient().deref().borrow_mut(),
+                &outputs[1].gradient().deref().borrow(),
             ],
+            true,
         );
         Ok(output)
     }

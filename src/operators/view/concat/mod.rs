@@ -98,6 +98,7 @@ impl NaryOperator for Concat {
             Rc::new(ConcatBackward::default()),
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),
+            true,
         );
         Ok(output)
     }

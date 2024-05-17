@@ -92,6 +92,7 @@ impl BinaryOperator for MatMul {
                     &output.gradient().deref().borrow(),
                 ],
                 &[&input_1.gradient().deref().borrow()],
+                true,
             );
         }
 
@@ -103,6 +104,7 @@ impl BinaryOperator for MatMul {
                     &output.gradient().deref().borrow(),
                 ],
                 &[&input_0.gradient().deref().borrow()],
+                true,
             );
         }
 

@@ -51,6 +51,7 @@ impl UnaryOperator for Identity {
             Rc::new(IdentityBackward::default()),
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
+            true,
         );
         Ok(output)
     }

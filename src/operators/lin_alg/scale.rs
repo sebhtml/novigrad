@@ -53,6 +53,7 @@ impl UnaryOperator for Scale {
             Rc::new(ScaleBackward::default()),
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
+            true,
         );
         Ok(output)
     }

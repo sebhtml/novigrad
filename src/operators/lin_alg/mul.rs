@@ -63,6 +63,7 @@ impl BinaryOperator for Mul {
                 &outputs[0].gradient().deref().borrow(),
                 &outputs[1].gradient().deref().borrow(),
             ],
+            true,
         );
         Ok(output)
     }

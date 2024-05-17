@@ -38,8 +38,8 @@ impl Tensor {
         operator: Rc<dyn Operator>,
         inputs: &[&TensorF32],
         outputs: &[&TensorF32],
+        gradient_pathway: bool,
     ) {
-        let gradient_pathway = true;
         let instruction = Instruction::new(operator, inputs, outputs, gradient_pathway);
         self.instructions.deref().borrow_mut().push(instruction)
     }

@@ -109,6 +109,7 @@ impl BinaryOperator for ResidualSumOfSquares {
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].gradient().deref().borrow()],
+            true,
         );
         Ok(output)
     }

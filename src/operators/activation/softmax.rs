@@ -136,6 +136,7 @@ impl UnaryOperator for Softmax {
                 &outputs[0].tensor().deref().borrow(),
             ],
             &[&outputs[0].gradient().deref().borrow()],
+            true,
         );
         Ok(output)
     }

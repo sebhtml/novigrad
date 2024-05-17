@@ -56,6 +56,7 @@ impl UnaryOperator for Reshape {
             Rc::new(ReshapeBackward::new(self.input_size.clone())),
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
+            true,
         );
         Ok(output)
     }

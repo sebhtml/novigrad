@@ -1,5 +1,7 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Instruction, OpCode, Operator, TensorF32, UnaryOperator};
+use crate::{
+    ActivationFunction, Category, Instruction, OpCode, Operator, TensorF32, UnaryOperator,
+};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -9,12 +11,14 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub struct Softmax {
     device: Device,
+    next_is_cross_entropy_loss: bool,
 }
 
 impl Softmax {
-    pub fn new(device: &Device) -> Self {
+    pub fn new(device: &Device, next_is_cross_entropy_loss: bool) -> Self {
         Self {
             device: device.clone(),
+            next_is_cross_entropy_loss,
         }
     }
 
@@ -136,18 +140,32 @@ impl UnaryOperator for Softmax {
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
-        let inputs = [&output];
-        let outputs = [input];
-        output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(SoftmaxBackward::new(&self.device))),
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[0].gradient().deref().borrow(),
-                &outputs[0].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Gradient,
-        ));
+
+        if self.next_is_cross_entropy_loss {
+            output.push_instruction(Instruction::new(
+                OpCode::Add,
+                &[
+                    &output.gradient().deref().borrow(),
+                    &input.gradient().deref().borrow(),
+                ],
+                &[&input.gradient().deref().borrow()],
+                Category::Gradient,
+            ));
+        } else {
+            let inputs = [&output];
+            let outputs = [input];
+            output.push_instruction(Instruction::new(
+                OpCode::DynOperator(Rc::new(SoftmaxBackward::new(&self.device))),
+                &[
+                    &inputs[0].tensor().deref().borrow(),
+                    &inputs[0].gradient().deref().borrow(),
+                    &outputs[0].tensor().deref().borrow(),
+                ],
+                &[&outputs[0].gradient().deref().borrow()],
+                Category::Gradient,
+            ));
+        }
+
         Ok(output)
     }
 }

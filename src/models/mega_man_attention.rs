@@ -35,7 +35,7 @@ impl MegaManAttentionModel {
         let multi_head_attention =
             MultiHeadAttention::try_new(device, sequence_length, n_embd, true, num_heads).unwrap();
         let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length);
-        let softmax = Softmax::new(device);
+        let softmax = Softmax::new(device, true);
 
         Self {
             input_shape: vec![sequence_length, vocab_size],

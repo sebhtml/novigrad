@@ -74,8 +74,6 @@ impl NeuralMachine {
             }
         }
 
-        let mut instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
-
         let tensors = device.tensors_to_optimize().deref().borrow();
         let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
         instructions.append(&mut optimizer_instructions);
@@ -280,41 +278,5 @@ impl NeuralMachine {
         for (j, output) in instruction.outputs().deref().iter().enumerate() {
             println!("output {}: {}", j, output);
         }
-    }
-
-    pub fn optimize_softmax_and_cross_entropy_loss(
-        _device: &Device,
-        instructions: &Vec<Instruction>,
-    ) -> Vec<Instruction> {
-        let mut new_instructions = vec![];
-        let mut i = 0;
-        while i < instructions.len() {
-            if i + 3 < instructions.len() {
-                if instructions[i + 0].opcode().name() == "CrossEntropyLossBackward"
-                    && instructions[i + 1].opcode().name() == "Clip"
-                    && instructions[i + 2].opcode().name() == "SoftmaxBackward"
-                    && instructions[i + 3].opcode().name() == "Clip"
-                {
-                    new_instructions.push(instructions[i + 0].clone());
-                    new_instructions.push(instructions[i + 1].clone());
-                    let softmax_backward_input_gradient = &instructions[i + 2].inputs().deref()[1];
-                    new_instructions.push(Instruction::new(
-                        OpCode::IdentityBackward,
-                        &[softmax_backward_input_gradient],
-                        &instructions[i + 2].outputs().iter().collect::<Vec<_>>(),
-                        instructions[i + 2].category(),
-                    ));
-                    new_instructions.push(instructions[i + 3].clone());
-                    i += 4;
-                } else {
-                    new_instructions.push(instructions[i].clone());
-                    i += 1;
-                }
-            } else {
-                new_instructions.push(instructions[i].clone());
-                i += 1;
-            }
-        }
-        new_instructions
     }
 }

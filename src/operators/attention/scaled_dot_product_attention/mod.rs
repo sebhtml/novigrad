@@ -33,7 +33,7 @@ impl ScaledDotProductAttention {
                 Some(mask)
             }
         };
-        let softmax = Softmax::new(device);
+        let softmax = Softmax::new(device, false);
         let matmul = MatMul::new(device, false);
 
         let attention = Self {

@@ -166,12 +166,12 @@ impl Device {
         optimize: bool,
     ) -> Tensor {
         let len = rows * cols;
+        let tensor = Self::tensor_f32(&self, rows, cols, values);
         let gradient = if requires_grad {
             Self::tensor_f32(&self, rows, cols, vec![0.0; len])
         } else {
             Self::tensor_f32(&self, 0, 0, vec![])
         };
-        let tensor = Self::tensor_f32(&self, rows, cols, values);
         let tensor = Tensor::new(tensor, gradient, inputs);
         if optimize {
             self.tensors_to_optimize
@@ -196,15 +196,6 @@ impl Device {
 
     pub fn tensors_to_optimize(&self) -> &Rc<RefCell<Vec<Tensor>>> {
         &self.tensors_to_optimize
-    }
-
-    pub fn zero_grad(&self) -> Result<(), Error> {
-        let gradients: &[Tensor] = &self.tensors_to_optimize().deref().borrow();
-        for gradient in gradients {
-            let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
-            gradient.zero()?;
-        }
-        Ok(())
     }
 
     pub fn buffer(&self, len: usize) -> DevBuffer {

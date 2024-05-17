@@ -1,8 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
 use crate::{
-    BinaryOperator, Clip, Device, Error, IdentityBackward, Instruction, LossOperator, Tensor,
-    TensorF32, UnaryModel,
+    BinaryOperator, Category, Clip, Device, Error, IdentityBackward, Instruction, LossOperator,
+    OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
 pub struct NeuralMachine {
@@ -17,9 +17,10 @@ pub struct NeuralMachine {
 impl NeuralMachine {
     pub fn try_new(
         device: &Device,
-        model: &impl UnaryModel,
-        loss_operator: &impl LossOperator,
+        model: &Box<dyn UnaryModel>,
+        loss_operator: &Box<dyn LossOperator>,
         clipped_gradient_norm: f32,
+        optimizer: &Box<dyn OptimizerTrait>,
     ) -> Result<Self, Error> {
         // input
         let input_shape = model.input_size();
@@ -45,7 +46,8 @@ impl NeuralMachine {
         );
 
         let program_output = model.forward(&example_input)?;
-        let loss = BinaryOperator::forward(loss_operator, &example_output, &program_output)?;
+        let loss =
+            BinaryOperator::forward(loss_operator.deref(), &example_output, &program_output)?;
         let tape = loss.get_tape();
         let mut instructions = vec![];
 
@@ -56,7 +58,7 @@ impl NeuralMachine {
         }
 
         for tensor in tape.iter().rev() {
-            for instruction in tensor.backward_instructions().into_iter() {
+            for instruction in tensor.gradient_instructions().into_iter() {
                 let outputs: Vec<TensorF32> =
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
@@ -64,7 +66,7 @@ impl NeuralMachine {
                     Rc::new(Clip::new(clipped_gradient_norm)),
                     &[],
                     &outputs,
-                    instruction.gradient_pathway(),
+                    instruction.category(),
                 );
 
                 instructions.push(instruction.clone());
@@ -72,7 +74,11 @@ impl NeuralMachine {
             }
         }
 
-        let instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
+        let mut instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
+
+        let tensors = device.tensors_to_optimize().deref().borrow();
+        let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
+        instructions.append(&mut optimizer_instructions);
 
         let program = NeuralMachine {
             device: device.clone(),
@@ -87,21 +93,7 @@ impl NeuralMachine {
         Ok(program)
     }
 
-    pub fn loss(&self) -> Result<Tensor, Error> {
-        Ok(self.loss.clone())
-    }
-}
-
-impl NeuralMachine {
-    pub fn forward(&self, input: &Tensor, expected_output: &Tensor) -> Result<Tensor, Error> {
-        //println!("NeuralMachine forward");
-        // Copy input
-        {
-            let example_input: &mut TensorF32 =
-                &mut self.example_input.tensor().deref().borrow_mut();
-            let input: &TensorF32 = &input.tensor().deref().borrow_mut();
-            TensorF32::copy(input, example_input)?;
-        }
+    pub fn loss(&self, expected_output: &Tensor) -> Result<Tensor, Error> {
         // Copy expected output
         {
             let example_output: &mut TensorF32 =
@@ -109,10 +101,43 @@ impl NeuralMachine {
             let expected_output: &TensorF32 = &expected_output.tensor().deref().borrow_mut();
             TensorF32::copy(expected_output, example_output)?;
         }
+
+        self.forward(Category::Loss)?;
+
+        Ok(self.loss.clone())
+    }
+
+    pub fn backward(&self) -> Result<(), Error> {
+        self.forward(Category::Gradient)?;
+
+        Ok(())
+    }
+
+    pub fn step(&self) -> Result<(), Error> {
+        self.forward(Category::Optimization)?;
+
+        Ok(())
+    }
+
+    fn forward(&self, category: Category) -> Result<(), Error> {
+        let debug = false;
+        if debug {
+            println!("Debugger for NeuralMachine forward pass");
+        }
+
         // Forward tensors
         #[allow(unused_variables)]
-        for (i, instruction) in self.instructions.iter().enumerate() {
-            //cprintln!("Forward instruction {} {}", i, instruction.operator().name(),);
+        for (i, instruction) in self
+            .instructions
+            .iter()
+            .filter(|i| i.category() == category)
+            .enumerate()
+        {
+            if debug {
+                println!("----------------------------------");
+                println!("Debugging instruction {}", i);
+            }
+
             #[cfg(debug_assertions)]
             for input in instruction.inputs().deref() {
                 debug_assert_eq!(
@@ -124,6 +149,12 @@ impl NeuralMachine {
                     input.name(),
                     input,
                 );
+            }
+
+            if debug {
+                println!("BEFORE FORWARD");
+                self.print_instruction(i, instruction);
+                self.print_instruction_inputs_outputs(instruction);
             }
 
             instruction.forward()?;
@@ -141,29 +172,27 @@ impl NeuralMachine {
                 );
             }
 
-            // TODO impl Display
-            /*
-            println!(
-                "{} -> {}, {} inputs, {} outputs",
-                i,
-                instruction.operator().name(),
-                instruction.inputs().len(),
-                instruction.outputs().len()
-            );
-
-            println!("inputs:");
-
-            for inputs in instruction.inputs().deref().iter() {
-                println!("inputs {}", inputs);
+            if debug {
+                println!("AFTER FORWARD");
+                self.print_instruction(i, instruction);
+                self.print_instruction_inputs_outputs(instruction);
             }
-
-            println!("outputs:");
-
-            for output in instruction.outputs().deref().iter() {
-                println!("output {}", output);
-            }
-             */
         }
+
+        Ok(())
+    }
+
+    pub fn infer(&self, input: &Tensor) -> Result<Tensor, Error> {
+        // Copy input
+        {
+            let example_input: &mut TensorF32 =
+                &mut self.example_input.tensor().deref().borrow_mut();
+            let input: &TensorF32 = &input.tensor().deref().borrow_mut();
+            TensorF32::copy(input, example_input)?;
+        }
+
+        self.forward(Category::Inference)?;
+
         Ok(self.program_output.clone())
     }
 
@@ -214,25 +243,43 @@ impl NeuralMachine {
         println!("Instructions: {}", self.instructions.len());
         println!("------------------------------");
         for (i, instruction) in self.instructions.iter().enumerate() {
-            println!(
-                "{}: INSTRUCTION    {}    {}    {}",
-                i,
-                instruction.operator().name(),
-                instruction
-                    .inputs()
-                    .iter()
-                    .map(|x| x.name())
-                    .collect::<Vec<_>>()
-                    .join(" "),
-                instruction
-                    .outputs()
-                    .iter()
-                    .map(|x| x.name())
-                    .collect::<Vec<_>>()
-                    .join(" ")
-            );
+            self.print_instruction(i, instruction);
         }
         println!("------------------------------");
+    }
+
+    fn print_instruction(&self, i: usize, instruction: &Instruction) {
+        println!(
+            "{}: INSTRUCTION    {}    {}    {}",
+            i,
+            instruction.operator().name(),
+            instruction
+                .inputs()
+                .iter()
+                .map(|x| x.name())
+                .collect::<Vec<_>>()
+                .join(" "),
+            instruction
+                .outputs()
+                .iter()
+                .map(|x| x.name())
+                .collect::<Vec<_>>()
+                .join(" ")
+        );
+    }
+
+    fn print_instruction_inputs_outputs(&self, instruction: &Instruction) {
+        println!("inputs: {}", instruction.inputs().deref().len());
+
+        for (j, input) in instruction.inputs().deref().iter().enumerate() {
+            println!("input {}: {}", j, input);
+        }
+
+        println!("outputs: {}", instruction.outputs().deref().len());
+
+        for (j, output) in instruction.outputs().deref().iter().enumerate() {
+            println!("output {}: {}", j, output);
+        }
     }
 
     pub fn optimize_softmax_and_cross_entropy_loss(
@@ -255,7 +302,7 @@ impl NeuralMachine {
                         Rc::new(IdentityBackward::default()),
                         &[softmax_backward_input_gradient],
                         &instructions[i + 2].outputs().iter().collect::<Vec<_>>(),
-                        instructions[i + 2].gradient_pathway(),
+                        instructions[i + 2].category(),
                     ));
                     new_instructions.push(instructions[i + 3].clone());
                     i += 4;

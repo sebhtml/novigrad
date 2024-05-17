@@ -1,8 +1,8 @@
 mod gradient_descent;
 pub use gradient_descent::*;
 
-use crate::{Error, Tensor};
+use crate::{Device, Error, Instruction, Tensor};
 
 pub trait OptimizerTrait {
-    fn optimize(&self, gradients: &[Tensor], learning_rate: f32) -> Result<(), Error>;
+    fn optimize(&self, device: &Device, tensors: &[Tensor]) -> Result<Vec<Instruction>, Error>;
 }

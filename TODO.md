@@ -1,5 +1,7 @@
 - Bake optimizer instructions in neural machine
+- put op codes in a OpCode enum
 - add interesting example
+- simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
 
 - Use Add instead of AddBackward
 - use Scale instead of Zero
@@ -23,9 +25,6 @@
 - revisit initialization of weights and biases in Linear
 - revisit initialization of embedding_table in Embedding
 
-== Clean-up ==
-
-- remove most of the Backward ops
 
 == Other things ==
 
@@ -50,8 +49,6 @@
 == Mini Batch ==
 
 - implement mini batch
-- shuffle examples in each epoch
-
 - image transformer
 
 == Datasets ==

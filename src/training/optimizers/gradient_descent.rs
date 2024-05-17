@@ -1,18 +1,57 @@
-use std::ops::Deref;
+use std::{ops::Deref, rc::Rc};
 
-use crate::{Error, OptimizerTrait, Tensor, TensorF32};
+use crate::{Add, Device, Error, Instruction, OptimizerTrait, Scale, Tensor, TensorF32};
 
-#[derive(Default)]
-pub struct GradientDescent {}
+pub struct GradientDescent {
+    learning_rate: f32,
+}
+
+impl GradientDescent {
+    pub fn new(learning_rate: f32) -> Self {
+        Self { learning_rate }
+    }
+}
 
 impl OptimizerTrait for GradientDescent {
-    fn optimize(&self, gradients: &[Tensor], learning_rate: f32) -> Result<(), Error> {
-        for gradient in gradients {
-            let tensor: &mut TensorF32 = &mut gradient.tensor().deref().borrow_mut();
-            let gradient: &TensorF32 = &gradient.gradient().deref().borrow();
+    fn optimize(&self, device: &Device, tensors: &[Tensor]) -> Result<Vec<Instruction>, Error> {
+        let mut instructions = vec![];
+        for optimizable_tensor in tensors {
+            let tensor: &TensorF32 = &optimizable_tensor.tensor().deref().borrow();
+            let gradient: &TensorF32 = &optimizable_tensor.gradient().deref().borrow();
             debug_assert_eq!(gradient.size(), tensor.size(),);
-            TensorF32::a_x_plus_y(-learning_rate, gradient, tensor)?;
+
+            let scaled_gradient =
+                device.tensor_f32(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()]);
+
+            instructions.push(Instruction::new(
+                Rc::new(Scale::new(device, 0.0)),
+                &[&scaled_gradient],
+                &[&scaled_gradient],
+                crate::Category::Optimization,
+            ));
+
+            instructions.push(Instruction::new(
+                Rc::new(Add::new(device)),
+                &[&scaled_gradient, gradient],
+                &[&scaled_gradient],
+                crate::Category::Optimization,
+            ));
+
+            instructions.push(Instruction::new(
+                Rc::new(Scale::new(device, -self.learning_rate)),
+                &[&scaled_gradient],
+                &[&scaled_gradient],
+                crate::Category::Optimization,
+            ));
+
+            instructions.push(Instruction::new(
+                Rc::new(Add::new(device)),
+                &[tensor, &scaled_gradient],
+                &[tensor],
+                crate::Category::Optimization,
+            ));
         }
-        Ok(())
+
+        Ok(instructions)
     }
 }

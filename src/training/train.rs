@@ -3,8 +3,7 @@ use rand::thread_rng;
 use std::{ops::Deref, time::SystemTime};
 
 use crate::{
-    Device, Error, GradientDescent, ModelDetails, NeuralMachine, OptimizerTrait, Tensor, TensorF32,
-    Tokenizer, TokenizerTrait,
+    Device, Error, ModelDetails, NeuralMachine, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 trait IsPrintable {
@@ -134,14 +133,20 @@ pub struct NetworkTestOutput {
 pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
     let examples = &details.examples;
-    let learning_rate = details.learning_rate;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let clipped_gradient_norm = details.clipped_gradient_norm;
     let mut tokenizer = details.tokenizer;
     let device = details.device;
-    let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::default());
-    let program = NeuralMachine::try_new(&device, &model, &loss_operator, clipped_gradient_norm)?;
+    let shuffle_examples = details.shuffle_examples;
+    let optimizer = details.optimizer;
+    let program = NeuralMachine::try_new(
+        &device,
+        &model,
+        &loss_operator,
+        clipped_gradient_norm,
+        &optimizer,
+    )?;
 
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
@@ -170,15 +175,7 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
                 break;
             }
         }
-        train(
-            &program,
-            &device,
-            &optimizer,
-            learning_rate,
-            epoch,
-            &inputs,
-            &outputs,
-        )?;
+        train(&program, shuffle_examples, &inputs, &outputs)?;
     }
     let final_total_error = print_total_loss(
         &device,
@@ -215,8 +212,8 @@ fn print_results(
     for i in 0..inputs.len() {
         let input = &inputs[i];
         let expected_output = &outputs[i];
-        let actual_output = program.forward(input, expected_output)?;
-        let loss = program.loss()?;
+        let actual_output = program.infer(input)?;
+        let loss = program.loss(expected_output)?;
         let loss: &TensorF32 = &loss.tensor().deref().borrow();
         let loss: f32 = loss.try_into()?;
 
@@ -266,26 +263,16 @@ fn get_row_argmaxes(tensor: &TensorF32) -> Result<Vec<usize>, Error> {
 
 pub fn train(
     program: &NeuralMachine,
-    device: &Device,
-    optimizer: &Box<dyn OptimizerTrait>,
-    learning_rate: f32,
-    epoch: usize,
+    shuffle_examples: bool,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
 ) -> Result<(), Error> {
     let mut indices: Vec<usize> = (0..inputs.len()).collect();
-    indices.shuffle(&mut thread_rng());
+    if shuffle_examples {
+        indices.shuffle(&mut thread_rng());
+    }
     for i in indices.into_iter() {
-        train_with_one_example(
-            program,
-            device,
-            optimizer,
-            learning_rate,
-            epoch,
-            i,
-            &inputs[i],
-            &outputs[i],
-        )?;
+        train_with_one_example(program, &inputs[i], &outputs[i])?;
     }
     Ok(())
 }
@@ -298,8 +285,8 @@ pub fn total_loss(
     let mut total_error = 0.0;
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
-        let _ = program.forward(&inputs[i], expected_output)?;
-        let example_loss = program.loss()?;
+        let _ = program.infer(&inputs[i])?;
+        let example_loss = program.loss(expected_output)?;
         let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
         let example_loss: f32 = example_loss.try_into()?;
         total_error += example_loss;
@@ -310,22 +297,13 @@ pub fn total_loss(
 
 fn train_with_one_example(
     program: &NeuralMachine,
-    device: &Device,
-    optimizer: &Box<dyn OptimizerTrait>,
-    learning_rate: f32,
-    _epoch: usize,
-    _example_index: usize,
-    x: &Tensor,
-    y: &Tensor,
+    input: &Tensor,
+    output: &Tensor,
 ) -> Result<(), Error> {
-    device.zero_grad()?;
-
-    let _output = program.forward(x, y)?;
-    let _loss = program.loss()?;
-    let gradients = device.tensors_to_optimize();
-    let gradients: &[Tensor] = &gradients.deref().borrow();
-
-    optimizer.optimize(&gradients, learning_rate)?;
+    let _output = program.infer(input)?;
+    let _loss = program.loss(output)?;
+    program.backward()?;
+    program.step()?;
 
     Ok(())
 }

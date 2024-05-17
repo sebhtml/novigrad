@@ -1,4 +1,4 @@
-use crate::{Error, Instruction, TensorF32};
+use crate::{Category, Error, Instruction, TensorF32};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
@@ -26,23 +26,21 @@ impl Tensor {
         self.instructions.deref().borrow_mut().push(instruction)
     }
 
+    pub fn instructions(&self) -> Vec<Instruction> {
+        self.instructions.deref().borrow().clone()
+    }
+
     pub fn forward_instructions(&self) -> Vec<Instruction> {
-        self.instructions
-            .deref()
-            .borrow()
-            .clone()
+        self.instructions()
             .into_iter()
-            .filter(|i| !i.gradient_pathway())
+            .filter(|i| i.category() == Category::Inference || i.category() == Category::Loss)
             .collect()
     }
 
-    pub fn backward_instructions(&self) -> Vec<Instruction> {
-        self.instructions
-            .deref()
-            .borrow()
-            .clone()
+    pub fn gradient_instructions(&self) -> Vec<Instruction> {
+        self.instructions()
             .into_iter()
-            .filter(|i| i.gradient_pathway())
+            .filter(|i| i.category() == Category::Gradient)
             .collect()
     }
 

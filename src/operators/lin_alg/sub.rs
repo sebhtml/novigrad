@@ -2,8 +2,7 @@ use crate::{Error, TensorF32};
 
 /// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
-pub struct Sub {
-}
+pub struct Sub {}
 
 impl Sub {
     pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {

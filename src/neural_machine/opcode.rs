@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::{
     Add, AddBackward, Clip, Error, Gemm, Identity, IdentityBackward, Mul, Operator, Scale,
-    ScaleBackward, Softmax, TensorF32, Zero,
+    ScaleBackward, Softmax, Sub, TensorF32, Zero,
 };
 
 #[derive(Clone, Debug)]
@@ -19,6 +19,7 @@ pub enum OpCode {
     Identity,
     IdentityBackward,
     Softmax,
+    Sub,
 }
 
 impl Operator for OpCode {
@@ -36,6 +37,7 @@ impl Operator for OpCode {
             OpCode::Identity => "Identity",
             OpCode::IdentityBackward => "IdentityBackward",
             OpCode::Softmax => "Softmax",
+            OpCode::Sub => "Sub",
         }
     }
 
@@ -55,6 +57,7 @@ impl Operator for OpCode {
             OpCode::Identity => Identity::execute(inputs, outputs),
             OpCode::IdentityBackward => IdentityBackward::execute(inputs, outputs),
             OpCode::Softmax => Softmax::execute(inputs, outputs),
+            OpCode::Sub => Sub::execute(inputs, outputs),
         }
     }
 }

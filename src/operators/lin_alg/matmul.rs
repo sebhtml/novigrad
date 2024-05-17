@@ -137,11 +137,7 @@ impl Operator for MatMulBackward {
             let b = input_gradient;
             let c = output_0_gradient;
             let transb = self.transb;
-            if transb {
-                TensorF32::gemm(true, true, 1.0, a, b, 1.0, c, true)?;
-            } else {
-                TensorF32::gemm(true, false, 1.0, a, b, 1.0, c, true)?;
-            }
+            TensorF32::gemm(true, transb, 1.0, a, b, 1.0, c, true)?;
         }
 
         Ok(())

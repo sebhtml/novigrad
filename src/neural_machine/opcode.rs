@@ -22,6 +22,15 @@ pub enum OpCode {
     Sub,
     Reshape(Vec<usize>),
     ReshapeBackward(Vec<usize>),
+    // Sigmoid, // TODO
+    // SigmoidBackward, // TODO
+    // SoftmaxBackward, // TODO
+    // CrossEntropyLoss, // TODO
+    // CrossEntropyLossBackward, // TODO
+    // ResidualSumOfSquares, // TODO
+    // ResidualSumOfSquaresBackward, // TODO
+    // Concat, // TODO
+    // ConcatBackward, // TODO
 }
 
 impl Operator for OpCode {

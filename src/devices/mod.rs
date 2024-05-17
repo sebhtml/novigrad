@@ -198,15 +198,6 @@ impl Device {
         &self.tensors_to_optimize
     }
 
-    pub fn zero_grad(&self) -> Result<(), Error> {
-        let gradients: &[Tensor] = &self.tensors_to_optimize().deref().borrow();
-        for gradient in gradients {
-            let gradient: &mut TensorF32 = &mut gradient.gradient().deref().borrow_mut();
-            gradient.zero()?;
-        }
-        Ok(())
-    }
-
     pub fn buffer(&self, len: usize) -> DevBuffer {
         let recycled = self
             .available_buffers

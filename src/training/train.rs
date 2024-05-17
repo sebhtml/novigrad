@@ -318,8 +318,6 @@ fn train_with_one_example(
     x: &Tensor,
     y: &Tensor,
 ) -> Result<(), Error> {
-    device.zero_grad()?;
-
     let _output = program.forward(x, y)?;
     let _loss = program.loss()?;
     let gradients = device.tensors_to_optimize();

@@ -1,8 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
 use crate::{
-    BinaryOperator, Category, Clip, Device, Error, IdentityBackward, Instruction, LossOperator,
-    OpCode, Operator, OptimizerTrait, Tensor, TensorF32, UnaryModel,
+    BinaryOperator, Category, Device, Error, IdentityBackward, Instruction, LossOperator, OpCode,
+    Operator, OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
 pub struct NeuralMachine {
@@ -63,7 +63,7 @@ impl NeuralMachine {
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
                 let clip_instruction = Instruction::new(
-                    OpCode::DynOperator(Rc::new(Clip::new(clipped_gradient_norm))),
+                    OpCode::Clip(clipped_gradient_norm),
                     &[],
                     &outputs,
                     instruction.category(),

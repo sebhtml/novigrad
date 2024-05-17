@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
-    Add, AddBackward, Clip, Error, Gemm, Identity, IdentityBackward, Mul, Operator, Reshape, Scale,
-    ScaleBackward, Softmax, Sub, TensorF32, Zero,
+    Add, AddBackward, Clip, Error, Gemm, Identity, IdentityBackward, Mul, Operator, Reshape,
+    ReshapeBackward, Scale, ScaleBackward, Softmax, Sub, TensorF32, Zero,
 };
 
 #[derive(Clone, Debug)]
@@ -21,6 +21,7 @@ pub enum OpCode {
     Softmax,
     Sub,
     Reshape(Vec<usize>),
+    ReshapeBackward(Vec<usize>),
 }
 
 impl Operator for OpCode {
@@ -40,6 +41,7 @@ impl Operator for OpCode {
             OpCode::Softmax => "Softmax",
             OpCode::Sub => "Sub",
             OpCode::Reshape(_) => "Reshape",
+            OpCode::ReshapeBackward(_) => "ReshapeBackward",
         }
     }
 
@@ -61,6 +63,9 @@ impl Operator for OpCode {
             OpCode::Softmax => Softmax::execute(inputs, outputs),
             OpCode::Sub => Sub::execute(inputs, outputs),
             OpCode::Reshape(output_size) => Reshape::execute(output_size, inputs, outputs),
+            OpCode::ReshapeBackward(input_size) => {
+                ReshapeBackward::execute(input_size, inputs, outputs)
+            }
         }
     }
 }

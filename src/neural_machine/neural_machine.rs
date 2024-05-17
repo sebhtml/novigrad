@@ -17,8 +17,8 @@ pub struct NeuralMachine {
 impl NeuralMachine {
     pub fn try_new(
         device: &Device,
-        model: &impl UnaryModel,
-        loss_operator: &impl LossOperator,
+        model: &Box<dyn UnaryModel>,
+        loss_operator: &Box<dyn LossOperator>,
         clipped_gradient_norm: f32,
     ) -> Result<Self, Error> {
         // input
@@ -45,7 +45,8 @@ impl NeuralMachine {
         );
 
         let program_output = model.forward(&example_input)?;
-        let loss = BinaryOperator::forward(loss_operator, &example_output, &program_output)?;
+        let loss =
+            BinaryOperator::forward(loss_operator.deref(), &example_output, &program_output)?;
         let tape = loss.get_tape();
         let mut instructions = vec![];
 

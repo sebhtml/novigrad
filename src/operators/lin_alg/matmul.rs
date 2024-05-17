@@ -1,6 +1,8 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero};
+use crate::{
+    devices::Device, BinaryOperator, Error, ErrorEnum, Gemm, Operator, Tensor, TensorF32, Zero,
+};
 
 /// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]
@@ -73,7 +75,7 @@ impl BinaryOperator for MatMul {
             &[&outputs[0].gradient().deref().borrow()],
         );
         output.push_forward_instruction(
-            Rc::new(self.clone()),
+            Rc::new(Gemm::new(&self.device, transb)),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -96,24 +98,6 @@ impl BinaryOperator for MatMul {
             ],
         );
         Ok(output)
-    }
-}
-
-impl Operator for MatMul {
-    fn name(&self) -> &str {
-        "MatMul"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        debug_assert_eq!(inputs.len(), 2);
-        let input_0 = inputs[0];
-        let input_1 = inputs[1];
-        let output = outputs[0];
-        let a = input_0;
-        let b = input_1;
-        let c = output;
-        let transb = self.transb;
-        TensorF32::gemm(false, transb, 1.0, a, b, 1.0, c, false)
     }
 }
 

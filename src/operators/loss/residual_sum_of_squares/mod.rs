@@ -83,11 +83,13 @@ impl BinaryOperator for ResidualSumOfSquares {
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
+            false,
         );
         output.push_forward_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
+            false,
         );
         output.push_forward_instruction(
             Rc::new(self.clone()),
@@ -96,6 +98,7 @@ impl BinaryOperator for ResidualSumOfSquares {
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
+            false,
         );
         let inputs = [input_1, input_2];
         let outputs = [input_2];

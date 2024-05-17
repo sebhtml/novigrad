@@ -33,11 +33,13 @@ impl BinaryOperator for Mul {
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
+            false,
         );
         output.push_forward_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
+            false,
         );
         output.push_forward_instruction(
             Rc::new(self.clone()),
@@ -46,6 +48,7 @@ impl BinaryOperator for Mul {
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
+            false,
         );
         let inputs = [input_0, input_1, &output];
         let outputs = [input_0, input_1];

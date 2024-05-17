@@ -82,16 +82,19 @@ impl UnaryOperator for Sigmoid {
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
+            false,
         );
         output.push_forward_instruction(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
+            false,
         );
         output.push_forward_instruction(
             Rc::new(self.clone()),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
+            false,
         );
         let inputs = [&output];
         let outputs = [input];

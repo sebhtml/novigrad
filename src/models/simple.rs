@@ -1,5 +1,5 @@
 use crate::{
-    into_one_hot_encoded_rows, CrossEntropyLoss, DatasetDetails, Device, Error, ErrorEnum,
+    into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, ModelDetails,
     NeuralMachine, Tensor, Tokenizer, TokenizerTrait, UnaryOperator,
 };
 
@@ -121,13 +121,13 @@ fn load_examples(
     examples
 }
 
-pub fn load_dataset(device: &Device) -> Result<DatasetDetails, Error> {
+pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let model = SimpleModel::new(device);
     let examples = load_examples(&device, &mut tokenizer, model.vocab_size())?;
     let loss_operator = CrossEntropyLoss::new(device);
     let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
-    let details = DatasetDetails {
+    let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,

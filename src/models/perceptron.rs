@@ -1,5 +1,5 @@
 use crate::{
-    DatasetDetails, Device, Error, NeuralMachine, ResidualSumOfSquares, Tensor, UnaryOperator,
+    Device, Error, ModelDetails, NeuralMachine, ResidualSumOfSquares, Tensor, UnaryOperator,
 };
 
 use crate::{Linear, Model};
@@ -48,12 +48,12 @@ fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
     Ok(examples)
 }
 
-pub fn load_perceptron(device: &Device) -> Result<DatasetDetails, Error> {
+pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
     let model = PerceptronModel::new(device);
     let examples = load_examples(&device)?;
     let loss_operator = ResidualSumOfSquares::new(device);
     let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
-    let details = DatasetDetails {
+    let details = ModelDetails {
         device: device.clone(),
         tokenizer: None,
         examples,

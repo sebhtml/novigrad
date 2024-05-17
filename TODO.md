@@ -1,8 +1,10 @@
-- Remove TensorF32 matmul in favor of Gemm
 - remome zero and name from tensor
+- in Tensor, store just one Vec<Instruction> with bool flag for_gradient
+
+- Use add instead of AddBackward
+- use Gemm instead of MatMulBackward
 - sigmoidGrad and softmaxBackward are Mul
 - Bake optimizer instructions in neural machine
-- in Tensor, store just one Vec<Instruction> with bool flag for_gradient
 
 == GPT-1 Transformer ==
 

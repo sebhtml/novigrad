@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{Add, AddBackward, Error, Gemm, Operator, TensorF32};
+use crate::{Add, AddBackward, Error, Gemm, Operator, Scale, TensorF32};
 
 #[derive(Clone, Debug)]
 pub enum OpCode {
@@ -8,6 +8,7 @@ pub enum OpCode {
     Gemm(bool, bool, bool),
     Add,
     AddBackward,
+    Scale(f32),
 }
 
 impl Operator for OpCode {
@@ -17,6 +18,7 @@ impl Operator for OpCode {
             OpCode::Gemm(_, _, _) => "Gemm",
             OpCode::Add => "Add",
             OpCode::AddBackward => "AddBackward",
+            OpCode::Scale(_) => "Scale",
         }
     }
 
@@ -28,6 +30,7 @@ impl Operator for OpCode {
             }
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::AddBackward => AddBackward::execute(inputs, outputs),
+            OpCode::Scale(alpha) => Scale::execute(*alpha, inputs, outputs),
         }
     }
 }

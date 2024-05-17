@@ -16,6 +16,17 @@ impl Scale {
             alpha,
         }
     }
+
+    pub fn execute(
+        alpha: f32,
+        inputs: &[&TensorF32],
+        outputs: &[&TensorF32],
+    ) -> Result<(), crate::Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+        TensorF32::copy(input, output)?;
+        TensorF32::scale(alpha, output)
+    }
 }
 
 impl UnaryOperator for Scale {
@@ -42,7 +53,7 @@ impl UnaryOperator for Scale {
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::Scale(self.alpha),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
@@ -56,20 +67,6 @@ impl UnaryOperator for Scale {
             crate::Category::Gradient,
         ));
         Ok(output)
-    }
-}
-
-impl Operator for Scale {
-    fn name(&self) -> &str {
-        "Scale"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
-        let input = inputs[0];
-        let output = outputs[0];
-        TensorF32::copy(input, output)?;
-        let alpha = self.alpha;
-        TensorF32::scale(alpha, output)
     }
 }
 

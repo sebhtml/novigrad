@@ -2,6 +2,7 @@
 - use Scale instead of Zero
 - rename Scale to ScalarMul
 - SigmoidBackward and SoftmaxBackward are Mul
+- simplify execute method arguments
 
 - simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
 - add interesting example

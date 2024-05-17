@@ -1,6 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{Device, Error, Instruction, OpCode, OptimizerTrait, Scale, Tensor, TensorF32};
+use crate::{Device, Error, Instruction, OpCode, OptimizerTrait, Tensor, TensorF32};
 
 pub struct GradientDescent {
     learning_rate: f32,
@@ -24,7 +24,7 @@ impl OptimizerTrait for GradientDescent {
                 device.tensor_f32(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()]);
 
             instructions.push(Instruction::new(
-                OpCode::DynOperator(Rc::new(Scale::new(device, 0.0))),
+                OpCode::Scale(0.0),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
                 crate::Category::Optimization,
@@ -38,7 +38,7 @@ impl OptimizerTrait for GradientDescent {
             ));
 
             instructions.push(Instruction::new(
-                OpCode::DynOperator(Rc::new(Scale::new(device, -self.learning_rate))),
+                OpCode::Scale(-self.learning_rate),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
                 crate::Category::Optimization,

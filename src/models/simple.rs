@@ -134,7 +134,7 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
         examples,
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
-        epochs: 1000,
+        epochs: 500,
         progress: 100,
         initial_total_error_min: 8.0,
         final_total_error_max: 0.001,

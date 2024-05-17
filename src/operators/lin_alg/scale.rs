@@ -1,6 +1,6 @@
 use std::{ops::Deref, rc::Rc};
 
-use crate::{Device, Instruction, OpCode, Operator, Tensor, TensorF32, UnaryOperator, Zero};
+use crate::{Device, Instruction, OpCode, Tensor, TensorF32, UnaryOperator, Zero};
 
 /// Scale is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
@@ -61,7 +61,7 @@ impl UnaryOperator for Scale {
         let inputs = [&output];
         let outputs = [input];
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(ScaleBackward::default())),
+            OpCode::ScaleBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Gradient,
@@ -72,18 +72,8 @@ impl UnaryOperator for Scale {
 
 pub struct ScaleBackward {}
 
-impl Default for ScaleBackward {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Operator for ScaleBackward {
-    fn name(&self) -> &str {
-        "ScaleBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
+impl ScaleBackward {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
         let input = inputs[0];
         let output = outputs[0];
         TensorF32::add(input, output)

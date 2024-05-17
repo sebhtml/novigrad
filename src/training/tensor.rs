@@ -26,21 +26,19 @@ impl Tensor {
         self.instructions.deref().borrow_mut().push(instruction)
     }
 
+    pub fn instructions(&self) -> Vec<Instruction> {
+        self.instructions.deref().borrow().clone()
+    }
+
     pub fn forward_instructions(&self) -> Vec<Instruction> {
-        self.instructions
-            .deref()
-            .borrow()
-            .clone()
+        self.instructions()
             .into_iter()
             .filter(|i| i.category() == Category::Inference || i.category() == Category::Loss)
             .collect()
     }
 
     pub fn backward_instructions(&self) -> Vec<Instruction> {
-        self.instructions
-            .deref()
-            .borrow()
-            .clone()
+        self.instructions()
             .into_iter()
             .filter(|i| i.category() == Category::Gradient)
             .collect()

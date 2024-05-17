@@ -20,6 +20,17 @@ impl Reshape {
             output_size,
         }
     }
+
+    pub fn execute(
+        output_size: &[usize],
+        inputs: &[&TensorF32],
+        outputs: &[&TensorF32],
+    ) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+        TensorF32::copy(input, output)?;
+        output.resize(output_size)
+    }
 }
 
 impl UnaryOperator for Reshape {
@@ -47,7 +58,7 @@ impl UnaryOperator for Reshape {
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::Reshape(self.output_size.clone()),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
@@ -61,19 +72,6 @@ impl UnaryOperator for Reshape {
             crate::Category::Gradient,
         ));
         Ok(output)
-    }
-}
-
-impl Operator for Reshape {
-    fn name(&self) -> &str {
-        "Reshape"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input = inputs[0];
-        let output = outputs[0];
-        TensorF32::copy(input, output)?;
-        output.resize(&self.output_size)
     }
 }
 

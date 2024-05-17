@@ -20,9 +20,7 @@ impl CrossEntropyLoss {
             device: device.clone(),
         }
     }
-}
 
-impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     fn evaluate(_device: &Device, expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
         debug_assert_eq!(actual.size(), expected.size());
@@ -66,6 +64,26 @@ impl LossFunction for CrossEntropyLoss {
     fn derive(expected: &TensorF32, actual: &TensorF32, result: &TensorF32) -> Result<(), Error> {
         TensorF32::copy(actual, result)?;
         TensorF32::sub(expected, result)
+    }
+}
+
+impl LossFunction for CrossEntropyLoss {
+    fn evaluate(
+        &self,
+        device: &Device,
+        expected: &TensorF32,
+        actual: &TensorF32,
+    ) -> Result<f32, Error> {
+        Self::evaluate(device, expected, actual)
+    }
+
+    fn derive(
+        &self,
+        expected: &TensorF32,
+        actual: &TensorF32,
+        result: &TensorF32,
+    ) -> Result<(), Error> {
+        Self::derive(expected, actual, result)
     }
 }
 

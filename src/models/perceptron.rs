@@ -1,7 +1,4 @@
-use crate::{
-    Device, Error, ModelDetails, NeuralMachine, ResidualSumOfSquares, Tensor, UnaryModel,
-    UnaryOperator,
-};
+use crate::{Device, Error, ModelDetails, ResidualSumOfSquares, Tensor, UnaryModel, UnaryOperator};
 
 use crate::{Linear, Model};
 
@@ -55,12 +52,12 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
     let model = PerceptronModel::new(device);
     let examples = load_examples(&device)?;
     let loss_operator = ResidualSumOfSquares::new(device);
-    let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: None,
         examples,
-        program,
+        model: Box::new(model),
+        loss_operator: Box::new(loss_operator),
         epochs: 100,
         progress: 10,
         initial_total_error_min: 50.0,

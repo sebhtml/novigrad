@@ -4,7 +4,7 @@ mod mega_man;
 mod mega_man_attention;
 mod perceptron;
 mod simple;
-use crate::NeuralMachine;
+use crate::LossOperator;
 pub use perceptron::*;
 use std::fs;
 
@@ -26,7 +26,8 @@ pub struct ModelDetails {
     pub device: Device,
     pub tokenizer: Option<Tokenizer>,
     pub examples: Vec<(Tensor, Tensor)>,
-    pub program: NeuralMachine,
+    pub model: Box<dyn UnaryModel>,
+    pub loss_operator: Box<dyn LossOperator>,
     pub learning_rate: f32,
     pub epochs: usize,
     pub progress: usize,

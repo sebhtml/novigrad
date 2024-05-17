@@ -29,7 +29,6 @@
 == Other things ==
 
 - investigate calls to Device::tensor_f32
-- test if Zero is really needed
 
 == Tensor clean-up ==
 

@@ -25,9 +25,7 @@ impl ResidualSumOfSquares {
             device: device.clone(),
         }
     }
-}
 
-impl LossFunction for ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
     fn evaluate(device: &Device, expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
         if expected.size() != actual.size() {
@@ -51,6 +49,26 @@ impl LossFunction for ResidualSumOfSquares {
         TensorF32::copy(expected, result)?;
         TensorF32::sub(actual, result)?;
         TensorF32::scale(-2.0, result)
+    }
+}
+
+impl LossFunction for ResidualSumOfSquares {
+    fn evaluate(
+        &self,
+        device: &Device,
+        expected: &TensorF32,
+        actual: &TensorF32,
+    ) -> Result<f32, Error> {
+        Self::evaluate(device, expected, actual)
+    }
+
+    fn derive(
+        &self,
+        expected: &TensorF32,
+        actual: &TensorF32,
+        result: &TensorF32,
+    ) -> Result<(), Error> {
+        Self::derive(expected, actual, result)
     }
 }
 

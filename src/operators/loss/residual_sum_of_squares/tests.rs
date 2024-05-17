@@ -1,4 +1,4 @@
-use crate::{Device, LossFunction};
+use crate::Device;
 
 use super::ResidualSumOfSquares;
 

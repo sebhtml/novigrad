@@ -36,7 +36,8 @@ impl Tensor {
         inputs: &[&TensorF32],
         outputs: &[&TensorF32],
     ) {
-        let instruction = Instruction::new(operator, inputs, outputs);
+        let gradient_pathway = false;
+        let instruction = Instruction::new(operator, inputs, outputs, gradient_pathway);
         self.forward_instructions
             .deref()
             .borrow_mut()
@@ -49,7 +50,8 @@ impl Tensor {
         inputs: &[&TensorF32],
         outputs: &[&TensorF32],
     ) {
-        let instruction = Instruction::new(operator, inputs, outputs);
+        let gradient_pathway = true;
+        let instruction = Instruction::new(operator, inputs, outputs, gradient_pathway);
         self.backward_instructions
             .deref()
             .borrow_mut()

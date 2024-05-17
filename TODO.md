@@ -1,8 +1,9 @@
 - remome zero and name from tensor
-- in Tensor, store just one Vec<Instruction> with bool flag for_gradient
+- use Scale instead of Zero
+- rename Scale to ScalarMul
 - add interesting example
 
-- Use add instead of AddBackward
+- Use Add instead of AddBackward
 - sigmoidGrad and softmaxBackward are Mul
 - Bake optimizer instructions in neural machine
 

@@ -20,48 +20,48 @@ impl Sigmoid {
 }
 
 impl ActivationFunction for Sigmoid {
-    fn activate(product_matrix: &TensorF32, result: &TensorF32) -> Result<(), Error> {
-        let rows = product_matrix.rows();
-        let cols = product_matrix.cols();
-        let values = product_matrix.get_values()?;
-        let mut result_values = result.get_values()?;
+    fn activate(input: &TensorF32, output: &TensorF32) -> Result<(), Error> {
+        let rows = input.rows();
+        let cols = input.cols();
+        let values = input.get_values()?;
+        let mut result_values = output.get_values()?;
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = values[product_matrix.index(row, col)];
+                let x = values[input.index(row, col)];
                 let y = 1.0 / (1.0 + E.powf(-x));
-                result_values[result.index(row, col)] = y;
+                result_values[output.index(row, col)] = y;
                 col += 1;
             }
             row += 1;
         }
-        result.set_values(result_values);
+        output.set_values(result_values);
         Ok(())
     }
 
     fn derive(
-        _product_matrix: &TensorF32,
-        activation_matrix: &TensorF32,
-        result: &mut TensorF32,
+        _input: &TensorF32,
+        activation_output: &TensorF32,
+        output: &mut TensorF32,
     ) -> Result<(), Error> {
-        let rows = activation_matrix.rows();
-        let cols = activation_matrix.cols();
-        let values = activation_matrix.get_values()?;
-        let mut result_values = result.get_values()?;
+        let rows = activation_output.rows();
+        let cols = activation_output.cols();
+        let values = activation_output.get_values()?;
+        let mut result_values = output.get_values()?;
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = values[activation_matrix.index(row, col)];
+                let x = values[activation_output.index(row, col)];
                 let y = x * (1.0 - x);
-                result_values[result.index(row, col)] = y;
+                result_values[output.index(row, col)] = y;
                 col += 1;
             }
             row += 1;
         }
 
-        result.set_values(result_values);
+        output.set_values(result_values);
         Ok(())
     }
 }

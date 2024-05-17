@@ -1,5 +1,6 @@
 - Remove TensorF32 matmul in favor of Gemm
 - remome zero and name from tensor
+- sigmoidGrad and softmaxBackward are Mul
 - Bake optimizer instructions in neural machine
 - in Tensor, store just one Vec<Instruction> with bool flag for_gradient
 
@@ -23,15 +24,12 @@
 
 == Clean-up ==
 
-- sigmoidGrad and softmaxBackward are Mul
 - remove most of the Backward ops
 
 == Other things ==
 
 - investigate calls to Device::tensor_f32
 - test if Zero is really needed
-
-- copy -> copy_from
 
 == Tensor clean-up ==
 

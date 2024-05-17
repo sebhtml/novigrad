@@ -1,6 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{Device, Error, Instruction, NaryOperator, OpCode, Operator, Tensor, TensorF32};
+use crate::{Device, Error, Instruction, NaryOperator, OpCode, Tensor, TensorF32};
 
 #[cfg(test)]
 mod tests;
@@ -99,7 +99,7 @@ impl NaryOperator for Concat {
             .map(|t| t.gradient().deref().borrow().clone())
             .collect();
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(ConcatBackward::default())),
+            OpCode::ConcatBackward,
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),
             crate::Category::Gradient,
@@ -110,18 +110,8 @@ impl NaryOperator for Concat {
 
 pub struct ConcatBackward {}
 
-impl Default for ConcatBackward {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Operator for ConcatBackward {
-    fn name(&self) -> &str {
-        "ConcatBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+impl ConcatBackward {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         Concat::unconcat(inputs, outputs)
     }
 }

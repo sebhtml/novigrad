@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
-    Add, AddBackward, Clip, Concat, Error, Gemm, Identity, IdentityBackward, Mul, Operator,
-    Reshape, ReshapeBackward, Scale, ScaleBackward, Softmax, Sub, TensorF32, Zero,
+    Add, AddBackward, Clip, Concat, ConcatBackward, Error, Gemm, Identity, IdentityBackward, Mul,
+    Operator, Reshape, ReshapeBackward, Scale, ScaleBackward, Softmax, Sub, TensorF32, Zero,
 };
 
 #[derive(Clone, Debug)]
@@ -30,7 +30,7 @@ pub enum OpCode {
     // ResidualSumOfSquares, // TODO
     // ResidualSumOfSquaresBackward, // TODO
     Concat,
-    // ConcatBackward, // TODO
+    ConcatBackward,
 }
 
 impl Operator for OpCode {
@@ -52,6 +52,7 @@ impl Operator for OpCode {
             OpCode::Reshape(_) => "Reshape",
             OpCode::ReshapeBackward(_) => "ReshapeBackward",
             OpCode::Concat => "Concat",
+            OpCode::ConcatBackward => "ConcatBackward",
         }
     }
 
@@ -77,6 +78,7 @@ impl Operator for OpCode {
                 ReshapeBackward::execute(input_size, inputs, outputs)
             }
             OpCode::Concat => Concat::execute(inputs, outputs),
+            OpCode::ConcatBackward => ConcatBackward::execute(inputs, outputs),
         }
     }
 }

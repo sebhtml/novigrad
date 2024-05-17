@@ -1,4 +1,5 @@
 - Bake optimizer instructions in neural machine
+
 - pass alpha for Scale in a TensorF32
 - put op codes in a OpCode enum
 - for Instruction, add category field with Forward, Gradient, Optimizer

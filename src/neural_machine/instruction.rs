@@ -2,12 +2,20 @@ use std::rc::Rc;
 
 use crate::{Error, Operator, TensorF32};
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum Category {
+    Inference,
+    Loss,
+    Gradient,
+    Optimization,
+}
+
 #[derive(Clone, Debug)]
 pub struct Instruction {
     operator: Rc<dyn Operator>,
     inputs: Rc<Vec<TensorF32>>,
     outputs: Rc<Vec<TensorF32>>,
-    gradient_pathway: bool,
+    category: Category,
 }
 
 impl Instruction {
@@ -15,7 +23,7 @@ impl Instruction {
         operator: Rc<dyn Operator>,
         inputs: &[&TensorF32],
         outputs: &[&TensorF32],
-        gradient_pathway: bool,
+        category: Category,
     ) -> Self {
         let inputs: Vec<TensorF32> = inputs.into_iter().map(|x| (*x).clone()).collect();
         let outputs: Vec<TensorF32> = outputs.into_iter().map(|x| (*x).clone()).collect();
@@ -23,12 +31,12 @@ impl Instruction {
             operator,
             inputs: inputs.into(),
             outputs: outputs.into(),
-            gradient_pathway,
+            category,
         }
     }
 
-    pub fn gradient_pathway(&self) -> bool {
-        self.gradient_pathway
+    pub fn category(&self) -> Category {
+        self.category.clone()
     }
 
     pub fn operator(&self) -> &Rc<dyn Operator> {

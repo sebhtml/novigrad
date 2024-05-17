@@ -1,4 +1,4 @@
-use crate::{Error, Instruction, TensorF32};
+use crate::{Category, Error, Instruction, TensorF32};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
@@ -32,7 +32,7 @@ impl Tensor {
             .borrow()
             .clone()
             .into_iter()
-            .filter(|i| !i.gradient_pathway())
+            .filter(|i| i.category() == Category::Inference || i.category() == Category::Loss)
             .collect()
     }
 
@@ -42,7 +42,7 @@ impl Tensor {
             .borrow()
             .clone()
             .into_iter()
-            .filter(|i| i.gradient_pathway())
+            .filter(|i| i.category() == Category::Gradient)
             .collect()
     }
 

@@ -74,19 +74,19 @@ impl NaryOperator for Concat {
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
-            false,
+            crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
-            false,
+            crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
             Rc::new(self.clone()),
             &inputs.iter().collect::<Vec<_>>(),
             &[&outputs[0].tensor().deref().borrow()],
-            false,
+            crate::Category::Inference,
         ));
         let inputs = [&output];
         let outputs = inputs_n;
@@ -98,7 +98,7 @@ impl NaryOperator for Concat {
             Rc::new(ConcatBackward::default()),
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),
-            true,
+            crate::Category::Gradient,
         ));
         Ok(output)
     }

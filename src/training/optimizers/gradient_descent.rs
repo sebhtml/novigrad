@@ -27,28 +27,28 @@ impl OptimizerTrait for GradientDescent {
                 Rc::new(Scale::new(device, 0.0)),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
-                false,
+                crate::Category::Optimization,
             ));
 
             instructions.push(Instruction::new(
                 Rc::new(Add::new(device)),
                 &[&scaled_gradient, gradient],
                 &[&scaled_gradient],
-                false,
+                crate::Category::Optimization,
             ));
 
             instructions.push(Instruction::new(
                 Rc::new(Scale::new(device, -self.learning_rate)),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
-                false,
+                crate::Category::Optimization,
             ));
 
             instructions.push(Instruction::new(
                 Rc::new(Add::new(device)),
                 &[tensor, &scaled_gradient],
                 &[tensor],
-                false,
+                crate::Category::Optimization,
             ));
         }
 

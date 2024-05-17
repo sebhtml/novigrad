@@ -33,13 +33,13 @@ impl BinaryOperator for Add {
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
-            false,
+            crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
-            false,
+            crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
             Rc::new(self.clone()),
@@ -48,7 +48,7 @@ impl BinaryOperator for Add {
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
-            false,
+            crate::Category::Inference,
         ));
         let inputs = [&output];
         let outputs = [input_1, input_2];
@@ -59,7 +59,7 @@ impl BinaryOperator for Add {
                 &outputs[0].gradient().deref().borrow(),
                 &outputs[1].gradient().deref().borrow(),
             ],
-            true,
+            crate::Category::Gradient,
         ));
         Ok(output)
     }

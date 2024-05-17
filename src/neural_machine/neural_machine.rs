@@ -66,7 +66,7 @@ impl NeuralMachine {
                     Rc::new(Clip::new(clipped_gradient_norm)),
                     &[],
                     &outputs,
-                    instruction.gradient_pathway(),
+                    instruction.category(),
                 );
 
                 instructions.push(instruction.clone());
@@ -279,7 +279,7 @@ impl NeuralMachine {
                         Rc::new(IdentityBackward::default()),
                         &[softmax_backward_input_gradient],
                         &instructions[i + 2].outputs().iter().collect::<Vec<_>>(),
-                        instructions[i + 2].gradient_pathway(),
+                        instructions[i + 2].category(),
                     ));
                     new_instructions.push(instructions[i + 3].clone());
                     i += 4;

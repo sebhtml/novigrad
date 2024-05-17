@@ -82,19 +82,19 @@ impl UnaryOperator for Sigmoid {
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].tensor().deref().borrow()],
-            false,
+            crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
             Rc::new(Zero::default()),
             &[],
             &[&outputs[0].gradient().deref().borrow()],
-            false,
+            crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
             Rc::new(self.clone()),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            false,
+            crate::Category::Inference,
         ));
         let inputs = [&output];
         let outputs = [input];
@@ -106,7 +106,7 @@ impl UnaryOperator for Sigmoid {
                 &outputs[0].tensor().deref().borrow(),
             ],
             &[&outputs[0].gradient().deref().borrow()],
-            true,
+            crate::Category::Gradient,
         ));
         Ok(output)
     }

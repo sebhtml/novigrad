@@ -1,8 +1,7 @@
 use std::{ops::Deref, rc::Rc};
 
 use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Gemm, Instruction, OpCode, Tensor,
-    TensorF32, Zero,
+    devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, OpCode, Tensor, TensorF32, Zero,
 };
 
 /// https://onnx.ai/onnx/operators/onnx__MatMul.html
@@ -78,7 +77,7 @@ impl BinaryOperator for MatMul {
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(Gemm::new(&self.device, false, transb, false))),
+            OpCode::Gemm(false, transb, false),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -89,7 +88,7 @@ impl BinaryOperator for MatMul {
 
         if input_1.gradient().deref().borrow().requires_grad() {
             output.push_instruction(Instruction::new(
-                OpCode::DynOperator(Rc::new(Gemm::new(&self.device, true, false, transb))),
+                OpCode::Gemm(true, false, transb),
                 &[
                     &input_0.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
@@ -101,7 +100,7 @@ impl BinaryOperator for MatMul {
 
         if input_0.gradient().deref().borrow().requires_grad() {
             output.push_instruction(Instruction::new(
-                OpCode::DynOperator(Rc::new(Gemm::new(&self.device, true, transb, true))),
+                OpCode::Gemm(true, transb, true),
                 &[
                     &input_1.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),

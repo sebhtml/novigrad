@@ -1,11 +1,12 @@
 use std::rc::Rc;
 
-use crate::{Error, Gemm, Operator, TensorF32};
+use crate::{Add, Error, Gemm, Operator, TensorF32};
 
 #[derive(Clone, Debug)]
 pub enum OpCode {
     DynOperator(Rc<dyn Operator>),
     Gemm(bool, bool, bool),
+    Add,
 }
 
 impl Operator for OpCode {
@@ -13,6 +14,7 @@ impl Operator for OpCode {
         match self {
             OpCode::DynOperator(inner) => inner.name(),
             OpCode::Gemm(_, _, _) => "Gemm",
+            OpCode::Add => "Add",
         }
     }
 
@@ -22,6 +24,7 @@ impl Operator for OpCode {
             OpCode::Gemm(trans_a, trans_b, trans_result) => {
                 Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)
             }
+            OpCode::Add => Add::execute(inputs, outputs),
         }
     }
 }

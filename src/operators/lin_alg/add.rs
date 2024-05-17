@@ -16,6 +16,14 @@ impl Add {
             device: device.to_owned(),
         }
     }
+
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input_0 = inputs[0];
+        let input_1 = inputs[1];
+        let output = outputs[0];
+        TensorF32::copy(input_0, output)?;
+        TensorF32::add(input_1, output)
+    }
 }
 
 impl BinaryOperator for Add {
@@ -44,7 +52,7 @@ impl BinaryOperator for Add {
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::Add,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -64,20 +72,6 @@ impl BinaryOperator for Add {
             crate::Category::Gradient,
         ));
         Ok(output)
-    }
-}
-
-impl Operator for Add {
-    fn name(&self) -> &str {
-        "Add"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input_0 = inputs[0];
-        let input_1 = inputs[1];
-        let output = outputs[0];
-        TensorF32::copy(input_0, output)?;
-        TensorF32::add(input_1, output)
     }
 }
 

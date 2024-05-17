@@ -54,7 +54,6 @@ pub fn into_one_hot_encoded_rows(
 ) -> Result<Tensor, Error> {
     debug_assert!(num_classes >= *input_tokens.iter().max().unwrap());
     let len = input_tokens.len() * num_classes;
-    // TODO avoid allocating a Tensor and a LearningTensor., gradient  should be a Option in LearningTensor
     let result = device.tensor_f32(
         input_tokens.len(),
         num_classes,

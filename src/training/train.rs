@@ -3,8 +3,7 @@ use rand::thread_rng;
 use std::{ops::Deref, time::SystemTime};
 
 use crate::{
-    Device, Error, ModelDetails, NeuralMachine, OptimizerTrait, Tensor, TensorF32, Tokenizer,
-    TokenizerTrait,
+    Device, Error, ModelDetails, NeuralMachine, Tensor, TensorF32, Tokenizer, TokenizerTrait,
 };
 
 trait IsPrintable {
@@ -176,15 +175,7 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
                 break;
             }
         }
-        train(
-            &program,
-            &device,
-            shuffle_examples,
-            &optimizer,
-            epoch,
-            &inputs,
-            &outputs,
-        )?;
+        train(&program, shuffle_examples, &inputs, &outputs)?;
     }
     let final_total_error = print_total_loss(
         &device,
@@ -272,10 +263,7 @@ fn get_row_argmaxes(tensor: &TensorF32) -> Result<Vec<usize>, Error> {
 
 pub fn train(
     program: &NeuralMachine,
-    device: &Device,
     shuffle_examples: bool,
-    optimizer: &Box<dyn OptimizerTrait>,
-    epoch: usize,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
 ) -> Result<(), Error> {
@@ -284,15 +272,7 @@ pub fn train(
         indices.shuffle(&mut thread_rng());
     }
     for i in indices.into_iter() {
-        train_with_one_example(
-            program,
-            device,
-            optimizer,
-            epoch,
-            i,
-            &inputs[i],
-            &outputs[i],
-        )?;
+        train_with_one_example(program, &inputs[i], &outputs[i])?;
     }
     Ok(())
 }
@@ -317,24 +297,13 @@ pub fn total_loss(
 
 fn train_with_one_example(
     program: &NeuralMachine,
-    device: &Device,
-    optimizer: &Box<dyn OptimizerTrait>,
-    _epoch: usize,
-    _example_index: usize,
     input: &Tensor,
     output: &Tensor,
 ) -> Result<(), Error> {
     let _output = program.infer(input)?;
     let _loss = program.loss(output)?;
     program.backward()?;
-    let tensors = device.tensors_to_optimize();
-    let tensors: &[Tensor] = &tensors.deref().borrow();
-
-    // TODO remove me
-    let instructions = optimizer.optimize(device, &tensors)?;
-    for instruction in instructions.iter() {
-        instruction.forward()?;
-    }
+    program.step()?;
 
     Ok(())
 }

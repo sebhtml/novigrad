@@ -76,12 +76,9 @@ impl NeuralMachine {
 
         let mut instructions = Self::optimize_softmax_and_cross_entropy_loss(device, &instructions);
 
-        // TODO enable this
-        if false {
-            let tensors = device.tensors_to_optimize().deref().borrow();
-            let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
-            instructions.append(&mut optimizer_instructions);
-        }
+        let tensors = device.tensors_to_optimize().deref().borrow();
+        let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
+        instructions.append(&mut optimizer_instructions);
 
         let program = NeuralMachine {
             device: device.clone(),
@@ -112,6 +109,12 @@ impl NeuralMachine {
 
     pub fn backward(&self) -> Result<(), Error> {
         self.forward(Category::Gradient)?;
+
+        Ok(())
+    }
+
+    pub fn step(&self) -> Result<(), Error> {
+        self.forward(Category::Optimization)?;
 
         Ok(())
     }

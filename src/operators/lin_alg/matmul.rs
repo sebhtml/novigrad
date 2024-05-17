@@ -75,7 +75,7 @@ impl BinaryOperator for MatMul {
             &[&outputs[0].gradient().deref().borrow()],
         );
         output.push_forward_instruction(
-            Rc::new(Gemm::new(&self.device, transb)),
+            Rc::new(Gemm::new(&self.device, false, transb, false)),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),

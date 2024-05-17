@@ -3,12 +3,18 @@ use crate::{devices::Device, Error, Operator, TensorF32};
 /// https://onnx.ai/onnx/operators/onnx__Gemm.html
 #[derive(Clone)]
 pub struct Gemm {
+    transa: bool,
     transb: bool,
+    transpose_result: bool,
 }
 
 impl Gemm {
-    pub fn new(_device: &Device, transb: bool) -> Self {
-        Self { transb }
+    pub fn new(_device: &Device, transa: bool, transb: bool, transpose_result: bool) -> Self {
+        Self {
+            transa,
+            transb,
+            transpose_result,
+        }
     }
 }
 
@@ -30,7 +36,9 @@ impl Operator for Gemm {
         let a = input;
         let b = weights;
         let c = biases;
+        let transa = self.transa;
         let transb = self.transb;
-        TensorF32::gemm(false, transb, 1.0, a, b, 1.0, c, false)
+        let transpose_result = self.transpose_result;
+        TensorF32::gemm(transa, transb, 1.0, a, b, 1.0, c, transpose_result)
     }
 }

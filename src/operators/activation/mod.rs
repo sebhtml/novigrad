@@ -7,10 +7,10 @@ pub use softmax::*;
 use crate::TensorF32;
 
 pub trait ActivationFunction {
-    fn activate(product_matrix: &TensorF32, result: &TensorF32) -> Result<(), Error>;
+    fn activate(input: &TensorF32, output: &TensorF32) -> Result<(), Error>;
     fn derive(
-        product_matrix: &TensorF32,
-        activation_matrix: &TensorF32,
-        result: &mut TensorF32,
+        input: &TensorF32,
+        activation_output: &TensorF32,
+        output: &mut TensorF32,
     ) -> Result<(), Error>;
 }

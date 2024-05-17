@@ -1,6 +1,6 @@
 use crate::{
-    into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, ModelDetails,
-    NeuralMachine, Tensor, Tokenizer, TokenizerTrait, UnaryOperator,
+    into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, ModelDetails, Tensor,
+    Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
 };
 
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
@@ -19,6 +19,8 @@ struct SimpleModel {
     linear_2: Linear,
     softmax: Softmax,
 }
+
+impl UnaryModel for SimpleModel {}
 
 impl SimpleModel {
     pub fn new(device: &Device) -> Self {
@@ -126,17 +128,18 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
     let model = SimpleModel::new(device);
     let examples = load_examples(&device, &mut tokenizer, model.vocab_size())?;
     let loss_operator = CrossEntropyLoss::new(device);
-    let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
-        program,
+        model: Box::new(model),
+        loss_operator: Box::new(loss_operator),
         epochs: 1000,
         progress: 100,
         initial_total_error_min: 8.0,
         final_total_error_max: 0.001,
         learning_rate: 0.5,
+        clipped_gradient_norm: 1.0,
     };
     Ok(details)
 }

@@ -133,10 +133,14 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
     let examples = &details.examples;
     let learning_rate = details.learning_rate;
-    let program = details.program;
+    let model = details.model;
+    let loss_operator = details.loss_operator;
+    let clipped_gradient_norm = details.clipped_gradient_norm;
     let mut tokenizer = details.tokenizer;
     let device = details.device;
     let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::default());
+    let program = NeuralMachine::try_new(&device, &model, &loss_operator, clipped_gradient_norm)?;
+
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
 

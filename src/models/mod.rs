@@ -4,13 +4,16 @@ mod mega_man;
 mod mega_man_attention;
 mod perceptron;
 mod simple;
-use crate::NeuralMachine;
+use crate::LossOperator;
 pub use perceptron::*;
 use std::fs;
 
 use crate::{Device, Error, ErrorEnum, Tensor, Tokenizer, TokenizerTrait};
 
-use self::{mega_man::load_mega_man_model, simple::load_simple_model};
+use self::{
+    mega_man::load_mega_man_model, mega_man_attention::load_mega_man_attention_model,
+    simple::load_simple_model,
+};
 
 pub enum ModelEnum {
     Perceptron,
@@ -23,8 +26,10 @@ pub struct ModelDetails {
     pub device: Device,
     pub tokenizer: Option<Tokenizer>,
     pub examples: Vec<(Tensor, Tensor)>,
-    pub program: NeuralMachine,
+    pub model: Box<dyn UnaryModel>,
+    pub loss_operator: Box<dyn LossOperator>,
     pub learning_rate: f32,
+    pub clipped_gradient_norm: f32,
     pub epochs: usize,
     pub progress: usize,
     pub initial_total_error_min: f32,
@@ -36,7 +41,7 @@ pub fn load_model_details(model: ModelEnum, device: &Device) -> Result<ModelDeta
         ModelEnum::Perceptron => load_perceptron(device),
         ModelEnum::Simple => load_simple_model(device),
         ModelEnum::MegaMan => load_mega_man_model(device),
-        ModelEnum::MegaManAttention => mega_man_attention::load_mega_man_attention_model(device),
+        ModelEnum::MegaManAttention => load_mega_man_attention_model(device),
     }
 }
 

@@ -1,7 +1,7 @@
 use super::load_examples;
 use crate::{
-    CrossEntropyLoss, Device, MultiHeadAttention, NeuralMachine, TernaryOperator, Tokenizer,
-    TokenizerTrait, UnaryOperator,
+    CrossEntropyLoss, Device, MultiHeadAttention, TernaryOperator, Tokenizer, UnaryModel,
+    UnaryOperator,
 };
 use crate::{Error, ModelDetails};
 
@@ -17,6 +17,8 @@ struct MegaManAttentionModel {
     linear: Linear,
     softmax: Softmax,
 }
+
+impl UnaryModel for MegaManAttentionModel {}
 
 impl MegaManAttentionModel {
     pub fn new(device: &Device) -> Self {
@@ -100,22 +102,20 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         &mut tokenizer,
     )?;
 
-    println!("TOkenizer vocab_size: {}", tokenizer.vocab_size());
-
-    let model = model;
     let loss_operator = CrossEntropyLoss::new(device);
-    let program = NeuralMachine::try_new(&device, &model, &loss_operator)?;
 
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
-        program,
-        epochs: 500,
+        model: Box::new(model),
+        loss_operator: Box::new(loss_operator),
+        epochs: 100,
         progress: 100,
         initial_total_error_min: 50.0,
         final_total_error_max: 20.0,
         learning_rate: 0.1,
+        clipped_gradient_norm: 1.0,
     };
     Ok(details)
 }

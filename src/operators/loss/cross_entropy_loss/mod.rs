@@ -2,7 +2,8 @@ use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
 use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Operator, Tensor, TensorF32, Zero, EPSILON,
+    devices::Device, BinaryOperator, Error, ErrorEnum, LossOperator, Operator, Tensor, TensorF32,
+    Zero, EPSILON,
 };
 
 /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
@@ -11,15 +12,15 @@ pub struct CrossEntropyLoss {
     device: Device,
 }
 
+impl LossOperator for CrossEntropyLoss {}
+
 impl CrossEntropyLoss {
     pub fn new(device: &Device) -> Self {
         Self {
             device: device.clone(),
         }
     }
-}
 
-impl LossFunction for CrossEntropyLoss {
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     fn evaluate(_device: &Device, expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
         debug_assert_eq!(actual.size(), expected.size());
@@ -63,6 +64,26 @@ impl LossFunction for CrossEntropyLoss {
     fn derive(expected: &TensorF32, actual: &TensorF32, result: &TensorF32) -> Result<(), Error> {
         TensorF32::copy(actual, result)?;
         TensorF32::sub(expected, result)
+    }
+}
+
+impl LossFunction for CrossEntropyLoss {
+    fn evaluate(
+        &self,
+        device: &Device,
+        expected: &TensorF32,
+        actual: &TensorF32,
+    ) -> Result<f32, Error> {
+        Self::evaluate(device, expected, actual)
+    }
+
+    fn derive(
+        &self,
+        expected: &TensorF32,
+        actual: &TensorF32,
+        result: &TensorF32,
+    ) -> Result<(), Error> {
+        Self::derive(expected, actual, result)
     }
 }
 

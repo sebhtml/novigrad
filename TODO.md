@@ -1,10 +1,9 @@
 - print instruction category in log
-- add interesting example
 - Use Add instead of AddBackward
 - rename Scale to ScalarMul
 - SigmoidBackward and SoftmaxBackward are Mul
 - simplify execute method arguments
-
+- move execute methods outside of operators inside neural_machine
 - simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
 
 == GPT-1 Transformer ==

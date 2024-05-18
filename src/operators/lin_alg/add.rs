@@ -2,7 +2,6 @@ use std::ops::Deref;
 
 use crate::{BinaryOperator, Device, Error, Instruction, OpCode, Tensor, TensorF32};
 
-/// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
 pub struct Add {
     device: Device,

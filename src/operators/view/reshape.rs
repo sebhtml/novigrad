@@ -2,7 +2,6 @@ use std::ops::Deref;
 
 use crate::{devices::Device, Error, Instruction, OpCode, Tensor, TensorF32, UnaryOperator};
 
-/// https://onnx.ai/onnx/operators/onnx__Reshape.html
 #[derive(Clone)]
 pub struct Reshape {
     device: Device,

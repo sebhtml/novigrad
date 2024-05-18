@@ -10,8 +10,6 @@ use super::LossFunction;
 #[cfg(test)]
 mod tests;
 
-/// ResidualSumOfSquares is not a ONNX operator.
-/// https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
 pub struct ResidualSumOfSquares {
     device: Device,

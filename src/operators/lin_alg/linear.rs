@@ -2,8 +2,6 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{Add, BinaryOperator, Device, Error, MatMul, Tensor, UnaryOperator};
 
-/// Linear is not a ONNX operator.
-/// https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
 pub struct Linear {
     weights: Tensor,

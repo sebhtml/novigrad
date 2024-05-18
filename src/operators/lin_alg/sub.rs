@@ -1,6 +1,5 @@
 use crate::{Error, TensorF32};
 
-/// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
 pub struct Sub {}
 

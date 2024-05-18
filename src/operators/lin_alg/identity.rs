@@ -2,7 +2,6 @@ use std::ops::Deref;
 
 use crate::{Device, Error, Instruction, OpCode, Tensor, TensorF32, UnaryOperator};
 
-/// https://onnx.ai/onnx/operators/onnx__Identity.html
 #[derive(Clone)]
 pub struct Identity {
     device: Device,

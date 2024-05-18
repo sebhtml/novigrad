@@ -2,7 +2,6 @@ use std::ops::Deref;
 
 use crate::{BinaryOperator, Category, Device, Error, Instruction, OpCode, Tensor, TensorF32};
 
-/// https://onnx.ai/onnx/operators/onnx__Mul.html
 #[derive(Clone)]
 pub struct Mul {
     device: Device,

@@ -59,6 +59,10 @@
 
 - implement parallel execution of certain branches in parallel using a execution_group_id
 
+== Import / Export ==
+
+- serialize and deserialize model to ONNX format
+
 == Positional Encoding ==
 
 - implement positional encoding
@@ -67,9 +71,6 @@
 
 - Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
 
-== Import / Export ==
-
-- serialize and deserialize model to ONNX format
 
 == Devices ==
 

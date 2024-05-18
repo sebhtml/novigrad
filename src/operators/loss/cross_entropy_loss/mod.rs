@@ -6,7 +6,6 @@ use crate::{
     Tensor, TensorF32, EPSILON,
 };
 
-/// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
 #[derive(Clone)]
 pub struct CrossEntropyLoss {
     device: Device,

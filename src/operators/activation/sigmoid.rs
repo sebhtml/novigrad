@@ -5,7 +5,6 @@ use std::f32::consts::E;
 use std::ops::Deref;
 use std::rc::Rc;
 
-/// https://onnx.ai/onnx/operators/onnx__Sigmoid.html
 #[derive(Clone)]
 pub struct Sigmoid {
     device: Device,

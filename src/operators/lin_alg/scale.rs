@@ -2,7 +2,6 @@ use std::ops::Deref;
 
 use crate::{Device, Instruction, OpCode, Tensor, TensorF32, UnaryOperator};
 
-/// Scale is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
 #[derive(Clone)]
 pub struct Scale {
     device: Device,

@@ -4,7 +4,6 @@ use crate::{
     devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, OpCode, Tensor, TensorF32,
 };
 
-/// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]
 pub struct MatMul {
     device: Device,

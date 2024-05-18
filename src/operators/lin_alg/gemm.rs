@@ -1,6 +1,5 @@
 use crate::{devices::Device, Error, TensorF32};
 
-/// https://onnx.ai/onnx/operators/onnx__Gemm.html
 #[derive(Clone)]
 pub struct Gemm {}
 

@@ -7,29 +7,115 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub enum OpCode {
+    // Not ONNX-compliant
+    // TODO remove this op code
     DynOperator(Rc<dyn Operator>),
+
+    /// https://onnx.ai/onnx/operators/onnx__Gemm.html
     Gemm(bool, bool, bool),
+
+    /// https://onnx.ai/onnx/operators/onnx__Add.html
     Add,
+
+    /// Not ONNX-compliant
+    /// TODO remove this op code
     AddBackward,
+
+    /// Not ONNX-compliant
+    /// TODO remove this op code and use Mul with broadcast
     Scale(f32),
+
+    /// Not ONNX-compliant
+    /// TODO remove this op code
     ScaleBackward,
+
+    /// Not ONNX-compliant
+    /// TODO remove this op code
     Zero,
+
+    /// Not ONNX-compliant
+    /// similar op codes:
+    /// - https://onnx.ai/onnx/operators/onnx__Clip.html
+    /// - https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
+    /// TODO rename to ClipNorm
     Clip(f32),
+
+    /// https://onnx.ai/onnx/operators/onnx__Mul.html
     Mul,
+
+    /// https://onnx.ai/onnx/operators/onnx__Identity.html
     Identity,
+
+    /// Not ONNX-compliant
+    /// TODO remove this op code
     IdentityBackward,
+
+    /// https://onnx.ai/onnx/operators/onnx__Softmax.html
     Softmax,
+
+    /// https://onnx.ai/onnx/operators/onnx__Sub.html
     Sub,
+
+    /// https://onnx.ai/onnx/operators/onnx__Reshape.html
     Reshape(Vec<usize>),
+
+    /// Not ONNX-compliant
     ReshapeBackward(Vec<usize>),
-    // Sigmoid, // TODO
-    // SigmoidBackward, // TODO
-    // SoftmaxBackward, // TODO
-    // CrossEntropyLoss, // TODO
-    // CrossEntropyLossBackward, // TODO
+
+    /// TODO
+    /// https://onnx.ai/onnx/operators/onnx__Sigmoid.html
+    // Sigmoid,
+
+    /// TODO
+    /// Not ONNX-compliant
+    /// TODO remove this op code
+    // SigmoidBackward,
+
+    /// TODO
+    /// Not ONNX-compliant
+    /// TODO remove this op code
+    // SoftmaxBackward,
+
+    /// TODO
+    /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
+    /// TODO rename it
+    // CrossEntropyLoss,
+
+    /// TODO
+    /// Not ONNX-compliant
+    /// TODO remove this op code
+    /// CrossEntropyLossBackward, // TODO
+
+    /// TODO
+    /// Not ONNX-compliant
+    /// TODO remove this op code
     // ResidualSumOfSquares, // TODO
+
+    /// TODO
+    /// Not ONNX-compliant
+    /// TODO remove this op code
     // ResidualSumOfSquaresBackward, // TODO
+
+    /// TODO
+    /// https://onnx.ai/onnx/operators/onnx__Dropout.html
+    /// Dropout,
+
+    /// TODO
+    /// https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
+    /// LayerNormalization
+
+    /// TODO
+    /// https://onnx.ai/onnx/operators/onnx__Gelu.html
+    /// Gelu,
+
+    /// TODO
+    /// https://onnx.ai/onnx/operators/onnx__Conv.html
+    /// Conv,
+
+    /// https://onnx.ai/onnx/operators/onnx__Concat.html
     Concat,
+
+    /// Not ONNX-compliant
     ConcatBackward,
 }
 

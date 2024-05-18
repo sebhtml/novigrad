@@ -1,4 +1,4 @@
-use rs_brain::{load_model_details, train_model, Device, ModelEnum};
+use novigrad::{load_model_details, train_model, Device, ModelEnum};
 
 fn main() {
     let device = Device::cuda().unwrap();

@@ -1,5 +1,5 @@
 [package]
-name = "rs-brain"
+name = "novigrad"
 version = "0.1.0"
 edition = "2021"
 
@@ -30,6 +30,5 @@ cudarc = { version = "0.10.0", optional = true }
 
 rand = "0.8"
 
-[dev-dependencies]
 more-asserts = "0.3.1"
 

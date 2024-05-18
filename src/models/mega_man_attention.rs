@@ -1,17 +1,14 @@
 use super::load_examples;
 use crate::{
     CrossEntropyLoss, Device, GradientDescent, MultiHeadAttention, TernaryOperator, Tokenizer,
-    UnaryModel, UnaryOperator,
+    TokenizerTrait, UnaryModel, UnaryOperator,
 };
-use crate::{Error, ModelDetails};
-
 use crate::{Embedding, Linear, Model, Softmax, Tensor};
+use crate::{Error, ModelDetails};
 
 struct MegaManAttentionModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
-    vocab_size: usize,
-    sequence_length: usize,
     embedding: Embedding,
     multi_head_attention: MultiHeadAttention,
     linear: Linear,
@@ -21,10 +18,8 @@ struct MegaManAttentionModel {
 impl UnaryModel for MegaManAttentionModel {}
 
 impl MegaManAttentionModel {
-    pub fn new(device: &Device) -> Self {
+    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
         let _batch_size = 1;
-        let sequence_length = 32;
-        let vocab_size = 256;
         let n_embd = 384;
         let num_heads = 8;
         let _n_layer = 1;
@@ -40,21 +35,11 @@ impl MegaManAttentionModel {
         Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![sequence_length, vocab_size],
-            vocab_size,
-            sequence_length,
             embedding,
             multi_head_attention,
             linear,
             softmax,
         }
-    }
-
-    pub fn vocab_size(&self) -> usize {
-        self.vocab_size
-    }
-
-    pub fn sequence_length(&self) -> usize {
-        self.sequence_length
     }
 }
 
@@ -84,13 +69,11 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
-    // TODO vocab_size should be a new argument
-    let model = MegaManAttentionModel::new(device);
-    let vocab_size = model.vocab_size();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
+    let sequence_length = 32;
 
-    let input_sequence_length = model.sequence_length();
-    let output_sequence_length = input_sequence_length;
+    let input_sequence_length = sequence_length;
+    let output_sequence_length = sequence_length;
     let examples = load_examples(
         &device,
         file_path,
@@ -98,9 +81,11 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         max_number_of_examples,
         input_sequence_length,
         output_sequence_length,
-        vocab_size,
         &mut tokenizer,
     )?;
+
+    let vocab_size = tokenizer.vocab_size();
+    let model = MegaManAttentionModel::new(device, sequence_length, vocab_size);
 
     let loss_operator = CrossEntropyLoss::new(device);
     let learning_rate = 0.05;

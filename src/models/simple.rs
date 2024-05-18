@@ -2,14 +2,11 @@ use crate::{
     into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, GradientDescent,
     ModelDetails, Tensor, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
 };
-
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
 
 struct SimpleModel {
-    sequence_length: usize,
-    vocab_size: usize,
-    output_rows: usize,
-
+    input_shape: Vec<usize>,
+    output_shape: Vec<usize>,
     embedding: Embedding,
     linear_0: Linear,
     sigmoid_0: Sigmoid,
@@ -23,9 +20,7 @@ struct SimpleModel {
 impl UnaryModel for SimpleModel {}
 
 impl SimpleModel {
-    pub fn new(device: &Device) -> Self {
-        let sequence_length = 6;
-        let vocab_size = 256;
+    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
         let n_embd = 384;
         let output_rows = 1;
 
@@ -43,9 +38,8 @@ impl SimpleModel {
         let softmax = Softmax::new(device, true);
 
         Self {
-            sequence_length,
-            vocab_size,
-            output_rows,
+            input_shape: vec![sequence_length, vocab_size],
+            output_shape: vec![output_rows, vocab_size],
             embedding,
             linear_0,
             sigmoid_0,
@@ -55,9 +49,6 @@ impl SimpleModel {
             linear_2,
             softmax,
         }
-    }
-    pub fn vocab_size(&self) -> usize {
-        self.vocab_size
     }
 }
 
@@ -77,18 +68,16 @@ impl UnaryOperator for SimpleModel {
 
 impl Model for SimpleModel {
     fn input_size(&self) -> Vec<usize> {
-        vec![self.sequence_length, self.vocab_size]
+        self.input_shape.clone()
     }
-
     fn output_size(&self) -> Vec<usize> {
-        vec![self.output_rows, self.vocab_size]
+        self.output_shape.clone()
     }
 }
 
 fn load_examples(
     device: &Device,
     tokenizer: &mut Tokenizer,
-    vocab_size: usize,
 ) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let examples: Vec<_> = ["quizzed", "fuzzing"]
         .iter()
@@ -100,6 +89,7 @@ fn load_examples(
         })
         .collect();
 
+    let vocab_size = tokenizer.vocab_size();
     let examples = examples
         .into_iter()
         .map(|example| {
@@ -125,10 +115,13 @@ fn load_examples(
 
 pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
-    let model = SimpleModel::new(device);
-    let examples = load_examples(&device, &mut tokenizer, model.vocab_size())?;
+    let sequence_length = 6;
+    let examples = load_examples(&device, &mut tokenizer)?;
+
     let loss_operator = CrossEntropyLoss::new(device);
     let learning_rate = 0.5;
+    let vocab_size = tokenizer.vocab_size();
+    let model = SimpleModel::new(device, sequence_length, vocab_size);
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),

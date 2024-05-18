@@ -243,7 +243,7 @@ fn print_results(
     Ok((expected_argmax_values, actual_argmax_values))
 }
 
-fn get_row_argmaxes(tensor: &TensorF32) -> Result<Vec<usize>, Error> {
+pub fn get_row_argmaxes(tensor: &TensorF32) -> Result<Vec<usize>, Error> {
     let values = tensor.get_values()?;
     let cols = tensor.cols();
     let mut argmaxes = vec![];

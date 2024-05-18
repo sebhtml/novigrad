@@ -1,16 +1,14 @@
 use super::load_examples;
 use crate::{
-    BinaryOperator, CrossEntropyLoss, Device, GradientDescent, Tokenizer, UnaryModel, UnaryOperator,
+    BinaryOperator, CrossEntropyLoss, Device, GradientDescent, Tokenizer, TokenizerTrait,
+    UnaryModel, UnaryOperator,
 };
-use crate::{Error, ModelDetails};
-
 use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, Tensor};
+use crate::{Error, ModelDetails};
 
 struct MegaManModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
-    vocab_size: usize,
-    sequence_length: usize,
     parameters: Tensor,
     embedding: Embedding,
     matmul: MatMul,
@@ -22,17 +20,13 @@ struct MegaManModel {
 impl UnaryModel for MegaManModel {}
 
 impl MegaManModel {
-    pub fn new(device: &Device) -> Self {
-        let sequence_length = 32;
-        let vocab_size = 256;
+    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
         let n_embd = 384;
         let output_rows = 1;
 
         Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![output_rows, vocab_size],
-            vocab_size,
-            sequence_length,
             parameters: device.tensor(n_embd, n_embd, vec![0.0; n_embd * n_embd], &[], true, true),
             embedding: Embedding::new(device, vocab_size, n_embd),
             matmul: MatMul::new(device, true),
@@ -51,14 +45,6 @@ impl MegaManModel {
             softmax: Softmax::new(device, true),
         }
     }
-
-    pub fn vocab_size(&self) -> usize {
-        self.vocab_size
-    }
-
-    pub fn sequence_length(&self) -> usize {
-        self.sequence_length
-    }
 }
 
 impl UnaryOperator for MegaManModel {
@@ -76,7 +62,6 @@ impl Model for MegaManModel {
     fn input_size(&self) -> Vec<usize> {
         self.input_shape.clone()
     }
-
     fn output_size(&self) -> Vec<usize> {
         self.output_shape.clone()
     }
@@ -86,10 +71,9 @@ pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails, Error> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
-    let model = MegaManModel::new(device);
-    let vocab_size = model.vocab_size();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
-    let input_sequence_length = model.sequence_length();
+    let sequence_length = 32;
+    let input_sequence_length = sequence_length;
     let output_sequence_length = 1;
     let examples = load_examples(
         &device,
@@ -98,9 +82,10 @@ pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails, Error> {
         max_number_of_examples,
         input_sequence_length,
         output_sequence_length,
-        vocab_size,
         &mut tokenizer,
     )?;
+    let vocab_size = tokenizer.vocab_size();
+    let model = MegaManModel::new(device, sequence_length, vocab_size);
     let loss_operator = CrossEntropyLoss::new(device);
     let learning_rate = 0.5;
     let details = ModelDetails {

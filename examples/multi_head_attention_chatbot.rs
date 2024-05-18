@@ -17,8 +17,6 @@ use novigrad::{
 struct ChatbotModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
-    vocab_size: usize,
-    sequence_length: usize,
     embedding: Embedding,
     multi_head_attention: MultiHeadAttention,
     linear: Linear,
@@ -30,9 +28,7 @@ impl UnaryModel for ChatbotModel {}
 impl ChatbotModel {
     /// Attention Is All You Need
     /// https://arxiv.org/abs/1706.03762
-    pub fn new(device: &Device) -> Self {
-        let sequence_length = 32;
-        let vocab_size = 256;
+    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
         let n_embd = 512;
         let num_heads = 8;
 
@@ -45,21 +41,11 @@ impl ChatbotModel {
         Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![sequence_length, vocab_size],
-            vocab_size,
-            sequence_length,
             embedding,
             multi_head_attention,
             linear,
             softmax,
         }
-    }
-
-    pub fn vocab_size(&self) -> usize {
-        self.vocab_size
-    }
-
-    pub fn sequence_length(&self) -> usize {
-        self.sequence_length
     }
 }
 
@@ -86,9 +72,11 @@ impl Model for ChatbotModel {
 
 fn main() -> Result<(), Error> {
     let device = Device::cuda().unwrap();
-    let model = ChatbotModel::new(&device);
-    let vocab_size = model.vocab_size();
-    let sequence_length = model.sequence_length();
+    let mut tokenizer = Tokenizer::ascii_tokenizer();
+    let sequence_length = 32;
+    let vocab_size = tokenizer.vocab_size();
+    let model = ChatbotModel::new(&device, sequence_length, vocab_size);
+    let vocab_size = tokenizer.vocab_size();
     let model: Box<dyn UnaryModel> = Box::new(model);
     let clipped_gradient_norm = 1.0;
     let learning_rate = 0.05;
@@ -102,8 +90,6 @@ fn main() -> Result<(), Error> {
         &optimizer,
     )
     .unwrap();
-
-    let mut tokenizer = Tokenizer::ascii_tokenizer();
 
     println!("This is a Novigrad-powered chatbot");
     println!("A forward pass is all you need");

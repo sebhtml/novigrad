@@ -40,7 +40,7 @@ impl SimpleModel {
         let linear_1 = Linear::new(device, n_embd, sequence_length * n_embd, true, output_rows);
         let sigmoid_1 = Sigmoid::new(device);
         let linear_2 = Linear::new(device, vocab_size, n_embd, true, output_rows);
-        let softmax = Softmax::new(device);
+        let softmax = Softmax::new(device, true);
 
         Self {
             sequence_length,

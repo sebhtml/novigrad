@@ -6,8 +6,6 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
-/// MaskedScaledDotProductAttention is not a ONNX operator.
-/// https://onnx.ai/onnx/operators/index.html ???
 /// Attention Is All You Need
 /// https://arxiv.org/abs/1706.03762
 #[derive(Clone)]
@@ -33,7 +31,7 @@ impl ScaledDotProductAttention {
                 Some(mask)
             }
         };
-        let softmax = Softmax::new(device);
+        let softmax = Softmax::new(device, false);
         let matmul = MatMul::new(device, false);
 
         let attention = Self {

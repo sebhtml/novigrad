@@ -1,23 +1,15 @@
-use crate::{Error, Operator, TensorF32};
+use crate::{Error, TensorF32};
 
-pub struct Clip {
-    norm: f32,
-}
+pub struct Clip {}
 
 impl Clip {
-    pub fn new(norm: f32) -> Self {
-        Self { norm }
-    }
-}
-
-impl Operator for Clip {
-    fn name(&self) -> &str {
-        "Clip"
-    }
-
-    fn forward(&self, _inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(
+        clipped_norm: f32,
+        _inputs: &[&TensorF32],
+        outputs: &[&TensorF32],
+    ) -> Result<(), Error> {
         for output in outputs {
-            output.clip(self.norm)?;
+            output.clip(clipped_norm)?;
         }
         Ok(())
     }

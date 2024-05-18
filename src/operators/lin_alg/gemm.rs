@@ -1,30 +1,17 @@
-use crate::{devices::Device, Error, Operator, TensorF32};
+use crate::{devices::Device, Error, TensorF32};
 
-/// https://onnx.ai/onnx/operators/onnx__Gemm.html
 #[derive(Clone)]
-pub struct Gemm {
-    transa: bool,
-    transb: bool,
-    transpose_result: bool,
-}
+pub struct Gemm {}
 
 impl Gemm {
-    pub fn new(_device: &Device, transa: bool, transb: bool, transpose_result: bool) -> Self {
-        Self {
-            transa,
-            transb,
-            transpose_result,
-        }
-    }
-}
-
-impl Operator for Gemm {
-    fn name(&self) -> &str {
-        "Gemm"
+    pub fn new(_device: &Device) -> Self {
+        Self {}
     }
 
-    fn forward(
-        &self,
+    pub fn execute(
+        trans_a: bool,
+        trans_b: bool,
+        trans_result: bool,
         inputs: &[&crate::TensorF32],
         outputs: &[&crate::TensorF32],
     ) -> Result<(), Error> {
@@ -36,9 +23,9 @@ impl Operator for Gemm {
         let a = input;
         let b = weights;
         let c = biases;
-        let transa = self.transa;
-        let transb = self.transb;
-        let transpose_result = self.transpose_result;
+        let transa = trans_a;
+        let transb = trans_b;
+        let transpose_result = trans_result;
         TensorF32::gemm(transa, transb, 1.0, a, b, 1.0, c, transpose_result)
     }
 }

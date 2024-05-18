@@ -1,6 +1,6 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{Device, Error, Instruction, NaryOperator, Operator, Tensor, TensorF32, Zero};
+use crate::{Device, Error, Instruction, NaryOperator, OpCode, Tensor, TensorF32};
 
 #[cfg(test)]
 mod tests;
@@ -48,6 +48,10 @@ impl Concat {
         }
         Ok(())
     }
+
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        Self::concat(inputs, outputs)
+    }
 }
 
 impl NaryOperator for Concat {
@@ -71,19 +75,19 @@ impl NaryOperator for Concat {
             .map(|t| t.tensor().deref().borrow().clone())
             .collect();
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(self.clone()),
+            OpCode::Concat,
             &inputs.iter().collect::<Vec<_>>(),
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
@@ -95,7 +99,7 @@ impl NaryOperator for Concat {
             .map(|t| t.gradient().deref().borrow().clone())
             .collect();
         output.push_instruction(Instruction::new(
-            Rc::new(ConcatBackward::default()),
+            OpCode::ConcatBackward,
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),
             crate::Category::Gradient,
@@ -104,30 +108,10 @@ impl NaryOperator for Concat {
     }
 }
 
-impl Operator for Concat {
-    fn name(&self) -> &str {
-        "Concat"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        Self::concat(inputs, outputs)
-    }
-}
-
 pub struct ConcatBackward {}
 
-impl Default for ConcatBackward {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Operator for ConcatBackward {
-    fn name(&self) -> &str {
-        "ConcatBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+impl ConcatBackward {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         Concat::unconcat(inputs, outputs)
     }
 }

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{Error, Operator, TensorF32};
+use crate::{Error, OpCode, Operator, TensorF32};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Category {
@@ -12,7 +12,7 @@ pub enum Category {
 
 #[derive(Clone, Debug)]
 pub struct Instruction {
-    operator: Rc<dyn Operator>,
+    opcode: OpCode,
     inputs: Rc<Vec<TensorF32>>,
     outputs: Rc<Vec<TensorF32>>,
     category: Category,
@@ -20,7 +20,7 @@ pub struct Instruction {
 
 impl Instruction {
     pub fn new(
-        operator: Rc<dyn Operator>,
+        opcode: OpCode,
         inputs: &[&TensorF32],
         outputs: &[&TensorF32],
         category: Category,
@@ -28,7 +28,7 @@ impl Instruction {
         let inputs: Vec<TensorF32> = inputs.into_iter().map(|x| (*x).clone()).collect();
         let outputs: Vec<TensorF32> = outputs.into_iter().map(|x| (*x).clone()).collect();
         Self {
-            operator,
+            opcode,
             inputs: inputs.into(),
             outputs: outputs.into(),
             category,
@@ -39,8 +39,8 @@ impl Instruction {
         self.category.clone()
     }
 
-    pub fn operator(&self) -> &Rc<dyn Operator> {
-        &self.operator
+    pub fn opcode(&self) -> &OpCode {
+        &self.opcode
     }
     pub fn inputs(&self) -> &Rc<Vec<TensorF32>> {
         &self.inputs
@@ -51,6 +51,6 @@ impl Instruction {
     pub fn forward(&self) -> Result<(), Error> {
         let inputs: Vec<&TensorF32> = self.inputs.iter().collect();
         let outputs_f32: Vec<&TensorF32> = self.outputs.iter().collect();
-        self.operator.forward(&inputs, &outputs_f32)
+        self.opcode.forward(&inputs, &outputs_f32)
     }
 }

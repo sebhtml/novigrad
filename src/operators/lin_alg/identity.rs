@@ -1,8 +1,7 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{Device, Error, Instruction, Operator, Tensor, TensorF32, UnaryOperator, Zero};
+use crate::{Device, Error, Instruction, OpCode, Tensor, TensorF32, UnaryOperator};
 
-/// https://onnx.ai/onnx/operators/onnx__Identity.html
 #[derive(Clone)]
 pub struct Identity {
     device: Device,
@@ -13,6 +12,12 @@ impl Identity {
         Self {
             device: device.clone(),
         }
+    }
+
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+        TensorF32::copy(&input, &output)
     }
 }
 
@@ -28,19 +33,19 @@ impl UnaryOperator for Identity {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(self.clone()),
+            OpCode::Identity,
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
@@ -48,7 +53,7 @@ impl UnaryOperator for Identity {
         let inputs = [&output];
         let outputs = [input];
         output.push_instruction(Instruction::new(
-            Rc::new(IdentityBackward::default()),
+            OpCode::IdentityBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Gradient,
@@ -57,32 +62,10 @@ impl UnaryOperator for Identity {
     }
 }
 
-impl Operator for Identity {
-    fn name(&self) -> &str {
-        "Identity"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input = inputs[0];
-        let output = outputs[0];
-        TensorF32::copy(&input, &output)
-    }
-}
-
 pub struct IdentityBackward {}
 
-impl Default for IdentityBackward {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Operator for IdentityBackward {
-    fn name(&self) -> &str {
-        "IdentityBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+impl IdentityBackward {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
             let input_gradient = inputs[0];

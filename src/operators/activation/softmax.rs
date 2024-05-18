@@ -1,25 +1,34 @@
 use crate::devices::Device;
-use crate::{ActivationFunction, Instruction, Operator, TensorF32, UnaryOperator, Zero};
+use crate::{Category, Instruction, OpCode, Operator, TensorF32, UnaryOperator};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
 use std::rc::Rc;
 
-/// https://onnx.ai/onnx/operators/onnx__Softmax.html
 #[derive(Clone)]
 pub struct Softmax {
     device: Device,
+    next_is_cross_entropy_loss: bool,
 }
 
 impl Softmax {
-    pub fn new(device: &Device) -> Self {
+    pub fn new(device: &Device, next_is_cross_entropy_loss: bool) -> Self {
         Self {
             device: device.clone(),
+            next_is_cross_entropy_loss,
         }
     }
-}
 
-impl ActivationFunction for Softmax {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+        debug_assert_eq!(false, input.is_nan()?,);
+        debug_assert_eq!(false, input.is_nan()?,);
+        Self::activate(input, output)?;
+        debug_assert_eq!(false, output.is_nan()?,);
+        Ok(())
+    }
+
     fn activate(input: &TensorF32, output: &TensorF32) -> Result<(), Error> {
         let rows = input.rows();
         let cols = input.cols();
@@ -70,31 +79,6 @@ impl ActivationFunction for Softmax {
         output.set_values(result_values);
         Ok(())
     }
-
-    fn derive(
-        _input: &TensorF32,
-        activation_output: &TensorF32,
-        output: &mut TensorF32,
-    ) -> Result<(), Error> {
-        let rows = activation_output.rows();
-        let cols = activation_output.cols();
-        let values = activation_output.get_values()?;
-        let mut result_values = output.get_values()?;
-        let mut row = 0;
-        while row < rows {
-            let mut col = 0;
-            while col < cols {
-                let x = values[activation_output.index(row, col)];
-                let y = x * (1.0 - x);
-                result_values[output.index(row, col)] = y;
-                col += 1;
-            }
-            row += 1;
-        }
-        output.set_values(result_values);
-
-        Ok(())
-    }
 }
 
 impl UnaryOperator for Softmax {
@@ -109,52 +93,50 @@ impl UnaryOperator for Softmax {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(self.clone()),
+            OpCode::Softmax,
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
-        let inputs = [&output];
-        let outputs = [input];
-        output.push_instruction(Instruction::new(
-            Rc::new(SoftmaxBackward::new(&self.device)),
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[0].gradient().deref().borrow(),
-                &outputs[0].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Gradient,
-        ));
+
+        if self.next_is_cross_entropy_loss {
+            output.push_instruction(Instruction::new(
+                OpCode::Add,
+                &[
+                    &output.gradient().deref().borrow(),
+                    &input.gradient().deref().borrow(),
+                ],
+                &[&input.gradient().deref().borrow()],
+                Category::Gradient,
+            ));
+        } else {
+            let inputs = [&output];
+            let outputs = [input];
+            output.push_instruction(Instruction::new(
+                OpCode::DynOperator(Rc::new(SoftmaxBackward::new(&self.device))),
+                &[
+                    &inputs[0].tensor().deref().borrow(),
+                    &inputs[0].gradient().deref().borrow(),
+                    &outputs[0].tensor().deref().borrow(),
+                ],
+                &[&outputs[0].gradient().deref().borrow()],
+                Category::Gradient,
+            ));
+        }
+
         Ok(output)
-    }
-}
-
-impl Operator for Softmax {
-    fn name(&self) -> &str {
-        "Softmax"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input = inputs[0];
-        let output = outputs[0];
-        debug_assert_eq!(false, input.is_nan()?,);
-        debug_assert_eq!(false, input.is_nan()?,);
-        Self::activate(input, output)?;
-        debug_assert_eq!(false, output.is_nan()?,);
-        Ok(())
     }
 }
 
@@ -178,15 +160,16 @@ impl Operator for SoftmaxBackward {
     fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
-            let input_gradient = inputs[0];
+            let input_gradient = inputs[1];
             let output = inputs[2];
             let input = inputs[0];
             let rows = output.rows();
             let cols = output.cols();
             let len = rows * cols;
-            // Compute activation function derivative.
-            let mut layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            Softmax::derive(output, input, &mut layer_f_derivative)?;
+            let one_minus_output = self.device.tensor_f32(rows, cols, vec![1.0; len]);
+            TensorF32::sub(input, &one_minus_output)?;
+            let layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+            TensorF32::mul(input, &one_minus_output, &layer_f_derivative)?;
             let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
             TensorF32::mul(&layer_f_derivative, input_gradient, &mut tmp)?;
             TensorF32::add(&tmp, output_gradient)?;

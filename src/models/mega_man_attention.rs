@@ -35,7 +35,7 @@ impl MegaManAttentionModel {
         let multi_head_attention =
             MultiHeadAttention::try_new(device, sequence_length, n_embd, true, num_heads).unwrap();
         let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length);
-        let softmax = Softmax::new(device);
+        let softmax = Softmax::new(device, true);
 
         Self {
             input_shape: vec![sequence_length, vocab_size],
@@ -114,7 +114,7 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         epochs: 200,
         progress: 10,
         initial_total_error_min: 50.0,
-        final_total_error_max: 6.0,
+        final_total_error_max: 0.05,
         learning_rate,
         shuffle_examples: true,
         clipped_gradient_norm: 1.0,

@@ -5,8 +5,8 @@ use crate::{BinaryOperator, Device, Error, Mul, Tensor, UnaryOperator};
 #[cfg(test)]
 mod tests;
 
-/// Linear is not a ONNX operator. https://onnx.ai/onnx/operators/index.html ???
-/// Attention Is All You Need -> https://arxiv.org/abs/1706.03762
+/// Attention Is All You Need
+/// https://arxiv.org/abs/1706.03762
 #[derive(Clone)]
 pub struct Mask {
     mask: Tensor,

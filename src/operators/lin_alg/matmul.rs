@@ -1,10 +1,9 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
 use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Gemm, Instruction, Tensor, TensorF32, Zero,
+    devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, OpCode, Tensor, TensorF32,
 };
 
-/// https://onnx.ai/onnx/operators/onnx__MatMul.html
 #[derive(Clone)]
 pub struct MatMul {
     device: Device,
@@ -65,19 +64,19 @@ impl BinaryOperator for MatMul {
         let inputs = [input_0, input_1];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Gemm::new(&self.device, false, transb, false)),
+            OpCode::Gemm(false, transb, false),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -88,7 +87,7 @@ impl BinaryOperator for MatMul {
 
         if input_1.gradient().deref().borrow().requires_grad() {
             output.push_instruction(Instruction::new(
-                Rc::new(Gemm::new(&self.device, true, false, transb)),
+                OpCode::Gemm(true, false, transb),
                 &[
                     &input_0.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
@@ -100,7 +99,7 @@ impl BinaryOperator for MatMul {
 
         if input_0.gradient().deref().borrow().requires_grad() {
             output.push_instruction(Instruction::new(
-                Rc::new(Gemm::new(&self.device, true, transb, true)),
+                OpCode::Gemm(true, transb, true),
                 &[
                     &input_1.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),

@@ -1,8 +1,7 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use crate::{BinaryOperator, Device, Error, Instruction, Operator, Tensor, TensorF32, Zero};
+use crate::{BinaryOperator, Device, Error, Instruction, OpCode, Tensor, TensorF32};
 
-/// https://onnx.ai/onnx/operators/onnx__Add.html
 #[derive(Clone)]
 pub struct Add {
     device: Device,
@@ -13,6 +12,14 @@ impl Add {
         Self {
             device: device.to_owned(),
         }
+    }
+
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input_0 = inputs[0];
+        let input_1 = inputs[1];
+        let output = outputs[0];
+        TensorF32::copy(input_0, output)?;
+        TensorF32::add(input_1, output)
     }
 }
 
@@ -30,19 +37,19 @@ impl BinaryOperator for Add {
         let inputs = [input_1, input_2];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(Zero::default()),
+            OpCode::Zero,
             &[],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            Rc::new(self.clone()),
+            OpCode::Add,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -53,7 +60,7 @@ impl BinaryOperator for Add {
         let inputs = [&output];
         let outputs = [input_1, input_2];
         output.push_instruction(Instruction::new(
-            Rc::new(AddBackward::new()),
+            OpCode::AddBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[
                 &outputs[0].gradient().deref().borrow(),
@@ -65,33 +72,10 @@ impl BinaryOperator for Add {
     }
 }
 
-impl Operator for Add {
-    fn name(&self) -> &str {
-        "Add"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input_0 = inputs[0];
-        let input_1 = inputs[1];
-        let output = outputs[0];
-        TensorF32::copy(input_0, output)?;
-        TensorF32::add(input_1, output)
-    }
-}
-
 pub struct AddBackward {}
 
 impl AddBackward {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-impl Operator for AddBackward {
-    fn name(&self) -> &str {
-        "AddBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(outputs.len(), 2);
         let input_gradient = inputs[0];
 

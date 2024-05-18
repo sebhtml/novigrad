@@ -48,7 +48,7 @@ impl MegaManModel {
                 true,
                 output_rows,
             ),
-            softmax: Softmax::new(device),
+            softmax: Softmax::new(device, true),
         }
     }
 

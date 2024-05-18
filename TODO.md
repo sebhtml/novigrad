@@ -1,12 +1,11 @@
-- Bake optimizer instructions in neural machine
-- put op codes in a OpCode enum
+- print instruction category in log
 - add interesting example
-- simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
-
 - Use Add instead of AddBackward
-- use Scale instead of Zero
 - rename Scale to ScalarMul
 - SigmoidBackward and SoftmaxBackward are Mul
+- simplify execute method arguments
+
+- simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
 
 == GPT-1 Transformer ==
 
@@ -60,6 +59,10 @@
 
 - implement parallel execution of certain branches in parallel using a execution_group_id
 
+== Import / Export ==
+
+- serialize and deserialize model to ONNX format
+
 == Positional Encoding ==
 
 - implement positional encoding
@@ -68,9 +71,6 @@
 
 - Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
 
-== Import / Export ==
-
-- serialize and deserialize model to ONNX format
 
 == Devices ==
 

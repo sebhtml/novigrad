@@ -3,9 +3,8 @@ use crate::{
     CrossEntropyLoss, Device, GradientDescent, MultiHeadAttention, TernaryOperator, Tokenizer,
     TokenizerTrait, UnaryModel, UnaryOperator,
 };
-use crate::{Error, ModelDetails};
-
 use crate::{Embedding, Linear, Model, Softmax, Tensor};
+use crate::{Error, ModelDetails};
 
 struct MegaManAttentionModel {
     input_shape: Vec<usize>,
@@ -72,8 +71,6 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
     let max_number_of_examples = 10;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
-    let vocab_size = tokenizer.vocab_size();
-    let model = MegaManAttentionModel::new(device, sequence_length, vocab_size);
 
     let input_sequence_length = sequence_length;
     let output_sequence_length = sequence_length;
@@ -84,9 +81,11 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         max_number_of_examples,
         input_sequence_length,
         output_sequence_length,
-        vocab_size,
         &mut tokenizer,
     )?;
+
+    let vocab_size = tokenizer.vocab_size();
+    let model = MegaManAttentionModel::new(device, sequence_length, vocab_size);
 
     let loss_operator = CrossEntropyLoss::new(device);
     let learning_rate = 0.05;

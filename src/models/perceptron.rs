@@ -2,7 +2,6 @@ use crate::{
     Device, Error, GradientDescent, ModelDetails, ResidualSumOfSquares, Tensor, UnaryModel,
     UnaryOperator,
 };
-
 use crate::{Linear, Model};
 
 struct PerceptronModel {

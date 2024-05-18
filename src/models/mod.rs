@@ -1,5 +1,6 @@
 mod model;
 pub use model::*;
+use more_asserts::debug_assert_lt;
 mod mega_man;
 mod mega_man_attention;
 mod perceptron;
@@ -52,7 +53,7 @@ pub fn into_one_hot_encoded_rows(
     input_tokens: &[usize],
     num_classes: usize,
 ) -> Result<Tensor, Error> {
-    debug_assert!(num_classes >= *input_tokens.iter().max().unwrap());
+    debug_assert_lt!(*input_tokens.iter().max().unwrap(), num_classes);
     let len = input_tokens.len() * num_classes;
     let result = device.tensor_f32(
         input_tokens.len(),
@@ -80,7 +81,6 @@ fn load_examples(
     max_number_of_examples: usize,
     input_sequence_length: usize,
     output_sequence_length: usize,
-    vocab_size: usize,
     tokenizer: &mut Tokenizer,
 ) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let mut examples = Vec::new();
@@ -97,6 +97,7 @@ fn load_examples(
     }
     println!("[load_megaman_examples] loaded {} bytes", text.len());
     let tokens: Vec<usize> = tokenizer.encode(&text);
+    let vocab_size = tokenizer.vocab_size();
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
     while i + input_sequence_length < tokens.len() && i < max_number_of_examples {

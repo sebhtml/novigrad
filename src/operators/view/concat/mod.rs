@@ -34,6 +34,8 @@ impl Concat {
     }
 
     pub fn unconcat(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        // TODO this function generates memory corruption.
+        return Ok(());
         let src = inputs[0];
         for input_index in 0..outputs.len() {
             let dst = outputs[input_index];
@@ -98,6 +100,7 @@ impl NaryOperator for Concat {
             .iter()
             .map(|t| t.gradient().deref().borrow().clone())
             .collect();
+        // TODO this instruction generates memory corruption...
         output.push_instruction(Instruction::new(
             OpCode::ConcatBackward,
             &[&inputs[0].gradient().deref().borrow_mut()],

@@ -1,7 +1,7 @@
 use crate::{Concat, Device};
 
 #[test]
-fn forward() {
+fn concat() {
     let device = Device::default();
 
     let input_1 = device.tensor_f32(
@@ -54,7 +54,7 @@ fn forward() {
 }
 
 #[test]
-fn backward() {
+fn unconcat() {
     let device = Device::default();
 
     let input = device.tensor_f32(

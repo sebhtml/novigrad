@@ -25,8 +25,17 @@ impl Instruction {
         outputs: &[&TensorF32],
         category: Category,
     ) -> Self {
-        let inputs: Vec<TensorF32> = inputs.into_iter().map(|x| (*x).clone()).collect();
-        let outputs: Vec<TensorF32> = outputs.into_iter().map(|x| (*x).clone()).collect();
+        let inputs: Vec<TensorF32> = inputs
+            .to_owned()
+            .into_iter()
+            .map(|x| (*x).clone())
+            .collect();
+        let outputs: Vec<TensorF32> = outputs
+            .to_owned()
+            .into_iter()
+            .map(|x| (*x).clone())
+            .collect();
+        println!("Instruction::new inputs {}", inputs.len());
         Self {
             opcode,
             inputs: inputs.into(),

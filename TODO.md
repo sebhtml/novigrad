@@ -1,3 +1,7 @@
+- remove dyn Operator from OpCode
+- delete trait Operator
+
+-----------------
 
 - Use Add instead of AddBackward
 - rename Scale to ScalarMul

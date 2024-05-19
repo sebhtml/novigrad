@@ -68,6 +68,8 @@ impl Model for ChatbotModel {
 }
 
 fn main() -> Result<(), Error> {
+    let debug = true;
+    let print_in_console = true;
     let device = Device::cuda().unwrap();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
@@ -88,16 +90,27 @@ fn main() -> Result<(), Error> {
     )
     .unwrap();
 
-    println!("-------------------------------------------------------------------");
-    println!("This is a Novigrad-powered chatbot");
-    println!("A forward pass is all you need");
-    println!("The chatbot knows nothing and will learn as you interact with it.");
-    println!("-------------------------------------------------------------------");
+    if print_in_console {
+        println!("-------------------------------------------------------------------");
+        println!("This is a Novigrad-powered chatbot");
+        println!("A forward pass is all you need");
+        println!("The chatbot knows nothing and will learn as you interact with it.");
+        println!("-------------------------------------------------------------------");
+    }
 
     for turn in 0..1000 {
-        println!("Turn: {}", turn);
-        println!("Prompt: ");
-        let mut prompt = read_prompt()?;
+        if print_in_console {
+            println!("Turn: {}", turn);
+            println!("Prompt: ");
+        }
+
+        let mut prompt: String = if debug {
+            let prompt =
+                "Taylor Alison Swift (born December 13, 1989) is an American singer-songwriter.";
+            prompt.into()
+        } else {
+            read_prompt()?
+        };
         while prompt.len() < sequence_length {
             prompt += " ";
         }
@@ -128,7 +141,9 @@ fn main() -> Result<(), Error> {
             let loss = chatbot.loss(&expected_output_one_hot)?;
             let loss: &TensorF32 = &loss.tensor().deref().borrow();
             let loss: f32 = loss.try_into()?;
-            println!("Loss {}", loss);
+            if print_in_console {
+                println!("Loss {}", loss);
+            }
             chatbot.backward()?;
             chatbot.step()?;
         }
@@ -143,7 +158,9 @@ fn main() -> Result<(), Error> {
             get_row_argmaxes(&actual_output_one_hot.tensor().deref().borrow())?;
         let actual_output = tokenizer.decode(&actual_output_tokens)?;
 
-        println!("Chatbot: {}", actual_output);
+        if print_in_console {
+            println!("Chatbot: {}", actual_output);
+        }
     }
 
     Ok(())

@@ -1,7 +1,6 @@
 mod cpu;
 use crate::Error;
 use std::{
-    borrow::Borrow,
     cell::RefCell,
     collections::{HashMap, LinkedList},
     mem::swap,
@@ -18,6 +17,7 @@ pub use cuda::*;
 use crate::{Tensor, TensorF32};
 mod buffer;
 pub use buffer::*;
+use core::fmt::Debug;
 
 pub struct MemoryInfo {
     pub used: usize,
@@ -86,7 +86,14 @@ pub trait DeviceInterface {
     /// SSCAL scales a vector by a constant.
     fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error>;
 
+    /// Allocate a slice on the device.
     fn slice(&self, n: i32) -> Result<DevBufferEnum, Error>;
+}
+
+impl Debug for dyn DeviceInterface {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -94,7 +101,7 @@ pub struct Device {
     next_name: Rc<RefCell<usize>>,
     used: Rc<RefCell<usize>>,
     tensors_to_optimize: Rc<RefCell<Vec<Tensor>>>,
-    device: Rc<DeviceEnum>,
+    device: Rc<dyn DeviceInterface>,
     available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevBuffer>>>>,
 }
 
@@ -112,18 +119,18 @@ impl Default for Device {
 }
 
 impl Device {
-    pub fn new(device: DeviceEnum) -> Self {
+    pub fn new(device: Rc<dyn DeviceInterface>) -> Self {
         Self {
             next_name: Default::default(),
             used: Default::default(),
             tensors_to_optimize: Rc::new(RefCell::new(vec![])),
-            device: Rc::new(device),
+            device,
             available_buffers: Default::default(),
         }
     }
 
     pub fn cpu() -> Self {
-        Self::new(DeviceEnum::Cpu(CpuDevice::default()))
+        Self::new(Rc::new(CpuDevice::default()))
     }
 
     pub fn recycle(&self, len: usize, buffer: &mut DevBuffer) {
@@ -147,7 +154,7 @@ impl Device {
     #[cfg(feature = "cuda")]
     pub fn cuda() -> Result<Self, Error> {
         match CudaDevice::try_default() {
-            Ok(cublas) => Ok(Self::new(DeviceEnum::Cuda(cublas))),
+            Ok(cuda) => Ok(Self::new(Rc::new(cuda))),
             Err(error) => Err(error),
         }
     }
@@ -239,15 +246,8 @@ impl DeviceInterface for Device {
         c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error> {
-        match self.device.borrow() {
-            DeviceEnum::Cpu(device) => {
-                device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-            }
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(device) => {
-                device.sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-            }
-        }
+        self.device
+            .sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
     }
 
     fn sdot(
@@ -258,19 +258,11 @@ impl DeviceInterface for Device {
         y: *const f32,
         incy: i32,
     ) -> Result<f32, Error> {
-        match self.device.borrow() {
-            DeviceEnum::Cpu(device) => device.sdot(n, x, incx, y, incy),
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(device) => device.sdot(n, x, incx, y, incy),
-        }
+        self.device.sdot(n, x, incx, y, incy)
     }
 
     fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
-        match self.device.borrow() {
-            DeviceEnum::Cpu(device) => device.scopy(n, x, incx, y, incy),
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(device) => device.scopy(n, x, incx, y, incy),
-        }
+        self.device.scopy(n, x, incx, y, incy)
     }
 
     fn saxpy(
@@ -282,26 +274,14 @@ impl DeviceInterface for Device {
         y: *mut f32,
         incy: i32,
     ) -> Result<(), Error> {
-        match self.device.borrow() {
-            DeviceEnum::Cpu(device) => device.saxpy(n, alpha, x, incx, y, incy),
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(device) => device.saxpy(n, alpha, x, incx, y, incy),
-        }
+        self.device.saxpy(n, alpha, x, incx, y, incy)
     }
 
     fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
-        match self.device.borrow() {
-            DeviceEnum::Cpu(device) => device.sscal(n, alpha, x, incx),
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(device) => device.sscal(n, alpha, x, incx),
-        }
+        self.device.sscal(n, alpha, x, incx)
     }
 
     fn slice(&self, n: i32) -> Result<DevBufferEnum, Error> {
-        match self.device.borrow() {
-            DeviceEnum::Cpu(device) => device.slice(n),
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(device) => device.slice(n),
-        }
+        self.device.slice(n)
     }
 }

@@ -120,7 +120,7 @@ impl NeuralMachine {
     }
 
     fn forward(&self, category: Category) -> Result<(), Error> {
-        let debug = true;
+        let debug = false;
         if debug {
             println!("Debugger for NeuralMachine forward pass");
         }
@@ -146,7 +146,6 @@ impl NeuralMachine {
 
             #[cfg(debug_assertions)]
             for input in instruction.inputs().deref() {
-                println!("Running assertions on input");
                 debug_assert_eq!(
                     input.is_nan()?,
                     false,

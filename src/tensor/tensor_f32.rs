@@ -471,13 +471,8 @@ impl TensorF32 {
     }
 
     pub fn l2_norm(&self) -> Result<f32, Error> {
-        let mut l2_norm = 0.0;
-        let self_values = self.get_values()?;
-        for index in 0..self.len() {
-            let value = self_values[index];
-            l2_norm += value * value;
-        }
-        l2_norm = l2_norm.sqrt();
+        let squared_l2_norm = TensorF32::dot_product(self, self)?;
+        let l2_norm = squared_l2_norm.sqrt();
         Ok(l2_norm)
     }
 

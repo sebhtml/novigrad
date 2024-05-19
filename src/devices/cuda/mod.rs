@@ -13,7 +13,7 @@ use cudarc::{
     driver,
 };
 
-use crate::{DeviceInterface, Error, ErrorEnum};
+use crate::{DevBufferEnum, DeviceInterface, Error, ErrorEnum};
 
 #[derive(Debug)]
 pub struct CudaDevice {
@@ -135,5 +135,17 @@ impl DeviceInterface for CudaDevice {
         status
             .result()
             .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
+    }
+
+    fn slice(&self, n: i32) -> Result<DevBufferEnum, Error> {
+        match self.dev.alloc_zeros(n as usize) {
+            Ok(slice) => Ok(DevBufferEnum::CudaBuffer(slice)),
+            _ => Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::UnsupportedOperation,
+            )),
+        }
     }
 }

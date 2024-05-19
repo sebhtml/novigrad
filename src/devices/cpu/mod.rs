@@ -1,6 +1,6 @@
 use cblas::{Layout, Transpose};
 extern crate cblas_sys as ffi;
-use crate::Error;
+use crate::{DevBufferEnum, Error};
 
 use super::DeviceInterface;
 extern crate blas_src;
@@ -96,5 +96,12 @@ impl DeviceInterface for CpuDevice {
     fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
         unsafe { ffi::cblas_sscal(n, alpha, x, incx) }
         Ok(())
+    }
+
+    fn slice(&self, n: i32) -> Result<crate::DevBufferEnum, Error> {
+        let len = n as usize;
+        let values = vec![0.0; len];
+        let slice = DevBufferEnum::CpuBuffer(values);
+        Ok(slice)
     }
 }

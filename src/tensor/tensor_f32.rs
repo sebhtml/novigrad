@@ -471,30 +471,19 @@ impl TensorF32 {
     }
 
     pub fn l2_norm(&self) -> Result<f32, Error> {
-        let mut l2_norm = 0.0;
-        let self_values = self.get_values()?;
-        for index in 0..self.len() {
-            let value = self_values[index];
-            l2_norm += value * value;
-        }
-        l2_norm = l2_norm.sqrt();
+        let squared_l2_norm = TensorF32::dot_product(self, self)?;
+        let l2_norm = squared_l2_norm.sqrt();
         Ok(l2_norm)
     }
 
-    // TODO use device to clip
     pub fn clip(&self, norm: f32) -> Result<(), Error> {
         let l2_norm = self.l2_norm()?;
         if l2_norm == 0.0 {
             return Ok(());
         }
-        let mut self_values = self.get_values()?;
-        for index in 0..self.len() {
-            let value = self_values[index];
-            let value = value / l2_norm * norm;
-            self_values[index] = value;
-        }
-        self.set_values(self_values);
-        Ok(())
+        let alpha = 1.0 / l2_norm * norm;
+        let x = self;
+        TensorF32::scale(alpha, x)
     }
 
     pub fn scale(alpha: f32, x: &TensorF32) -> Result<(), Error> {

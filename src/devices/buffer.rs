@@ -1,9 +1,8 @@
-use std::ops::Deref;
 use std::{borrow::BorrowMut, mem::swap};
 
 use cudarc::driver::{CudaSlice, DevicePtr, DevicePtrMut, DeviceSlice};
 
-use crate::DeviceEnum;
+use crate::DeviceInterface;
 use crate::Error;
 use crate::{Device, ErrorEnum};
 
@@ -32,21 +31,11 @@ pub enum DevBufferEnum {
 
 impl DevBuffer {
     pub fn new(device: &Device, len: usize) -> DevBuffer {
-        let buffer = match device.device.deref() {
-            DeviceEnum::Cpu(_) => {
-                let values = vec![0.0; len];
-                DevBufferEnum::CpuBuffer(values)
-            }
-            #[cfg(feature = "cuda")]
-            DeviceEnum::Cuda(device) => {
-                // TODO don't unwrap
-                let buffer = device.dev.alloc_zeros(len).unwrap();
-                DevBufferEnum::CudaBuffer(buffer)
-            }
-        };
+        // TODO remove unwrap
+        let slice = device.slice(len as i32).unwrap();
         DevBuffer {
             device: device.clone(),
-            buffer,
+            buffer: slice,
         }
     }
 

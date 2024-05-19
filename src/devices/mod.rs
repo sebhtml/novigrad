@@ -85,6 +85,8 @@ pub trait DeviceInterface {
 
     /// SSCAL scales a vector by a constant.
     fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error>;
+
+    fn slice(&self, n: i32) -> Result<DevBufferEnum, Error>;
 }
 
 #[derive(Clone, Debug)]
@@ -292,6 +294,14 @@ impl DeviceInterface for Device {
             DeviceEnum::Cpu(device) => device.sscal(n, alpha, x, incx),
             #[cfg(feature = "cuda")]
             DeviceEnum::Cuda(device) => device.sscal(n, alpha, x, incx),
+        }
+    }
+
+    fn slice(&self, n: i32) -> Result<DevBufferEnum, Error> {
+        match self.device.borrow() {
+            DeviceEnum::Cpu(device) => device.slice(n),
+            #[cfg(feature = "cuda")]
+            DeviceEnum::Cuda(device) => device.slice(n),
         }
     }
 }

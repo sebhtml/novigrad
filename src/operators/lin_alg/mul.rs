@@ -36,14 +36,14 @@ impl BinaryOperator for Mul {
         let inputs = [input_0, input_1];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            OpCode::Zero,
-            &[],
+            OpCode::Scale(0.0),
+            &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::Zero,
-            &[],
+            OpCode::Scale(0.0),
+            &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));

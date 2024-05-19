@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::{
     Add, AddBackward, Clip, Concat, ConcatBackward, Error, Gemm, Identity, IdentityBackward, Mul,
-    Operator, Reshape, ReshapeBackward, Scale, ScaleBackward, Softmax, Sub, TensorF32, Zero,
+    Operator, Reshape, ReshapeBackward, Scale, ScaleBackward, Softmax, Sub, TensorF32,
 };
 
 #[derive(Clone, Debug)]
@@ -28,10 +28,6 @@ pub enum OpCode {
     /// Not ONNX-compliant
     /// TODO remove this op code
     ScaleBackward,
-
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    Zero,
 
     /// Not ONNX-compliant
     /// similar op codes:
@@ -128,7 +124,6 @@ impl Operator for OpCode {
             OpCode::AddBackward => "AddBackward",
             OpCode::Scale(_) => "Scale",
             OpCode::ScaleBackward => "ScaleBackward",
-            OpCode::Zero => "Zero",
             OpCode::Clip(_) => "Clip",
             OpCode::Mul => "Mul",
             OpCode::Identity => "Identity",
@@ -152,7 +147,6 @@ impl Operator for OpCode {
             OpCode::AddBackward => AddBackward::execute(inputs, outputs),
             OpCode::Scale(alpha) => Scale::execute(*alpha, inputs, outputs),
             OpCode::ScaleBackward => ScaleBackward::execute(inputs, outputs),
-            OpCode::Zero => Zero::execute(inputs, outputs),
             OpCode::Clip(clipped_norm) => Clip::execute(*clipped_norm, inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
             OpCode::Identity => Identity::execute(inputs, outputs),

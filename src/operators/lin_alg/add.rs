@@ -37,14 +37,14 @@ impl BinaryOperator for Add {
         let inputs = [input_1, input_2];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            OpCode::Zero,
-            &[],
+            OpCode::Scale(0.0),
+            &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::Zero,
-            &[],
+            OpCode::Scale(0.0),
+            &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
         ));

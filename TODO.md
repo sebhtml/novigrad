@@ -17,6 +17,7 @@
 
 == Logging ==
 
+- investigate performance issue with tons of call to pthread_rwlock_unlock
 - don't print machine on boot for chatbot
 - in chatbot example, use special token end_of_text to disable loss for that unknown expected token
 

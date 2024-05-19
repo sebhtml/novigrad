@@ -94,14 +94,14 @@ impl BinaryOperator for CrossEntropyLoss {
         let inputs = [input_1, input_2];
         let outputs = [&output];
         output.push_instruction(Instruction::new(
-            OpCode::Zero,
-            &[],
+            OpCode::Scale(0.0),
+            &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Loss,
         ));
         output.push_instruction(Instruction::new(
-            OpCode::Zero,
-            &[],
+            OpCode::Scale(0.0),
+            &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Loss,
         ));

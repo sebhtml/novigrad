@@ -105,13 +105,6 @@ pub struct Device {
     available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevBuffer>>>>,
 }
 
-#[derive(Debug)]
-pub enum DeviceEnum {
-    Cpu(CpuDevice),
-    #[cfg(feature = "cuda")]
-    Cuda(CudaDevice),
-}
-
 impl Default for Device {
     fn default() -> Self {
         Self::cpu()

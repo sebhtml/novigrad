@@ -29,4 +29,5 @@ pub enum ErrorEnum {
     IncompatibleTensorShapes,
     UnsupportedOperation,
     IncorrectOperatorConfiguration,
+    InputOutputError,
 }

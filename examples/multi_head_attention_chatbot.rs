@@ -1,19 +1,16 @@
-use std::{io::Read, ops::Deref};
-
 use novigrad::{
     get_row_argmaxes, into_one_hot_encoded_rows, CrossEntropyLoss, Device, Embedding, Error,
-    GradientDescent, Linear, LossOperator, Model, MultiHeadAttention, NeuralMachine,
+    ErrorEnum, GradientDescent, Linear, LossOperator, Model, MultiHeadAttention, NeuralMachine,
     OptimizerTrait, Softmax, Tensor, TensorF32, TernaryOperator, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
 };
+use rand::prelude::SliceRandom;
+use rand::thread_rng;
+use std::{
+    io::{self},
+    ops::Deref,
+};
 
-/// Booting Neural Machine...
-/// Neural program compiled with Novigrad
-/// Tensors: 397
-/// Parameters: 1392640
-/// Input size: [32, 256]
-/// Output size: [32, 256]
-/// Instructions: 971
 struct ChatbotModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
@@ -29,7 +26,7 @@ impl ChatbotModel {
     /// Attention Is All You Need
     /// https://arxiv.org/abs/1706.03762
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
-        let n_embd = 512;
+        let n_embd = 384;
         let num_heads = 8;
 
         let embedding = Embedding::new(device, vocab_size, n_embd);
@@ -91,80 +88,77 @@ fn main() -> Result<(), Error> {
     )
     .unwrap();
 
+    println!("-------------------------------------------------------------------");
     println!("This is a Novigrad-powered chatbot");
     println!("A forward pass is all you need");
     println!("The chatbot knows nothing and will learn as you interact with it.");
+    println!("-------------------------------------------------------------------");
 
-    for i in 0..2000 {
-        let corpus = "Taylor Swift is an American singer-songwriter.";
-        let start = i % (corpus.len() - sequence_length);
-        let end = start + sequence_length;
-        let prompt = &corpus[start..end];
+    for turn in 0..1000 {
+        println!("Turn: {}", turn);
+        println!("Prompt: ");
+        let mut prompt = read_prompt()?;
+        while prompt.len() < sequence_length {
+            prompt += " ";
+        }
+        // Learn things
+        let end = if (sequence_length + 1) < prompt.len() {
+            prompt.len() - (sequence_length + 1)
+        } else {
+            0
+        };
 
-        println!("Turn: {}", i);
-        println!("Prompt: {}", prompt);
+        let mut indices = (0..end).collect::<Vec<_>>();
+        indices.shuffle(&mut thread_rng());
 
-        let prompt_tokens = tokenizer.encode(&prompt);
-        let prompt_one_hot = into_one_hot_encoded_rows(&device, &prompt_tokens, vocab_size)?;
-        let chatbot_answer_one_hot = chatbot.infer(&prompt_one_hot)?;
-        let expected = prepare_expected(&prompt_one_hot, &device)?;
-        let loss = chatbot.loss(&expected)?;
-        let loss: &TensorF32 = &loss.tensor().deref().borrow();
-        let loss: f32 = loss.try_into()?;
-        chatbot.backward()?;
-        chatbot.step()?;
-        let chatbot_answer_tokens =
-            get_row_argmaxes(&chatbot_answer_one_hot.tensor().deref().borrow())?;
-        let chatbot_answer = tokenizer.decode(&chatbot_answer_tokens)?;
+        for i in indices {
+            let start = i;
+            let end = start + sequence_length;
 
-        println!("Chatbot: {}", chatbot_answer);
-        println!("Loss: {}", loss);
+            let input = &prompt[start..end];
+            let input_tokens = tokenizer.encode(&input);
+            let input_one_hot = into_one_hot_encoded_rows(&device, &input_tokens, vocab_size)?;
+
+            let expected_output = &prompt[start + 1..end + 1];
+            let expected_output_tokens = tokenizer.encode(expected_output);
+            let expected_output_one_hot =
+                into_one_hot_encoded_rows(&device, &expected_output_tokens, vocab_size)?;
+
+            let _actual_output_one_hot = chatbot.infer(&input_one_hot)?;
+            let loss = chatbot.loss(&expected_output_one_hot)?;
+            let loss: &TensorF32 = &loss.tensor().deref().borrow();
+            let loss: f32 = loss.try_into()?;
+            println!("Loss {}", loss);
+            chatbot.backward()?;
+            chatbot.step()?;
+        }
+
+        let input = &prompt[(prompt.len() - sequence_length)..];
+        let input_tokens = tokenizer.encode(&input);
+        let input_one_hot = into_one_hot_encoded_rows(&device, &input_tokens, vocab_size)?;
+
+        let actual_output_one_hot = chatbot.infer(&input_one_hot)?;
+
+        let actual_output_tokens =
+            get_row_argmaxes(&actual_output_one_hot.tensor().deref().borrow())?;
+        let actual_output = tokenizer.decode(&actual_output_tokens)?;
+
+        println!("Chatbot: {}", actual_output);
     }
 
     Ok(())
 }
 
-/// The                 dog
-/// dog                 ate
-/// ate         ->      my
-/// my                  homework
-/// homework            .
-/// .                   <|end_of_text|>
-/// See https://github.com/tinygrad/tinygrad/blob/master/examples/llama.py
-fn prepare_expected(input: &Tensor, device: &Device) -> Result<Tensor, Error> {
-    let input_f32: &TensorF32 = &input.tensor().deref().borrow();
-    let rows = input_f32.rows();
-    let cols = input_f32.cols();
-    let len = rows * cols;
-    let output = device.tensor(rows, cols, vec![0.0; len], &[], false, false);
-    {
-        let output_f32: &TensorF32 = &output.tensor().deref().borrow();
-        let mut output_values = output_f32.get_values()?;
-        let input_values = input_f32.get_values()?;
-        for row in 1..rows {
-            for col in 0..cols {
-                output_values[output_f32.index(row - 1, col)] =
-                    input_values[input_f32.index(row, col)];
-            }
-        }
-        output_f32.set_values(output_values);
-    }
-
-    Ok(output)
-}
-
-fn _read_prompt(sequence_length: usize) -> String {
-    let mut stdin_handle = std::io::stdin().lock();
-
+fn read_prompt() -> Result<String, Error> {
     let mut prompt = String::new();
-    while prompt.len() < sequence_length {
-        let mut byte = [0u8];
-        // Read a single byte
-        stdin_handle.read_exact(&mut byte).unwrap();
-
-        // Convert byte to char (may require additional logic for multi-byte characters)
-        let character = byte[0] as char;
-        prompt.push(character);
+    let stdin = io::stdin();
+    match stdin.read_line(&mut prompt) {
+        Ok(_) => Ok(prompt),
+        Err(_) => Err(Error::new(
+            file!(),
+            line!(),
+            column!(),
+            ErrorEnum::InputOutputError,
+        )),
     }
-    prompt
 }

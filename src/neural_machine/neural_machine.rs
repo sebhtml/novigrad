@@ -169,8 +169,6 @@ impl NeuralMachine {
                 self.print_instruction_inputs_outputs(instruction);
             }
 
-            // < 50 => Ok
-            if i < 100 {}
             instruction.forward()?;
 
             #[cfg(debug_assertions)]

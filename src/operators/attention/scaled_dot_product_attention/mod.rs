@@ -47,7 +47,6 @@ impl ScaledDotProductAttention {
 
 impl TernaryOperator for ScaledDotProductAttention {
     fn forward(&self, q: &Tensor, k: &Tensor, v: &Tensor) -> Result<Tensor, Error> {
-        //return Ok(q.clone());
         let weights = self.qk_matmul.forward(q, k)?;
         let scaled_weights = self.scale.forward(&weights)?;
         let masked_weights = match &self.mask {

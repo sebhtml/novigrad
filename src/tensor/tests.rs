@@ -242,9 +242,6 @@ fn transposed_lhs_matrix_multiplication_result() {
     let cols = rhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    // Lhs is (2, 3)
-    // Rhs is (2, 3)
-    // Result is (3, 3)
     TensorF32::gemm(true, false, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }

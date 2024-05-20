@@ -116,7 +116,6 @@ impl NaryOperator for Concat {
             .iter()
             .map(|t| t.gradient().deref().borrow().clone())
             .collect();
-        // TODO this instruction generates memory corruption...
         output.push_instruction(Instruction::new(
             OpCode::ConcatBackward,
             &[&inputs[0].gradient().deref().borrow_mut()],

@@ -54,7 +54,6 @@ fn mega_man_model_cuda() {
     test_model(ModelEnum::MegaMan, &device);
 }
 
-// TODO this test fails.
 #[test]
 fn mega_man_attention_model_cpu() {
     let device = Device::cpu();

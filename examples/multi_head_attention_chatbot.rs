@@ -26,7 +26,7 @@ impl ChatbotModel {
     /// Attention Is All You Need
     /// https://arxiv.org/abs/1706.03762
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
-        let n_embd = 512;
+        let n_embd = 384;
         let num_heads = 8;
 
         let embedding = Embedding::new(device, vocab_size, n_embd);

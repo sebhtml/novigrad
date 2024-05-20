@@ -2,8 +2,8 @@ use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
 use crate::{
-    devices::Device, instruction, BinaryOperator, Error, ErrorEnum, Instruction, LossOperator,
-    OpCode, Operator, Tensor, TensorF32, EPSILON,
+    devices::Device, instruction, loss_instruction, BinaryOperator, Error, ErrorEnum, Instruction,
+    LossOperator, OpCode, Operator, Tensor, TensorF32, EPSILON,
 };
 
 #[derive(Clone)]
@@ -93,26 +93,23 @@ impl BinaryOperator for CrossEntropyLoss {
             .tensor(1, 1, vec![0.0], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        output.push_instruction(instruction!(
+        output.push_instruction(loss_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Loss,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(loss_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Loss,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(loss_instruction!(
             OpCode::DynOperator(Rc::new(self.clone())),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Loss,
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];

@@ -57,7 +57,7 @@ macro_rules! inference_instruction {
 #[macro_export]
 macro_rules! loss_instruction {
     ( $opcode:expr, $inputs:expr, $outputs:expr, ) => {
-        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Loss)
+        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Loss,)
     };
 }
 

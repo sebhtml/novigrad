@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::{
     Add, AddBackward, Clip, Concat, ConcatBackward, Error, Gemm, Identity, IdentityBackward, Mul,
-    Operator, Reshape, ReshapeBackward, Scale, ScaleBackward, Softmax, Sub, TensorF32,
+    Operator, Reshape, ReshapeBackward, ScalarMul, ScalarMulBackward, Softmax, Sub, TensorF32,
 };
 
 #[derive(Clone, Debug)]
@@ -23,11 +23,11 @@ pub enum OpCode {
 
     /// Not ONNX-compliant
     /// TODO remove this op code and use Mul with broadcast
-    Scale(f32),
+    ScalarMul(f32),
 
     /// Not ONNX-compliant
     /// TODO remove this op code
-    ScaleBackward,
+    ScalarMulBackward,
 
     /// Not ONNX-compliant
     /// similar op codes:
@@ -122,8 +122,8 @@ impl Operator for OpCode {
             OpCode::Gemm(_, _, _) => "Gemm",
             OpCode::Add => "Add",
             OpCode::AddBackward => "AddBackward",
-            OpCode::Scale(_) => "Scale",
-            OpCode::ScaleBackward => "ScaleBackward",
+            OpCode::ScalarMul(_) => "Scale",
+            OpCode::ScalarMulBackward => "ScaleBackward",
             OpCode::Clip(_) => "Clip",
             OpCode::Mul => "Mul",
             OpCode::Identity => "Identity",
@@ -145,8 +145,8 @@ impl Operator for OpCode {
             }
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::AddBackward => AddBackward::execute(inputs, outputs),
-            OpCode::Scale(alpha) => Scale::execute(*alpha, inputs, outputs),
-            OpCode::ScaleBackward => ScaleBackward::execute(inputs, outputs),
+            OpCode::ScalarMul(alpha) => ScalarMul::execute(*alpha, inputs, outputs),
+            OpCode::ScalarMulBackward => ScalarMulBackward::execute(inputs, outputs),
             OpCode::Clip(clipped_norm) => Clip::execute(*clipped_norm, inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
             OpCode::Identity => Identity::execute(inputs, outputs),

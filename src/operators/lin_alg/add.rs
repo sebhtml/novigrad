@@ -5,7 +5,6 @@ use crate::{
     OpCode, Tensor, TensorF32,
 };
 
-#[derive(Clone)]
 pub struct Add {
     device: Device,
 }
@@ -40,12 +39,12 @@ impl BinaryOperator for Add {
         let inputs = [input_1, input_2];
         let outputs = [&output];
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));

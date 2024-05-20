@@ -1,7 +1,6 @@
 use crate::{devices::Device, BinaryOperator, Error, MatMul, Tensor, TensorF32, UnaryOperator};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-#[derive(Clone)]
 pub struct Embedding {
     embedding_table: Tensor,
     matmul: MatMul,

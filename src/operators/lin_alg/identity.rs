@@ -5,7 +5,6 @@ use crate::{
     TensorF32, UnaryOperator,
 };
 
-#[derive(Clone)]
 pub struct Identity {
     device: Device,
 }
@@ -36,12 +35,12 @@ impl UnaryOperator for Identity {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));

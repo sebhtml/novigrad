@@ -1,6 +1,5 @@
 use crate::{Error, TensorF32};
 
-#[derive(Clone)]
 pub struct Sub {}
 
 impl Sub {

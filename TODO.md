@@ -1,36 +1,38 @@
-- simplify Loss
-- Scale -> ScalarMul
 - use less Identity
+- Use Add instead of AddBackward
+- SigmoidBackward and SoftmaxBackward are Mul
+- remove dyn Operator from OpCode
+- delete trait Operator
 - remove word Backward
+
+--------------------------------
 - use macro for errors
+
 - Clip must take 2 inputs
 - make sure that all OpCode have >= 2 inputs
-
 - no values in OpCode, put them insteast in OpCodeArguments
 
 ---------------------
 
 - increase learning rates
-- remove dyn Operator from OpCode
-
 - try Tensor<f8>
-- delete trait Operator
-
 - Split Softmax in Exp + other operators to reuse them.
 
 -----------------
 
-- Use Add instead of AddBackward
-- rename Scale to ScalarMul
-- SigmoidBackward and SoftmaxBackward are Mul
 - simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
+
+== Regularization ==
+
+- implement Dropout
 
 == GPT-1 Transformer ==
 
-- implement Dropout
 - implement Gelu
 - implement LayerNorm
 - implement Transformer
+
+- simplify Loss
 
 == Logging ==
 

@@ -8,7 +8,6 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone)]
 pub struct Concat {
     device: Device,
 }
@@ -58,12 +57,12 @@ impl NaryOperator for Concat {
             .map(|t| t.tensor().deref().borrow().clone())
             .collect();
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));

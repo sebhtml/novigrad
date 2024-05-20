@@ -1,6 +1,5 @@
 use crate::{devices::Device, Error, TensorF32};
 
-#[derive(Clone)]
 pub struct Gemm {}
 
 impl Gemm {

@@ -5,13 +5,12 @@ use crate::{
     UnaryOperator,
 };
 
-#[derive(Clone)]
-pub struct Scale {
+pub struct ScalarMul {
     device: Device,
     alpha: f32,
 }
 
-impl Scale {
+impl ScalarMul {
     pub fn new(device: &Device, alpha: f32) -> Self {
         Self {
             device: device.clone(),
@@ -31,7 +30,7 @@ impl Scale {
     }
 }
 
-impl UnaryOperator for Scale {
+impl UnaryOperator for ScalarMul {
     fn forward(&self, input: &Tensor) -> Result<Tensor, crate::Error> {
         let input_t: &TensorF32 = &input.tensor().deref().borrow();
         let rows = input_t.rows();
@@ -43,24 +42,24 @@ impl UnaryOperator for Scale {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(self.alpha),
+            OpCode::ScalarMul(self.alpha),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         let inputs = [&output];
         let outputs = [input];
         output.push_instruction(gradient_instruction!(
-            OpCode::ScaleBackward,
+            OpCode::ScalarMulBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
@@ -68,9 +67,9 @@ impl UnaryOperator for Scale {
     }
 }
 
-pub struct ScaleBackward {}
+pub struct ScalarMulBackward {}
 
-impl ScaleBackward {
+impl ScalarMulBackward {
     pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
         let input = inputs[0];
         let output = outputs[0];

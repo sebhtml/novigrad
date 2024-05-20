@@ -8,7 +8,6 @@ use std::f32::consts::E;
 use std::ops::Deref;
 use std::rc::Rc;
 
-#[derive(Clone)]
 pub struct Softmax {
     device: Device,
     next_is_cross_entropy_loss: bool,
@@ -96,12 +95,12 @@ impl UnaryOperator for Softmax {
         let inputs = [input];
         let outputs = [&output];
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));

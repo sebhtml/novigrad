@@ -1,5 +1,5 @@
 use crate::{
-    BinaryOperator, Device, Error, Mask, MatMul, Scale, Softmax, Tensor, TernaryOperator,
+    BinaryOperator, Device, Error, Mask, MatMul, ScalarMul, Softmax, Tensor, TernaryOperator,
     UnaryOperator,
 };
 
@@ -8,10 +8,9 @@ mod tests;
 
 /// Attention Is All You Need
 /// https://arxiv.org/abs/1706.03762
-#[derive(Clone)]
 pub struct ScaledDotProductAttention {
     qk_matmul: MatMul,
-    scale: Scale,
+    scale: ScalarMul,
     mask: Option<Mask>,
     softmax: Softmax,
     matmul: MatMul,
@@ -21,7 +20,7 @@ impl ScaledDotProductAttention {
     pub fn try_new(device: &Device, rows: usize, cols: usize, mask: bool) -> Result<Self, Error> {
         let qk_matmul = MatMul::new(device, true);
         let alpha = 1.0 / f32::sqrt(cols as f32);
-        let scale = Scale::new(device, alpha);
+        let scale = ScalarMul::new(device, alpha);
         let mask = match mask {
             false => None,
             true => {

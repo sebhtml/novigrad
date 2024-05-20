@@ -87,7 +87,7 @@ impl BinaryOperator for ResidualSumOfSquares {
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
+            crate::Category::Loss,
         ));
         output.push_instruction(instruction!(
             OpCode::DynOperator(Rc::new(self.clone())),

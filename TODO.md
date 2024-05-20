@@ -1,8 +1,9 @@
+- simplify unconcat / concat
+- simplify Loss
+- use less Identity
 - rename loss, backward, step
 - use *_instruction! macros
 - no values in OpCode, put them insteast in OpCodeArguments
-- remove Identity
-- remove scopy
 - Scale -> ScalarMul
 - Clip must take 2 inputs
 - make sure that all OpCode have >= 2 inputs

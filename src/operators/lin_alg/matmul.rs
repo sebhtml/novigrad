@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, instruction, BinaryOperator, Error, ErrorEnum, Instruction, OpCode, Tensor,
-    TensorF32,
+    devices::Device, inference_instruction, instruction, BinaryOperator, Error, ErrorEnum,
+    Instruction, OpCode, Tensor, TensorF32,
 };
 
 #[derive(Clone)]
@@ -64,26 +64,23 @@ impl BinaryOperator for MatMul {
 
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Gemm(false, transb, false),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
         ));
 
         if input_1.gradient().deref().borrow().requires_grad() {

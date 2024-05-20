@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-use crate::{instruction, Device, Error, Instruction, OpCode, Tensor, TensorF32, UnaryOperator};
+use crate::{
+    inference_instruction, instruction, Device, Error, Instruction, OpCode, Tensor, TensorF32,
+    UnaryOperator,
+};
 
 #[derive(Clone)]
 pub struct Identity {
@@ -32,23 +35,20 @@ impl UnaryOperator for Identity {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Identity,
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
         ));
         let inputs = [&output];
         let outputs = [input];

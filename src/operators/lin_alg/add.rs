@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-use crate::{instruction, BinaryOperator, Device, Error, Instruction, OpCode, Tensor, TensorF32};
+use crate::{
+    inference_instruction, instruction, BinaryOperator, Device, Error, Instruction, OpCode, Tensor,
+    TensorF32,
+};
 
 #[derive(Clone)]
 pub struct Add {
@@ -36,26 +39,23 @@ impl BinaryOperator for Add {
                 .tensor(rows, cols, vec![0.0; len], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Add,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
         ));
         let inputs = [&output];
         let outputs = [input_1, input_2];

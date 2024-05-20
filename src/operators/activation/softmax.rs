@@ -1,5 +1,8 @@
 use crate::devices::Device;
-use crate::{instruction, Category, Instruction, OpCode, Operator, TensorF32, UnaryOperator};
+use crate::{
+    inference_instruction, instruction, Category, Instruction, OpCode, Operator, TensorF32,
+    UnaryOperator,
+};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -92,23 +95,20 @@ impl UnaryOperator for Softmax {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
         ));
-        output.push_instruction(instruction!(
+        output.push_instruction(inference_instruction!(
             OpCode::Softmax,
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
         ));
 
         if self.next_is_cross_entropy_loss {

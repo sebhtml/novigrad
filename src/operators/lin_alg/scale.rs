@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-use crate::{Device, Instruction, OpCode, Tensor, TensorF32, UnaryOperator};
+use crate::{
+    gradient_instruction, inference_instruction, Device, Instruction, OpCode, Tensor, TensorF32,
+    UnaryOperator,
+};
 
 #[derive(Clone)]
 pub struct Scale {
@@ -39,55 +42,27 @@ impl UnaryOperator for Scale {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(self.alpha),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
         let inputs = [&output];
         let outputs = [input];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(gradient_instruction!(
             OpCode::ScaleBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Gradient,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
         Ok(output)
     }

@@ -1,10 +1,9 @@
+use more_asserts::debug_assert_lt;
 use std::ops::Deref;
 
-use more_asserts::debug_assert_lt;
-
 use crate::{
-    BinaryOperator, Category, Device, Error, Instruction, LossOperator, OpCode, Operator,
-    OptimizerTrait, Tensor, TensorF32, UnaryModel,
+    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, LossOperator,
+    OpCode, Operator, OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
 pub struct NeuralMachine {
@@ -64,18 +63,8 @@ impl NeuralMachine {
                 let outputs: Vec<TensorF32> =
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
-                let clip_instruction = Instruction::new(
-                    OpCode::Clip(clipped_gradient_norm),
-                    &[],
-                    &outputs,
-                    instruction.category(),
-                    #[cfg(debug_assertions)]
-                    file!(),
-                    #[cfg(debug_assertions)]
-                    line!(),
-                    #[cfg(debug_assertions)]
-                    column!(),
-                );
+                let clip_instruction =
+                    gradient_instruction!(OpCode::Clip(clipped_gradient_norm), &[], &outputs,);
 
                 instructions.push(instruction.clone());
                 instructions.push(clip_instruction);
@@ -113,13 +102,13 @@ impl NeuralMachine {
         Ok(self.loss.clone())
     }
 
-    pub fn backward(&self) -> Result<(), Error> {
+    pub fn compute_gradient(&self) -> Result<(), Error> {
         self.forward(Category::Gradient)?;
 
         Ok(())
     }
 
-    pub fn step(&self) -> Result<(), Error> {
+    pub fn optimize(&self) -> Result<(), Error> {
         self.forward(Category::Optimization)?;
 
         Ok(())

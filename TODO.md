@@ -1,6 +1,23 @@
+- simplify unconcat / concat
+- simplify Loss
+- Scale -> ScalarMul
+- use less Identity
+- remove word Backward
+- use macro for errors
+- Clip must take 2 inputs
+- make sure that all OpCode have >= 2 inputs
+
+- no values in OpCode, put them insteast in OpCodeArguments
+
+---------------------
+
 - increase learning rates
 - remove dyn Operator from OpCode
+
+- try Tensor<f8>
 - delete trait Operator
+
+- Split Softmax in Exp + other operators to reuse them.
 
 -----------------
 

@@ -1,7 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, OpCode, Tensor, TensorF32,
+    devices::Device, gradient_instruction, inference_instruction, BinaryOperator, Error, ErrorEnum,
+    Instruction, OpCode, Tensor, TensorF32,
 };
 
 #[derive(Clone)]
@@ -63,79 +64,44 @@ impl BinaryOperator for MatMul {
 
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Gemm(false, transb, false),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
 
         if input_1.gradient().deref().borrow().requires_grad() {
-            output.push_instruction(Instruction::new(
+            output.push_instruction(gradient_instruction!(
                 OpCode::Gemm(true, false, transb),
                 &[
                     &input_0.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
                 ],
                 &[&input_1.gradient().deref().borrow()],
-                crate::Category::Gradient,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
         }
 
         if input_0.gradient().deref().borrow().requires_grad() {
-            output.push_instruction(Instruction::new(
+            output.push_instruction(gradient_instruction!(
                 OpCode::Gemm(false, !transb, false),
                 &[
                     &output.gradient().deref().borrow(),
                     &input_1.tensor().deref().borrow(),
                 ],
                 &[&input_0.gradient().deref().borrow()],
-                crate::Category::Gradient,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
         }
 

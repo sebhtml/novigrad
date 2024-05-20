@@ -1,6 +1,8 @@
 use std::ops::Deref;
 
-use crate::{Device, Error, Instruction, OpCode, OptimizerTrait, Tensor, TensorF32};
+use crate::{
+    optimization_instruction, Device, Error, Instruction, OpCode, OptimizerTrait, Tensor, TensorF32,
+};
 
 pub struct GradientDescent {
     learning_rate: f32,
@@ -23,56 +25,28 @@ impl OptimizerTrait for GradientDescent {
             let scaled_gradient =
                 device.tensor_f32(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()]);
 
-            instructions.push(Instruction::new(
+            instructions.push(optimization_instruction!(
                 OpCode::Scale(0.0),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
-                crate::Category::Optimization,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
 
-            instructions.push(Instruction::new(
+            instructions.push(optimization_instruction!(
                 OpCode::Add,
                 &[&scaled_gradient, gradient],
                 &[&scaled_gradient],
-                crate::Category::Optimization,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
 
-            instructions.push(Instruction::new(
+            instructions.push(optimization_instruction!(
                 OpCode::Scale(-self.learning_rate),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
-                crate::Category::Optimization,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
 
-            instructions.push(Instruction::new(
+            instructions.push(optimization_instruction!(
                 OpCode::Add,
                 &[tensor, &scaled_gradient],
                 &[tensor],
-                crate::Category::Optimization,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
         }
 

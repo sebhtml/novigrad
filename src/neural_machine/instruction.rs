@@ -1,6 +1,5 @@
-use std::rc::Rc;
-
 use crate::{Error, OpCode, Operator, TensorF32};
+use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Category {
@@ -22,6 +21,58 @@ pub struct Instruction {
     line: u32,
     #[cfg(debug_assertions)]
     column: u32,
+}
+
+#[cfg(debug_assertions)]
+#[macro_export]
+macro_rules! instruction {
+    ( $opcode:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
+        Instruction::new(
+            $opcode,
+            $inputs,
+            $outputs,
+            $category,
+            file!(),
+            line!(),
+            column!(),
+        )
+    };
+}
+
+#[cfg(not(debug_assertions))]
+#[macro_export]
+macro_rules! instruction {
+    ( $opcode:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
+        Instruction::new($opcode, $inputs, $outputs, $category)
+    };
+}
+
+#[macro_export]
+macro_rules! inference_instruction {
+    ( $opcode:expr, $inputs:expr, $outputs:expr, ) => {
+        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Inference,)
+    };
+}
+
+#[macro_export]
+macro_rules! loss_instruction {
+    ( $opcode:expr, $inputs:expr, $outputs:expr, ) => {
+        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Loss,)
+    };
+}
+
+#[macro_export]
+macro_rules! gradient_instruction {
+    ( $opcode:expr, $inputs:expr, $outputs:expr, ) => {
+        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Gradient,)
+    };
+}
+
+#[macro_export]
+macro_rules! optimization_instruction {
+    ( $opcode:expr, $inputs:expr, $outputs:expr, ) => {
+        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Optimization,)
+    };
 }
 
 impl Instruction {

@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-use crate::{devices::Device, Error, Instruction, OpCode, Tensor, TensorF32, UnaryOperator};
+use crate::{
+    devices::Device, gradient_instruction, inference_instruction, Error, Instruction, OpCode,
+    Tensor, TensorF32, UnaryOperator,
+};
 
 #[derive(Clone)]
 pub struct Reshape {
@@ -42,55 +45,27 @@ impl UnaryOperator for Reshape {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Reshape(self.output_size.clone()),
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
         let inputs = [&output];
         let outputs = [input];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(gradient_instruction!(
             OpCode::ReshapeBackward(self.input_size.clone()),
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Gradient,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
         Ok(output)
     }

@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-use crate::{BinaryOperator, Category, Device, Error, Instruction, OpCode, Tensor, TensorF32};
+use crate::{
+    gradient_instruction, inference_instruction, BinaryOperator, Device, Error, Instruction,
+    OpCode, Tensor, TensorF32,
+};
 
 #[derive(Clone)]
 pub struct Mul {
@@ -35,44 +38,23 @@ impl BinaryOperator for Mul {
                 .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Mul,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
 
         {
@@ -101,30 +83,16 @@ impl BinaryOperator for Mul {
                 let output_0 = inputs[0];
                 let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
 
-                output.push_instruction(Instruction::new(
+                output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
                     &[output_0, input_gradient],
                     &[&mut tmp],
-                    Category::Gradient,
-                    #[cfg(debug_assertions)]
-                    file!(),
-                    #[cfg(debug_assertions)]
-                    line!(),
-                    #[cfg(debug_assertions)]
-                    column!(),
                 ));
 
-                output.push_instruction(Instruction::new(
+                output.push_instruction(gradient_instruction!(
                     OpCode::Add,
                     &[&tmp, output_1_gradient],
                     &[output_1_gradient],
-                    Category::Gradient,
-                    #[cfg(debug_assertions)]
-                    file!(),
-                    #[cfg(debug_assertions)]
-                    line!(),
-                    #[cfg(debug_assertions)]
-                    column!(),
                 ));
             }
 
@@ -133,30 +101,16 @@ impl BinaryOperator for Mul {
                 let output_ = inputs[1];
                 let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
 
-                output.push_instruction(Instruction::new(
+                output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
                     &[output_, input_gradient],
                     &[&mut tmp],
-                    Category::Gradient,
-                    #[cfg(debug_assertions)]
-                    file!(),
-                    #[cfg(debug_assertions)]
-                    line!(),
-                    #[cfg(debug_assertions)]
-                    column!(),
                 ));
 
-                output.push_instruction(Instruction::new(
+                output.push_instruction(gradient_instruction!(
                     OpCode::Add,
                     &[&tmp, output_0_gradient],
                     &[output_0_gradient],
-                    Category::Gradient,
-                    #[cfg(debug_assertions)]
-                    file!(),
-                    #[cfg(debug_assertions)]
-                    line!(),
-                    #[cfg(debug_assertions)]
-                    column!(),
                 ));
             }
         }

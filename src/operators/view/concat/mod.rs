@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
-use crate::{Device, Error, Instruction, NaryOperator, OpCode, Tensor, TensorF32};
+use crate::{
+    gradient_instruction, inference_instruction, Device, Error, Instruction, NaryOperator, OpCode,
+    Tensor, TensorF32,
+};
 
 #[cfg(test)]
 mod tests;
@@ -74,41 +77,20 @@ impl NaryOperator for Concat {
             .iter()
             .map(|t| t.tensor().deref().borrow().clone())
             .collect();
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Concat,
             &inputs.iter().collect::<Vec<_>>(),
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
         let inputs = [&output];
         let outputs = inputs_n;
@@ -116,17 +98,10 @@ impl NaryOperator for Concat {
             .iter()
             .map(|t| t.gradient().deref().borrow().clone())
             .collect();
-        output.push_instruction(Instruction::new(
+        output.push_instruction(gradient_instruction!(
             OpCode::ConcatBackward,
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),
-            crate::Category::Gradient,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
         Ok(output)
     }

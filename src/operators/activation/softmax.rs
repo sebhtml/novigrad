@@ -1,5 +1,8 @@
 use crate::devices::Device;
-use crate::{Category, Instruction, OpCode, Operator, TensorF32, UnaryOperator};
+use crate::{
+    gradient_instruction, inference_instruction, Instruction, OpCode, Operator, TensorF32,
+    UnaryOperator,
+};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
@@ -92,63 +95,35 @@ impl UnaryOperator for Softmax {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(inference_instruction!(
             OpCode::Softmax,
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
-            crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
 
         if self.next_is_cross_entropy_loss {
-            output.push_instruction(Instruction::new(
+            output.push_instruction(gradient_instruction!(
                 OpCode::Add,
                 &[
                     &output.gradient().deref().borrow(),
                     &input.gradient().deref().borrow(),
                 ],
                 &[&input.gradient().deref().borrow()],
-                Category::Gradient,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
         } else {
             let inputs = [&output];
             let outputs = [input];
-            output.push_instruction(Instruction::new(
+            output.push_instruction(gradient_instruction!(
                 OpCode::DynOperator(Rc::new(SoftmaxBackward::new(&self.device))),
                 &[
                     &inputs[0].tensor().deref().borrow(),
@@ -156,13 +131,6 @@ impl UnaryOperator for Softmax {
                     &outputs[0].tensor().deref().borrow(),
                 ],
                 &[&outputs[0].gradient().deref().borrow()],
-                Category::Gradient,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
         }
 

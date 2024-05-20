@@ -126,7 +126,7 @@ impl NeuralMachine {
     }
 
     fn forward(&self, category: Category) -> Result<(), Error> {
-        let debug = true;
+        let debug = false;
         if debug {
             println!("Debugger for NeuralMachine forward pass");
         }

@@ -122,12 +122,42 @@ impl BinaryOperator for MatMul {
         }
 
         // Source code location: src/operators/lin_alg/matmul.rs 136 17
+        // Incompatible sizes in GEMM
+        // transa: true, transb: false, transpose_result: true
+        // A size: [32, 8]  B size:  [32, 8]  C size:  [32, 32]
+        //
+        // A size: [256, 8]  B size:  [32, 256]  C size:  [32, 8]
+        //println!("DEBUG-55    transb {}  input_0 {:?}, input_1 {:?}, output {:?},",
+        //    transb,
+        //    input_0.tensor().deref().borrow().size().deref().borrow(),
+        //    input_1.tensor().deref().borrow().size().deref().borrow(),
+        //    output.tensor().deref().borrow().size().deref().borrow(),
+        //);
+        /*
+        DEBUG-55    transb true  input_0 [32, 256], input_1 [8, 256], output [32, 8],
+
+                                  input_1
+        [32, 256]^T @ [32, 8] = [256, 8]^T
+
+        output                          input_0
+        [32, 8] [8, 256]                    =  [32, 256]
+
+        DEBUG-55    transb true  input_0 [32, 8], input_1 [8, 8], output [32, 8],
+        DEBUG-55    transb true  input_0 [32, 8], input_1 [8, 8], output [32, 8],
+        DEBUG-55    transb true  input_0 [32, 8], input_1 [8, 8], output [32, 8],
+        DEBUG-55    transb true  input_0 [32, 8], input_1 [32, 8], output [32, 32],
+        DEBUG-55    transb false  input_0 [32, 32], input_1 [32, 8], output [32, 8],
+        DEBUG-55    transb true  input_0 [32, 8], input_1 [8, 8], output [32, 8],
+        DEBUG-55    transb true  input_0 [32, 8], input_1 [256, 8], output [32, 256],
+
+                 */
+
         if input_0.gradient().deref().borrow().requires_grad() {
             output.push_instruction(Instruction::new(
-                OpCode::Gemm(true, transb, true),
+                OpCode::Gemm(false, !transb, false),
                 &[
-                    &input_1.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
+                    &input_1.tensor().deref().borrow(),
                 ],
                 &[&input_0.gradient().deref().borrow()],
                 crate::Category::Gradient,

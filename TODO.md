@@ -1,4 +1,4 @@
-- make multi_head_attention_chatbot work on cpu
+- increase learning rates
 - remove dyn Operator from OpCode
 - delete trait Operator
 

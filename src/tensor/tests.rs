@@ -686,6 +686,6 @@ fn copy_slice() {
         ],
     );
 
-    TensorF32::copy_slice(&from, 0, 0, &mut actual, 1, 2).unwrap();
+    TensorF32::copy_slice(from.cols(), &from, 0, 0, &mut actual, 1, 2).unwrap();
     assert_eq!(actual, expected);
 }

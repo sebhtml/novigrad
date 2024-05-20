@@ -221,6 +221,7 @@ impl TensorF32 {
     }
 
     pub fn copy_slice(
+        n: usize,
         src: &TensorF32,
         src_row: usize,
         src_col: usize,
@@ -229,7 +230,7 @@ impl TensorF32 {
         dst_col: usize,
     ) -> Result<(), Error> {
         let device = &src.device;
-        let n = src.cols() as i32;
+        let n = n as i32;
         let incx = 1;
         let incy = 1;
         let x = src.as_ptr().wrapping_add(src_row * src.cols() + src_col);

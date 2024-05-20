@@ -27,7 +27,7 @@ impl Concat {
             for src_row in 0..input_rows {
                 let dst_row = src_row;
                 let dst_col = input_index * input_cols;
-                TensorF32::copy_slice(&src, src_row, src_col, &dst, dst_row, dst_col)?;
+                TensorF32::copy_slice(src.cols(), &src, src_row, src_col, &dst, dst_row, dst_col)?;
             }
         }
         Ok(())
@@ -35,15 +35,15 @@ impl Concat {
 
     pub fn unconcat(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let src = inputs[0];
-        for input_index in 0..outputs.len() {
-            let dst = outputs[input_index];
+        for output_index in 0..outputs.len() {
+            let dst = outputs[output_index];
             let dst_col = 0;
             let input_rows = dst.rows();
             let input_cols = dst.cols();
             for dst_row in 0..input_rows {
                 let src_row = dst_row;
-                let src_col = input_index * input_cols;
-                TensorF32::copy_slice(src, src_row, src_col, dst, dst_row, dst_col)?;
+                let src_col = output_index * input_cols;
+                TensorF32::copy_slice(dst.cols(), src, src_row, src_col, dst, dst_row, dst_col)?;
             }
         }
         Ok(())

@@ -188,7 +188,7 @@ impl NeuralMachine {
 
             if debug {
                 println!("AFTER FORWARD");
-                let maybe_corrupted_instruction = 45;
+                let maybe_corrupted_instruction = 81;
                 println!(
                     "After forward for instruction {} : instruction {}, inputs: {}",
                     i,

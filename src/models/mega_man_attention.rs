@@ -21,7 +21,7 @@ impl MegaManAttentionModel {
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
         let _batch_size = 1;
         let n_embd = 384;
-        let num_heads = 1; // TODO use 8
+        let num_heads = 8;
         let _n_layer = 1;
         let _dropout = 0.1;
         let _block_size = 2048;

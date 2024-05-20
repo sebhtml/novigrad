@@ -108,7 +108,7 @@ impl NeuralMachine {
         Ok(())
     }
 
-    pub fn step(&self) -> Result<(), Error> {
+    pub fn optimize(&self) -> Result<(), Error> {
         self.forward(Category::Optimization)?;
 
         Ok(())

@@ -146,8 +146,8 @@ fn main() -> Result<(), Error> {
                 println!("Loss {}", loss);
             }
 
-            chatbot.backward()?;
-            chatbot.step()?;
+            chatbot.compute_gradient()?;
+            chatbot.optimize()?;
         }
 
         let input = &prompt[(prompt.len() - sequence_length)..];

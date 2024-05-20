@@ -303,7 +303,7 @@ fn train_with_one_example(
     let _output = program.infer(input)?;
     let _loss = program.loss(output)?;
     program.compute_gradient()?;
-    program.step()?;
+    program.optimize()?;
 
     Ok(())
 }

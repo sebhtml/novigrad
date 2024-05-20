@@ -1,8 +1,7 @@
 use std::ops::Deref;
 
 use crate::{
-    instruction, optimization_instruction, Device, Error, Instruction, OpCode, OptimizerTrait,
-    Tensor, TensorF32,
+    optimization_instruction, Device, Error, Instruction, OpCode, OptimizerTrait, Tensor, TensorF32,
 };
 
 pub struct GradientDescent {
@@ -32,25 +31,22 @@ impl OptimizerTrait for GradientDescent {
                 &[&scaled_gradient],
             ));
 
-            instructions.push(instruction!(
+            instructions.push(optimization_instruction!(
                 OpCode::Add,
                 &[&scaled_gradient, gradient],
                 &[&scaled_gradient],
-                crate::Category::Optimization,
             ));
 
-            instructions.push(instruction!(
+            instructions.push(optimization_instruction!(
                 OpCode::Scale(-self.learning_rate),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
-                crate::Category::Optimization,
             ));
 
-            instructions.push(instruction!(
+            instructions.push(optimization_instruction!(
                 OpCode::Add,
                 &[tensor, &scaled_gradient],
                 &[tensor],
-                crate::Category::Optimization,
             ));
         }
 

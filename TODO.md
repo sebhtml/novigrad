@@ -1,12 +1,14 @@
+- remove word Backward
+- use macro for errors
 - simplify unconcat / concat
 - simplify Loss
-- use less Identity
-- rename loss, backward, step
 - use *_instruction! macros
-- no values in OpCode, put them insteast in OpCodeArguments
 - Scale -> ScalarMul
 - Clip must take 2 inputs
 - make sure that all OpCode have >= 2 inputs
+
+- no values in OpCode, put them insteast in OpCodeArguments
+- use less Identity
 
 ---------------------
 

@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    inference_instruction, instruction, Device, Error, Instruction, NaryOperator, OpCode, Tensor,
-    TensorF32,
+    gradient_instruction, inference_instruction, Device, Error, Instruction, NaryOperator, OpCode,
+    Tensor, TensorF32,
 };
 
 #[cfg(test)]
@@ -98,11 +98,10 @@ impl NaryOperator for Concat {
             .iter()
             .map(|t| t.gradient().deref().borrow().clone())
             .collect();
-        output.push_instruction(instruction!(
+        output.push_instruction(gradient_instruction!(
             OpCode::ConcatBackward,
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),
-            crate::Category::Gradient,
         ));
         Ok(output)
     }

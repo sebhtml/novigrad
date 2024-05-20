@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, inference_instruction, instruction, Error, Instruction, OpCode, Tensor,
-    TensorF32, UnaryOperator,
+    devices::Device, gradient_instruction, inference_instruction, Error, Instruction, OpCode,
+    Tensor, TensorF32, UnaryOperator,
 };
 
 #[derive(Clone)]
@@ -62,11 +62,10 @@ impl UnaryOperator for Reshape {
         ));
         let inputs = [&output];
         let outputs = [input];
-        output.push_instruction(instruction!(
+        output.push_instruction(gradient_instruction!(
             OpCode::ReshapeBackward(self.input_size.clone()),
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Gradient,
         ));
         Ok(output)
     }

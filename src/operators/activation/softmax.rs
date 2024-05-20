@@ -1,6 +1,6 @@
 use crate::devices::Device;
 use crate::{
-    inference_instruction, instruction, Category, Instruction, OpCode, Operator, TensorF32,
+    gradient_instruction, inference_instruction, Instruction, OpCode, Operator, TensorF32,
     UnaryOperator,
 };
 use crate::{Error, Tensor};
@@ -112,19 +112,18 @@ impl UnaryOperator for Softmax {
         ));
 
         if self.next_is_cross_entropy_loss {
-            output.push_instruction(instruction!(
+            output.push_instruction(gradient_instruction!(
                 OpCode::Add,
                 &[
                     &output.gradient().deref().borrow(),
                     &input.gradient().deref().borrow(),
                 ],
                 &[&input.gradient().deref().borrow()],
-                Category::Gradient,
             ));
         } else {
             let inputs = [&output];
             let outputs = [input];
-            output.push_instruction(instruction!(
+            output.push_instruction(gradient_instruction!(
                 OpCode::DynOperator(Rc::new(SoftmaxBackward::new(&self.device))),
                 &[
                     &inputs[0].tensor().deref().borrow(),
@@ -132,7 +131,6 @@ impl UnaryOperator for Softmax {
                     &outputs[0].tensor().deref().borrow(),
                 ],
                 &[&outputs[0].gradient().deref().borrow()],
-                Category::Gradient,
             ));
         }
 

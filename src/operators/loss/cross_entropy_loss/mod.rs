@@ -2,8 +2,8 @@ use std::{ops::Deref, rc::Rc};
 
 use super::LossFunction;
 use crate::{
-    devices::Device, instruction, loss_instruction, BinaryOperator, Error, ErrorEnum, Instruction,
-    LossOperator, OpCode, Operator, Tensor, TensorF32, EPSILON,
+    devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
+    Instruction, LossOperator, OpCode, Operator, Tensor, TensorF32, EPSILON,
 };
 
 #[derive(Clone)]
@@ -113,14 +113,13 @@ impl BinaryOperator for CrossEntropyLoss {
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
-        output.push_instruction(instruction!(
+        output.push_instruction(gradient_instruction!(
             OpCode::DynOperator(Rc::new(CrossEntropyLossBackward::default())),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
             ],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Gradient,
         ));
         Ok(output)
     }

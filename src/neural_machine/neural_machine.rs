@@ -102,7 +102,7 @@ impl NeuralMachine {
         Ok(self.loss.clone())
     }
 
-    pub fn backward(&self) -> Result<(), Error> {
+    pub fn compute_gradient(&self) -> Result<(), Error> {
         self.forward(Category::Gradient)?;
 
         Ok(())

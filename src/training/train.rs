@@ -302,7 +302,7 @@ fn train_with_one_example(
 ) -> Result<(), Error> {
     let _output = program.infer(input)?;
     let _loss = program.loss(output)?;
-    program.backward()?;
+    program.compute_gradient()?;
     program.step()?;
 
     Ok(())

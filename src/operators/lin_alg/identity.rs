@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    inference_instruction, instruction, Device, Error, Instruction, OpCode, Tensor, TensorF32,
-    UnaryOperator,
+    gradient_instruction, inference_instruction, Device, Error, Instruction, OpCode, Tensor,
+    TensorF32, UnaryOperator,
 };
 
 #[derive(Clone)]
@@ -52,11 +52,10 @@ impl UnaryOperator for Identity {
         ));
         let inputs = [&output];
         let outputs = [input];
-        output.push_instruction(instruction!(
+        output.push_instruction(gradient_instruction!(
             OpCode::IdentityBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Gradient,
         ));
         Ok(output)
     }

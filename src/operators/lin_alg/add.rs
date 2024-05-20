@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    inference_instruction, instruction, BinaryOperator, Device, Error, Instruction, OpCode, Tensor,
-    TensorF32,
+    gradient_instruction, inference_instruction, BinaryOperator, Device, Error, Instruction,
+    OpCode, Tensor, TensorF32,
 };
 
 #[derive(Clone)]
@@ -59,14 +59,13 @@ impl BinaryOperator for Add {
         ));
         let inputs = [&output];
         let outputs = [input_1, input_2];
-        output.push_instruction(instruction!(
+        output.push_instruction(gradient_instruction!(
             OpCode::AddBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[
                 &outputs[0].gradient().deref().borrow(),
                 &outputs[1].gradient().deref().borrow(),
             ],
-            crate::Category::Gradient,
         ));
         Ok(output)
     }

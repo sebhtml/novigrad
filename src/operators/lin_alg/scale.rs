@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use crate::{
-    inference_instruction, instruction, Device, Instruction, OpCode, Tensor, TensorF32,
+    gradient_instruction, inference_instruction, Device, Instruction, OpCode, Tensor, TensorF32,
     UnaryOperator,
 };
 
@@ -59,11 +59,10 @@ impl UnaryOperator for Scale {
         ));
         let inputs = [&output];
         let outputs = [input];
-        output.push_instruction(instruction!(
+        output.push_instruction(gradient_instruction!(
             OpCode::ScaleBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
-            crate::Category::Gradient,
         ));
         Ok(output)
     }

@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use crate::{
-    inference_instruction, instruction, BinaryOperator, Category, Device, Error, Instruction,
+    gradient_instruction, inference_instruction, BinaryOperator, Device, Error, Instruction,
     OpCode, Tensor, TensorF32,
 };
 
@@ -83,18 +83,16 @@ impl BinaryOperator for Mul {
                 let output_0 = inputs[0];
                 let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
 
-                output.push_instruction(instruction!(
+                output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
                     &[output_0, input_gradient],
                     &[&mut tmp],
-                    Category::Gradient,
                 ));
 
-                output.push_instruction(instruction!(
+                output.push_instruction(gradient_instruction!(
                     OpCode::Add,
                     &[&tmp, output_1_gradient],
                     &[output_1_gradient],
-                    Category::Gradient,
                 ));
             }
 
@@ -103,18 +101,16 @@ impl BinaryOperator for Mul {
                 let output_ = inputs[1];
                 let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
 
-                output.push_instruction(instruction!(
+                output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
                     &[output_, input_gradient],
                     &[&mut tmp],
-                    Category::Gradient,
                 ));
 
-                output.push_instruction(instruction!(
+                output.push_instruction(gradient_instruction!(
                     OpCode::Add,
                     &[&tmp, output_0_gradient],
                     &[output_0_gradient],
-                    Category::Gradient,
                 ));
             }
         }

@@ -70,19 +70,13 @@ impl BinaryOperator for MatMul {
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(instruction!(
             OpCode::Gemm(false, transb, false),
             &[
                 &inputs[0].tensor().deref().borrow(),
@@ -90,16 +84,10 @@ impl BinaryOperator for MatMul {
             ],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
 
         if input_1.gradient().deref().borrow().requires_grad() {
-            output.push_instruction(Instruction::new(
+            output.push_instruction(instruction!(
                 OpCode::Gemm(true, false, transb),
                 &[
                     &input_0.tensor().deref().borrow(),
@@ -107,17 +95,11 @@ impl BinaryOperator for MatMul {
                 ],
                 &[&input_1.gradient().deref().borrow()],
                 crate::Category::Gradient,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
         }
 
         if input_0.gradient().deref().borrow().requires_grad() {
-            output.push_instruction(Instruction::new(
+            output.push_instruction(instruction!(
                 OpCode::Gemm(false, !transb, false),
                 &[
                     &output.gradient().deref().borrow(),
@@ -125,12 +107,6 @@ impl BinaryOperator for MatMul {
                 ],
                 &[&input_0.gradient().deref().borrow()],
                 crate::Category::Gradient,
-                #[cfg(debug_assertions)]
-                file!(),
-                #[cfg(debug_assertions)]
-                line!(),
-                #[cfg(debug_assertions)]
-                column!(),
             ));
         }
 

@@ -1,6 +1,6 @@
-use std::ops::Deref;
-
+use crate::instruction;
 use more_asserts::debug_assert_lt;
+use std::ops::Deref;
 
 use crate::{
     BinaryOperator, Category, Device, Error, Instruction, LossOperator, OpCode, Operator,
@@ -64,17 +64,11 @@ impl NeuralMachine {
                 let outputs: Vec<TensorF32> =
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
-                let clip_instruction = Instruction::new(
+                let clip_instruction = instruction!(
                     OpCode::Clip(clipped_gradient_norm),
                     &[],
                     &outputs,
                     instruction.category(),
-                    #[cfg(debug_assertions)]
-                    file!(),
-                    #[cfg(debug_assertions)]
-                    line!(),
-                    #[cfg(debug_assertions)]
-                    column!(),
                 );
 
                 instructions.push(instruction.clone());

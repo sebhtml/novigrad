@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{BinaryOperator, Device, Error, Instruction, OpCode, Tensor, TensorF32};
+use crate::{instruction, BinaryOperator, Device, Error, Instruction, OpCode, Tensor, TensorF32};
 
 #[derive(Clone)]
 pub struct Add {
@@ -36,31 +36,19 @@ impl BinaryOperator for Add {
                 .tensor(rows, cols, vec![0.0; len], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
-        output.push_instruction(Instruction::new(
+        output.push_instruction(instruction!(
             OpCode::Add,
             &[
                 &inputs[0].tensor().deref().borrow(),
@@ -68,16 +56,10 @@ impl BinaryOperator for Add {
             ],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
         let inputs = [&output];
         let outputs = [input_1, input_2];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(instruction!(
             OpCode::AddBackward,
             &[&inputs[0].gradient().deref().borrow()],
             &[
@@ -85,12 +67,6 @@ impl BinaryOperator for Add {
                 &outputs[1].gradient().deref().borrow(),
             ],
             crate::Category::Gradient,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
         Ok(output)
     }

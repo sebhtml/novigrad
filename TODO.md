@@ -1,3 +1,4 @@
+- increase learning rates
 - remove dyn Operator from OpCode
 - delete trait Operator
 

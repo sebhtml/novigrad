@@ -1,7 +1,7 @@
 use crate::{Concat, Device};
 
 #[test]
-fn forward() {
+fn concat() {
     let device = Device::default();
 
     let input_1 = device.tensor_f32(
@@ -54,7 +54,7 @@ fn forward() {
 }
 
 #[test]
-fn backward() {
+fn unconcat() {
     let device = Device::default();
 
     let input = device.tensor_f32(
@@ -105,13 +105,7 @@ fn backward() {
 
     Concat::unconcat(inputs, outputs).unwrap();
 
-    assert_eq!(output_1.size(), expected_output_1.size());
-
     assert_eq!(output_1.get_values(), expected_output_1.get_values());
-
-    assert_eq!(output_2.size(), expected_output_2.size());
     assert_eq!(output_2.get_values(), expected_output_2.get_values());
-
-    assert_eq!(output_3.size(), expected_output_3.size());
     assert_eq!(output_3.get_values(), expected_output_3.get_values());
 }

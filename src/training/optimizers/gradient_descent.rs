@@ -28,6 +28,12 @@ impl OptimizerTrait for GradientDescent {
                 &[&scaled_gradient],
                 &[&scaled_gradient],
                 crate::Category::Optimization,
+                #[cfg(debug_assertions)]
+                file!(),
+                #[cfg(debug_assertions)]
+                line!(),
+                #[cfg(debug_assertions)]
+                column!(),
             ));
 
             instructions.push(Instruction::new(
@@ -35,6 +41,12 @@ impl OptimizerTrait for GradientDescent {
                 &[&scaled_gradient, gradient],
                 &[&scaled_gradient],
                 crate::Category::Optimization,
+                #[cfg(debug_assertions)]
+                file!(),
+                #[cfg(debug_assertions)]
+                line!(),
+                #[cfg(debug_assertions)]
+                column!(),
             ));
 
             instructions.push(Instruction::new(
@@ -42,6 +54,12 @@ impl OptimizerTrait for GradientDescent {
                 &[&scaled_gradient],
                 &[&scaled_gradient],
                 crate::Category::Optimization,
+                #[cfg(debug_assertions)]
+                file!(),
+                #[cfg(debug_assertions)]
+                line!(),
+                #[cfg(debug_assertions)]
+                column!(),
             ));
 
             instructions.push(Instruction::new(
@@ -49,6 +67,12 @@ impl OptimizerTrait for GradientDescent {
                 &[tensor, &scaled_gradient],
                 &[tensor],
                 crate::Category::Optimization,
+                #[cfg(debug_assertions)]
+                file!(),
+                #[cfg(debug_assertions)]
+                line!(),
+                #[cfg(debug_assertions)]
+                column!(),
             ));
         }
 

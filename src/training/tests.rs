@@ -43,9 +43,21 @@ fn simple_model_cuda() {
 }
 
 #[test]
+fn mega_man_model_cpu() {
+    let device = Device::cpu();
+    test_model(ModelEnum::MegaMan, &device);
+}
+
+#[test]
 fn mega_man_model_cuda() {
     let device = Device::cuda().unwrap();
     test_model(ModelEnum::MegaMan, &device);
+}
+
+#[test]
+fn mega_man_attention_model_cpu() {
+    let device = Device::cpu();
+    test_model(ModelEnum::MegaManAttention, &device);
 }
 
 #[test]

@@ -40,12 +40,24 @@ impl BinaryOperator for Mul {
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Mul,
@@ -55,6 +67,12 @@ impl BinaryOperator for Mul {
             ],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
 
         {
@@ -88,6 +106,12 @@ impl BinaryOperator for Mul {
                     &[output_0, input_gradient],
                     &[&mut tmp],
                     Category::Gradient,
+                    #[cfg(debug_assertions)]
+                    file!(),
+                    #[cfg(debug_assertions)]
+                    line!(),
+                    #[cfg(debug_assertions)]
+                    column!(),
                 ));
 
                 output.push_instruction(Instruction::new(
@@ -95,6 +119,12 @@ impl BinaryOperator for Mul {
                     &[&tmp, output_1_gradient],
                     &[output_1_gradient],
                     Category::Gradient,
+                    #[cfg(debug_assertions)]
+                    file!(),
+                    #[cfg(debug_assertions)]
+                    line!(),
+                    #[cfg(debug_assertions)]
+                    column!(),
                 ));
             }
 
@@ -108,6 +138,12 @@ impl BinaryOperator for Mul {
                     &[output_, input_gradient],
                     &[&mut tmp],
                     Category::Gradient,
+                    #[cfg(debug_assertions)]
+                    file!(),
+                    #[cfg(debug_assertions)]
+                    line!(),
+                    #[cfg(debug_assertions)]
+                    column!(),
                 ));
 
                 output.push_instruction(Instruction::new(
@@ -115,6 +151,12 @@ impl BinaryOperator for Mul {
                     &[&tmp, output_0_gradient],
                     &[output_0_gradient],
                     Category::Gradient,
+                    #[cfg(debug_assertions)]
+                    file!(),
+                    #[cfg(debug_assertions)]
+                    line!(),
+                    #[cfg(debug_assertions)]
+                    column!(),
                 ));
             }
         }

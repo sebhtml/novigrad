@@ -97,18 +97,36 @@ impl UnaryOperator for Softmax {
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Softmax,
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
 
         if self.next_is_cross_entropy_loss {
@@ -120,6 +138,12 @@ impl UnaryOperator for Softmax {
                 ],
                 &[&input.gradient().deref().borrow()],
                 Category::Gradient,
+                #[cfg(debug_assertions)]
+                file!(),
+                #[cfg(debug_assertions)]
+                line!(),
+                #[cfg(debug_assertions)]
+                column!(),
             ));
         } else {
             let inputs = [&output];
@@ -133,6 +157,12 @@ impl UnaryOperator for Softmax {
                 ],
                 &[&outputs[0].gradient().deref().borrow()],
                 Category::Gradient,
+                #[cfg(debug_assertions)]
+                file!(),
+                #[cfg(debug_assertions)]
+                line!(),
+                #[cfg(debug_assertions)]
+                column!(),
             ));
         }
 

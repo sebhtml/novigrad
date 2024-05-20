@@ -41,12 +41,24 @@ impl BinaryOperator for Add {
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Add,
@@ -56,6 +68,12 @@ impl BinaryOperator for Add {
             ],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         let inputs = [&output];
         let outputs = [input_1, input_2];
@@ -67,6 +85,12 @@ impl BinaryOperator for Add {
                 &outputs[1].gradient().deref().borrow(),
             ],
             crate::Category::Gradient,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         Ok(output)
     }

@@ -70,7 +70,8 @@ impl Model for ChatbotModel {
 fn main() -> Result<(), Error> {
     let debug = true;
     let print_in_console = true;
-    let device = Device::cuda().unwrap();
+    let device = Device::cuda()?;
+    //let device = Device::cpu();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
     let vocab_size = tokenizer.vocab_size();
@@ -144,6 +145,7 @@ fn main() -> Result<(), Error> {
             if print_in_console {
                 println!("Loss {}", loss);
             }
+
             chatbot.backward()?;
             chatbot.step()?;
         }

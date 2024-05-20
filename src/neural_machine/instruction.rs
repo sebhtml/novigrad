@@ -16,6 +16,12 @@ pub struct Instruction {
     inputs: Rc<Vec<TensorF32>>,
     outputs: Rc<Vec<TensorF32>>,
     category: Category,
+    #[cfg(debug_assertions)]
+    file: String,
+    #[cfg(debug_assertions)]
+    line: u32,
+    #[cfg(debug_assertions)]
+    column: u32,
 }
 
 impl Instruction {
@@ -24,15 +30,48 @@ impl Instruction {
         inputs: &[&TensorF32],
         outputs: &[&TensorF32],
         category: Category,
+        #[cfg(debug_assertions)] file: &str,
+        #[cfg(debug_assertions)] line: u32,
+        #[cfg(debug_assertions)] column: u32,
     ) -> Self {
-        let inputs: Vec<TensorF32> = inputs.into_iter().map(|x| (*x).clone()).collect();
-        let outputs: Vec<TensorF32> = outputs.into_iter().map(|x| (*x).clone()).collect();
+        let inputs: Vec<TensorF32> = inputs
+            .to_owned()
+            .into_iter()
+            .map(|x| (*x).clone())
+            .collect();
+        let outputs: Vec<TensorF32> = outputs
+            .to_owned()
+            .into_iter()
+            .map(|x| (*x).clone())
+            .collect();
+
         Self {
             opcode,
             inputs: inputs.into(),
             outputs: outputs.into(),
             category,
+            #[cfg(debug_assertions)]
+            file: file.into(),
+            #[cfg(debug_assertions)]
+            line,
+            #[cfg(debug_assertions)]
+            column,
         }
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn file(&self) -> &String {
+        &self.file
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn line(&self) -> u32 {
+        self.line
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn column(&self) -> u32 {
+        self.column
     }
 
     pub fn category(&self) -> Category {

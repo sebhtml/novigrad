@@ -1,5 +1,7 @@
 use std::ops::Deref;
 
+use more_asserts::debug_assert_lt;
+
 use crate::{
     BinaryOperator, Category, Device, Error, Instruction, LossOperator, OpCode, Operator,
     OptimizerTrait, Tensor, TensorF32, UnaryModel,
@@ -67,6 +69,12 @@ impl NeuralMachine {
                     &[],
                     &outputs,
                     instruction.category(),
+                    #[cfg(debug_assertions)]
+                    file!(),
+                    #[cfg(debug_assertions)]
+                    line!(),
+                    #[cfg(debug_assertions)]
+                    column!(),
                 );
 
                 instructions.push(instruction.clone());
@@ -128,12 +136,18 @@ impl NeuralMachine {
         for (i, instruction) in self
             .instructions
             .iter()
-            .filter(|i| i.category() == category)
             .enumerate()
+            .filter(|(_, i)| i.category() == category)
         {
             if debug {
                 println!("----------------------------------");
-                println!("Debugging instruction {}", i);
+                println!(
+                    "Debugging instruction {} {} with {} inputs and {} outputs",
+                    i,
+                    instruction.opcode().name(),
+                    instruction.inputs().len(),
+                    instruction.outputs().len(),
+                );
             }
 
             #[cfg(debug_assertions)]
@@ -172,6 +186,15 @@ impl NeuralMachine {
 
             if debug {
                 println!("AFTER FORWARD");
+                let maybe_corrupted_instruction = 81;
+                println!(
+                    "After forward for instruction {} : instruction {}, inputs: {}",
+                    i,
+                    maybe_corrupted_instruction,
+                    self.instructions[maybe_corrupted_instruction]
+                        .inputs()
+                        .len()
+                );
                 self.print_instruction(i, instruction);
                 self.print_instruction_inputs_outputs(instruction);
             }
@@ -247,22 +270,30 @@ impl NeuralMachine {
     }
 
     fn print_instruction(&self, i: usize, instruction: &Instruction) {
+        let opcode = instruction.opcode().name();
+        debug_assert_lt!(instruction.inputs().len(), 10);
+        let inputs = instruction
+            .inputs()
+            .iter()
+            .map(|x| x.name())
+            .collect::<Vec<_>>()
+            .join(" ");
+        let outputs = instruction
+            .outputs()
+            .iter()
+            .map(|x| x.name())
+            .collect::<Vec<_>>()
+            .join(" ");
         println!(
             "{}: INSTRUCTION    {}    {}    {}",
-            i,
-            instruction.opcode().name(),
-            instruction
-                .inputs()
-                .iter()
-                .map(|x| x.name())
-                .collect::<Vec<_>>()
-                .join(" "),
-            instruction
-                .outputs()
-                .iter()
-                .map(|x| x.name())
-                .collect::<Vec<_>>()
-                .join(" ")
+            i, opcode, inputs, outputs,
+        );
+        #[cfg(debug_assertions)]
+        println!(
+            "Source code location: {} {} {}",
+            instruction.file(),
+            instruction.line(),
+            instruction.column(),
         );
     }
 

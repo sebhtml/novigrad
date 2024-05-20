@@ -260,9 +260,9 @@ impl TensorF32 {
                 );
                 println!(
                     "A size: {:?}  B size:  {:?}  C size:  {:?}",
-                    a.size(),
-                    b.size(),
-                    c.size()
+                    a.size().deref().borrow(),
+                    b.size().deref().borrow(),
+                    c.size().deref().borrow(),
                 );
                 debug_assert!(false);
                 Err(error)
@@ -331,6 +331,23 @@ impl TensorF32 {
                     ErrorEnum::IncompatibleTensorShapes,
                 ));
             }
+            if a.cols() != c.rows() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+            if b.cols() != c.cols() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+
             let (m, n, k) = (a.cols(), b.cols(), a.rows());
 
             device.sgemm(
@@ -350,6 +367,22 @@ impl TensorF32 {
             )
         } else if !transa && transb && !transpose_result {
             if a.cols() != b.cols() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+            if a.rows() != c.rows() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+            if b.rows() != c.cols() {
                 return Err(Error::new(
                     file!(),
                     line!(),
@@ -383,6 +416,22 @@ impl TensorF32 {
                     ErrorEnum::IncompatibleTensorShapes,
                 ));
             }
+            if a.cols() != c.rows() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+            if b.rows() != c.cols() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
             let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
             device.sgemm(
@@ -409,6 +458,22 @@ impl TensorF32 {
                     ErrorEnum::IncompatibleTensorShapes,
                 ));
             }
+            if a.cols() != c.cols() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+            if b.rows() != c.rows() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
             let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
             device.sgemm(
@@ -428,6 +493,22 @@ impl TensorF32 {
             )
         } else if transa && !transb && transpose_result {
             if a.rows() != b.rows() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+            if a.cols() != c.cols() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+            if b.cols() != c.rows() {
                 return Err(Error::new(
                     file!(),
                     line!(),

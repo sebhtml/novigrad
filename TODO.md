@@ -1,4 +1,3 @@
-- simplify unconcat / concat
 - simplify Loss
 - Scale -> ScalarMul
 - use less Identity

@@ -1,4 +1,4 @@
-use crate::{Concat, Device};
+use crate::{Concat, ConcatBackward, Device};
 
 #[test]
 fn concat() {
@@ -48,7 +48,7 @@ fn concat() {
 
     let inputs = [&input_1, &input_2, &input_3];
     let outputs = [&output];
-    Concat::concat(&inputs, &outputs).unwrap();
+    Concat::execute(&inputs, &outputs).unwrap();
     assert_eq!(output.size(), expected.size());
     assert_eq!(output.get_values(), expected.get_values());
 }
@@ -103,7 +103,7 @@ fn unconcat() {
         ],
     );
 
-    Concat::unconcat(inputs, outputs).unwrap();
+    ConcatBackward::execute(inputs, outputs).unwrap();
 
     assert_eq!(output_1.get_values(), expected_output_1.get_values());
     assert_eq!(output_2.get_values(), expected_output_2.get_values());

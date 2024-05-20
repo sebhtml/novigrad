@@ -1,7 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, BinaryOperator, Error, ErrorEnum, Instruction, OpCode, Tensor, TensorF32,
+    devices::Device, instruction, BinaryOperator, Error, ErrorEnum, Instruction, OpCode, Tensor,
+    TensorF32,
 };
 
 #[derive(Clone)]
@@ -63,17 +64,11 @@ impl BinaryOperator for MatMul {
 
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        output.push_instruction(Instruction::new(
+        output.push_instruction(instruction!(
             OpCode::Scale(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
-            #[cfg(debug_assertions)]
-            file!(),
-            #[cfg(debug_assertions)]
-            line!(),
-            #[cfg(debug_assertions)]
-            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Scale(0.0),

@@ -24,6 +24,29 @@ pub struct Instruction {
     column: u32,
 }
 
+#[cfg(debug_assertions)]
+#[macro_export]
+macro_rules! instruction {
+    ( $opcode:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
+        Instruction::new(
+            $opcode,
+            $inputs,
+            $outputs,
+            $category,
+            file!(),
+            line!(),
+            column!(),
+        )
+    };
+}
+#[cfg(not(debug_assertions))]
+#[macro_export]
+macro_rules! instruction {
+    ( $opcode:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
+        Instruction::new($opcode, $inputs, $outputs, $category)
+    };
+}
+
 impl Instruction {
     pub fn new(
         opcode: OpCode,

@@ -79,18 +79,36 @@ impl NaryOperator for Concat {
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Concat,
             &inputs.iter().collect::<Vec<_>>(),
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         let inputs = [&output];
         let outputs = inputs_n;
@@ -104,6 +122,12 @@ impl NaryOperator for Concat {
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),
             crate::Category::Gradient,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         Ok(output)
     }

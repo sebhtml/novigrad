@@ -69,6 +69,12 @@ impl NeuralMachine {
                     &[],
                     &outputs,
                     instruction.category(),
+                    #[cfg(debug_assertions)]
+                    file!(),
+                    #[cfg(debug_assertions)]
+                    line!(),
+                    #[cfg(debug_assertions)]
+                    column!(),
                 );
 
                 instructions.push(instruction.clone());
@@ -120,7 +126,7 @@ impl NeuralMachine {
     }
 
     fn forward(&self, category: Category) -> Result<(), Error> {
-        let debug = false;
+        let debug = true;
         if debug {
             println!("Debugger for NeuralMachine forward pass");
         }
@@ -182,10 +188,14 @@ impl NeuralMachine {
 
             if debug {
                 println!("AFTER FORWARD");
+                let maybe_corrupted_instruction = 45;
                 println!(
-                    "After forward for instruction {} : instruction 449 inputs: {}",
+                    "After forward for instruction {} : instruction {}, inputs: {}",
                     i,
-                    self.instructions[449].inputs().len()
+                    maybe_corrupted_instruction,
+                    self.instructions[maybe_corrupted_instruction]
+                        .inputs()
+                        .len()
                 );
                 self.print_instruction(i, instruction);
                 self.print_instruction_inputs_outputs(instruction);
@@ -263,8 +273,6 @@ impl NeuralMachine {
 
     fn print_instruction(&self, i: usize, instruction: &Instruction) {
         let opcode = instruction.opcode().name();
-        println!("opcode {}", opcode);
-        println!("inputs {}", instruction.inputs().len());
         debug_assert_lt!(instruction.inputs().len(), 10);
         let inputs = instruction
             .inputs()
@@ -281,6 +289,13 @@ impl NeuralMachine {
         println!(
             "{}: INSTRUCTION    {}    {}    {}",
             i, opcode, inputs, outputs,
+        );
+        #[cfg(debug_assertions)]
+        println!(
+            "Source code location: {} {} {}",
+            instruction.file(),
+            instruction.line(),
+            instruction.column(),
         );
     }
 

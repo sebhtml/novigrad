@@ -98,12 +98,24 @@ impl BinaryOperator for CrossEntropyLoss {
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Loss,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Loss,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::DynOperator(Rc::new(self.clone())),
@@ -113,6 +125,12 @@ impl BinaryOperator for CrossEntropyLoss {
             ],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Loss,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
@@ -124,6 +142,12 @@ impl BinaryOperator for CrossEntropyLoss {
             ],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Gradient,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         Ok(output)
     }

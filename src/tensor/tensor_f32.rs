@@ -253,12 +253,17 @@ impl TensorF32 {
         match op_result {
             Ok(value) => Ok(value),
             Err(error) => {
-                let device = &a.device;
-                let mut b_t = device.tensor_f32(b.cols(), b.rows(), vec![0.0; b.cols() * b.rows()]);
-                b.transpose(&mut b_t)?;
-                println!("Incompatible shapes in matrix multiplication");
-                println!("transa: {}, transb: {}", transa, transb);
-                println!("Between A {:?} and B^T {:?}", a.size(), b_t.size(),);
+                println!("Incompatible sizes in GEMM");
+                println!(
+                    "transa: {}, transb: {}, transpose_result: {}",
+                    transa, transb, transpose_result
+                );
+                println!(
+                    "A size: {:?}  B size:  {:?}  C size:  {:?}",
+                    a.size(),
+                    b.size(),
+                    c.size()
+                );
                 debug_assert!(false);
                 Err(error)
             }
@@ -278,6 +283,22 @@ impl TensorF32 {
         let device = &a.device;
         if !transa && !transb && !transpose_result {
             if a.cols() != b.rows() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+            if a.rows() != c.rows() {
+                return Err(Error::new(
+                    file!(),
+                    line!(),
+                    column!(),
+                    ErrorEnum::IncompatibleTensorShapes,
+                ));
+            }
+            if b.cols() != c.cols() {
                 return Err(Error::new(
                     file!(),
                     line!(),

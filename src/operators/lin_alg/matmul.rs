@@ -68,12 +68,24 @@ impl BinaryOperator for MatMul {
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Scale(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
         output.push_instruction(Instruction::new(
             OpCode::Gemm(false, transb, false),
@@ -83,6 +95,12 @@ impl BinaryOperator for MatMul {
             ],
             &[&outputs[0].tensor().deref().borrow()],
             crate::Category::Inference,
+            #[cfg(debug_assertions)]
+            file!(),
+            #[cfg(debug_assertions)]
+            line!(),
+            #[cfg(debug_assertions)]
+            column!(),
         ));
 
         if input_1.gradient().deref().borrow().requires_grad() {
@@ -94,9 +112,16 @@ impl BinaryOperator for MatMul {
                 ],
                 &[&input_1.gradient().deref().borrow()],
                 crate::Category::Gradient,
+                #[cfg(debug_assertions)]
+                file!(),
+                #[cfg(debug_assertions)]
+                line!(),
+                #[cfg(debug_assertions)]
+                column!(),
             ));
         }
 
+        // Source code location: src/operators/lin_alg/matmul.rs 136 17
         if input_0.gradient().deref().borrow().requires_grad() {
             output.push_instruction(Instruction::new(
                 OpCode::Gemm(true, transb, true),
@@ -106,6 +131,12 @@ impl BinaryOperator for MatMul {
                 ],
                 &[&input_0.gradient().deref().borrow()],
                 crate::Category::Gradient,
+                #[cfg(debug_assertions)]
+                file!(),
+                #[cfg(debug_assertions)]
+                line!(),
+                #[cfg(debug_assertions)]
+                column!(),
             ));
         }
 

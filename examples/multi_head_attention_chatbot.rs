@@ -27,7 +27,7 @@ impl ChatbotModel {
     /// https://arxiv.org/abs/1706.03762
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
         let n_embd = 384;
-        let num_heads = 8;
+        let num_heads = 1;
 
         let embedding = Embedding::new(device, vocab_size, n_embd);
         let multi_head_attention =
@@ -145,11 +145,9 @@ fn main() -> Result<(), Error> {
             if print_in_console {
                 println!("Loss {}", loss);
             }
-            println!("before backward");
+
             chatbot.backward()?;
-            println!("after backward");
             chatbot.step()?;
-            println!("after step");
         }
 
         let input = &prompt[(prompt.len() - sequence_length)..];

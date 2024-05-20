@@ -1,3 +1,4 @@
+- rename loss, backward, step
 - use *_instruction! macros
 - no values in OpCode, put them insteast in OpCodeArguments
 - remove Identity

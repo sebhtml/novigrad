@@ -14,6 +14,8 @@
 - try Tensor<f8>
 - delete trait Operator
 
+- Split Softmax in Exp + other operators to reuse them.
+
 -----------------
 
 - Use Add instead of AddBackward

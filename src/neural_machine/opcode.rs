@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::{
     Add, ClipNorm, Concat, ConcatBackward, CrossEntropyLoss, Error, Gemm, Mul, Operator, Reshape,
-    ReshapeBackward, ScalarMul, ScalarMulBackward, Sigmoid, Softmax, Sub, TensorF32,
+    ScalarMul, ScalarMulBackward, Sigmoid, Softmax, Sub, TensorF32,
 };
 
 #[derive(Clone, Debug)]
@@ -42,9 +42,6 @@ pub enum OpCode {
 
     /// https://onnx.ai/onnx/operators/onnx__Reshape.html
     Reshape(Vec<usize>),
-
-    /// Not ONNX-compliant
-    ReshapeBackward(Vec<usize>),
 
     /// https://onnx.ai/onnx/operators/onnx__Sigmoid.html
     Sigmoid,
@@ -103,7 +100,6 @@ impl Operator for OpCode {
             OpCode::Softmax => "Softmax",
             OpCode::Sub => "Sub",
             OpCode::Reshape(_) => "Reshape",
-            OpCode::ReshapeBackward(_) => "ReshapeBackward",
             OpCode::Concat => "Concat",
             OpCode::ConcatBackward => "ConcatBackward",
             OpCode::Sigmoid => "Sigmoid",
@@ -125,9 +121,6 @@ impl Operator for OpCode {
             OpCode::Softmax => Softmax::execute(inputs, outputs),
             OpCode::Sub => Sub::execute(inputs, outputs),
             OpCode::Reshape(output_size) => Reshape::execute(output_size, inputs, outputs),
-            OpCode::ReshapeBackward(input_size) => {
-                ReshapeBackward::execute(input_size, inputs, outputs)
-            }
             OpCode::Concat => Concat::execute(inputs, outputs),
             OpCode::ConcatBackward => ConcatBackward::execute(inputs, outputs),
             OpCode::Sigmoid => Sigmoid::execute(inputs, outputs),

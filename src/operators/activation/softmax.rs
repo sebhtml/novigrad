@@ -1,12 +1,10 @@
 use crate::devices::Device;
 use crate::{
-    gradient_instruction, inference_instruction, Instruction, OpCode, Operator, TensorF32,
-    UnaryOperator,
+    gradient_instruction, inference_instruction, Instruction, OpCode, TensorF32, UnaryOperator,
 };
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;
-use std::rc::Rc;
 
 pub struct Softmax {
     device: Device,
@@ -128,55 +126,44 @@ impl UnaryOperator for Softmax {
                 &outputs[0].tensor().deref().borrow(),
             ];
             let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
-            output.push_instruction(gradient_instruction!(
-                OpCode::DynOperator(Rc::new(SoftmaxBackward::new(&self.device))),
-                inputs,
-                outputs,
-            ));
+
+            if outputs[0].requires_grad() {
+                let output_gradient = outputs[0];
+                let input_gradient = inputs[1];
+                let output_ = inputs[2];
+                let input = inputs[0];
+                let rows = output_.rows();
+                let cols = output_.cols();
+                let len = rows * cols;
+                let ones = self.device.tensor_f32(rows, cols, vec![1.0; len]);
+                let one_minus_output = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+
+                output.push_instruction(gradient_instruction!(
+                    OpCode::Sub,
+                    &[&ones, input],
+                    &[&one_minus_output],
+                ));
+                let layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+                output.push_instruction(gradient_instruction!(
+                    OpCode::Mul,
+                    &[input, &one_minus_output],
+                    &[&layer_f_derivative],
+                ));
+                let tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+
+                output.push_instruction(gradient_instruction!(
+                    OpCode::Mul,
+                    &[&layer_f_derivative, input_gradient],
+                    &[&tmp],
+                ));
+                output.push_instruction(gradient_instruction!(
+                    OpCode::Add,
+                    &[&tmp, output_gradient],
+                    &[output_gradient],
+                ));
+            }
         }
 
         Ok(output)
-    }
-}
-
-pub struct SoftmaxBackward {
-    device: Device,
-}
-
-impl SoftmaxBackward {
-    pub fn new(device: &Device) -> Self {
-        Self {
-            device: device.clone(),
-        }
-    }
-}
-
-impl Operator for SoftmaxBackward {
-    fn name(&self) -> &str {
-        "SoftmaxBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        if outputs[0].requires_grad() {
-            let output_gradient = outputs[0];
-            let input_gradient = inputs[1];
-            let output = inputs[2];
-            let input = inputs[0];
-            let rows = output.rows();
-            let cols = output.cols();
-            let len = rows * cols;
-            let ones = self.device.tensor_f32(rows, cols, vec![1.0; len]);
-            let one_minus_output = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            TensorF32::scalar_mul(0.0, &one_minus_output)?;
-            TensorF32::add(&ones, &one_minus_output)?;
-            TensorF32::sub(input, &one_minus_output)?;
-            let layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            TensorF32::mul(input, &one_minus_output, &layer_f_derivative)?;
-            let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-            TensorF32::mul(&layer_f_derivative, input_gradient, &mut tmp)?;
-            TensorF32::add(&tmp, output_gradient)?;
-        }
-
-        Ok(())
     }
 }

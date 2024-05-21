@@ -1,5 +1,11 @@
 
 - add Softmax constructor without argument next_is_...
+
+== Cuda ==
+
+- implement a mul cuda kernel
+- implement a softmax cuda kernel
+
 - device interface use <T>
 
 - make list of things that are using Tensorf32::set_value
@@ -24,22 +30,12 @@
 
 ---------------------
 
-- Div
-- Pow
-
----------------------
-
 - simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
-
-- Split Softmax in Exp + other operators to reuse them.
 
 == AMD ==
 
 - Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
 
-== Cuda ==
-
-- implement a mul cuda kernel
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 
 == Initialization ==

@@ -148,4 +148,14 @@ impl DeviceInterface for CudaDevice {
             )),
         }
     }
+
+    fn softmax(
+        &self,
+        _rows: i32,
+        _cols: i32,
+        _input: *const f32,
+        _output: *mut f32,
+    ) -> Result<(), Error> {
+        todo!()
+    }
 }

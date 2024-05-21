@@ -1,11 +1,9 @@
 - remove dyn Operator from OpCode
 - delete trait Operator
-- remove word Backward
-- print instruction category in log
 
 --------------------------------
 - use macro for errors
-
+- print instruction category in log
 - make sure that all OpCode have >= 2 inputs
 - no values in OpCode, put them insteast in OpCodeArguments
 
@@ -17,7 +15,7 @@
 
 -----------------
 
-- simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
+- simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
 
 == Regularization ==
 

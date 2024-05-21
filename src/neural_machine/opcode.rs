@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
-    Add, ClipNorm, Concat, ConcatBackward, CrossEntropyLoss, Error, Gemm, Mul, Operator, Reshape,
-    ResidualSumOfSquares, ScalarMul, Sigmoid, Softmax, Sub, TensorF32,
+    Add, ClipNorm, Concat, CrossEntropyLoss, Error, Gemm, Mul, Operator, Reshape,
+    ResidualSumOfSquares, ScalarMul, Sigmoid, Softmax, Sub, TensorF32, Unconcat,
 };
 
 #[derive(Clone, Debug)]
@@ -68,7 +68,7 @@ pub enum OpCode {
     Concat,
 
     /// Not ONNX-compliant
-    ConcatBackward,
+    Unconcat,
 }
 
 impl Operator for OpCode {
@@ -77,15 +77,15 @@ impl Operator for OpCode {
             OpCode::DynOperator(inner) => inner.name(),
             OpCode::Gemm(_, _, _) => "Gemm",
             OpCode::Add => "Add",
+            OpCode::Sub => "Sub",
+            OpCode::Mul => "Mul",
             OpCode::ScalarMul(_) => "ScalarMul",
             OpCode::ClipNorm(_) => "Clip",
-            OpCode::Mul => "Mul",
             OpCode::Softmax => "Softmax",
-            OpCode::Sub => "Sub",
+            OpCode::Sigmoid => "Sigmoid",
             OpCode::Reshape(_) => "Reshape",
             OpCode::Concat => "Concat",
-            OpCode::ConcatBackward => "ConcatBackward",
-            OpCode::Sigmoid => "Sigmoid",
+            OpCode::Unconcat => "Unconcat",
             OpCode::CrossEntropyLoss => "CrossEntropyLoss",
             OpCode::ResidualSumOfSquares => "ResidualSumOfSquares",
         }
@@ -105,7 +105,7 @@ impl Operator for OpCode {
             OpCode::Sub => Sub::execute(inputs, outputs),
             OpCode::Reshape(output_size) => Reshape::execute(output_size, inputs, outputs),
             OpCode::Concat => Concat::execute(inputs, outputs),
-            OpCode::ConcatBackward => ConcatBackward::execute(inputs, outputs),
+            OpCode::Unconcat => Unconcat::execute(inputs, outputs),
             OpCode::Sigmoid => Sigmoid::execute(inputs, outputs),
             OpCode::CrossEntropyLoss => CrossEntropyLoss::execute(inputs, outputs),
             OpCode::ResidualSumOfSquares => ResidualSumOfSquares::execute(inputs, outputs),

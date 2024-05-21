@@ -1,4 +1,4 @@
-use crate::{Concat, ConcatBackward, Device};
+use crate::{Concat, Device, Unconcat};
 
 #[test]
 fn concat() {
@@ -103,7 +103,7 @@ fn unconcat() {
         ],
     );
 
-    ConcatBackward::execute(inputs, outputs).unwrap();
+    Unconcat::execute(inputs, outputs).unwrap();
 
     assert_eq!(output_1.get_values(), expected_output_1.get_values());
     assert_eq!(output_2.get_values(), expected_output_2.get_values());

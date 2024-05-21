@@ -78,7 +78,7 @@ impl NaryOperator for Concat {
             .map(|t| t.gradient().deref().borrow().clone())
             .collect();
         output.push_instruction(gradient_instruction!(
-            OpCode::ConcatBackward,
+            OpCode::Unconcat,
             &[&inputs[0].gradient().deref().borrow_mut()],
             &outputs.iter().collect::<Vec<_>>(),
         ));
@@ -86,9 +86,9 @@ impl NaryOperator for Concat {
     }
 }
 
-pub struct ConcatBackward {}
+pub struct Unconcat {}
 
-impl ConcatBackward {
+impl Unconcat {
     pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let src = inputs[0];
         for output_index in 0..outputs.len() {

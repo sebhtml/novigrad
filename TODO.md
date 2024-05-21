@@ -1,7 +1,3 @@
-- remove dyn Operator from OpCode
-- delete trait Operator
-
---------------------------------
 - use macro for errors
 - print instruction category in log
 - make sure that all OpCode have >= 2 inputs

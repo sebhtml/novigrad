@@ -1,4 +1,4 @@
-use crate::{Error, OpCode, Operator, TensorF32};
+use crate::{Error, OpCode, TensorF32};
 use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -138,9 +138,9 @@ impl Instruction {
     pub fn outputs(&self) -> &Rc<Vec<TensorF32>> {
         &self.outputs
     }
-    pub fn forward(&self) -> Result<(), Error> {
+    pub fn execute(&self) -> Result<(), Error> {
         let inputs: Vec<&TensorF32> = self.inputs.iter().collect();
         let outputs_f32: Vec<&TensorF32> = self.outputs.iter().collect();
-        self.opcode.forward(&inputs, &outputs_f32)
+        self.opcode.execute(&inputs, &outputs_f32)
     }
 }

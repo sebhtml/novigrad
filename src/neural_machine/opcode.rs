@@ -1,16 +1,10 @@
-use std::rc::Rc;
-
 use crate::{
-    Add, ClipNorm, Concat, CrossEntropyLoss, Error, Gemm, Mul, Operator, Reshape,
-    ResidualSumOfSquares, ScalarMul, Sigmoid, Softmax, Sub, TensorF32, Unconcat,
+    Add, ClipNorm, Concat, CrossEntropyLoss, Error, Gemm, Mul, Reshape, ResidualSumOfSquares,
+    ScalarMul, Sigmoid, Softmax, Sub, TensorF32, Unconcat,
 };
 
 #[derive(Clone, Debug)]
 pub enum OpCode {
-    // Not ONNX-compliant
-    // TODO remove this op code
-    DynOperator(Rc<dyn Operator>),
-
     /// https://onnx.ai/onnx/operators/onnx__Gemm.html
     Gemm(bool, bool, bool),
 
@@ -71,10 +65,9 @@ pub enum OpCode {
     Unconcat,
 }
 
-impl Operator for OpCode {
-    fn name(&self) -> &str {
+impl OpCode {
+    pub fn name(&self) -> &str {
         match self {
-            OpCode::DynOperator(inner) => inner.name(),
             OpCode::Gemm(_, _, _) => "Gemm",
             OpCode::Add => "Add",
             OpCode::Sub => "Sub",
@@ -91,9 +84,8 @@ impl Operator for OpCode {
         }
     }
 
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         match self {
-            OpCode::DynOperator(inner) => inner.forward(inputs, outputs),
             OpCode::Gemm(trans_a, trans_b, trans_result) => {
                 Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)
             }

@@ -75,14 +75,14 @@ impl Tensor {
 
     pub fn forward(&self) -> Result<(), Error> {
         for inst in self.forward_instructions().iter() {
-            inst.forward()?;
+            inst.execute()?;
         }
         Ok(())
     }
 
     pub fn compute_gradient(&self) -> Result<(), Error> {
         for inst in self.gradient_instructions().iter() {
-            inst.forward()?;
+            inst.execute()?;
         }
         Ok(())
     }

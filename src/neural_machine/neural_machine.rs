@@ -2,7 +2,7 @@ use more_asserts::debug_assert_lt;
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, OpCode, Operator,
+    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, OpCode,
     OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
@@ -164,7 +164,7 @@ impl NeuralMachine {
                 self.print_instruction_inputs_outputs(instruction);
             }
 
-            instruction.forward()?;
+            instruction.execute()?;
 
             #[cfg(debug_assertions)]
             for output in instruction.outputs().deref() {

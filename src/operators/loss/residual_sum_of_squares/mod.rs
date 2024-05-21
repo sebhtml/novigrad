@@ -1,8 +1,8 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
 use crate::{
     devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    Instruction, OpCode, Operator, Tensor, TensorF32,
+    Instruction, OpCode, Tensor, TensorF32,
 };
 
 #[cfg(test)]
@@ -89,39 +89,25 @@ impl BinaryOperator for ResidualSumOfSquares {
             &inputs[1].tensor().deref().borrow(),
         ];
         let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
-        output.push_instruction(gradient_instruction!(
-            OpCode::DynOperator(Rc::new(ResidualSumOfSquaresBackward::default())),
-            inputs,
-            outputs,
-        ));
-        Ok(output)
-    }
-}
 
-pub struct ResidualSumOfSquaresBackward {}
-
-impl Default for ResidualSumOfSquaresBackward {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Operator for ResidualSumOfSquaresBackward {
-    fn name(&self) -> &str {
-        "ResidualSumOfSquaresBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
             let expected = inputs[0];
             let actual = inputs[1];
-            TensorF32::copy(expected, output_gradient)?;
-            TensorF32::sub(actual, output_gradient)?;
-            TensorF32::scalar_mul(-2.0, output_gradient)?;
+            output.push_instruction(gradient_instruction!(
+                OpCode::Sub,
+                &[expected, actual],
+                &[output_gradient],
+            ));
+            output.push_instruction(gradient_instruction!(
+                OpCode::ScalarMul(-2.0),
+                &[output_gradient],
+                &[output_gradient],
+            ));
         }
-        Ok(())
+
+        Ok(output)
     }
 }

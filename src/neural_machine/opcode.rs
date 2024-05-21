@@ -53,11 +53,6 @@ pub enum OpCode {
     ResidualSumOfSquares,
 
     /// TODO
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    // ResidualSumOfSquaresBackward, // TODO
-
-    /// TODO
     /// https://onnx.ai/onnx/operators/onnx__Dropout.html
     /// Dropout,
 

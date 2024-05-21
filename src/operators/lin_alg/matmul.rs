@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     devices::Device, gradient_instruction, inference_instruction, BinaryOperator, Error, ErrorEnum,
-    Instruction, OpCode, Tensor, TensorF32,
+    GenericTensor, Instruction, OpCode, Tensor,
 };
 
 pub struct MatMul {
@@ -21,8 +21,8 @@ impl MatMul {
 
 impl BinaryOperator for MatMul {
     fn forward(&self, input_0: &Tensor, input_1: &Tensor) -> Result<Tensor, Error> {
-        let input_0_tensor: &TensorF32 = &input_0.tensor().deref().borrow();
-        let input_1_tensor: &TensorF32 = &input_1.tensor().deref().borrow();
+        let input_0_tensor: &GenericTensor = &input_0.tensor().deref().borrow();
+        let input_1_tensor: &GenericTensor = &input_1.tensor().deref().borrow();
         /*println!("a size {:?}, b size {:?} transb {}",
             input_0_tensor.size().deref().borrow(),
                     input_1_tensor.size().deref().borrow(),

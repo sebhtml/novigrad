@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    Instruction, OpCode, Tensor, TensorF32, EPSILON,
+    GenericTensor, Instruction, OpCode, Tensor, EPSILON,
 };
 
 #[derive(Clone)]
@@ -17,7 +17,7 @@ impl CrossEntropyLoss {
         }
     }
 
-    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = CrossEntropyLoss::evaluate(expected, actual)?;
@@ -26,7 +26,7 @@ impl CrossEntropyLoss {
     }
 
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
+    fn evaluate(expected: &GenericTensor, actual: &GenericTensor) -> Result<f32, Error> {
         debug_assert_eq!(actual.size(), expected.size());
         let p = expected;
         let q = actual;
@@ -90,11 +90,11 @@ impl BinaryOperator for CrossEntropyLoss {
         let inputs = [input_1, input_2];
         let outputs = [input_2];
 
-        let inputs: &[&TensorF32] = &[
+        let inputs: &[&GenericTensor] = &[
             &inputs[0].tensor().deref().borrow(),
             &inputs[1].tensor().deref().borrow(),
         ];
-        let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
+        let outputs: &[&GenericTensor] = &[&outputs[0].gradient().deref().borrow()];
 
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);

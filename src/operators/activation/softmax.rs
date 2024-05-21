@@ -1,6 +1,6 @@
 use crate::devices::Device;
 use crate::{
-    gradient_instruction, inference_instruction, Instruction, OpCode, TensorF32, UnaryOperator,
+    gradient_instruction, inference_instruction, GenericTensor, Instruction, OpCode, UnaryOperator,
 };
 use crate::{Error, Tensor};
 use std::f32::consts::E;
@@ -19,7 +19,7 @@ impl Softmax {
         }
     }
 
-    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
         debug_assert_eq!(false, input.is_nan()?,);
@@ -78,7 +78,7 @@ impl Softmax {
 
 impl UnaryOperator for Softmax {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        let input_t: &TensorF32 = &input.tensor().deref().borrow();
+        let input_t: &GenericTensor = &input.tensor().deref().borrow();
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
@@ -127,12 +127,12 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
 ) {
     let inputs = [&output];
     let outputs = [input];
-    let inputs: &[&TensorF32] = &[
+    let inputs: &[&GenericTensor] = &[
         &inputs[0].tensor().deref().borrow(),
         &inputs[0].gradient().deref().borrow(),
         &outputs[0].tensor().deref().borrow(),
     ];
-    let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
+    let outputs: &[&GenericTensor] = &[&outputs[0].gradient().deref().borrow()];
 
     if outputs[0].requires_grad() {
         let output_gradient = outputs[0];

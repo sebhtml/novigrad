@@ -1,4 +1,4 @@
-use crate::{Error, OpCode, TensorF32};
+use crate::{Error, GenericTensor, OpCode};
 use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -24,8 +24,8 @@ impl Into<String> for Category {
 #[derive(Clone, Debug)]
 pub struct Instruction {
     opcode: OpCode,
-    inputs: Rc<Vec<TensorF32>>,
-    outputs: Rc<Vec<TensorF32>>,
+    inputs: Rc<Vec<GenericTensor>>,
+    outputs: Rc<Vec<GenericTensor>>,
     category: Category,
     #[cfg(debug_assertions)]
     file: String,
@@ -90,19 +90,19 @@ macro_rules! optimization_instruction {
 impl Instruction {
     pub fn new(
         opcode: OpCode,
-        inputs: &[&TensorF32],
-        outputs: &[&TensorF32],
+        inputs: &[&GenericTensor],
+        outputs: &[&GenericTensor],
         category: Category,
         #[cfg(debug_assertions)] file: &str,
         #[cfg(debug_assertions)] line: u32,
         #[cfg(debug_assertions)] column: u32,
     ) -> Self {
-        let inputs: Vec<TensorF32> = inputs
+        let inputs: Vec<GenericTensor> = inputs
             .to_owned()
             .into_iter()
             .map(|x| (*x).clone())
             .collect();
-        let outputs: Vec<TensorF32> = outputs
+        let outputs: Vec<GenericTensor> = outputs
             .to_owned()
             .into_iter()
             .map(|x| (*x).clone())
@@ -144,15 +144,15 @@ impl Instruction {
     pub fn opcode(&self) -> &OpCode {
         &self.opcode
     }
-    pub fn inputs(&self) -> &Rc<Vec<TensorF32>> {
+    pub fn inputs(&self) -> &Rc<Vec<GenericTensor>> {
         &self.inputs
     }
-    pub fn outputs(&self) -> &Rc<Vec<TensorF32>> {
+    pub fn outputs(&self) -> &Rc<Vec<GenericTensor>> {
         &self.outputs
     }
     pub fn execute(&self) -> Result<(), Error> {
-        let inputs: Vec<&TensorF32> = self.inputs.iter().collect();
-        let outputs_f32: Vec<&TensorF32> = self.outputs.iter().collect();
+        let inputs: Vec<&GenericTensor> = self.inputs.iter().collect();
+        let outputs_f32: Vec<&GenericTensor> = self.outputs.iter().collect();
         self.opcode.execute(&inputs, &outputs_f32)
     }
 }

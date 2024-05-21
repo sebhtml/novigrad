@@ -1,4 +1,4 @@
-use crate::{Category, Error, Instruction, TensorF32};
+use crate::{Category, Error, GenericTensor, Instruction};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
@@ -7,12 +7,12 @@ use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 pub struct Tensor {
     inputs: Rc<Vec<Tensor>>,
     instructions: Rc<RefCell<Vec<Instruction>>>,
-    tensor: Rc<RefCell<TensorF32>>,
-    gradient: Rc<RefCell<TensorF32>>,
+    tensor: Rc<RefCell<GenericTensor>>,
+    gradient: Rc<RefCell<GenericTensor>>,
 }
 
 impl Tensor {
-    pub fn new(tensor: TensorF32, gradient: TensorF32, inputs: &[&Tensor]) -> Self {
+    pub fn new(tensor: GenericTensor, gradient: GenericTensor, inputs: &[&Tensor]) -> Self {
         let inputs: Vec<Tensor> = inputs.iter().map(|x| (*x).to_owned()).collect();
         Self {
             inputs: Rc::new(inputs),
@@ -44,11 +44,11 @@ impl Tensor {
             .collect()
     }
 
-    pub fn tensor(&self) -> &Rc<RefCell<TensorF32>> {
+    pub fn tensor(&self) -> &Rc<RefCell<GenericTensor>> {
         &self.tensor
     }
 
-    pub fn gradient(&self) -> &Rc<RefCell<TensorF32>> {
+    pub fn gradient(&self) -> &Rc<RefCell<GenericTensor>> {
         &self.gradient
     }
 
@@ -90,15 +90,15 @@ impl Tensor {
 
 impl PartialEq for Tensor {
     fn eq(&self, other: &Self) -> bool {
-        let t1: &TensorF32 = &self.tensor().deref().borrow();
-        let t2: &TensorF32 = &other.tensor().deref().borrow();
+        let t1: &GenericTensor = &self.tensor().deref().borrow();
+        let t2: &GenericTensor = &other.tensor().deref().borrow();
         t1 == t2
     }
 }
 
 impl Display for Tensor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let tensor: &TensorF32 = &self.tensor().deref().borrow();
+        let tensor: &GenericTensor = &self.tensor().deref().borrow();
         std::fmt::Display::fmt(&tensor, f)
     }
 }

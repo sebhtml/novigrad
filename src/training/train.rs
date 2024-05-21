@@ -3,7 +3,7 @@ use rand::thread_rng;
 use std::{ops::Deref, time::SystemTime};
 
 use crate::{
-    Device, Error, ModelDetails, NeuralMachine, Tensor, TensorF32, Tokenizer, TokenizerTrait,
+    Device, Error, GenericTensor, ModelDetails, NeuralMachine, Tensor, Tokenizer, TokenizerTrait,
 };
 
 trait IsPrintable {
@@ -52,9 +52,9 @@ pub fn print_expected_output_and_actual_output(
     epoch: usize,
     tokenizer: &mut Option<Tokenizer>,
     example: usize,
-    input: &TensorF32,
-    expected_output: &TensorF32,
-    actual_output: &TensorF32,
+    input: &GenericTensor,
+    expected_output: &GenericTensor,
+    actual_output: &GenericTensor,
     expected_output_token: usize,
     actual_output_token: usize,
     loss: f32,
@@ -214,15 +214,15 @@ fn print_results(
         let expected_output = &outputs[i];
         let actual_output = program.infer(input)?;
         let loss = program.loss(expected_output)?;
-        let loss: &TensorF32 = &loss.tensor().deref().borrow();
+        let loss: &GenericTensor = &loss.tensor().deref().borrow();
         let loss: f32 = loss.try_into()?;
 
-        let expected_output: &TensorF32 = &outputs[i].tensor().deref().borrow();
+        let expected_output: &GenericTensor = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
         let expected_argmax = expected_output_argmaxes[last_row].to_owned();
         expected_argmax_values.push(expected_argmax);
 
-        let actual_output: &TensorF32 = &actual_output.tensor().deref().borrow();
+        let actual_output: &GenericTensor = &actual_output.tensor().deref().borrow();
         let actual_output_argmaxes = get_row_argmaxes(actual_output)?;
         let actual_argmax = actual_output_argmaxes[last_row].to_owned();
         actual_argmax_values.push(actual_argmax);
@@ -243,7 +243,7 @@ fn print_results(
     Ok((expected_argmax_values, actual_argmax_values))
 }
 
-pub fn get_row_argmaxes(tensor: &TensorF32) -> Result<Vec<usize>, Error> {
+pub fn get_row_argmaxes(tensor: &GenericTensor) -> Result<Vec<usize>, Error> {
     let values = tensor.get_values()?;
     let cols = tensor.cols();
     let mut argmaxes = vec![];
@@ -287,7 +287,7 @@ pub fn total_loss(
         let expected_output = &outputs[i];
         let _ = program.infer(&inputs[i])?;
         let example_loss = program.loss(expected_output)?;
-        let example_loss: &TensorF32 = &example_loss.tensor().deref().borrow();
+        let example_loss: &GenericTensor = &example_loss.tensor().deref().borrow();
         let example_loss: f32 = example_loss.try_into()?;
         total_error += example_loss;
     }

@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, gradient_instruction, inference_instruction, Error, Instruction, OpCode,
-    Tensor, TensorF32, UnaryOperator,
+    devices::Device, gradient_instruction, inference_instruction, Error, GenericTensor,
+    Instruction, OpCode, Tensor, UnaryOperator,
 };
 
 pub struct Reshape {
@@ -22,19 +22,19 @@ impl Reshape {
 
     pub fn execute(
         output_size: &[usize],
-        inputs: &[&TensorF32],
-        outputs: &[&TensorF32],
+        inputs: &[&GenericTensor],
+        outputs: &[&GenericTensor],
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        TensorF32::copy(input, output)?;
+        GenericTensor::copy(input, output)?;
         output.resize(output_size)
     }
 }
 
 impl UnaryOperator for Reshape {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        let input_tensor: &TensorF32 = &input.tensor().deref().borrow();
+        let input_tensor: &GenericTensor = &input.tensor().deref().borrow();
         debug_assert_eq!(*input_tensor.size().deref().borrow_mut(), self.input_size);
         let rows = self.output_size[0];
         let cols = self.output_size[1];

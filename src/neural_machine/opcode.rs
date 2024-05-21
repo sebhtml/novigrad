@@ -1,6 +1,6 @@
 use crate::{
-    Add, ClipNorm, Concat, CrossEntropyLoss, Error, Gemm, Mul, Reshape, ResidualSumOfSquares,
-    ScalarMul, Sigmoid, Softmax, Sub, TensorF32, Unconcat,
+    Add, ClipNorm, Concat, CrossEntropyLoss, Error, Gemm, GenericTensor, Mul, Reshape,
+    ResidualSumOfSquares, ScalarMul, Sigmoid, Softmax, Sub, Unconcat,
 };
 
 #[derive(Clone, Debug)]
@@ -89,7 +89,11 @@ impl Into<String> for OpCode {
 }
 
 impl OpCode {
-    pub fn execute(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(
+        &self,
+        inputs: &[&GenericTensor],
+        outputs: &[&GenericTensor],
+    ) -> Result<(), Error> {
         match self {
             OpCode::Gemm(trans_a, trans_b, trans_result) => {
                 Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)

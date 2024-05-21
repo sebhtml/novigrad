@@ -19,16 +19,24 @@ impl UnaryModel for MegaManAttentionModel {}
 
 impl MegaManAttentionModel {
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
+        // see https://github.com/karpathy/minGPT
         let _batch_size = 1;
-        let n_embd = 384;
-        let num_heads = 8;
+        let n_embd = 768;
+        let num_heads = 12;
         let _n_layer = 1;
-        let _dropout = 0.1;
+        let dropout_probability = 0.1;
         let _block_size = 2048;
 
         let embedding = Embedding::new(device, vocab_size, n_embd);
-        let multi_head_attention =
-            MultiHeadAttention::try_new(device, sequence_length, n_embd, true, num_heads).unwrap();
+        let multi_head_attention = MultiHeadAttention::try_new(
+            device,
+            sequence_length,
+            n_embd,
+            true,
+            num_heads,
+            dropout_probability,
+        )
+        .unwrap();
         let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length);
         let softmax = Softmax::new(device, true);
 
@@ -96,7 +104,7 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
         optimizer: Box::new(GradientDescent::new(learning_rate)),
-        epochs: 200,
+        epochs: 300,
         progress: 10,
         initial_total_error_min: 50.0,
         final_total_error_max: 0.05,

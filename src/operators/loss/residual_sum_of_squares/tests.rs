@@ -21,9 +21,9 @@ fn evaluate() {
     let device = Device::default();
     let expected_tensor = device.tensor_f32(1, 8, vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]);
     let actual_tensor = device.tensor_f32(1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]);
-    let device = Device::cpu();
+    let diffs = device.tensor_f32(1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]);
     assert_eq!(
-        ResidualSumOfSquares::evaluate(&device, &expected_tensor, &actual_tensor),
+        ResidualSumOfSquares::evaluate(&diffs, &expected_tensor, &actual_tensor),
         Ok((4.0 - 1.0 as f32).powf(2.0) * 8.0)
     );
 }

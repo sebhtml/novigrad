@@ -1,4 +1,3 @@
-- Use Add instead of AddBackward
 - remove dyn Operator from OpCode
 - delete trait Operator
 - remove word Backward

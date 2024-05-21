@@ -1,8 +1,8 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
 use crate::{
     devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    Instruction, OpCode, Operator, Tensor, TensorF32, EPSILON,
+    Instruction, OpCode, Tensor, TensorF32, EPSILON,
 };
 
 #[derive(Clone)]
@@ -103,36 +103,17 @@ impl BinaryOperator for CrossEntropyLoss {
         // then we don't need to derive the softmax activations.
         // The derivative of the Loss in respect to logits (before activation) is
         // output of the softmax function - expected output (one-hot encoded)
-        output.push_instruction(gradient_instruction!(
-            OpCode::DynOperator(Rc::new(CrossEntropyLossBackward::default())),
-            inputs,
-            outputs,
-        ));
-        Ok(output)
-    }
-}
-
-pub struct CrossEntropyLossBackward {}
-
-impl Default for CrossEntropyLossBackward {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Operator for CrossEntropyLossBackward {
-    fn name(&self) -> &str {
-        "CrossEntropyLossBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
             let expected = inputs[0];
             let actual = inputs[1];
-            TensorF32::copy(actual, output_gradient)?;
-            TensorF32::sub(expected, output_gradient)?;
+            output.push_instruction(gradient_instruction!(
+                OpCode::Sub,
+                &[actual, expected],
+                &[output_gradient],
+            ));
         }
-        Ok(())
+
+        Ok(output)
     }
 }

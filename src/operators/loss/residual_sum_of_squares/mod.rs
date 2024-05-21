@@ -55,12 +55,6 @@ impl ResidualSumOfSquares {
         TensorF32::dot_product(diffs, diffs)
          */
     }
-
-    fn derive(expected: &TensorF32, actual: &TensorF32, result: &TensorF32) -> Result<(), Error> {
-        TensorF32::copy(expected, result)?;
-        TensorF32::sub(actual, result)?;
-        TensorF32::scalar_mul(-2.0, result)
-    }
 }
 
 impl BinaryOperator for ResidualSumOfSquares {
@@ -90,13 +84,15 @@ impl BinaryOperator for ResidualSumOfSquares {
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
+        let inputs: &[&TensorF32] = &[
+            &inputs[0].tensor().deref().borrow(),
+            &inputs[1].tensor().deref().borrow(),
+        ];
+        let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
         output.push_instruction(gradient_instruction!(
             OpCode::DynOperator(Rc::new(ResidualSumOfSquaresBackward::default())),
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].gradient().deref().borrow()],
+            inputs,
+            outputs,
         ));
         Ok(output)
     }
@@ -122,7 +118,9 @@ impl Operator for ResidualSumOfSquaresBackward {
             let output_gradient = outputs[0];
             let expected = inputs[0];
             let actual = inputs[1];
-            ResidualSumOfSquares::derive(expected, actual, output_gradient)?;
+            TensorF32::copy(expected, output_gradient)?;
+            TensorF32::sub(actual, output_gradient)?;
+            TensorF32::scalar_mul(-2.0, output_gradient)?;
         }
         Ok(())
     }

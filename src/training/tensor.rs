@@ -79,6 +79,13 @@ impl Tensor {
         }
         Ok(())
     }
+
+    pub fn compute_gradient(&self) -> Result<(), Error> {
+        for inst in self.gradient_instructions().iter() {
+            inst.forward()?;
+        }
+        Ok(())
+    }
 }
 
 impl PartialEq for Tensor {

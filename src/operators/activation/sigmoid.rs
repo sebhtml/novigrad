@@ -1,9 +1,8 @@
 use crate::devices::Device;
 use crate::{emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, Error, Tensor};
-use crate::{Instruction, OpCode, Operator, TensorF32, UnaryOperator};
+use crate::{Instruction, OpCode, TensorF32, UnaryOperator};
 use std::f32::consts::E;
 use std::ops::Deref;
-use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Sigmoid {
@@ -17,7 +16,10 @@ impl Sigmoid {
         }
     }
 
-    fn activate(input: &TensorF32, output: &TensorF32) -> Result<(), Error> {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+
         let rows = input.rows();
         let cols = input.cols();
         let values = input.get_values()?;
@@ -61,7 +63,7 @@ impl UnaryOperator for Sigmoid {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::Sigmoid,
             &[&inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
@@ -69,17 +71,5 @@ impl UnaryOperator for Sigmoid {
         emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output);
 
         Ok(output)
-    }
-}
-
-impl Operator for Sigmoid {
-    fn name(&self) -> &str {
-        "Sigmoid"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let input = inputs[0];
-        let output = outputs[0];
-        Self::activate(&input, &output)
     }
 }

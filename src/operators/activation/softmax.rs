@@ -24,12 +24,7 @@ impl Softmax {
         let output = outputs[0];
         debug_assert_eq!(false, input.is_nan()?,);
         debug_assert_eq!(false, input.is_nan()?,);
-        Self::activate(input, output)?;
-        debug_assert_eq!(false, output.is_nan()?,);
-        Ok(())
-    }
 
-    fn activate(input: &TensorF32, output: &TensorF32) -> Result<(), Error> {
         let rows = input.rows();
         let cols = input.cols();
         let values = input.get_values()?;

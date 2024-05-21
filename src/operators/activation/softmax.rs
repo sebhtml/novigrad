@@ -163,7 +163,9 @@ impl Operator for SoftmaxBackward {
             let rows = output.rows();
             let cols = output.cols();
             let len = rows * cols;
-            let one_minus_output = self.device.tensor_f32(rows, cols, vec![1.0; len]);
+            let ones = self.device.tensor_f32(rows, cols, vec![1.0; len]);
+            let one_minus_output = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+            TensorF32::copy(&ones, &one_minus_output)?;
             TensorF32::sub(input, &one_minus_output)?;
             let layer_f_derivative = self.device.tensor_f32(rows, cols, vec![0.0; len]);
             TensorF32::mul(input, &one_minus_output, &layer_f_derivative)?;

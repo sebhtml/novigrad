@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::{
     Add, ClipNorm, Concat, ConcatBackward, CrossEntropyLoss, Error, Gemm, Mul, Operator, Reshape,
-    ScalarMul, ScalarMulBackward, Sigmoid, Softmax, Sub, TensorF32,
+    ResidualSumOfSquares, ScalarMul, ScalarMulBackward, Sigmoid, Softmax, Sub, TensorF32,
 };
 
 #[derive(Clone, Debug)]
@@ -49,10 +49,8 @@ pub enum OpCode {
     /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
     CrossEntropyLoss,
 
-    /// TODO
     /// Not ONNX-compliant
-    /// TODO remove this op code
-    // ResidualSumOfSquares, // TODO
+    ResidualSumOfSquares,
 
     /// TODO
     /// Not ONNX-compliant
@@ -99,6 +97,7 @@ impl Operator for OpCode {
             OpCode::ConcatBackward => "ConcatBackward",
             OpCode::Sigmoid => "Sigmoid",
             OpCode::CrossEntropyLoss => "CrossEntropyLoss",
+            OpCode::ResidualSumOfSquares => "ResidualSumOfSquares",
         }
     }
 
@@ -120,6 +119,7 @@ impl Operator for OpCode {
             OpCode::ConcatBackward => ConcatBackward::execute(inputs, outputs),
             OpCode::Sigmoid => Sigmoid::execute(inputs, outputs),
             OpCode::CrossEntropyLoss => CrossEntropyLoss::execute(inputs, outputs),
+            OpCode::ResidualSumOfSquares => ResidualSumOfSquares::execute(inputs, outputs),
         }
     }
 }

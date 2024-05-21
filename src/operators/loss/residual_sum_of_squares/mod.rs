@@ -20,6 +20,14 @@ impl ResidualSumOfSquares {
         }
     }
 
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let expected = inputs[0];
+        let actual = inputs[1];
+        let loss = ResidualSumOfSquares::evaluate(expected, actual)?;
+        outputs[0].set_values(vec![loss; 1]);
+        Ok(())
+    }
+
     /// RSS = Σ (y_i - f(x_i))^2
     fn evaluate(expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
         if expected.size() != actual.size() {
@@ -73,7 +81,7 @@ impl BinaryOperator for ResidualSumOfSquares {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::ResidualSumOfSquares,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -91,20 +99,6 @@ impl BinaryOperator for ResidualSumOfSquares {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         Ok(output)
-    }
-}
-
-impl Operator for ResidualSumOfSquares {
-    fn name(&self) -> &str {
-        "ResidualSumOfSquares"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let expected = inputs[0];
-        let actual = inputs[1];
-        let loss = ResidualSumOfSquares::evaluate(expected, actual)?;
-        outputs[0].set_values(vec![loss; 1]);
-        Ok(())
     }
 }
 

@@ -1,11 +1,10 @@
 - device interface use <T>
+- make list of things that are using Tensorf32::set_value
 
 == Cuda ==
 
 - implement a mul cuda kernel
 - implement a softmax cuda kernel
-
-- make list of things that are using Tensorf32::set_value
 
 - Implement code with f16
 

@@ -61,29 +61,15 @@ impl UnaryOperator for Reshape {
         ));
         let inputs = [&output];
         let outputs = [input];
-        output.push_instruction(gradient_instruction!(
-            OpCode::ReshapeBackward(self.input_size.clone()),
-            &[&inputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
-        ));
-        Ok(output)
-    }
-}
 
-pub struct ReshapeBackward {}
-
-impl ReshapeBackward {
-    pub fn execute(
-        input_size: &[usize],
-        inputs: &[&TensorF32],
-        outputs: &[&TensorF32],
-    ) -> Result<(), Error> {
-        if outputs[0].requires_grad() {
-            let output_gradient = outputs[0];
-            let input_gradient = inputs[0];
-            TensorF32::copy(input_gradient, output_gradient)?;
-            output_gradient.resize(input_size)?;
+        if outputs[0].gradient().deref().borrow().requires_grad() {
+            output.push_instruction(gradient_instruction!(
+                OpCode::Reshape(self.input_size.clone()),
+                &[&inputs[0].gradient().deref().borrow()],
+                &[&outputs[0].gradient().deref().borrow()],
+            ));
         }
-        Ok(())
+
+        Ok(output)
     }
 }

@@ -1,11 +1,9 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
 use crate::{
     devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    Instruction, LossOperator, OpCode, Operator, Tensor, TensorF32,
+    Instruction, OpCode, Tensor, TensorF32,
 };
-
-use super::LossFunction;
 
 #[cfg(test)]
 mod tests;
@@ -15,8 +13,6 @@ pub struct ResidualSumOfSquares {
     device: Device,
 }
 
-impl LossOperator for ResidualSumOfSquares {}
-
 impl ResidualSumOfSquares {
     pub fn new(device: &Device) -> Self {
         Self {
@@ -24,8 +20,16 @@ impl ResidualSumOfSquares {
         }
     }
 
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let expected = inputs[0];
+        let actual = inputs[1];
+        let loss = ResidualSumOfSquares::evaluate(expected, actual)?;
+        outputs[0].set_values(vec![loss; 1]);
+        Ok(())
+    }
+
     /// RSS = Σ (y_i - f(x_i))^2
-    fn evaluate(device: &Device, expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
+    fn evaluate(expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
         if expected.size() != actual.size() {
             return Err(Error::new(
                 file!(),
@@ -34,39 +38,22 @@ impl ResidualSumOfSquares {
                 ErrorEnum::IncompatibleTensorShapes,
             ));
         }
-        let rows = expected.rows();
-        let cols = expected.cols();
-        let len = rows * cols;
-        let mut diffs = device.tensor_f32(rows, cols, vec![0.0; len]);
-        TensorF32::copy(expected, &mut diffs)?;
-        TensorF32::sub(actual, &mut diffs)?;
-        TensorF32::dot_product(&diffs, &diffs)
-    }
-
-    fn derive(expected: &TensorF32, actual: &TensorF32, result: &TensorF32) -> Result<(), Error> {
-        TensorF32::copy(expected, result)?;
-        TensorF32::sub(actual, result)?;
-        TensorF32::scale(-2.0, result)
-    }
-}
-
-impl LossFunction for ResidualSumOfSquares {
-    fn evaluate(
-        &self,
-        device: &Device,
-        expected: &TensorF32,
-        actual: &TensorF32,
-    ) -> Result<f32, Error> {
-        Self::evaluate(device, expected, actual)
-    }
-
-    fn derive(
-        &self,
-        expected: &TensorF32,
-        actual: &TensorF32,
-        result: &TensorF32,
-    ) -> Result<(), Error> {
-        Self::derive(expected, actual, result)
+        let expected_values = expected.get_values()?;
+        let actual_values = actual.get_values()?;
+        let mut loss = 0.0;
+        for i in 0..expected_values.len() {
+            let expected = expected_values[i];
+            let actual = actual_values[i];
+            let diff = expected - actual;
+            loss += diff * diff;
+        }
+        Ok(loss)
+        /*
+        TODO use copy, sub, dot_product on GPU.
+        TensorF32::copy(expected, diffs)?;
+        TensorF32::sub(actual, diffs)?;
+        TensorF32::dot_product(diffs, diffs)
+         */
     }
 }
 
@@ -88,7 +75,7 @@ impl BinaryOperator for ResidualSumOfSquares {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::ResidualSumOfSquares,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -97,54 +84,30 @@ impl BinaryOperator for ResidualSumOfSquares {
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
-        output.push_instruction(gradient_instruction!(
-            OpCode::DynOperator(Rc::new(ResidualSumOfSquaresBackward::default())),
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].gradient().deref().borrow()],
-        ));
-        Ok(output)
-    }
-}
+        let inputs: &[&TensorF32] = &[
+            &inputs[0].tensor().deref().borrow(),
+            &inputs[1].tensor().deref().borrow(),
+        ];
+        let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
 
-impl Operator for ResidualSumOfSquares {
-    fn name(&self) -> &str {
-        "ResidualSumOfSquares"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let expected = inputs[0];
-        let actual = inputs[1];
-        let loss = ResidualSumOfSquares::evaluate(&self.device, expected, actual)?;
-        outputs[0].set_values(vec![loss; 1]);
-        Ok(())
-    }
-}
-
-pub struct ResidualSumOfSquaresBackward {}
-
-impl Default for ResidualSumOfSquaresBackward {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Operator for ResidualSumOfSquaresBackward {
-    fn name(&self) -> &str {
-        "ResidualSumOfSquaresBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
             let expected = inputs[0];
             let actual = inputs[1];
-            ResidualSumOfSquares::derive(expected, actual, output_gradient)?;
+            output.push_instruction(gradient_instruction!(
+                OpCode::Sub,
+                &[expected, actual],
+                &[output_gradient],
+            ));
+            output.push_instruction(gradient_instruction!(
+                OpCode::ScalarMul(-2.0),
+                &[output_gradient],
+                &[output_gradient],
+            ));
         }
-        Ok(())
+
+        Ok(output)
     }
 }

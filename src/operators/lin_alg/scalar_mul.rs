@@ -26,7 +26,7 @@ impl ScalarMul {
         let input = inputs[0];
         let output = outputs[0];
         TensorF32::copy(input, output)?;
-        TensorF32::scale(alpha, output)
+        TensorF32::scalar_mul(alpha, output)
     }
 }
 
@@ -58,21 +58,22 @@ impl UnaryOperator for ScalarMul {
         ));
         let inputs = [&output];
         let outputs = [input];
-        output.push_instruction(gradient_instruction!(
-            OpCode::ScalarMulBackward,
-            &[&inputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
-        ));
+
+        {
+            let inputs: &[&TensorF32] = &[&inputs[0].gradient().deref().borrow()];
+            let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
+
+            let input = inputs[0];
+            let output_ = outputs[0];
+            if output_.requires_grad() {
+                output.push_instruction(gradient_instruction!(
+                    OpCode::Add,
+                    &[input, output_],
+                    &[output_],
+                ));
+            }
+        }
+
         Ok(output)
-    }
-}
-
-pub struct ScalarMulBackward {}
-
-impl ScalarMulBackward {
-    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), crate::Error> {
-        let input = inputs[0];
-        let output = outputs[0];
-        TensorF32::add(input, output)
     }
 }

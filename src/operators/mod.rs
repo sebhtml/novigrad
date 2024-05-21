@@ -8,11 +8,8 @@ mod lin_alg;
 pub use lin_alg::*;
 mod attention;
 pub use attention::*;
-mod nullary;
-pub use nullary::*;
 
-use crate::{Error, Tensor, TensorF32};
-use core::fmt::Debug;
+use crate::{Error, Tensor};
 
 pub trait UnaryOperator {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error>;
@@ -35,15 +32,4 @@ pub trait TernaryOperator {
 /// https://en.wikipedia.org/wiki/Arity
 pub trait NaryOperator {
     fn forward(&self, inputs: &[&Tensor]) -> Result<Tensor, Error>;
-}
-
-pub trait Operator {
-    fn name(&self) -> &str;
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error>;
-}
-
-impl Debug for dyn Operator {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Ok(())
-    }
 }

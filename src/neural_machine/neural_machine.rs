@@ -2,8 +2,8 @@ use more_asserts::debug_assert_lt;
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, LossOperator,
-    OpCode, Operator, OptimizerTrait, Tensor, TensorF32, UnaryModel,
+    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, OpCode,
+    OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
 pub struct NeuralMachine {
@@ -19,7 +19,7 @@ impl NeuralMachine {
     pub fn try_new(
         device: &Device,
         model: &Box<dyn UnaryModel>,
-        loss_operator: &Box<dyn LossOperator>,
+        loss_operator: &Box<dyn BinaryOperator>,
         clipped_gradient_norm: f32,
         optimizer: &Box<dyn OptimizerTrait>,
     ) -> Result<Self, Error> {
@@ -63,11 +63,17 @@ impl NeuralMachine {
                 let outputs: Vec<TensorF32> =
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
-                let clip_instruction =
-                    gradient_instruction!(OpCode::Clip(clipped_gradient_norm), &[], &outputs,);
 
-                instructions.push(instruction.clone());
-                instructions.push(clip_instruction);
+                instructions.push(instruction);
+
+                for output in outputs {
+                    let clip_instruction = gradient_instruction!(
+                        OpCode::ClipNorm(clipped_gradient_norm),
+                        &[output],
+                        &[output],
+                    );
+                    instructions.push(clip_instruction);
+                }
             }
         }
 
@@ -129,11 +135,12 @@ impl NeuralMachine {
             .filter(|(_, i)| i.category() == category)
         {
             if debug {
+                let opcode: String = instruction.opcode().clone().into();
                 println!("----------------------------------");
                 println!(
                     "Debugging instruction {} {} with {} inputs and {} outputs",
                     i,
-                    instruction.opcode().name(),
+                    opcode,
                     instruction.inputs().len(),
                     instruction.outputs().len(),
                 );
@@ -141,12 +148,13 @@ impl NeuralMachine {
 
             #[cfg(debug_assertions)]
             for input in instruction.inputs().deref() {
+                let opcode: String = instruction.opcode().clone().into();
                 debug_assert_eq!(
                     input.is_nan()?,
                     false,
                     "instruction {} {} read nan input {} {}",
                     i,
-                    instruction.opcode().name(),
+                    opcode,
                     input.name(),
                     input,
                 );
@@ -158,16 +166,17 @@ impl NeuralMachine {
                 self.print_instruction_inputs_outputs(instruction);
             }
 
-            instruction.forward()?;
+            instruction.execute()?;
 
             #[cfg(debug_assertions)]
             for output in instruction.outputs().deref() {
+                let opcode: String = instruction.opcode().clone().into();
                 debug_assert_eq!(
                     output.is_nan()?,
                     false,
                     "instruction {} {} wrote nan output {} {}",
                     i,
-                    instruction.opcode().name(),
+                    opcode,
                     output.name(),
                     output,
                 );
@@ -258,24 +267,31 @@ impl NeuralMachine {
         println!("------------------------------");
     }
 
+    fn tensor_name(name: usize) -> String {
+        "t".to_owned() + name.to_string().as_str()
+    }
+
     fn print_instruction(&self, i: usize, instruction: &Instruction) {
-        let opcode = instruction.opcode().name();
+        let opcode: String = instruction.opcode().clone().into();
         debug_assert_lt!(instruction.inputs().len(), 10);
         let inputs = instruction
             .inputs()
             .iter()
             .map(|x| x.name())
+            .map(Self::tensor_name)
             .collect::<Vec<_>>()
             .join(" ");
         let outputs = instruction
             .outputs()
             .iter()
             .map(|x| x.name())
+            .map(Self::tensor_name)
             .collect::<Vec<_>>()
             .join(" ");
+        let category: String = instruction.category().into();
         println!(
-            "{}: INSTRUCTION    {}    {}    {}",
-            i, opcode, inputs, outputs,
+            "{}: INSTRUCTION    {}    {}    {}    // category={}",
+            i, opcode, inputs, outputs, category,
         );
         #[cfg(debug_assertions)]
         println!(

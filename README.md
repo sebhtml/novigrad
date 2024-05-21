@@ -33,7 +33,7 @@ A neural machine is simply a stream of neural instructions, like a amd64 program
 With Novigrad  ("New Town"), a forward pass is all you need, for both training and inference.
 
 There is no backward pass. A forward pass is all you need.
-To achieve the goal, the computing machinery required to do the things that usually occur during the backward pass is simply baked in the generated neural machine. A consequence of this is that resulting neural networks have the computing machinery for training and inference.
+To achieve the goal, the computing machinery required to compute the gradient is simply baked in the generated neural machine. A consequence of this is that resulting neural networks have the computing machinery for training and inference.
 Animal brains are probably like that.
 
 # Why a new neural network frameworks ?

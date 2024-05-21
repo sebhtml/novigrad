@@ -1,16 +1,10 @@
-use std::rc::Rc;
-
 use crate::{
-    Add, Clip, Concat, ConcatBackward, Error, Gemm, Mul, Operator, Reshape, ReshapeBackward,
-    ScalarMul, ScalarMulBackward, Softmax, Sub, TensorF32,
+    Add, ClipNorm, Concat, CrossEntropyLoss, Error, Gemm, Mul, Reshape, ResidualSumOfSquares,
+    ScalarMul, Sigmoid, Softmax, Sub, TensorF32, Unconcat,
 };
 
 #[derive(Clone, Debug)]
 pub enum OpCode {
-    // Not ONNX-compliant
-    // TODO remove this op code
-    DynOperator(Rc<dyn Operator>),
-
     /// https://onnx.ai/onnx/operators/onnx__Gemm.html
     Gemm(bool, bool, bool),
 
@@ -22,15 +16,10 @@ pub enum OpCode {
     ScalarMul(f32),
 
     /// Not ONNX-compliant
-    /// TODO remove this op code
-    ScalarMulBackward,
-
-    /// Not ONNX-compliant
     /// similar op codes:
     /// - https://onnx.ai/onnx/operators/onnx__Clip.html
     /// - https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
-    /// TODO rename to ClipNorm
-    Clip(f32),
+    ClipNorm(f32),
 
     /// https://onnx.ai/onnx/operators/onnx__Mul.html
     Mul,
@@ -44,42 +33,14 @@ pub enum OpCode {
     /// https://onnx.ai/onnx/operators/onnx__Reshape.html
     Reshape(Vec<usize>),
 
-    /// Not ONNX-compliant
-    ReshapeBackward(Vec<usize>),
-
-    /// TODO
     /// https://onnx.ai/onnx/operators/onnx__Sigmoid.html
-    // Sigmoid,
+    Sigmoid,
 
-    /// TODO
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    // SigmoidBackward,
-
-    /// TODO
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    // SoftmaxBackward,
-
-    /// TODO
     /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
-    /// TODO rename it
-    // CrossEntropyLoss,
+    CrossEntropyLoss,
 
-    /// TODO
     /// Not ONNX-compliant
-    /// TODO remove this op code
-    /// CrossEntropyLossBackward, // TODO
-
-    /// TODO
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    // ResidualSumOfSquares, // TODO
-
-    /// TODO
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    // ResidualSumOfSquaresBackward, // TODO
+    ResidualSumOfSquares,
 
     /// TODO
     /// https://onnx.ai/onnx/operators/onnx__Dropout.html
@@ -101,47 +62,50 @@ pub enum OpCode {
     Concat,
 
     /// Not ONNX-compliant
-    ConcatBackward,
+    Unconcat,
 }
 
-impl Operator for OpCode {
-    fn name(&self) -> &str {
+impl Into<String> for OpCode {
+    fn into(self) -> String {
         match self {
-            OpCode::DynOperator(inner) => inner.name(),
-            OpCode::Gemm(_, _, _) => "Gemm",
-            OpCode::Add => "Add",
-            OpCode::ScalarMul(_) => "ScalarMul",
-            OpCode::ScalarMulBackward => "ScalarMulBackward",
-            OpCode::Clip(_) => "Clip",
-            OpCode::Mul => "Mul",
-            OpCode::Softmax => "Softmax",
-            OpCode::Sub => "Sub",
-            OpCode::Reshape(_) => "Reshape",
-            OpCode::ReshapeBackward(_) => "ReshapeBackward",
-            OpCode::Concat => "Concat",
-            OpCode::ConcatBackward => "ConcatBackward",
+            OpCode::Gemm(trans_a, trans_b, trans_result) => {
+                format!("Gemm {} {} {}", trans_a, trans_b, trans_result)
+            }
+            OpCode::Add => "Add".into(),
+            OpCode::Sub => "Sub".into(),
+            OpCode::Mul => "Mul".into(),
+            OpCode::ScalarMul(alpha) => format!("ScalarMul {}", alpha),
+            OpCode::ClipNorm(clipped_norm) => format!("Clip {}", clipped_norm),
+            OpCode::Softmax => "Softmax".into(),
+            OpCode::Sigmoid => "Sigmoid".into(),
+            OpCode::Reshape(output_size) => format!("Reshape {:?}", output_size),
+            OpCode::Concat => "Concat".into(),
+            OpCode::Unconcat => "Unconcat".into(),
+            OpCode::CrossEntropyLoss => "CrossEntropyLoss".into(),
+            OpCode::ResidualSumOfSquares => "ResidualSumOfSquares".into(),
         }
+        .into()
     }
+}
 
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+impl OpCode {
+    pub fn execute(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         match self {
-            OpCode::DynOperator(inner) => inner.forward(inputs, outputs),
             OpCode::Gemm(trans_a, trans_b, trans_result) => {
                 Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)
             }
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::ScalarMul(alpha) => ScalarMul::execute(*alpha, inputs, outputs),
-            OpCode::ScalarMulBackward => ScalarMulBackward::execute(inputs, outputs),
-            OpCode::Clip(clipped_norm) => Clip::execute(*clipped_norm, inputs, outputs),
+            OpCode::ClipNorm(clipped_norm) => ClipNorm::execute(*clipped_norm, inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
             OpCode::Softmax => Softmax::execute(inputs, outputs),
             OpCode::Sub => Sub::execute(inputs, outputs),
             OpCode::Reshape(output_size) => Reshape::execute(output_size, inputs, outputs),
-            OpCode::ReshapeBackward(input_size) => {
-                ReshapeBackward::execute(input_size, inputs, outputs)
-            }
             OpCode::Concat => Concat::execute(inputs, outputs),
-            OpCode::ConcatBackward => ConcatBackward::execute(inputs, outputs),
+            OpCode::Unconcat => Unconcat::execute(inputs, outputs),
+            OpCode::Sigmoid => Sigmoid::execute(inputs, outputs),
+            OpCode::CrossEntropyLoss => CrossEntropyLoss::execute(inputs, outputs),
+            OpCode::ResidualSumOfSquares => ResidualSumOfSquares::execute(inputs, outputs),
         }
     }
 }

@@ -1,6 +1,6 @@
 use novigrad::{
-    get_row_argmaxes, into_one_hot_encoded_rows, CrossEntropyLoss, Device, Embedding, Error,
-    ErrorEnum, GradientDescent, Linear, LossOperator, Model, MultiHeadAttention, NeuralMachine,
+    get_row_argmaxes, into_one_hot_encoded_rows, BinaryOperator, CrossEntropyLoss, Device,
+    Embedding, Error, ErrorEnum, GradientDescent, Linear, Model, MultiHeadAttention, NeuralMachine,
     OptimizerTrait, Softmax, Tensor, TensorF32, TernaryOperator, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
 };
@@ -80,7 +80,7 @@ fn main() -> Result<(), Error> {
     let model: Box<dyn UnaryModel> = Box::new(model);
     let clipped_gradient_norm = 1.0;
     let learning_rate = 0.05;
-    let loss_operator: Box<dyn LossOperator> = Box::new(CrossEntropyLoss::new(&device));
+    let loss_operator: Box<dyn BinaryOperator> = Box::new(CrossEntropyLoss::new(&device));
     let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::new(learning_rate));
     let chatbot = NeuralMachine::try_new(
         &device,

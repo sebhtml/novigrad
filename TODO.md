@@ -1,29 +1,13 @@
-- Use Add instead of AddBackward
-- SigmoidBackward and SoftmaxBackward are Mul
-- remove dyn Operator from OpCode
-- delete trait Operator
-- remove word Backward
+== Regularization ==
 
---------------------------------
-- use macro for errors
-
-- Clip must take 2 inputs
-- make sure that all OpCode have >= 2 inputs
-- no values in OpCode, put them insteast in OpCodeArguments
+- try Tensor<f8>
+- implement Dropout
 
 ---------------------
 
-- increase learning rates
-- try Tensor<f8>
-- Split Softmax in Exp + other operators to reuse them.
-
------------------
-
-- simplify train.rs to have at most 1 call to infer, loss, backward, step() per example per epoch.
-
-== Regularization ==
-
-- implement Dropout
+- use macro for errors
+- make sure that all OpCode have >= 2 inputs
+- no values in OpCode, put them instead in OpCodeArguments
 
 == GPT-1 Transformer ==
 
@@ -31,15 +15,25 @@
 - implement LayerNorm
 - implement Transformer
 
-- simplify Loss
-
-== Logging ==
+== Performance ==
 
 - investigate performance issue with tons of call to pthread_rwlock_unlock
-- don't print machine on boot for chatbot
-- in chatbot example, use special token end_of_text to disable loss for that unknown expected token
 
-- print instruction category in log
+---------------------
+
+- Div
+- Pow
+
+---------------------
+
+- simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
+
+- increase learning rates
+- Split Softmax in Exp + other operators to reuse them.
+
+== AMD ==
+
+- Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
 
 == Cuda ==
 
@@ -53,7 +47,6 @@
 - revisit initialization of weights and biases in Linear
 - revisit initialization of embedding_table in Embedding
 
-
 == Other things ==
 
 - investigate calls to Device::tensor_f32
@@ -65,7 +58,6 @@
 == Refactoring ==
 
 - merge the many load_examples functions
-- restore simple Errors (no line etc.)
 
 == Fixes ==
 
@@ -94,11 +86,6 @@
 == Positional Encoding ==
 
 - implement positional encoding
-
-== AMD ==
-
-- Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
-
 
 == Devices ==
 

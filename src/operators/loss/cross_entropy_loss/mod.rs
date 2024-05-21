@@ -1,17 +1,14 @@
-use std::{ops::Deref, rc::Rc};
+use std::ops::Deref;
 
-use super::LossFunction;
 use crate::{
     devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    Instruction, LossOperator, OpCode, Operator, Tensor, TensorF32, EPSILON,
+    Instruction, OpCode, Tensor, TensorF32, EPSILON,
 };
 
 #[derive(Clone)]
 pub struct CrossEntropyLoss {
     device: Device,
 }
-
-impl LossOperator for CrossEntropyLoss {}
 
 impl CrossEntropyLoss {
     pub fn new(device: &Device) -> Self {
@@ -20,8 +17,16 @@ impl CrossEntropyLoss {
         }
     }
 
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let expected = inputs[0];
+        let actual = inputs[1];
+        let loss = CrossEntropyLoss::evaluate(expected, actual)?;
+        outputs[0].set_values(vec![loss; 1]);
+        Ok(())
+    }
+
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(_device: &Device, expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
+    fn evaluate(expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
         debug_assert_eq!(actual.size(), expected.size());
         let p = expected;
         let q = actual;
@@ -55,35 +60,6 @@ impl CrossEntropyLoss {
         debug_assert!(sum.is_finite());
         Ok(-sum)
     }
-
-    /// When Cross-Entropy Loss is used with a Softmax activation function,
-    /// then we don't need to derive the softmax activations.
-    /// The derivative of the Loss in respect to logits (before activation) is
-    /// output of the softmax function - expected output (one-hot encoded)
-    fn derive(expected: &TensorF32, actual: &TensorF32, result: &TensorF32) -> Result<(), Error> {
-        TensorF32::copy(actual, result)?;
-        TensorF32::sub(expected, result)
-    }
-}
-
-impl LossFunction for CrossEntropyLoss {
-    fn evaluate(
-        &self,
-        device: &Device,
-        expected: &TensorF32,
-        actual: &TensorF32,
-    ) -> Result<f32, Error> {
-        Self::evaluate(device, expected, actual)
-    }
-
-    fn derive(
-        &self,
-        expected: &TensorF32,
-        actual: &TensorF32,
-        result: &TensorF32,
-    ) -> Result<(), Error> {
-        Self::derive(expected, actual, result)
-    }
 }
 
 impl BinaryOperator for CrossEntropyLoss {
@@ -104,7 +80,7 @@ impl BinaryOperator for CrossEntropyLoss {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::CrossEntropyLoss,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -113,54 +89,31 @@ impl BinaryOperator for CrossEntropyLoss {
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
-        output.push_instruction(gradient_instruction!(
-            OpCode::DynOperator(Rc::new(CrossEntropyLossBackward::default())),
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].gradient().deref().borrow()],
-        ));
-        Ok(output)
-    }
-}
 
-impl Operator for CrossEntropyLoss {
-    fn name(&self) -> &str {
-        "CrossEntropyLoss"
-    }
+        let inputs: &[&TensorF32] = &[
+            &inputs[0].tensor().deref().borrow(),
+            &inputs[1].tensor().deref().borrow(),
+        ];
+        let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
 
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let expected = inputs[0];
-        let actual = inputs[1];
-        let loss = CrossEntropyLoss::evaluate(&self.device, expected, actual)?;
-        outputs[0].set_values(vec![loss; 1]);
-        Ok(())
-    }
-}
-
-pub struct CrossEntropyLossBackward {}
-
-impl Default for CrossEntropyLossBackward {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Operator for CrossEntropyLossBackward {
-    fn name(&self) -> &str {
-        "CrossEntropyLossBackward"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);
+
+        // When Cross-Entropy Loss is used with a Softmax activation function,
+        // then we don't need to derive the softmax activations.
+        // The derivative of the Loss in respect to logits (before activation) is
+        // output of the softmax function - expected output (one-hot encoded)
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
             let expected = inputs[0];
             let actual = inputs[1];
-            CrossEntropyLoss::derive(expected, actual, output_gradient)?;
+            output.push_instruction(gradient_instruction!(
+                OpCode::Sub,
+                &[actual, expected],
+                &[output_gradient],
+            ));
         }
-        Ok(())
+
+        Ok(output)
     }
 }

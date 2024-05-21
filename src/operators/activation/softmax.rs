@@ -1,7 +1,6 @@
 use crate::devices::Device;
 use crate::{gradient_instruction, inference_instruction, GenericTensor, OpCode, UnaryOperator};
 use crate::{Error, Tensor};
-use std::f32::consts::E;
 use std::ops::Deref;
 
 pub struct Softmax {
@@ -10,10 +9,17 @@ pub struct Softmax {
 }
 
 impl Softmax {
-    pub fn new(device: &Device, next_is_cross_entropy_loss: bool) -> Self {
+    pub fn new(device: &Device) -> Self {
         Self {
             device: device.clone(),
-            next_is_cross_entropy_loss,
+            next_is_cross_entropy_loss: false,
+        }
+    }
+
+    pub fn new_with_next_is_cross_entropy_loss(device: &Device) -> Self {
+        Self {
+            device: device.clone(),
+            next_is_cross_entropy_loss: true,
         }
     }
 
@@ -21,55 +27,8 @@ impl Softmax {
         let input = inputs[0];
         let output = outputs[0];
         debug_assert_eq!(false, input.is_nan()?,);
-        debug_assert_eq!(false, input.is_nan()?,);
-
-        let rows = input.rows();
-        let cols = input.cols();
-        let values = input.get_values()?;
-        let mut result_values = output.get_values()?;
-        let mut row = 0;
-        while row < rows {
-            // Find max
-
-            let mut max = values[input.index(row, 0)];
-            let mut col = 0;
-            while col < cols {
-                let x = values[input.index(row, col)];
-                max = max.max(x);
-                col += 1;
-            }
-
-            // For each value:
-            // 1. substract the max
-            // 2. compute E^x
-            // 3. add result to sum
-            let mut sum = 0.0;
-            let mut col = 0;
-            while col < cols {
-                let x = values[input.index(row, col)];
-                debug_assert_eq!(false, x.is_nan());
-                let y = E.powf(x - max);
-                debug_assert_eq!(false, y.is_nan(), "x: {}, max: {}, y: {}", x, max, y,);
-                result_values[output.index(row, col)] = y;
-                sum += y;
-                col += 1;
-            }
-
-            // Divide every value by sum.
-
-            let mut col = 0;
-            while col < cols {
-                let x = result_values[output.index(row, col)];
-                debug_assert_eq!(false, x.is_nan());
-                debug_assert_ne!(0.0, sum);
-                let y = x / sum;
-                debug_assert_eq!(false, y.is_nan());
-                result_values[output.index(row, col)] = y;
-                col += 1;
-            }
-            row += 1;
-        }
-        output.set_values(result_values);
+        GenericTensor::softmax(input, output)?;
+        debug_assert_eq!(false, output.is_nan()?,);
         Ok(())
     }
 }

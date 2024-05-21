@@ -88,6 +88,14 @@ pub trait DeviceInterface {
 
     /// Allocate a slice on the device.
     fn slice(&self, n: i32) -> Result<DevBufferEnum, Error>;
+
+    fn softmax(
+        &self,
+        rows: i32,
+        cols: i32,
+        input: *const f32,
+        output: *mut f32,
+    ) -> Result<(), Error>;
 }
 
 impl Debug for dyn DeviceInterface {
@@ -276,5 +284,15 @@ impl DeviceInterface for Device {
 
     fn slice(&self, n: i32) -> Result<DevBufferEnum, Error> {
         self.device.slice(n)
+    }
+
+    fn softmax(
+        &self,
+        rows: i32,
+        cols: i32,
+        input: *const f32,
+        output: *mut f32,
+    ) -> Result<(), Error> {
+        self.device.softmax(rows, cols, input, output)
     }
 }

@@ -35,7 +35,7 @@ impl ScaledDotProductAttention {
                 Some(mask)
             }
         };
-        let softmax = Softmax::new(device, false);
+        let softmax = Softmax::new(device);
         let dropout = if dropout_probability == 0.0 {
             None
         } else {

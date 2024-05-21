@@ -1,3 +1,5 @@
+use std::f32::consts::E;
+
 use cblas::{Layout, Transpose};
 extern crate cblas_sys as ffi;
 use crate::{DevBufferEnum, Error};
@@ -103,5 +105,70 @@ impl DeviceInterface for CpuDevice {
         let values = vec![0.0; len];
         let slice = DevBufferEnum::CpuBuffer(values);
         Ok(slice)
+    }
+
+    fn softmax(
+        &self,
+        rows: i32,
+        cols: i32,
+        input: *const f32,
+        output: *mut f32,
+    ) -> Result<(), Error> {
+        CpuDevice::_softmax(rows, cols, input, output)
+    }
+}
+
+impl CpuDevice {
+    pub fn _softmax(
+        rows: i32,
+        cols: i32,
+        input: *const f32,
+        output: *mut f32,
+    ) -> Result<(), Error> {
+        let rows = rows as usize;
+        let cols = cols as usize;
+        let mut row = 0;
+        while row < rows {
+            // Find max
+
+            let mut max = unsafe { *input.add(row * cols + 0) };
+            let mut col = 0;
+            while col < cols {
+                let x = unsafe { *input.add(row * cols + col) };
+                max = max.max(x);
+                col += 1;
+            }
+
+            // For each value:
+            // 1. substract the max
+            // 2. compute E^x
+            // 3. add result to sum
+            let mut sum = 0.0;
+            let mut col = 0;
+            while col < cols {
+                let x = unsafe { *input.add(row * cols + col) };
+                debug_assert_eq!(false, x.is_nan());
+                let y = E.powf(x - max);
+                debug_assert_eq!(false, y.is_nan(), "x: {}, max: {}, y: {}", x, max, y,);
+                unsafe { *output.add(row * cols + col) = y };
+                sum += y;
+                col += 1;
+            }
+
+            // Divide every value by sum.
+            let mut col = 0;
+            while col < cols {
+                let x = unsafe { *output.add(row * cols + col) };
+                debug_assert_eq!(false, x.is_nan());
+                debug_assert_ne!(0.0, sum);
+                let y = x / sum;
+                debug_assert_eq!(false, y.is_nan());
+                unsafe { *output.add(row * cols + col) = y };
+                col += 1;
+            }
+            row += 1;
+        }
+
+        Ok(())
     }
 }

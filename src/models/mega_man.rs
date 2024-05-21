@@ -42,7 +42,7 @@ impl MegaManModel {
                 true,
                 output_rows,
             ),
-            softmax: Softmax::new(device, true),
+            softmax: Softmax::new_with_next_is_cross_entropy_loss(device),
         }
     }
 }

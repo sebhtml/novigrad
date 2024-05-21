@@ -21,7 +21,7 @@ impl ResidualSumOfSquares {
     }
 
     /// RSS = Σ (y_i - f(x_i))^2
-    fn evaluate(diffs: &TensorF32, expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
+    fn evaluate(expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
         if expected.size() != actual.size() {
             return Err(Error::new(
                 file!(),
@@ -30,9 +30,22 @@ impl ResidualSumOfSquares {
                 ErrorEnum::IncompatibleTensorShapes,
             ));
         }
+        let expected_values = expected.get_values()?;
+        let actual_values = actual.get_values()?;
+        let mut loss = 0.0;
+        for i in 0..expected_values.len() {
+            let expected = expected_values[i];
+            let actual = actual_values[i];
+            let diff = expected - actual;
+            loss += diff * diff;
+        }
+        Ok(loss)
+        /*
+        TODO use copy, sub, dot_product on GPU.
         TensorF32::copy(expected, diffs)?;
         TensorF32::sub(actual, diffs)?;
         TensorF32::dot_product(diffs, diffs)
+         */
     }
 
     fn derive(expected: &TensorF32, actual: &TensorF32, result: &TensorF32) -> Result<(), Error> {
@@ -89,11 +102,7 @@ impl Operator for ResidualSumOfSquares {
     fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
-        let rows = expected.rows();
-        let cols = expected.cols();
-        let len = rows * cols;
-        let diffs = self.device.tensor_f32(rows, cols, vec![0.0; len]);
-        let loss = ResidualSumOfSquares::evaluate(&diffs, expected, actual)?;
+        let loss = ResidualSumOfSquares::evaluate(expected, actual)?;
         outputs[0].set_values(vec![loss; 1]);
         Ok(())
     }

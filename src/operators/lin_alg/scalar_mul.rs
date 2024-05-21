@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, inference_instruction, Device, GenericTensor, Instruction, OpCode,
-    Tensor, UnaryOperator,
+    gradient_instruction, inference_instruction, Device, GenericTensor, OpCode, Tensor,
+    UnaryOperator,
 };
 
 pub struct ScalarMul {

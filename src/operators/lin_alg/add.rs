@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     gradient_instruction, inference_instruction, BinaryOperator, Device, Error, GenericTensor,
-    Instruction, OpCode, Tensor,
+    OpCode, Tensor,
 };
 
 pub struct Add {

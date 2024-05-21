@@ -1,6 +1,8 @@
-- implement Dropout
 
-== Regularization ==
+- add Softmax constructor without argument next_is_...
+- device interface use <T>
+
+- make list of things that are using Tensorf32::set_value
 
 - Implement code with f16
 
@@ -60,7 +62,6 @@
 
 == Fixes ==
 
-- make list of things that are using Tensorf32::set_value
 - remove random calls to unwrap()
 - return ErrNoGradient if output tensor has no gradient
 

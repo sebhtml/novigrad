@@ -9,7 +9,9 @@ fn forward() {
     let cols = 384;
     let mask = true;
     let input = device.tensor(rows, cols, vec![1.0; rows * cols], &[], false, false);
-    let attention = ScaledDotProductAttention::try_new(&device, rows, cols, mask).unwrap();
+    let dropout_probability = 0.1;
+    let attention =
+        ScaledDotProductAttention::try_new(&device, rows, cols, mask, dropout_probability).unwrap();
 
     let output = attention.forward(&input, &input, &input).unwrap();
     output.forward().unwrap();

@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     devices::Device, gradient_instruction, inference_instruction, BinaryOperator, Error, ErrorEnum,
-    GenericTensor, Instruction, OpCode, Tensor,
+    GenericTensor, OpCode, Tensor,
 };
 
 pub struct MatMul {

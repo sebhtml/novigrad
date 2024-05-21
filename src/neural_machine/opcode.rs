@@ -52,11 +52,6 @@ pub enum OpCode {
     /// TODO
     /// Not ONNX-compliant
     /// TODO remove this op code
-    /// CrossEntropyLossBackward, // TODO
-
-    /// TODO
-    /// Not ONNX-compliant
-    /// TODO remove this op code
     // ResidualSumOfSquares, // TODO
 
     /// TODO

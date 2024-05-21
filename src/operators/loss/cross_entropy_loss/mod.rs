@@ -89,11 +89,20 @@ impl BinaryOperator for CrossEntropyLoss {
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
+
         let inputs: &[&TensorF32] = &[
             &inputs[0].tensor().deref().borrow(),
             &inputs[1].tensor().deref().borrow(),
         ];
         let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
+
+        debug_assert_eq!(inputs.len(), 2);
+        debug_assert_eq!(outputs.len(), 1);
+
+        // When Cross-Entropy Loss is used with a Softmax activation function,
+        // then we don't need to derive the softmax activations.
+        // The derivative of the Loss in respect to logits (before activation) is
+        // output of the softmax function - expected output (one-hot encoded)
         output.push_instruction(gradient_instruction!(
             OpCode::DynOperator(Rc::new(CrossEntropyLossBackward::default())),
             inputs,
@@ -117,13 +126,6 @@ impl Operator for CrossEntropyLossBackward {
     }
 
     fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        debug_assert_eq!(inputs.len(), 2);
-        debug_assert_eq!(outputs.len(), 1);
-
-        // When Cross-Entropy Loss is used with a Softmax activation function,
-        // then we don't need to derive the softmax activations.
-        // The derivative of the Loss in respect to logits (before activation) is
-        // output of the softmax function - expected output (one-hot encoded)
         if outputs[0].requires_grad() {
             let output_gradient = outputs[0];
             let expected = inputs[0];

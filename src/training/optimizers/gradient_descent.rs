@@ -26,7 +26,7 @@ impl OptimizerTrait for GradientDescent {
                 device.tensor_f32(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()]);
 
             instructions.push(optimization_instruction!(
-                OpCode::Scale(0.0),
+                OpCode::ScalarMul(0.0),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
             ));
@@ -38,7 +38,7 @@ impl OptimizerTrait for GradientDescent {
             ));
 
             instructions.push(optimization_instruction!(
-                OpCode::Scale(-self.learning_rate),
+                OpCode::ScalarMul(-self.learning_rate),
                 &[&scaled_gradient],
                 &[&scaled_gradient],
             ));

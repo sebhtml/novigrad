@@ -5,7 +5,6 @@ use crate::{
     OpCode, Tensor, TensorF32,
 };
 
-#[derive(Clone)]
 pub struct Add {
     device: Device,
 }
@@ -40,12 +39,12 @@ impl BinaryOperator for Add {
         let inputs = [input_1, input_2];
         let outputs = [&output];
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
@@ -57,37 +56,42 @@ impl BinaryOperator for Add {
             ],
             &[&outputs[0].tensor().deref().borrow()],
         ));
-        let inputs = [&output];
-        let outputs = [input_1, input_2];
-        output.push_instruction(gradient_instruction!(
-            OpCode::AddBackward,
-            &[&inputs[0].gradient().deref().borrow()],
-            &[
+
+        {
+            let inputs = [&output];
+            let outputs = [input_1, input_2];
+
+            let inputs = &[&inputs[0].gradient().deref().borrow()];
+            let outputs = &[
                 &outputs[0].gradient().deref().borrow(),
                 &outputs[1].gradient().deref().borrow(),
-            ],
-        ));
+            ];
+
+            let input_gradient = inputs[0];
+
+            if outputs[1].requires_grad() {
+                let output_1_gradient = outputs[1];
+                TensorF32::add(input_gradient, output_1_gradient)?;
+
+                output.push_instruction(gradient_instruction!(
+                    OpCode::Add,
+                    &[input_gradient, output_1_gradient],
+                    &[output_1_gradient],
+                ));
+            }
+
+            if outputs[0].requires_grad() {
+                let output_0_gradient = outputs[0];
+                TensorF32::add(input_gradient, output_0_gradient)?;
+
+                output.push_instruction(gradient_instruction!(
+                    OpCode::Add,
+                    &[input_gradient, output_0_gradient],
+                    &[output_0_gradient],
+                ));
+            }
+        }
+
         Ok(output)
-    }
-}
-
-pub struct AddBackward {}
-
-impl AddBackward {
-    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        debug_assert_eq!(outputs.len(), 2);
-        let input_gradient = inputs[0];
-
-        if outputs[1].requires_grad() {
-            let output_1_gradient = outputs[1];
-            TensorF32::add(input_gradient, output_1_gradient)?;
-        }
-
-        if outputs[0].requires_grad() {
-            let output_0_gradient = outputs[0];
-            TensorF32::add(input_gradient, output_0_gradient)?;
-        }
-
-        Ok(())
     }
 }

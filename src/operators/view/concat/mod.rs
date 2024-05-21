@@ -8,7 +8,6 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone)]
 pub struct Concat {
     device: Device,
 }
@@ -20,7 +19,7 @@ impl Concat {
         }
     }
 
-    pub fn concat(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         let dst = outputs[0];
         for input_index in 0..inputs.len() {
             let src = inputs[input_index];
@@ -34,26 +33,6 @@ impl Concat {
             }
         }
         Ok(())
-    }
-
-    pub fn unconcat(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let src = inputs[0];
-        for output_index in 0..outputs.len() {
-            let dst = outputs[output_index];
-            let dst_col = 0;
-            let input_rows = dst.rows();
-            let input_cols = dst.cols();
-            for dst_row in 0..input_rows {
-                let src_row = dst_row;
-                let src_col = output_index * input_cols;
-                TensorF32::copy_slice(dst.cols(), src, src_row, src_col, dst, dst_row, dst_col)?;
-            }
-        }
-        Ok(())
-    }
-
-    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        Self::concat(inputs, outputs)
     }
 }
 
@@ -78,12 +57,12 @@ impl NaryOperator for Concat {
             .map(|t| t.tensor().deref().borrow().clone())
             .collect();
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Scale(0.0),
+            OpCode::ScalarMul(0.0),
             &[&outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
@@ -111,6 +90,18 @@ pub struct ConcatBackward {}
 
 impl ConcatBackward {
     pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        Concat::unconcat(inputs, outputs)
+        let src = inputs[0];
+        for output_index in 0..outputs.len() {
+            let dst = outputs[output_index];
+            let dst_col = 0;
+            let input_rows = dst.rows();
+            let input_cols = dst.cols();
+            for dst_row in 0..input_rows {
+                let src_row = dst_row;
+                let src_col = output_index * input_cols;
+                TensorF32::copy_slice(dst.cols(), src, src_row, src_col, dst, dst_row, dst_col)?;
+            }
+        }
+        Ok(())
     }
 }

@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
-    Add, AddBackward, Clip, Concat, ConcatBackward, Error, Gemm, Identity, IdentityBackward, Mul,
-    Operator, Reshape, ReshapeBackward, Scale, ScaleBackward, Softmax, Sub, TensorF32,
+    Add, Clip, Concat, ConcatBackward, Error, Gemm, Mul, Operator, Reshape, ReshapeBackward,
+    ScalarMul, ScalarMulBackward, Softmax, Sub, TensorF32,
 };
 
 #[derive(Clone, Debug)]
@@ -18,16 +18,12 @@ pub enum OpCode {
     Add,
 
     /// Not ONNX-compliant
-    /// TODO remove this op code
-    AddBackward,
-
-    /// Not ONNX-compliant
     /// TODO remove this op code and use Mul with broadcast
-    Scale(f32),
+    ScalarMul(f32),
 
     /// Not ONNX-compliant
     /// TODO remove this op code
-    ScaleBackward,
+    ScalarMulBackward,
 
     /// Not ONNX-compliant
     /// similar op codes:
@@ -38,13 +34,6 @@ pub enum OpCode {
 
     /// https://onnx.ai/onnx/operators/onnx__Mul.html
     Mul,
-
-    /// https://onnx.ai/onnx/operators/onnx__Identity.html
-    Identity,
-
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    IdentityBackward,
 
     /// https://onnx.ai/onnx/operators/onnx__Softmax.html
     Softmax,
@@ -121,13 +110,10 @@ impl Operator for OpCode {
             OpCode::DynOperator(inner) => inner.name(),
             OpCode::Gemm(_, _, _) => "Gemm",
             OpCode::Add => "Add",
-            OpCode::AddBackward => "AddBackward",
-            OpCode::Scale(_) => "Scale",
-            OpCode::ScaleBackward => "ScaleBackward",
+            OpCode::ScalarMul(_) => "ScalarMul",
+            OpCode::ScalarMulBackward => "ScalarMulBackward",
             OpCode::Clip(_) => "Clip",
             OpCode::Mul => "Mul",
-            OpCode::Identity => "Identity",
-            OpCode::IdentityBackward => "IdentityBackward",
             OpCode::Softmax => "Softmax",
             OpCode::Sub => "Sub",
             OpCode::Reshape(_) => "Reshape",
@@ -144,13 +130,10 @@ impl Operator for OpCode {
                 Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)
             }
             OpCode::Add => Add::execute(inputs, outputs),
-            OpCode::AddBackward => AddBackward::execute(inputs, outputs),
-            OpCode::Scale(alpha) => Scale::execute(*alpha, inputs, outputs),
-            OpCode::ScaleBackward => ScaleBackward::execute(inputs, outputs),
+            OpCode::ScalarMul(alpha) => ScalarMul::execute(*alpha, inputs, outputs),
+            OpCode::ScalarMulBackward => ScalarMulBackward::execute(inputs, outputs),
             OpCode::Clip(clipped_norm) => Clip::execute(*clipped_norm, inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
-            OpCode::Identity => Identity::execute(inputs, outputs),
-            OpCode::IdentityBackward => IdentityBackward::execute(inputs, outputs),
             OpCode::Softmax => Softmax::execute(inputs, outputs),
             OpCode::Sub => Sub::execute(inputs, outputs),
             OpCode::Reshape(output_size) => Reshape::execute(output_size, inputs, outputs),

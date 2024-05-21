@@ -2,7 +2,6 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{Add, BinaryOperator, Device, Error, MatMul, Tensor, UnaryOperator};
 
-#[derive(Clone)]
 pub struct Linear {
     weights: Tensor,
     biases: Tensor,

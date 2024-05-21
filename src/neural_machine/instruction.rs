@@ -9,6 +9,18 @@ pub enum Category {
     Optimization,
 }
 
+impl Into<String> for Category {
+    fn into(self) -> String {
+        match self {
+            Category::Inference => "Inference",
+            Category::Loss => "Loss",
+            Category::Gradient => "Gradient",
+            Category::Optimization => "Optimization",
+        }
+        .into()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Instruction {
     opcode: OpCode,

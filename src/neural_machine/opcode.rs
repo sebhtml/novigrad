@@ -65,25 +65,30 @@ pub enum OpCode {
     Unconcat,
 }
 
-impl OpCode {
-    pub fn name(&self) -> &str {
+impl Into<String> for OpCode {
+    fn into(self) -> String {
         match self {
-            OpCode::Gemm(_, _, _) => "Gemm",
-            OpCode::Add => "Add",
-            OpCode::Sub => "Sub",
-            OpCode::Mul => "Mul",
-            OpCode::ScalarMul(_) => "ScalarMul",
-            OpCode::ClipNorm(_) => "Clip",
-            OpCode::Softmax => "Softmax",
-            OpCode::Sigmoid => "Sigmoid",
-            OpCode::Reshape(_) => "Reshape",
-            OpCode::Concat => "Concat",
-            OpCode::Unconcat => "Unconcat",
-            OpCode::CrossEntropyLoss => "CrossEntropyLoss",
-            OpCode::ResidualSumOfSquares => "ResidualSumOfSquares",
+            OpCode::Gemm(trans_a, trans_b, trans_result) => {
+                format!("Gemm {} {} {}", trans_a, trans_b, trans_result)
+            }
+            OpCode::Add => "Add".into(),
+            OpCode::Sub => "Sub".into(),
+            OpCode::Mul => "Mul".into(),
+            OpCode::ScalarMul(alpha) => format!("ScalarMul {}", alpha),
+            OpCode::ClipNorm(clipped_norm) => format!("Clip {}", clipped_norm),
+            OpCode::Softmax => "Softmax".into(),
+            OpCode::Sigmoid => "Sigmoid".into(),
+            OpCode::Reshape(output_size) => format!("Reshape {:?}", output_size),
+            OpCode::Concat => "Concat".into(),
+            OpCode::Unconcat => "Unconcat".into(),
+            OpCode::CrossEntropyLoss => "CrossEntropyLoss".into(),
+            OpCode::ResidualSumOfSquares => "ResidualSumOfSquares".into(),
         }
+        .into()
     }
+}
 
+impl OpCode {
     pub fn execute(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
         match self {
             OpCode::Gemm(trans_a, trans_b, trans_result) => {

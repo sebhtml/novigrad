@@ -135,11 +135,12 @@ impl NeuralMachine {
             .filter(|(_, i)| i.category() == category)
         {
             if debug {
+                let opcode: String = instruction.opcode().clone().into();
                 println!("----------------------------------");
                 println!(
                     "Debugging instruction {} {} with {} inputs and {} outputs",
                     i,
-                    instruction.opcode().name(),
+                    opcode,
                     instruction.inputs().len(),
                     instruction.outputs().len(),
                 );
@@ -147,12 +148,13 @@ impl NeuralMachine {
 
             #[cfg(debug_assertions)]
             for input in instruction.inputs().deref() {
+                let opcode: String = instruction.opcode().clone().into();
                 debug_assert_eq!(
                     input.is_nan()?,
                     false,
                     "instruction {} {} read nan input {} {}",
                     i,
-                    instruction.opcode().name(),
+                    opcode,
                     input.name(),
                     input,
                 );
@@ -168,12 +170,13 @@ impl NeuralMachine {
 
             #[cfg(debug_assertions)]
             for output in instruction.outputs().deref() {
+                let opcode: String = instruction.opcode().clone().into();
                 debug_assert_eq!(
                     output.is_nan()?,
                     false,
                     "instruction {} {} wrote nan output {} {}",
                     i,
-                    instruction.opcode().name(),
+                    opcode,
                     output.name(),
                     output,
                 );
@@ -269,7 +272,7 @@ impl NeuralMachine {
     }
 
     fn print_instruction(&self, i: usize, instruction: &Instruction) {
-        let opcode = instruction.opcode().name();
+        let opcode: String = instruction.opcode().clone().into();
         debug_assert_lt!(instruction.inputs().len(), 10);
         let inputs = instruction
             .inputs()
@@ -285,9 +288,10 @@ impl NeuralMachine {
             .map(Self::tensor_name)
             .collect::<Vec<_>>()
             .join(" ");
+        let category: String = instruction.category().into();
         println!(
-            "{}: INSTRUCTION    {}    {}    {}",
-            i, opcode, inputs, outputs,
+            "{}: INSTRUCTION    {}    {}    {}    // category={}",
+            i, opcode, inputs, outputs, category,
         );
         #[cfg(debug_assertions)]
         println!(

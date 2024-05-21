@@ -20,8 +20,16 @@ impl CrossEntropyLoss {
         }
     }
 
+    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+        let expected = inputs[0];
+        let actual = inputs[1];
+        let loss = CrossEntropyLoss::evaluate(expected, actual)?;
+        outputs[0].set_values(vec![loss; 1]);
+        Ok(())
+    }
+
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(_device: &Device, expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
+    fn evaluate(expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
         debug_assert_eq!(actual.size(), expected.size());
         let p = expected;
         let q = actual;
@@ -69,11 +77,11 @@ impl CrossEntropyLoss {
 impl LossFunction for CrossEntropyLoss {
     fn evaluate(
         &self,
-        device: &Device,
+        _device: &Device,
         expected: &TensorF32,
         actual: &TensorF32,
     ) -> Result<f32, Error> {
-        Self::evaluate(device, expected, actual)
+        Self::evaluate(expected, actual)
     }
 
     fn derive(
@@ -104,7 +112,7 @@ impl BinaryOperator for CrossEntropyLoss {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
-            OpCode::DynOperator(Rc::new(self.clone())),
+            OpCode::CrossEntropyLoss,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -122,20 +130,6 @@ impl BinaryOperator for CrossEntropyLoss {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         Ok(output)
-    }
-}
-
-impl Operator for CrossEntropyLoss {
-    fn name(&self) -> &str {
-        "CrossEntropyLoss"
-    }
-
-    fn forward(&self, inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
-        let expected = inputs[0];
-        let actual = inputs[1];
-        let loss = CrossEntropyLoss::evaluate(&self.device, expected, actual)?;
-        outputs[0].set_values(vec![loss; 1]);
-        Ok(())
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::{devices::Device, BinaryOperator, Error, Operator, TensorF32};
+use crate::{devices::Device, BinaryOperator, Error, TensorF32};
 mod residual_sum_of_squares;
 pub use residual_sum_of_squares::*;
 mod cross_entropy_loss;
@@ -19,4 +19,4 @@ pub trait LossFunction {
     ) -> Result<(), Error>;
 }
 
-pub trait LossOperator: BinaryOperator + Operator + LossFunction {}
+pub trait LossOperator: BinaryOperator + LossFunction {}

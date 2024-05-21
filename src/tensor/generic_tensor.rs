@@ -7,14 +7,14 @@ use crate::{DevBuffer, ErrorEnum};
 use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc, vec};
 
 #[derive(Clone, Debug)]
-pub struct TensorF32 {
+pub struct GenericTensor {
     name: usize,
     device: Device,
     size: Rc<RefCell<Vec<usize>>>,
     buffer: Rc<RefCell<DevBuffer>>,
 }
 
-impl PartialEq for TensorF32 {
+impl PartialEq for GenericTensor {
     fn eq(&self, other: &Self) -> bool {
         self.rows() == other.rows()
             && self.cols() == other.cols()
@@ -22,7 +22,7 @@ impl PartialEq for TensorF32 {
     }
 }
 
-impl TensorF32 {
+impl GenericTensor {
     pub fn new(name: usize, rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
         let mut buffer = device.buffer(values.len());
@@ -80,7 +80,7 @@ impl TensorF32 {
         }
     }
 
-    pub fn transpose(&self, other: &mut TensorF32) -> Result<(), Error> {
+    pub fn transpose(&self, other: &mut GenericTensor) -> Result<(), Error> {
         let self_values = self.get_values()?;
         let mut other_values = other.get_values()?;
         let rows = self.rows();
@@ -130,11 +130,15 @@ impl TensorF32 {
     }
 
     pub fn zero(&self) -> Result<(), Error> {
-        TensorF32::scalar_mul(0.0, self)
+        GenericTensor::scalar_mul(0.0, self)
     }
 
     // TODO use device for element_wise_mul
-    pub fn mul(left: &TensorF32, right: &TensorF32, result: &TensorF32) -> Result<(), Error> {
+    pub fn mul(
+        left: &GenericTensor,
+        right: &GenericTensor,
+        result: &GenericTensor,
+    ) -> Result<(), Error> {
         if left.size() != right.size() {
             return Err(Error::new(
                 file!(),
@@ -194,7 +198,7 @@ impl TensorF32 {
         Ok(false)
     }
 
-    pub fn dot_product(x: &TensorF32, y: &TensorF32) -> Result<f32, Error> {
+    pub fn dot_product(x: &GenericTensor, y: &GenericTensor) -> Result<f32, Error> {
         let device = &x.device;
         if x.size() != y.size() {
             return Err(Error::new(
@@ -210,7 +214,7 @@ impl TensorF32 {
         device.sdot(n, x.as_ptr(), incx, y.as_ptr(), incy)
     }
 
-    pub fn copy(x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
+    pub fn copy(x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
         let device = &x.device;
         let n = x.len() as i32;
         let incx = 1;
@@ -222,10 +226,10 @@ impl TensorF32 {
 
     pub fn copy_slice(
         n: usize,
-        src: &TensorF32,
+        src: &GenericTensor,
         src_row: usize,
         src_col: usize,
-        dst: &TensorF32,
+        dst: &GenericTensor,
         dst_row: usize,
         dst_col: usize,
     ) -> Result<(), Error> {
@@ -244,10 +248,10 @@ impl TensorF32 {
         transa: bool,
         transb: bool,
         alpha: f32,
-        a: &TensorF32,
-        b: &TensorF32,
+        a: &GenericTensor,
+        b: &GenericTensor,
         beta: f32,
-        c: &TensorF32,
+        c: &GenericTensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
         let op_result = Self::_gemm(transa, transb, alpha, a, b, beta, c, transpose_result);
@@ -275,10 +279,10 @@ impl TensorF32 {
         transa: bool,
         transb: bool,
         alpha: f32,
-        a: &TensorF32,
-        b: &TensorF32,
+        a: &GenericTensor,
+        b: &GenericTensor,
         beta: f32,
-        c: &TensorF32,
+        c: &GenericTensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
         let device = &a.device;
@@ -544,17 +548,17 @@ impl TensorF32 {
         }
     }
 
-    pub fn sub(x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
+    pub fn sub(x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
         let alpha = -1.0;
         Self::a_x_plus_y(alpha, x, y)
     }
 
-    pub fn add(x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
+    pub fn add(x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
         let alpha = 1.0;
         Self::a_x_plus_y(alpha, x, y)
     }
 
-    fn a_x_plus_y(alpha: f32, x: &TensorF32, y: &TensorF32) -> Result<(), Error> {
+    fn a_x_plus_y(alpha: f32, x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
             println!("Incompatible sizes");
@@ -574,7 +578,7 @@ impl TensorF32 {
     }
 
     pub fn l2_norm(&self) -> Result<f32, Error> {
-        let squared_l2_norm = TensorF32::dot_product(self, self)?;
+        let squared_l2_norm = GenericTensor::dot_product(self, self)?;
         let l2_norm = squared_l2_norm.sqrt();
         Ok(l2_norm)
     }
@@ -586,10 +590,10 @@ impl TensorF32 {
         }
         let alpha = 1.0 / l2_norm * norm;
         let x = self;
-        TensorF32::scalar_mul(alpha, x)
+        GenericTensor::scalar_mul(alpha, x)
     }
 
-    pub fn scalar_mul(alpha: f32, x: &TensorF32) -> Result<(), Error> {
+    pub fn scalar_mul(alpha: f32, x: &GenericTensor) -> Result<(), Error> {
         let device = x.device.clone();
         let n = x.len() as i32;
         let incx = 1;
@@ -613,7 +617,7 @@ impl TensorF32 {
     }
 }
 
-impl Display for TensorF32 {
+impl Display for GenericTensor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let self_values = self.get_values().map_err(|_| std::fmt::Error)?;
         _ = write!(
@@ -638,7 +642,7 @@ impl Display for TensorF32 {
     }
 }
 
-impl TryInto<f32> for &TensorF32 {
+impl TryInto<f32> for &GenericTensor {
     type Error = Error;
 
     fn try_into(self) -> Result<f32, Self::Error> {

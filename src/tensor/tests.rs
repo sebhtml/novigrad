@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{tensor::TensorF32, Device, ErrorEnum};
+use crate::{tensor::GenericTensor, Device, ErrorEnum};
 
 #[test]
 fn new() {
@@ -144,7 +144,7 @@ fn assign() {
             17.0, 18.0, 19.0, //
         ],
     );
-    TensorF32::copy(&tensor2, &mut tensor).unwrap();
+    GenericTensor::copy(&tensor2, &mut tensor).unwrap();
     assert_eq!(tensor, tensor2);
 }
 
@@ -192,7 +192,7 @@ fn matrix_multiplication_result() {
     let cols = rhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::gemm(false, false, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
+    GenericTensor::gemm(false, false, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -242,7 +242,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     let cols = rhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::gemm(true, false, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
+    GenericTensor::gemm(true, false, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -292,7 +292,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     let cols = rhs.rows();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::gemm(false, true, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
+    GenericTensor::gemm(false, true, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -340,7 +340,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let cols = rhs.rows();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::gemm(true, true, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
+    GenericTensor::gemm(true, true, 1.0, &lhs, &rhs, 1.0, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -397,7 +397,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let cols = lhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::gemm(true, true, 1.0, &lhs, &rhs, 1.0, &mut result, true).unwrap();
+    GenericTensor::gemm(true, true, 1.0, &lhs, &rhs, 1.0, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -451,7 +451,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let cols = lhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::gemm(true, false, 1.0, &lhs, &rhs, 1.0, &mut result, true).unwrap();
+    GenericTensor::gemm(true, false, 1.0, &lhs, &rhs, 1.0, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -471,7 +471,7 @@ fn matrix_addition_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs: TensorF32 = device.tensor_f32(
+    let rhs: GenericTensor = device.tensor_f32(
         3,
         2,
         vec![
@@ -497,8 +497,8 @@ fn matrix_addition_result() {
     let cols = rhs.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::copy(&rhs, &mut result).unwrap();
-    TensorF32::add(&lhs, &mut result).unwrap();
+    GenericTensor::copy(&rhs, &mut result).unwrap();
+    GenericTensor::add(&lhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -518,7 +518,7 @@ fn element_wise_mul_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs: TensorF32 = device.tensor_f32(
+    let rhs: GenericTensor = device.tensor_f32(
         3,
         2,
         vec![
@@ -541,7 +541,7 @@ fn element_wise_mul_result() {
     );
 
     let mut result = device.tensor_f32(3, 2, vec![0.0; 6]);
-    TensorF32::mul(&lhs, &rhs, &mut result).unwrap();
+    GenericTensor::mul(&lhs, &rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -576,8 +576,8 @@ fn scalar_mul() {
     );
 
     let mut result = device.tensor_f32(3, 2, vec![0.0; 6]);
-    TensorF32::copy(&lhs, &mut result).unwrap();
-    TensorF32::scalar_mul(rhs, &mut result).unwrap();
+    GenericTensor::copy(&lhs, &mut result).unwrap();
+    GenericTensor::scalar_mul(rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -597,7 +597,7 @@ fn big_matrix_multiplication() {
     let cols = m.cols();
     let len = rows * cols;
     let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    TensorF32::gemm(false, false, 1.0, &m, &m, 1.0, &mut result, false).unwrap();
+    GenericTensor::gemm(false, false, 1.0, &m, &m, 1.0, &mut result, false).unwrap();
 }
 
 #[test]
@@ -613,8 +613,8 @@ fn big_matrix_addition() {
     let m = device.tensor_f32(rows, cols, values);
 
     let mut result = device.tensor_f32(rows, cols, vec![0.0; rows * cols]);
-    TensorF32::copy(&m, &mut result).unwrap();
-    TensorF32::add(&m, &mut result).unwrap();
+    GenericTensor::copy(&m, &mut result).unwrap();
+    GenericTensor::add(&m, &mut result).unwrap();
 }
 
 #[test]
@@ -649,7 +649,7 @@ fn copy() {
 
     let mut actual = device.tensor_f32(2, 4, vec![0.0; 2 * 4]);
 
-    TensorF32::copy(&expected, &mut actual).unwrap();
+    GenericTensor::copy(&expected, &mut actual).unwrap();
     assert_eq!(actual, expected);
 }
 
@@ -683,6 +683,6 @@ fn copy_slice() {
         ],
     );
 
-    TensorF32::copy_slice(from.cols(), &from, 0, 0, &mut actual, 1, 2).unwrap();
+    GenericTensor::copy_slice(from.cols(), &from, 0, 0, &mut actual, 1, 2).unwrap();
     assert_eq!(actual, expected);
 }

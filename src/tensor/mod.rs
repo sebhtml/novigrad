@@ -1,6 +1,6 @@
 use std::fmt::Debug;
-mod tensor_f32;
-pub use tensor_f32::*;
+mod generic_tensor;
+pub use generic_tensor::*;
 
 #[cfg(test)]
 mod tests;

@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, inference_instruction, BinaryOperator, Device, Error, Instruction,
-    OpCode, Tensor, TensorF32,
+    gradient_instruction, inference_instruction, BinaryOperator, Device, Error, GenericTensor,
+    Instruction, OpCode, Tensor,
 };
 
 pub struct Add {
@@ -16,19 +16,19 @@ impl Add {
         }
     }
 
-    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];
-        TensorF32::copy(input_0, output)?;
-        TensorF32::add(input_1, output)
+        GenericTensor::copy(input_0, output)?;
+        GenericTensor::add(input_1, output)
     }
 }
 
 impl BinaryOperator for Add {
     fn forward(&self, input_1: &Tensor, input_2: &Tensor) -> Result<Tensor, Error> {
-        let input_0_t: &TensorF32 = &input_1.tensor().deref().borrow();
-        let input_1_t: &TensorF32 = &input_1.tensor().deref().borrow();
+        let input_0_t: &GenericTensor = &input_1.tensor().deref().borrow();
+        let input_1_t: &GenericTensor = &input_1.tensor().deref().borrow();
         debug_assert_eq!(input_0_t.size(), input_1_t.size());
         let rows = input_0_t.rows();
         let cols = input_0_t.cols();

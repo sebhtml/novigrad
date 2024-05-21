@@ -1,21 +1,22 @@
 use more_asserts::debug_assert_lt;
-use std::ops::Deref;
+use std::{marker::PhantomData, ops::Deref};
 
 use crate::{
-    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, OpCode,
-    OptimizerTrait, Tensor, TensorF32, UnaryModel,
+    gradient_instruction, BinaryOperator, Category, Device, Error, GenericTensor, Instruction,
+    OpCode, OptimizerTrait, Tensor, UnaryModel,
 };
 
-pub struct NeuralMachine {
+pub struct NeuralMachine<T> {
     device: Device,
     example_input: Tensor,
     example_output: Tensor,
     program_output: Tensor,
     loss: Tensor,
     instructions: Vec<Instruction>,
+    phantom_data: PhantomData<T>,
 }
 
-impl NeuralMachine {
+impl<T> NeuralMachine<T> {
     pub fn try_new(
         device: &Device,
         model: &Box<dyn UnaryModel>,
@@ -60,9 +61,9 @@ impl NeuralMachine {
 
         for tensor in tape.iter().rev() {
             for instruction in tensor.gradient_instructions().into_iter() {
-                let outputs: Vec<TensorF32> =
+                let outputs: Vec<GenericTensor> =
                     instruction.outputs().deref().clone().into_iter().collect();
-                let outputs: Vec<&TensorF32> = outputs.iter().collect();
+                let outputs: Vec<&GenericTensor> = outputs.iter().collect();
 
                 instructions.push(instruction);
 
@@ -81,13 +82,14 @@ impl NeuralMachine {
         let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
         instructions.append(&mut optimizer_instructions);
 
-        let program = NeuralMachine {
+        let program = NeuralMachine::<T> {
             device: device.clone(),
             example_input,
             example_output,
             program_output,
             loss,
             instructions,
+            phantom_data: Default::default(),
         };
 
         program.print();
@@ -97,10 +99,10 @@ impl NeuralMachine {
     pub fn loss(&self, expected_output: &Tensor) -> Result<Tensor, Error> {
         // Copy expected output
         {
-            let example_output: &mut TensorF32 =
+            let example_output: &mut GenericTensor =
                 &mut self.example_output.tensor().deref().borrow_mut();
-            let expected_output: &TensorF32 = &expected_output.tensor().deref().borrow_mut();
-            TensorF32::copy(expected_output, example_output)?;
+            let expected_output: &GenericTensor = &expected_output.tensor().deref().borrow_mut();
+            GenericTensor::copy(expected_output, example_output)?;
         }
 
         self.forward(Category::Loss)?;
@@ -204,10 +206,10 @@ impl NeuralMachine {
     pub fn infer(&self, input: &Tensor) -> Result<Tensor, Error> {
         // Copy input
         {
-            let example_input: &mut TensorF32 =
+            let example_input: &mut GenericTensor =
                 &mut self.example_input.tensor().deref().borrow_mut();
-            let input: &TensorF32 = &input.tensor().deref().borrow_mut();
-            TensorF32::copy(input, example_input)?;
+            let input: &GenericTensor = &input.tensor().deref().borrow_mut();
+            GenericTensor::copy(input, example_input)?;
         }
 
         self.forward(Category::Inference)?;

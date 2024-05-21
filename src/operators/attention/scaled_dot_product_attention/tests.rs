@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{Device, ScaledDotProductAttention, TensorF32, TernaryOperator};
+use crate::{Device, GenericTensor, ScaledDotProductAttention, TernaryOperator};
 
 #[test]
 fn forward() {
@@ -14,7 +14,7 @@ fn forward() {
     let output = attention.forward(&input, &input, &input).unwrap();
     output.forward().unwrap();
 
-    let actual: &TensorF32 = &output.tensor().deref().borrow();
+    let actual: &GenericTensor = &output.tensor().deref().borrow();
 
     let actual_values = actual.get_values().unwrap();
     for actual_value in actual_values {

@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    Instruction, OpCode, Tensor, TensorF32,
+    GenericTensor, Instruction, OpCode, Tensor,
 };
 
 #[cfg(test)]
@@ -20,7 +20,7 @@ impl ResidualSumOfSquares {
         }
     }
 
-    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = ResidualSumOfSquares::evaluate(expected, actual)?;
@@ -29,7 +29,7 @@ impl ResidualSumOfSquares {
     }
 
     /// RSS = Σ (y_i - f(x_i))^2
-    fn evaluate(expected: &TensorF32, actual: &TensorF32) -> Result<f32, Error> {
+    fn evaluate(expected: &GenericTensor, actual: &GenericTensor) -> Result<f32, Error> {
         if expected.size() != actual.size() {
             return Err(Error::new(
                 file!(),
@@ -84,11 +84,11 @@ impl BinaryOperator for ResidualSumOfSquares {
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
-        let inputs: &[&TensorF32] = &[
+        let inputs: &[&GenericTensor] = &[
             &inputs[0].tensor().deref().borrow(),
             &inputs[1].tensor().deref().borrow(),
         ];
-        let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
+        let outputs: &[&GenericTensor] = &[&outputs[0].gradient().deref().borrow()];
 
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);

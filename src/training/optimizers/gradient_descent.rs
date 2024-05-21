@@ -1,7 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    optimization_instruction, Device, Error, Instruction, OpCode, OptimizerTrait, Tensor, TensorF32,
+    optimization_instruction, Device, Error, GenericTensor, Instruction, OpCode, OptimizerTrait,
+    Tensor,
 };
 
 pub struct GradientDescent {
@@ -18,8 +19,8 @@ impl OptimizerTrait for GradientDescent {
     fn optimize(&self, device: &Device, tensors: &[Tensor]) -> Result<Vec<Instruction>, Error> {
         let mut instructions = vec![];
         for optimizable_tensor in tensors {
-            let tensor: &TensorF32 = &optimizable_tensor.tensor().deref().borrow();
-            let gradient: &TensorF32 = &optimizable_tensor.gradient().deref().borrow();
+            let tensor: &GenericTensor = &optimizable_tensor.tensor().deref().borrow();
+            let gradient: &GenericTensor = &optimizable_tensor.gradient().deref().borrow();
             debug_assert_eq!(gradient.size(), tensor.size(),);
 
             let scaled_gradient =

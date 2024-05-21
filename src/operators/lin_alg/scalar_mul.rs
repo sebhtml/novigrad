@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, inference_instruction, Device, Instruction, OpCode, Tensor, TensorF32,
-    UnaryOperator,
+    gradient_instruction, inference_instruction, Device, GenericTensor, Instruction, OpCode,
+    Tensor, UnaryOperator,
 };
 
 pub struct ScalarMul {
@@ -20,19 +20,19 @@ impl ScalarMul {
 
     pub fn execute(
         alpha: f32,
-        inputs: &[&TensorF32],
-        outputs: &[&TensorF32],
+        inputs: &[&GenericTensor],
+        outputs: &[&GenericTensor],
     ) -> Result<(), crate::Error> {
         let input = inputs[0];
         let output = outputs[0];
-        TensorF32::copy(input, output)?;
-        TensorF32::scalar_mul(alpha, output)
+        GenericTensor::copy(input, output)?;
+        GenericTensor::scalar_mul(alpha, output)
     }
 }
 
 impl UnaryOperator for ScalarMul {
     fn forward(&self, input: &Tensor) -> Result<Tensor, crate::Error> {
-        let input_t: &TensorF32 = &input.tensor().deref().borrow();
+        let input_t: &GenericTensor = &input.tensor().deref().borrow();
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
@@ -60,8 +60,8 @@ impl UnaryOperator for ScalarMul {
         let outputs = [input];
 
         {
-            let inputs: &[&TensorF32] = &[&inputs[0].gradient().deref().borrow()];
-            let outputs: &[&TensorF32] = &[&outputs[0].gradient().deref().borrow()];
+            let inputs: &[&GenericTensor] = &[&inputs[0].gradient().deref().borrow()];
+            let outputs: &[&GenericTensor] = &[&outputs[0].gradient().deref().borrow()];
 
             let input = inputs[0];
             let output_ = outputs[0];

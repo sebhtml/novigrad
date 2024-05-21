@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{Device, Mask, TensorF32, UnaryOperator};
+use crate::{Device, GenericTensor, Mask, UnaryOperator};
 
 #[test]
 fn forward() {
@@ -13,7 +13,7 @@ fn forward() {
     let output = mask.forward(&input).unwrap();
     output.forward().unwrap();
 
-    let actual: &TensorF32 = &output.tensor().deref().borrow();
+    let actual: &GenericTensor = &output.tensor().deref().borrow();
 
     // A position i is allowed to attend to a position j if and only if i > j.
     // This means that a position can attend to previous positions, but not itself or future positions.++

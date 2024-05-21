@@ -1,4 +1,4 @@
-use crate::{devices::Device, BinaryOperator, Error, MatMul, Tensor, TensorF32, UnaryOperator};
+use crate::{devices::Device, BinaryOperator, Error, GenericTensor, MatMul, Tensor, UnaryOperator};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
@@ -39,7 +39,11 @@ impl UnaryOperator for Embedding {
     }
 }
 
-fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> TensorF32 {
+fn get_embedding_table(
+    device: &Device,
+    num_embeddings: usize,
+    embedding_dim: usize,
+) -> GenericTensor {
     let mut rng = thread_rng();
     let mut embeddings_table: Vec<f32> = Vec::new();
     let left = 0.0;

@@ -1,6 +1,6 @@
 use crate::devices::Device;
 use crate::{emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, Error, Tensor};
-use crate::{Instruction, OpCode, TensorF32, UnaryOperator};
+use crate::{GenericTensor, Instruction, OpCode, UnaryOperator};
 use std::f32::consts::E;
 use std::ops::Deref;
 
@@ -16,7 +16,7 @@ impl Sigmoid {
         }
     }
 
-    pub fn execute(inputs: &[&TensorF32], outputs: &[&TensorF32]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
 
@@ -42,7 +42,7 @@ impl Sigmoid {
 
 impl UnaryOperator for Sigmoid {
     fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        let input_t: &TensorF32 = &input.tensor().deref().borrow();
+        let input_t: &GenericTensor = &input.tensor().deref().borrow();
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;

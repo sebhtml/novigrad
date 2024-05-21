@@ -10,7 +10,7 @@ fn test_model(model: ModelEnum, device: &Device) {
     let details = load_model_details(model, device).unwrap();
     let initial_total_error_min = details.initial_total_error_min;
     let final_total_error_max = details.final_total_error_max;
-    let training_output = train_model(details).unwrap();
+    let training_output = train_model::<f32>(details).unwrap();
     assert_ge!(training_output.initial_total_error, initial_total_error_min);
     assert_le!(training_output.final_total_error, final_total_error_max);
     for i in 0..training_output.expected_argmax_values.len() {

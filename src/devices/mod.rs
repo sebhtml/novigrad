@@ -14,7 +14,7 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{Tensor, TensorF32};
+use crate::{GenericTensor, Tensor};
 mod buffer;
 pub use buffer::*;
 use core::fmt::Debug;
@@ -152,10 +152,10 @@ impl Device {
         }
     }
 
-    pub fn tensor_f32(&self, rows: usize, cols: usize, values: Vec<f32>) -> TensorF32 {
+    pub fn tensor_f32(&self, rows: usize, cols: usize, values: Vec<f32>) -> GenericTensor {
         let name = *self.next_name.deref().borrow();
         *self.next_name.deref().borrow_mut() += 1;
-        TensorF32::new(name, rows, cols, values, self)
+        GenericTensor::new(name, rows, cols, values, self)
     }
 
     pub fn tensor(

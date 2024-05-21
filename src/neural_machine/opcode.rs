@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::{
     Add, ClipNorm, Concat, ConcatBackward, CrossEntropyLoss, Error, Gemm, Mul, Operator, Reshape,
-    ResidualSumOfSquares, ScalarMul, ScalarMulBackward, Sigmoid, Softmax, Sub, TensorF32,
+    ResidualSumOfSquares, ScalarMul, Sigmoid, Softmax, Sub, TensorF32,
 };
 
 #[derive(Clone, Debug)]
@@ -20,10 +20,6 @@ pub enum OpCode {
     /// Not ONNX-compliant
     /// TODO remove this op code and use Mul with broadcast
     ScalarMul(f32),
-
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    ScalarMulBackward,
 
     /// Not ONNX-compliant
     /// similar op codes:
@@ -82,7 +78,6 @@ impl Operator for OpCode {
             OpCode::Gemm(_, _, _) => "Gemm",
             OpCode::Add => "Add",
             OpCode::ScalarMul(_) => "ScalarMul",
-            OpCode::ScalarMulBackward => "ScalarMulBackward",
             OpCode::ClipNorm(_) => "Clip",
             OpCode::Mul => "Mul",
             OpCode::Softmax => "Softmax",
@@ -104,7 +99,6 @@ impl Operator for OpCode {
             }
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::ScalarMul(alpha) => ScalarMul::execute(*alpha, inputs, outputs),
-            OpCode::ScalarMulBackward => ScalarMulBackward::execute(inputs, outputs),
             OpCode::ClipNorm(clipped_norm) => ClipNorm::execute(*clipped_norm, inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
             OpCode::Softmax => Softmax::execute(inputs, outputs),

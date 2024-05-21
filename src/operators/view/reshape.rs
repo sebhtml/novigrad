@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, gradient_instruction, inference_instruction, Error, GenericTensor,
-    Instruction, OpCode, Tensor, UnaryOperator,
+    devices::Device, gradient_instruction, inference_instruction, Error, GenericTensor, OpCode,
+    Tensor, UnaryOperator,
 };
 
 pub struct Reshape {

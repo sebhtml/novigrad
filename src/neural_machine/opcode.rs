@@ -1,5 +1,5 @@
 use crate::{
-    Add, ClipNorm, Concat, CrossEntropyLoss, Error, Gemm, GenericTensor, Mul, Reshape,
+    Add, ClipNorm, Concat, CrossEntropyLoss, Dropout, Error, Gemm, GenericTensor, Mul, Reshape,
     ResidualSumOfSquares, ScalarMul, Sigmoid, Softmax, Sub, Unconcat,
 };
 
@@ -42,9 +42,8 @@ pub enum OpCode {
     /// Not ONNX-compliant
     ResidualSumOfSquares,
 
-    /// TODO
     /// https://onnx.ai/onnx/operators/onnx__Dropout.html
-    /// Dropout,
+    Dropout(f32),
 
     /// TODO
     /// https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
@@ -83,6 +82,7 @@ impl Into<String> for OpCode {
             OpCode::Unconcat => "Unconcat".into(),
             OpCode::CrossEntropyLoss => "CrossEntropyLoss".into(),
             OpCode::ResidualSumOfSquares => "ResidualSumOfSquares".into(),
+            OpCode::Dropout(_) => "Dropout".into(),
         }
         .into()
     }
@@ -110,6 +110,9 @@ impl OpCode {
             OpCode::Sigmoid => Sigmoid::execute(inputs, outputs),
             OpCode::CrossEntropyLoss => CrossEntropyLoss::execute(inputs, outputs),
             OpCode::ResidualSumOfSquares => ResidualSumOfSquares::execute(inputs, outputs),
+            OpCode::Dropout(dropout_probability) => {
+                Dropout::execute(*dropout_probability, inputs, outputs)
+            }
         }
     }
 }

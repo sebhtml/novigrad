@@ -16,6 +16,7 @@ impl MultiHeadAttention {
         cols: usize,
         mask: bool,
         num_heads: usize,
+        dropout_probability: f32,
     ) -> Result<Self, Error> {
         if cols % num_heads > 0 {
             return Err(Error::new(
@@ -28,7 +29,14 @@ impl MultiHeadAttention {
         let head_cols = cols / num_heads;
         let mut attention_heads = vec![];
         for _ in 0..num_heads {
-            attention_heads.push(AttentionHead::try_new(device, rows, cols, head_cols, mask)?);
+            attention_heads.push(AttentionHead::try_new(
+                device,
+                rows,
+                cols,
+                head_cols,
+                mask,
+                dropout_probability,
+            )?);
         }
 
         let concat = Concat::new(device);

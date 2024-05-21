@@ -1,7 +1,5 @@
 use crate::devices::Device;
-use crate::{
-    gradient_instruction, inference_instruction, GenericTensor, Instruction, OpCode, UnaryOperator,
-};
+use crate::{gradient_instruction, inference_instruction, GenericTensor, OpCode, UnaryOperator};
 use crate::{Error, Tensor};
 use std::f32::consts::E;
 use std::ops::Deref;

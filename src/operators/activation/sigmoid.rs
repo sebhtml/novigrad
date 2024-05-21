@@ -1,6 +1,6 @@
 use crate::devices::Device;
 use crate::{emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, Error, Tensor};
-use crate::{GenericTensor, Instruction, OpCode, UnaryOperator};
+use crate::{GenericTensor, OpCode, UnaryOperator};
 use std::f32::consts::E;
 use std::ops::Deref;
 

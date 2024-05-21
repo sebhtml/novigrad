@@ -1,6 +1,6 @@
 use crate::{
-    BinaryOperator, Device, Error, Mask, MatMul, ScalarMul, Softmax, Tensor, TernaryOperator,
-    UnaryOperator,
+    BinaryOperator, Device, Dropout, Error, Mask, MatMul, ScalarMul, Softmax, Tensor,
+    TernaryOperator, UnaryOperator,
 };
 
 #[cfg(test)]
@@ -13,24 +13,34 @@ pub struct ScaledDotProductAttention {
     scale: ScalarMul,
     mask: Option<Mask>,
     softmax: Softmax,
+    dropout: Option<Dropout>,
     matmul: MatMul,
 }
 
 impl ScaledDotProductAttention {
-    pub fn try_new(device: &Device, rows: usize, cols: usize, mask: bool) -> Result<Self, Error> {
+    pub fn try_new(
+        device: &Device,
+        rows: usize,
+        cols: usize,
+        mask: bool,
+        dropout_probability: f32,
+    ) -> Result<Self, Error> {
         let qk_matmul = MatMul::new(device, true);
         let alpha = 1.0 / f32::sqrt(cols as f32);
         let scale = ScalarMul::new(device, alpha);
         let mask = match mask {
             false => None,
             true => {
-                let mask_rows = rows;
-                let mask_cols = rows;
-                let mask = Mask::try_new(device, mask_rows, mask_cols)?;
+                let mask = Mask::try_new(device, rows, rows)?;
                 Some(mask)
             }
         };
         let softmax = Softmax::new(device, false);
+        let dropout = if dropout_probability == 0.0 {
+            None
+        } else {
+            Some(Dropout::try_new(device, rows, rows, dropout_probability)?)
+        };
         let matmul = MatMul::new(device, false);
 
         let attention = Self {
@@ -38,6 +48,7 @@ impl ScaledDotProductAttention {
             scale,
             mask,
             softmax,
+            dropout,
             matmul,
         };
         Ok(attention)
@@ -53,7 +64,11 @@ impl TernaryOperator for ScaledDotProductAttention {
             _ => scaled_weights,
         };
         let softmaxed_weights = self.softmax.forward(&masked_weights)?;
-        let attentions = self.matmul.forward(&softmaxed_weights, v)?;
+        let with_dropout = match &self.dropout {
+            Some(dropout) => dropout.forward(&softmaxed_weights)?,
+            _ => softmaxed_weights,
+        };
+        let attentions = self.matmul.forward(&with_dropout, v)?;
         Ok(attentions)
     }
 }

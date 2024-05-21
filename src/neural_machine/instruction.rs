@@ -39,7 +39,7 @@ pub struct Instruction {
 #[macro_export]
 macro_rules! instruction {
     ( $opcode:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
-        Instruction::new(
+        crate::Instruction::new(
             $opcode,
             $inputs,
             $outputs,
@@ -55,7 +55,7 @@ macro_rules! instruction {
 #[macro_export]
 macro_rules! instruction {
     ( $opcode:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
-        Instruction::new($opcode, $inputs, $outputs, $category)
+        crate::Instruction::new($opcode, $inputs, $outputs, $category)
     };
 }
 

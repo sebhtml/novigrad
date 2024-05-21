@@ -35,7 +35,7 @@ impl SimpleModel {
         let linear_1 = Linear::new(device, n_embd, sequence_length * n_embd, true, output_rows);
         let sigmoid_1 = Sigmoid::new(device);
         let linear_2 = Linear::new(device, vocab_size, n_embd, true, output_rows);
-        let softmax = Softmax::new(device, true);
+        let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
 
         Self {
             input_shape: vec![sequence_length, vocab_size],

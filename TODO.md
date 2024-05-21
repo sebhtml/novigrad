@@ -1,12 +1,9 @@
-
-- add Softmax constructor without argument next_is_...
+- device interface use <T>
 
 == Cuda ==
 
 - implement a mul cuda kernel
 - implement a softmax cuda kernel
-
-- device interface use <T>
 
 - make list of things that are using Tensorf32::set_value
 

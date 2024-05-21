@@ -38,7 +38,7 @@ impl MegaManAttentionModel {
         )
         .unwrap();
         let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length);
-        let softmax = Softmax::new(device, true);
+        let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
 
         Self {
             input_shape: vec![sequence_length, vocab_size],

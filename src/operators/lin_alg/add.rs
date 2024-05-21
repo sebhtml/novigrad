@@ -71,7 +71,6 @@ impl BinaryOperator for Add {
 
             if outputs[1].requires_grad() {
                 let output_1_gradient = outputs[1];
-                TensorF32::add(input_gradient, output_1_gradient)?;
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Add,
@@ -82,7 +81,6 @@ impl BinaryOperator for Add {
 
             if outputs[0].requires_grad() {
                 let output_0_gradient = outputs[0];
-                TensorF32::add(input_gradient, output_0_gradient)?;
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Add,

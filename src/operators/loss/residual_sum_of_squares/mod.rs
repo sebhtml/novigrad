@@ -2,10 +2,8 @@ use std::{ops::Deref, rc::Rc};
 
 use crate::{
     devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    Instruction, LossOperator, OpCode, Operator, Tensor, TensorF32,
+    Instruction, OpCode, Operator, Tensor, TensorF32,
 };
-
-use super::LossFunction;
 
 #[cfg(test)]
 mod tests;
@@ -14,8 +12,6 @@ mod tests;
 pub struct ResidualSumOfSquares {
     device: Device,
 }
-
-impl LossOperator for ResidualSumOfSquares {}
 
 impl ResidualSumOfSquares {
     pub fn new(device: &Device) -> Self {
@@ -47,26 +43,6 @@ impl ResidualSumOfSquares {
         TensorF32::copy(expected, result)?;
         TensorF32::sub(actual, result)?;
         TensorF32::scalar_mul(-2.0, result)
-    }
-}
-
-impl LossFunction for ResidualSumOfSquares {
-    fn evaluate(
-        &self,
-        device: &Device,
-        expected: &TensorF32,
-        actual: &TensorF32,
-    ) -> Result<f32, Error> {
-        Self::evaluate(device, expected, actual)
-    }
-
-    fn derive(
-        &self,
-        expected: &TensorF32,
-        actual: &TensorF32,
-        result: &TensorF32,
-    ) -> Result<(), Error> {
-        Self::derive(expected, actual, result)
     }
 }
 

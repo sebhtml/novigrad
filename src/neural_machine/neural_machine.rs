@@ -2,8 +2,8 @@ use more_asserts::debug_assert_lt;
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, LossOperator,
-    OpCode, Operator, OptimizerTrait, Tensor, TensorF32, UnaryModel,
+    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, OpCode, Operator,
+    OptimizerTrait, Tensor, TensorF32, UnaryModel,
 };
 
 pub struct NeuralMachine {
@@ -19,7 +19,7 @@ impl NeuralMachine {
     pub fn try_new(
         device: &Device,
         model: &Box<dyn UnaryModel>,
-        loss_operator: &Box<dyn LossOperator>,
+        loss_operator: &Box<dyn BinaryOperator>,
         clipped_gradient_norm: f32,
         optimizer: &Box<dyn OptimizerTrait>,
     ) -> Result<Self, Error> {

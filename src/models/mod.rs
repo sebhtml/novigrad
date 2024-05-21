@@ -5,7 +5,7 @@ mod mega_man;
 mod mega_man_attention;
 mod perceptron;
 mod simple;
-use crate::{LossOperator, OptimizerTrait};
+use crate::{BinaryOperator, OptimizerTrait};
 pub use perceptron::*;
 use std::fs;
 
@@ -28,7 +28,7 @@ pub struct ModelDetails {
     pub tokenizer: Option<Tokenizer>,
     pub examples: Vec<(Tensor, Tensor)>,
     pub model: Box<dyn UnaryModel>,
-    pub loss_operator: Box<dyn LossOperator>,
+    pub loss_operator: Box<dyn BinaryOperator>,
     pub optimizer: Box<dyn OptimizerTrait>,
     pub learning_rate: f32,
     pub shuffle_examples: bool,

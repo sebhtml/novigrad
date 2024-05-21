@@ -1,13 +1,14 @@
-- Use Add instead of AddBackward
 - SigmoidBackward and SoftmaxBackward are Mul
+- remove ReshapeBackward
+- Use Add instead of AddBackward
 - remove dyn Operator from OpCode
 - delete trait Operator
 - remove word Backward
+- print instruction category in log
 
 --------------------------------
 - use macro for errors
 
-- Clip must take 2 inputs
 - make sure that all OpCode have >= 2 inputs
 - no values in OpCode, put them insteast in OpCodeArguments
 
@@ -31,7 +32,8 @@
 - implement LayerNorm
 - implement Transformer
 
-- simplify Loss
+- Div
+- Pow
 
 == Logging ==
 
@@ -39,7 +41,7 @@
 - don't print machine on boot for chatbot
 - in chatbot example, use special token end_of_text to disable loss for that unknown expected token
 
-- print instruction category in log
+- simplify Loss
 
 == Cuda ==
 

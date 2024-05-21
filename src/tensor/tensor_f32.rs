@@ -35,8 +35,8 @@ impl TensorF32 {
         }
     }
 
-    pub fn name(&self) -> String {
-        "t".to_owned() + self.name.to_string().as_str()
+    pub fn name(&self) -> usize {
+        self.name
     }
 
     pub fn requires_grad(&self) -> bool {

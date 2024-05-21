@@ -63,11 +63,17 @@ impl NeuralMachine {
                 let outputs: Vec<TensorF32> =
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
-                let clip_instruction =
-                    gradient_instruction!(OpCode::ClipNorm(clipped_gradient_norm), &[], &outputs,);
 
-                instructions.push(instruction.clone());
-                instructions.push(clip_instruction);
+                instructions.push(instruction);
+
+                for output in outputs {
+                    let clip_instruction = gradient_instruction!(
+                        OpCode::ClipNorm(clipped_gradient_norm),
+                        &[output],
+                        &[output],
+                    );
+                    instructions.push(clip_instruction);
+                }
             }
         }
 
@@ -258,6 +264,10 @@ impl NeuralMachine {
         println!("------------------------------");
     }
 
+    fn tensor_name(name: usize) -> String {
+        "t".to_owned() + name.to_string().as_str()
+    }
+
     fn print_instruction(&self, i: usize, instruction: &Instruction) {
         let opcode = instruction.opcode().name();
         debug_assert_lt!(instruction.inputs().len(), 10);
@@ -265,12 +275,14 @@ impl NeuralMachine {
             .inputs()
             .iter()
             .map(|x| x.name())
+            .map(Self::tensor_name)
             .collect::<Vec<_>>()
             .join(" ");
         let outputs = instruction
             .outputs()
             .iter()
             .map(|x| x.name())
+            .map(Self::tensor_name)
             .collect::<Vec<_>>()
             .join(" ");
         println!(

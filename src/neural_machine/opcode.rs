@@ -51,11 +51,6 @@ pub enum OpCode {
     // Sigmoid,
 
     /// TODO
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    // SigmoidBackward,
-
-    /// TODO
     /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
     /// TODO rename it
     // CrossEntropyLoss,

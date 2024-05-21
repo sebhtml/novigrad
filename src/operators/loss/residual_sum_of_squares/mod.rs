@@ -46,7 +46,7 @@ impl ResidualSumOfSquares {
     fn derive(expected: &TensorF32, actual: &TensorF32, result: &TensorF32) -> Result<(), Error> {
         TensorF32::copy(expected, result)?;
         TensorF32::sub(actual, result)?;
-        TensorF32::scale(-2.0, result)
+        TensorF32::scalar_mul(-2.0, result)
     }
 }
 

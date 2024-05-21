@@ -26,7 +26,7 @@ impl ScalarMul {
         let input = inputs[0];
         let output = outputs[0];
         TensorF32::copy(input, output)?;
-        TensorF32::scale(alpha, output)
+        TensorF32::scalar_mul(alpha, output)
     }
 }
 

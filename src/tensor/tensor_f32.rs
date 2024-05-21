@@ -130,7 +130,7 @@ impl TensorF32 {
     }
 
     pub fn zero(&self) -> Result<(), Error> {
-        TensorF32::scale(0.0, self)
+        TensorF32::scalar_mul(0.0, self)
     }
 
     // TODO use device for element_wise_mul
@@ -586,10 +586,10 @@ impl TensorF32 {
         }
         let alpha = 1.0 / l2_norm * norm;
         let x = self;
-        TensorF32::scale(alpha, x)
+        TensorF32::scalar_mul(alpha, x)
     }
 
-    pub fn scale(alpha: f32, x: &TensorF32) -> Result<(), Error> {
+    pub fn scalar_mul(alpha: f32, x: &TensorF32) -> Result<(), Error> {
         let device = x.device.clone();
         let n = x.len() as i32;
         let incx = 1;

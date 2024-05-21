@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::{
-    Add, Clip, Concat, ConcatBackward, Error, Gemm, Mul, Operator, Reshape, ReshapeBackward,
+    Add, ClipNorm, Concat, ConcatBackward, Error, Gemm, Mul, Operator, Reshape, ReshapeBackward,
     ScalarMul, ScalarMulBackward, Softmax, Sub, TensorF32,
 };
 
@@ -29,8 +29,7 @@ pub enum OpCode {
     /// similar op codes:
     /// - https://onnx.ai/onnx/operators/onnx__Clip.html
     /// - https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
-    /// TODO rename to ClipNorm
-    Clip(f32),
+    ClipNorm(f32),
 
     /// https://onnx.ai/onnx/operators/onnx__Mul.html
     Mul,
@@ -107,7 +106,7 @@ impl Operator for OpCode {
             OpCode::Add => "Add",
             OpCode::ScalarMul(_) => "ScalarMul",
             OpCode::ScalarMulBackward => "ScalarMulBackward",
-            OpCode::Clip(_) => "Clip",
+            OpCode::ClipNorm(_) => "Clip",
             OpCode::Mul => "Mul",
             OpCode::Softmax => "Softmax",
             OpCode::Sub => "Sub",
@@ -127,7 +126,7 @@ impl Operator for OpCode {
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::ScalarMul(alpha) => ScalarMul::execute(*alpha, inputs, outputs),
             OpCode::ScalarMulBackward => ScalarMulBackward::execute(inputs, outputs),
-            OpCode::Clip(clipped_norm) => Clip::execute(*clipped_norm, inputs, outputs),
+            OpCode::ClipNorm(clipped_norm) => ClipNorm::execute(*clipped_norm, inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
             OpCode::Softmax => Softmax::execute(inputs, outputs),
             OpCode::Sub => Sub::execute(inputs, outputs),

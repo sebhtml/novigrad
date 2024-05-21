@@ -64,7 +64,7 @@ impl NeuralMachine {
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&TensorF32> = outputs.iter().collect();
                 let clip_instruction =
-                    gradient_instruction!(OpCode::Clip(clipped_gradient_norm), &[], &outputs,);
+                    gradient_instruction!(OpCode::ClipNorm(clipped_gradient_norm), &[], &outputs,);
 
                 instructions.push(instruction.clone());
                 instructions.push(clip_instruction);

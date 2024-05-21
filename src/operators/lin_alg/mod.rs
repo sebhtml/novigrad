@@ -14,3 +14,5 @@ mod add;
 pub use add::*;
 mod sub;
 pub use sub::*;
+mod clip_norm;
+pub use clip_norm::*;

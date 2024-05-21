@@ -1,8 +1,8 @@
 use crate::{Error, TensorF32};
 
-pub struct Clip {}
+pub struct ClipNorm {}
 
-impl Clip {
+impl ClipNorm {
     pub fn execute(
         clipped_norm: f32,
         _inputs: &[&TensorF32],

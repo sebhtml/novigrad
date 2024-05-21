@@ -1,21 +1,22 @@
 use more_asserts::debug_assert_lt;
-use std::ops::Deref;
+use std::{marker::PhantomData, ops::Deref};
 
 use crate::{
     gradient_instruction, BinaryOperator, Category, Device, Error, GenericTensor, Instruction,
     OpCode, OptimizerTrait, Tensor, UnaryModel,
 };
 
-pub struct NeuralMachine {
+pub struct NeuralMachine<T> {
     device: Device,
     example_input: Tensor,
     example_output: Tensor,
     program_output: Tensor,
     loss: Tensor,
     instructions: Vec<Instruction>,
+    phantom_data: PhantomData<T>,
 }
 
-impl NeuralMachine {
+impl<T> NeuralMachine<T> {
     pub fn try_new(
         device: &Device,
         model: &Box<dyn UnaryModel>,
@@ -81,13 +82,14 @@ impl NeuralMachine {
         let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
         instructions.append(&mut optimizer_instructions);
 
-        let program = NeuralMachine {
+        let program = NeuralMachine::<T> {
             device: device.clone(),
             example_input,
             example_output,
             program_output,
             loss,
             instructions,
+            phantom_data: Default::default(),
         };
 
         program.print();

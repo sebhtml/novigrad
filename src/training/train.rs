@@ -104,9 +104,9 @@ fn print_device_mem_info(device: &Device) -> Result<(), Error> {
     Ok(())
 }
 
-fn print_total_loss(
+fn print_total_loss<T>(
     device: &Device,
-    program: &NeuralMachine,
+    program: &NeuralMachine<T>,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
     last_total_loss: f32,
@@ -130,7 +130,7 @@ pub struct NetworkTestOutput {
     pub actual_argmax_values: Vec<usize>,
 }
 
-pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
+pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     let mut initial_total_error = f32::NAN;
     let examples = &details.examples;
     let model = details.model;
@@ -140,7 +140,7 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     let device = details.device;
     let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
-    let program = NeuralMachine::try_new(
+    let program = NeuralMachine::<T>::try_new(
         &device,
         &model,
         &loss_operator,
@@ -198,9 +198,9 @@ pub fn train_model(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
     Ok(output)
 }
 
-fn print_results(
+fn print_results<T>(
     epoch: usize,
-    program: &NeuralMachine,
+    program: &NeuralMachine<T>,
     tokenizer: &mut Option<Tokenizer>,
     inputs: &[Tensor],
     outputs: &[Tensor],
@@ -261,8 +261,8 @@ pub fn get_row_argmaxes(tensor: &GenericTensor) -> Result<Vec<usize>, Error> {
     Ok(argmaxes)
 }
 
-pub fn train(
-    program: &NeuralMachine,
+pub fn train<T>(
+    program: &NeuralMachine<T>,
     shuffle_examples: bool,
     inputs: &Vec<Tensor>,
     outputs: &Vec<Tensor>,
@@ -277,8 +277,8 @@ pub fn train(
     Ok(())
 }
 
-pub fn total_loss(
-    program: &NeuralMachine,
+pub fn total_loss<T>(
+    program: &NeuralMachine<T>,
     inputs: &[Tensor],
     outputs: &[Tensor],
 ) -> Result<f32, Error> {
@@ -295,8 +295,8 @@ pub fn total_loss(
     Ok(total_error)
 }
 
-fn train_with_one_example(
-    program: &NeuralMachine,
+fn train_with_one_example<T>(
+    program: &NeuralMachine<T>,
     input: &Tensor,
     output: &Tensor,
 ) -> Result<(), Error> {

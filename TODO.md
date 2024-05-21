@@ -1,13 +1,8 @@
-== Regularization ==
-
-- try Tensor<f8>
 - implement Dropout
 
----------------------
+== Regularization ==
 
-- use macro for errors
-- make sure that all OpCode have >= 2 inputs
-- no values in OpCode, put them instead in OpCodeArguments
+- Implement code with f16
 
 == GPT-1 Transformer ==
 
@@ -15,9 +10,15 @@
 - implement LayerNorm
 - implement Transformer
 
-== Performance ==
-
 - investigate performance issue with tons of call to pthread_rwlock_unlock
+
+---------------------
+
+- use macro for errors
+- make sure that all OpCode have >= 2 inputs
+- no values in OpCode, put them instead in OpCodeArguments
+
+== Performance ==
 
 ---------------------
 
@@ -28,7 +29,6 @@
 
 - simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
 
-- increase learning rates
 - Split Softmax in Exp + other operators to reuse them.
 
 == AMD ==
@@ -38,7 +38,6 @@
 == Cuda ==
 
 - implement a mul cuda kernel
-
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 
 == Initialization ==

@@ -82,7 +82,7 @@ fn main() -> Result<(), Error> {
     let learning_rate = 0.05;
     let loss_operator: Box<dyn BinaryOperator> = Box::new(CrossEntropyLoss::new(&device));
     let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::new(learning_rate));
-    let chatbot = NeuralMachine::try_new(
+    let chatbot = NeuralMachine::<f32>::try_new(
         &device,
         &model,
         &loss_operator,

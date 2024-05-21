@@ -141,9 +141,9 @@ fn main() -> Result<(), Error> {
             let _actual_output_one_hot = chatbot.infer(&input_one_hot)?;
             let loss = chatbot.loss(&expected_output_one_hot)?;
             let loss: &TensorF32 = &loss.tensor().deref().borrow();
-            let loss: f32 = loss.try_into()?;
+            let _loss: f32 = loss.try_into()?;
             if print_in_console {
-                println!("Loss {}", loss);
+                //println!("Loss {}", loss);
             }
 
             chatbot.compute_gradient()?;

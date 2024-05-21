@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
-    Add, AddBackward, Clip, Concat, ConcatBackward, Error, Gemm, Mul, Operator, Reshape,
-    ReshapeBackward, ScalarMul, ScalarMulBackward, Softmax, Sub, TensorF32,
+    Add, Clip, Concat, ConcatBackward, Error, Gemm, Mul, Operator, Reshape, ReshapeBackward,
+    ScalarMul, ScalarMulBackward, Softmax, Sub, TensorF32,
 };
 
 #[derive(Clone, Debug)]
@@ -16,10 +16,6 @@ pub enum OpCode {
 
     /// https://onnx.ai/onnx/operators/onnx__Add.html
     Add,
-
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    AddBackward,
 
     /// Not ONNX-compliant
     /// TODO remove this op code and use Mul with broadcast
@@ -114,9 +110,8 @@ impl Operator for OpCode {
             OpCode::DynOperator(inner) => inner.name(),
             OpCode::Gemm(_, _, _) => "Gemm",
             OpCode::Add => "Add",
-            OpCode::AddBackward => "AddBackward",
-            OpCode::ScalarMul(_) => "Scale",
-            OpCode::ScalarMulBackward => "ScaleBackward",
+            OpCode::ScalarMul(_) => "ScalarMul",
+            OpCode::ScalarMulBackward => "ScalarMulBackward",
             OpCode::Clip(_) => "Clip",
             OpCode::Mul => "Mul",
             OpCode::Softmax => "Softmax",
@@ -135,7 +130,6 @@ impl Operator for OpCode {
                 Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)
             }
             OpCode::Add => Add::execute(inputs, outputs),
-            OpCode::AddBackward => AddBackward::execute(inputs, outputs),
             OpCode::ScalarMul(alpha) => ScalarMul::execute(*alpha, inputs, outputs),
             OpCode::ScalarMulBackward => ScalarMulBackward::execute(inputs, outputs),
             OpCode::Clip(clipped_norm) => Clip::execute(*clipped_norm, inputs, outputs),

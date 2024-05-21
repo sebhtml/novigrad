@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
-    Add, AddBackward, Clip, Concat, ConcatBackward, Error, Gemm, Identity, IdentityBackward, Mul,
-    Operator, Reshape, ReshapeBackward, ScalarMul, ScalarMulBackward, Softmax, Sub, TensorF32,
+    Add, AddBackward, Clip, Concat, ConcatBackward, Error, Gemm, Mul, Operator, Reshape,
+    ReshapeBackward, ScalarMul, ScalarMulBackward, Softmax, Sub, TensorF32,
 };
 
 #[derive(Clone, Debug)]
@@ -38,13 +38,6 @@ pub enum OpCode {
 
     /// https://onnx.ai/onnx/operators/onnx__Mul.html
     Mul,
-
-    /// https://onnx.ai/onnx/operators/onnx__Identity.html
-    Identity,
-
-    /// Not ONNX-compliant
-    /// TODO remove this op code
-    IdentityBackward,
 
     /// https://onnx.ai/onnx/operators/onnx__Softmax.html
     Softmax,
@@ -126,8 +119,6 @@ impl Operator for OpCode {
             OpCode::ScalarMulBackward => "ScaleBackward",
             OpCode::Clip(_) => "Clip",
             OpCode::Mul => "Mul",
-            OpCode::Identity => "Identity",
-            OpCode::IdentityBackward => "IdentityBackward",
             OpCode::Softmax => "Softmax",
             OpCode::Sub => "Sub",
             OpCode::Reshape(_) => "Reshape",
@@ -149,8 +140,6 @@ impl Operator for OpCode {
             OpCode::ScalarMulBackward => ScalarMulBackward::execute(inputs, outputs),
             OpCode::Clip(clipped_norm) => Clip::execute(*clipped_norm, inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
-            OpCode::Identity => Identity::execute(inputs, outputs),
-            OpCode::IdentityBackward => IdentityBackward::execute(inputs, outputs),
             OpCode::Softmax => Softmax::execute(inputs, outputs),
             OpCode::Sub => Sub::execute(inputs, outputs),
             OpCode::Reshape(output_size) => Reshape::execute(output_size, inputs, outputs),

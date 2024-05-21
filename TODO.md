@@ -1,4 +1,3 @@
-- use less Identity
 - Use Add instead of AddBackward
 - SigmoidBackward and SoftmaxBackward are Mul
 - remove dyn Operator from OpCode

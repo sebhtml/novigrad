@@ -57,6 +57,7 @@ Rust
 - [Burn](https://github.com/tracel-ai/burn/tree/main)
 - [candle](https://github.com/huggingface/candle)
 - [dfdx]( https://github.com/coreylowman/dfdx)
+- [autograph](https://github.com/charles-r-earp/autograph)
 - [tch-rs](https://github.com/LaurentMazare/tch-rs)
 - [wonnx](https://github.com/webonnx/wonnx/)
 
@@ -129,3 +130,6 @@ Text is available under the Creative Commons Attribution-ShareAlike License 4.0
 - [arrayfire::CublasMathMode](https://arrayfire.org/arrayfire-rust/arrayfire/enum.CublasMathMode.html)
 - [cuBLAS](https://docs.nvidia.com/cuda/cublas/)
 
+# Llama links
+
+- [llama3 implemented from scratch](https://github.com/naklecha/llama3-from-scratch)

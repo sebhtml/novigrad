@@ -96,6 +96,8 @@ pub trait DeviceInterface {
         input: *const f32,
         output: *mut f32,
     ) -> Result<(), Error>;
+
+    fn sum(&self, n: i32, x: *const f32, incx: i32, y: *mut f32) -> Result<(), Error>;
 }
 
 impl Debug for dyn DeviceInterface {
@@ -294,5 +296,9 @@ impl DeviceInterface for Device {
         output: *mut f32,
     ) -> Result<(), Error> {
         self.device.softmax(rows, cols, input, output)
+    }
+
+    fn sum(&self, n: i32, x: *const f32, incx: i32, y: *mut f32) -> Result<(), Error> {
+        self.device.sum(n, x, incx, y)
     }
 }

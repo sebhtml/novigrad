@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 mod generic_tensor;
+use cudarc::nvrtc::CompileError;
 pub use generic_tensor::*;
 
 #[cfg(test)]
@@ -30,4 +31,6 @@ pub enum ErrorEnum {
     UnsupportedOperation,
     IncorrectOperatorConfiguration,
     InputOutputError,
+    NvRtcCompilePtxError(CompileError),
+    NvRtcLoadPtxError,
 }

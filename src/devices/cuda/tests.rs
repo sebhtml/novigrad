@@ -127,3 +127,51 @@ fn htod_sync_copy_into() {
         .unwrap();
     assert_eq!(host_slice, values);
 }
+
+#[test]
+fn sum_kernel() {
+    use crate::CudaDevice;
+    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    let cuda_device = CudaDevice::try_default().unwrap();
+    let dev = cuda_device.dev;
+
+    // allocate buffers
+    let inp = dev.htod_copy(vec![3.0_f32; 100]).unwrap();
+    let mut out = dev.alloc_zeros::<f32>(1).unwrap();
+
+    let sum_kernel = dev.get_func("sum_kernel_module", "sum_kernel").unwrap();
+    let cfg = LaunchConfig::for_num_elems(100);
+    unsafe { sum_kernel.launch(cfg, (&inp, 100_usize, &mut out)) }.unwrap();
+
+    let out_host: Vec<f32> = dev.dtoh_sync_copy(&out).unwrap();
+    assert_eq!(out_host, vec![300.0],);
+}
+
+/// Example from https://github.com/coreylowman/cudarc
+#[test]
+fn sin_kernel() {
+    use crate::CudaDevice;
+    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    let cuda_device = CudaDevice::try_default().unwrap();
+    let dev = cuda_device.dev;
+
+    // allocate buffers
+    let inp = dev.htod_copy(vec![1.0_f32; 100]).unwrap();
+    let mut out = dev.alloc_zeros::<f32>(100).unwrap();
+
+    let sin_kernel = dev.get_func("sin_kernel_module", "sin_kernel").unwrap();
+    let cfg = LaunchConfig::for_num_elems(100);
+    unsafe { sin_kernel.launch(cfg, (&mut out, &inp, 100_usize)) }.unwrap();
+
+    let out_host: Vec<f32> = dev.dtoh_sync_copy(&out).unwrap();
+    // See:
+    // sin: Lack of precision?
+    // https://forums.developer.nvidia.com/t/sin-lack-of-precision/14242/1
+    let precision = 10e-7;
+    assert_eq!(
+        out_host,
+        [1.0; 100]
+            .map(f32::sin)
+            .map(|x| ((x / precision).round()) * precision)
+    );
+}

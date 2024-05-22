@@ -1,4 +1,4 @@
-use std::{ffi::c_void, sync::Arc};
+use std::{ffi::c_void, fs::File, io::Read, sync::Arc};
 
 mod tests;
 
@@ -26,7 +26,8 @@ impl CudaDevice {
         let dev = cudarc::driver::CudaDevice::new(0);
         let cuda_blas = dev.clone().map(|x| CudaBlas::new(x));
         match (cuda_blas, dev) {
-            (Ok(Ok(cuda_blas)), Ok(dev)) => Ok(CudaDevice { cuda_blas, dev }),
+            (Ok(Ok(cuda_blas)), Ok(dev)) => Self::try_new(cuda_blas, dev),
+
             _ => Err(Error::new(
                 file!(),
                 line!(),
@@ -34,6 +35,50 @@ impl CudaDevice {
                 ErrorEnum::UnsupportedOperation,
             )),
         }
+    }
+
+    pub fn try_new(cuda_blas: CudaBlas, dev: Arc<driver::CudaDevice>) -> Result<Self, Error> {
+        let device = CudaDevice { cuda_blas, dev };
+
+        device.load_module(
+            "sin_kernel_module",
+            &["sin_kernel"],
+            "./src/devices/cuda/sin_kernel.cu",
+        )?;
+
+        device.load_module(
+            "sum_kernel_module",
+            &["sum_kernel"],
+            "./src/devices/cuda/sum_kernel.cu",
+        )?;
+
+        Ok(device)
+    }
+
+    fn load_module(
+        &self,
+        module_name: &str,
+        func_names: &[&'static str],
+        src_file_path: &str,
+    ) -> Result<(), Error> {
+        let mut cuda_code = String::default();
+        File::open(src_file_path)
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::InputOutputError))?
+            .read_to_string(&mut cuda_code)
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::InputOutputError))?;
+        let ptx = cudarc::nvrtc::compile_ptx(cuda_code).map_err(|err| {
+            Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::NvRtcCompilePtxError(err),
+            )
+        })?;
+
+        self.dev
+            .load_ptx(ptx, module_name, func_names)
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::NvRtcLoadPtxError))?;
+        Ok(())
     }
 }
 
@@ -156,6 +201,10 @@ impl DeviceInterface for CudaDevice {
         _input: *const f32,
         _output: *mut f32,
     ) -> Result<(), Error> {
+        todo!()
+    }
+
+    fn sum(&self, _n: i32, _x: *const f32, _incx: i32, _y: *mut f32) -> Result<(), Error> {
         todo!()
     }
 }

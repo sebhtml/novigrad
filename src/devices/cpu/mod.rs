@@ -116,6 +116,10 @@ impl DeviceInterface for CpuDevice {
     ) -> Result<(), Error> {
         CpuDevice::_softmax(rows, cols, input, output)
     }
+
+    fn sum(&self, _n: i32, _x: *const f32, _incx: i32, _y: *mut f32) -> Result<(), Error> {
+        todo!()
+    }
 }
 
 impl CpuDevice {

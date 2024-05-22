@@ -1,4 +1,4 @@
-use std::{ffi::c_void, sync::Arc};
+use std::{ffi::c_void, fs::File, io::Read, sync::Arc};
 
 mod tests;
 
@@ -26,12 +26,8 @@ impl CudaDevice {
         let dev = cudarc::driver::CudaDevice::new(0);
         let cuda_blas = dev.clone().map(|x| CudaBlas::new(x));
         match (cuda_blas, dev) {
-            (Ok(Ok(cuda_blas)), Ok(dev)) => {
-                let device = CudaDevice { cuda_blas, dev };
-                device.load_sin_module()?;
-                device.load_sum_module()?;
-                Ok(device)
-            }
+            (Ok(Ok(cuda_blas)), Ok(dev)) => Self::try_new(cuda_blas, dev),
+
             _ => Err(Error::new(
                 file!(),
                 line!(),
@@ -41,44 +37,36 @@ impl CudaDevice {
         }
     }
 
-    fn load_sin_module(&self) -> Result<(), Error> {
-        let ptx = cudarc::nvrtc::compile_ptx(
-            "
-        extern \"C\" __global__ void sin_kernel(float *out, const float *inp, const size_t numel) {
-            unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
-            if (i < numel) {
-                out[i] = sin(inp[i]);
-            }
-        }",
-        )
-        .map_err(|err| {
-            Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::NvRtcCompilePtxError(err),
-            )
-        })?;
+    pub fn try_new(cuda_blas: CudaBlas, dev: Arc<driver::CudaDevice>) -> Result<Self, Error> {
+        let device = CudaDevice { cuda_blas, dev };
 
-        // and dynamically load it into the device
-        self.dev
-            .load_ptx(ptx, "sin_kernel_module", &["sin_kernel"])
-            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::NvRtcLoadPtxError))?;
-        Ok(())
+        device.load_module(
+            "sin_kernel_module",
+            &["sin_kernel"],
+            "./src/devices/cuda/sin_kernel.cu",
+        )?;
+
+        device.load_module(
+            "sum_kernel_module",
+            &["sum_kernel"],
+            "./src/devices/cuda/sum_kernel.cu",
+        )?;
+
+        Ok(device)
     }
 
-    fn load_sum_module(&self) -> Result<(), Error> {
-        let ptx = cudarc::nvrtc::compile_ptx(
-            "
-        extern \"C\" __global__ void sum_kernel(float* data, int size, float* result) {
-            int i = threadIdx.x;
-            if (i < size) {
-                atomicAdd(result, data[i]);
-            }
-        }
-        ",
-        )
-        .map_err(|err| {
+    fn load_module(
+        &self,
+        module_name: &str,
+        func_names: &[&'static str],
+        src_file_path: &str,
+    ) -> Result<(), Error> {
+        let mut cuda_code = String::default();
+        File::open(src_file_path)
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::InputOutputError))?
+            .read_to_string(&mut cuda_code)
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::InputOutputError))?;
+        let ptx = cudarc::nvrtc::compile_ptx(cuda_code).map_err(|err| {
             Error::new(
                 file!(),
                 line!(),
@@ -87,9 +75,8 @@ impl CudaDevice {
             )
         })?;
 
-        // and dynamically load it into the device
         self.dev
-            .load_ptx(ptx, "sum_kernel_module", &["sum_kernel"])
+            .load_ptx(ptx, module_name, func_names)
             .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::NvRtcLoadPtxError))?;
         Ok(())
     }

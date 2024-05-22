@@ -30,4 +30,6 @@ pub enum ErrorEnum {
     UnsupportedOperation,
     IncorrectOperatorConfiguration,
     InputOutputError,
+    NvRtcCompilePtxError,
+    NvRtcLoadPtxError,
 }

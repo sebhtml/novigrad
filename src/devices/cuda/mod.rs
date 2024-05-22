@@ -26,7 +26,11 @@ impl CudaDevice {
         let dev = cudarc::driver::CudaDevice::new(0);
         let cuda_blas = dev.clone().map(|x| CudaBlas::new(x));
         match (cuda_blas, dev) {
-            (Ok(Ok(cuda_blas)), Ok(dev)) => Ok(CudaDevice { cuda_blas, dev }),
+            (Ok(Ok(cuda_blas)), Ok(dev)) => {
+                let device = CudaDevice { cuda_blas, dev };
+                device.load_sin_module()?;
+                Ok(device)
+            }
             _ => Err(Error::new(
                 file!(),
                 line!(),
@@ -34,6 +38,25 @@ impl CudaDevice {
                 ErrorEnum::UnsupportedOperation,
             )),
         }
+    }
+
+    fn load_sin_module(&self) -> Result<(), Error> {
+        let ptx = cudarc::nvrtc::compile_ptx(
+            "
+        extern \"C\" __global__ void sin_kernel(float *out, const float *inp, const size_t numel) {
+            unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+            if (i < numel) {
+                out[i] = sin(inp[i]);
+            }
+        }",
+        )
+        .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::NvRtcCompilePtxError))?;
+
+        // and dynamically load it into the device
+        self.dev
+            .load_ptx(ptx, "sin_kernel", &["sin_kernel"])
+            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::NvRtcLoadPtxError))?;
+        Ok(())
     }
 }
 
@@ -156,6 +179,10 @@ impl DeviceInterface for CudaDevice {
         _input: *const f32,
         _output: *mut f32,
     ) -> Result<(), Error> {
+        todo!()
+    }
+
+    fn sum(&self, _n: i32, _x: *const f32, _incx: i32, _y: *mut f32) -> Result<(), Error> {
         todo!()
     }
 }

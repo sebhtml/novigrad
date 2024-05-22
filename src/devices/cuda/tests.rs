@@ -127,3 +127,73 @@ fn htod_sync_copy_into() {
         .unwrap();
     assert_eq!(host_slice, values);
 }
+
+#[ignore]
+#[test]
+fn sum() {
+    use crate::devices::DeviceInterface;
+    use crate::Device;
+
+    let device = Device::cuda().unwrap();
+
+    let a = device.tensor_f32(
+        2,
+        3,
+        vec![
+            //
+            1.0, 4.0, //
+            2.0, 5.0, //
+            3.0, 6.0, //
+        ],
+    );
+    let actual = device.tensor_f32(1, 1, vec![0.0]);
+
+    device
+        .sum(a.len() as i32, a.as_ptr(), 1, actual.as_mut_ptr())
+        .unwrap();
+
+    let expected = device.tensor_f32(1, 1, vec![1.0 + 4.0 + 2.0 + 5.0 + 3.0 + 6.0]);
+
+    assert_eq!(actual, expected,);
+}
+
+/// Example from https://github.com/coreylowman/cudarc
+#[test]
+fn sin_kernel() {
+    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    let dev = cudarc::driver::CudaDevice::new(0).unwrap();
+
+    // allocate buffers
+    let inp = dev.htod_copy(vec![1.0f32; 100]).unwrap();
+    let mut out = dev.alloc_zeros::<f32>(100).unwrap();
+
+    let ptx = cudarc::nvrtc::compile_ptx(
+        "
+extern \"C\" __global__ void sin_kernel(float *out, const float *inp, const size_t numel) {
+    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < numel) {
+        out[i] = sin(inp[i]);
+    }
+}",
+    )
+    .unwrap();
+
+    // and dynamically load it into the device
+    dev.load_ptx(ptx, "my_module", &["sin_kernel"]).unwrap();
+
+    let sin_kernel = dev.get_func("my_module", "sin_kernel").unwrap();
+    let cfg = LaunchConfig::for_num_elems(100);
+    unsafe { sin_kernel.launch(cfg, (&mut out, &inp, 100usize)) }.unwrap();
+
+    let out_host: Vec<f32> = dev.dtoh_sync_copy(&out).unwrap();
+    // See:
+    // sin: Lack of precision?
+    // https://forums.developer.nvidia.com/t/sin-lack-of-precision/14242/1
+    let precision = 10e-7;
+    assert_eq!(
+        out_host,
+        [1.0; 100]
+            .map(f32::sin)
+            .map(|x| ((x / precision).round()) * precision)
+    );
+}

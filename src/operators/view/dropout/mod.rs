@@ -26,7 +26,7 @@ impl Dropout {
     ) -> Result<Self, Error> {
         let len = mask_rows * mask_cols;
         let mask = vec![1.0; len];
-        let mask = device.tensor_with_grad(mask_rows, mask_cols, mask, &[], false, false);
+        let mask = device.tensor_with_grad(mask_rows, mask_cols, mask, &[], false, false)?;
         let mul = Mul::new(device);
         let alpha = 1.0 / (1.0 - dropout_probability);
         let scalar_mul = ScalarMul::new(device, alpha);
@@ -57,8 +57,7 @@ impl Dropout {
                 values[i] = 0.0;
             }
         }
-        output.set_values(values);
-        Ok(())
+        output.set_values(values)
     }
 }
 

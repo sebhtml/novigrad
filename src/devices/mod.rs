@@ -157,7 +157,7 @@ impl Device {
         }
     }
 
-    pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Tensor {
+    pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Result<Tensor, Error> {
         let name = *self.next_name.deref().borrow();
         *self.next_name.deref().borrow_mut() += 1;
         Tensor::new(name, rows, cols, values, self)
@@ -171,13 +171,13 @@ impl Device {
         inputs: &[&TensorWithGrad],
         requires_grad: bool,
         optimize: bool,
-    ) -> TensorWithGrad {
+    ) -> Result<TensorWithGrad, Error> {
         let len = rows * cols;
-        let tensor = Self::tensor(&self, rows, cols, values);
+        let tensor = Self::tensor(&self, rows, cols, values)?;
         let gradient = if requires_grad {
-            Self::tensor(&self, rows, cols, vec![0.0; len])
+            Self::tensor(&self, rows, cols, vec![0.0; len])?
         } else {
-            Self::tensor(&self, 0, 0, vec![])
+            Self::tensor(&self, 0, 0, vec![])?
         };
         let tensor = TensorWithGrad::new(tensor, gradient, inputs);
         if optimize {
@@ -186,7 +186,7 @@ impl Device {
                 .borrow_mut()
                 .push(tensor.clone())
         }
-        tensor
+        Ok(tensor)
     }
 
     pub fn tensor_count(&self) -> usize {

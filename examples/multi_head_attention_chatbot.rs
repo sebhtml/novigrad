@@ -25,12 +25,12 @@ impl UnaryModel for ChatbotModel {}
 impl ChatbotModel {
     /// Attention Is All You Need
     /// https://arxiv.org/abs/1706.03762
-    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
+    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
         let n_embd = 768;
         let num_heads = 12;
         let dropout_probability = 0.1;
 
-        let embedding = Embedding::new(device, vocab_size, n_embd);
+        let embedding = Embedding::new(device, vocab_size, n_embd)?;
         let multi_head_attention = MultiHeadAttention::try_new(
             device,
             sequence_length,
@@ -40,17 +40,18 @@ impl ChatbotModel {
             dropout_probability,
         )
         .unwrap();
-        let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length);
+        let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length)?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
 
-        Self {
+        let model = Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![sequence_length, vocab_size],
             embedding,
             multi_head_attention,
             linear,
             softmax,
-        }
+        };
+        Ok(model)
     }
 }
 
@@ -83,7 +84,7 @@ fn main() -> Result<(), Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
     let vocab_size = tokenizer.vocab_size();
-    let model = ChatbotModel::new(&device, sequence_length, vocab_size);
+    let model = ChatbotModel::new(&device, sequence_length, vocab_size)?;
     let vocab_size = tokenizer.vocab_size();
     let model: Box<dyn UnaryModel> = Box::new(model);
     let clipped_gradient_norm = 1.0;

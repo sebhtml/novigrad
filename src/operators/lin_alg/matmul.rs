@@ -63,13 +63,13 @@ impl BinaryOperator for MatMul {
             &[input_0, input_1],
             true,
             false,
-        );
+        )?;
 
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0]);
-        let alpha = self.device.tensor(1, 1, vec![1.0]);
-        let beta = self.device.tensor(1, 1, vec![1.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
+        let alpha = self.device.tensor(1, 1, vec![1.0])?;
+        let beta = self.device.tensor(1, 1, vec![1.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],

@@ -72,17 +72,18 @@ impl DevSlice {
         }
     }
 
-    pub fn set_values(&mut self, new_values: Vec<f32>) {
+    pub fn set_values(&mut self, new_values: Vec<f32>) -> Result<(), Error> {
         match self.buffer.borrow_mut() {
             DevSliceEnum::CpuDevSlice(ref mut values) => {
                 values.clear();
-                values.extend_from_slice(new_values.as_slice())
+                values.extend_from_slice(new_values.as_slice());
+                Ok(())
             }
             #[cfg(feature = "cuda")]
             DevSliceEnum::CudaDevSlice(ref mut buffer) => {
-                // TODO don't unwrap directly.
                 let dev = buffer.device();
-                dev.htod_sync_copy_into(&new_values, buffer).unwrap();
+                dev.htod_sync_copy_into(&new_values, buffer)
+                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
             }
         }
     }

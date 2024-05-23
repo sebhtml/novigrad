@@ -18,7 +18,7 @@ struct MegaManAttentionModel {
 impl UnaryModel for MegaManAttentionModel {}
 
 impl MegaManAttentionModel {
-    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
+    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
         // see https://github.com/karpathy/minGPT
         let _batch_size = 1;
         let n_embd = 768;
@@ -27,7 +27,7 @@ impl MegaManAttentionModel {
         let dropout_probability = 0.1;
         let _block_size = 2048;
 
-        let embedding = Embedding::new(device, vocab_size, n_embd);
+        let embedding = Embedding::new(device, vocab_size, n_embd)?;
         let multi_head_attention = MultiHeadAttention::try_new(
             device,
             sequence_length,
@@ -37,17 +37,18 @@ impl MegaManAttentionModel {
             dropout_probability,
         )
         .unwrap();
-        let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length);
+        let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length)?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
 
-        Self {
+        let model = Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![sequence_length, vocab_size],
             embedding,
             multi_head_attention,
             linear,
             softmax,
-        }
+        };
+        Ok(model)
     }
 }
 
@@ -93,7 +94,7 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let model = MegaManAttentionModel::new(device, sequence_length, vocab_size);
+    let model = MegaManAttentionModel::new(device, sequence_length, vocab_size)?;
 
     let loss_operator = CrossEntropyLoss::new(device);
     let learning_rate = 0.05;

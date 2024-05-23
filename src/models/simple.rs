@@ -20,24 +20,24 @@ struct SimpleModel {
 impl UnaryModel for SimpleModel {}
 
 impl SimpleModel {
-    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
+    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
         let n_embd = 384;
         let output_rows = 1;
 
-        let embedding = Embedding::new(device, vocab_size, n_embd);
-        let linear_0 = Linear::new(device, n_embd, n_embd, true, sequence_length);
+        let embedding = Embedding::new(device, vocab_size, n_embd)?;
+        let linear_0 = Linear::new(device, n_embd, n_embd, true, sequence_length)?;
         let sigmoid_0 = Sigmoid::new(device);
         let reshape = Reshape::new(
             device,
             vec![sequence_length, n_embd],
             vec![output_rows, sequence_length * n_embd],
         );
-        let linear_1 = Linear::new(device, n_embd, sequence_length * n_embd, true, output_rows);
+        let linear_1 = Linear::new(device, n_embd, sequence_length * n_embd, true, output_rows)?;
         let sigmoid_1 = Sigmoid::new(device);
-        let linear_2 = Linear::new(device, vocab_size, n_embd, true, output_rows);
+        let linear_2 = Linear::new(device, vocab_size, n_embd, true, output_rows)?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
 
-        Self {
+        let model = Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![output_rows, vocab_size],
             embedding,
@@ -48,7 +48,8 @@ impl SimpleModel {
             sigmoid_1,
             linear_2,
             softmax,
-        }
+        };
+        Ok(model)
     }
 }
 
@@ -116,7 +117,7 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
     let loss_operator = CrossEntropyLoss::new(device);
     let learning_rate = 0.5;
     let vocab_size = tokenizer.vocab_size();
-    let model = SimpleModel::new(device, sequence_length, vocab_size);
+    let model = SimpleModel::new(device, sequence_length, vocab_size)?;
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),

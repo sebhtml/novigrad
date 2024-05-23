@@ -163,9 +163,7 @@ impl DeviceInterface for CpuDevice {
             }
         }
 
-        result.set_values(result_values);
-
-        Ok(())
+        result.set_values(result_values)
     }
 }
 

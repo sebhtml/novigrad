@@ -17,7 +17,7 @@ impl Mask {
         let len = mask_rows * mask_cols;
         let mask = vec![1.0; len];
 
-        let mask = device.tensor_with_grad(mask_rows, mask_cols, mask, &[], true, true);
+        let mask = device.tensor_with_grad(mask_rows, mask_cols, mask, &[], true, true)?;
         let mut values = mask.tensor().deref().borrow().get_values()?;
         for row in 0..mask_rows {
             for col in 0..mask_cols {
@@ -27,7 +27,7 @@ impl Mask {
                 }
             }
         }
-        mask.tensor().deref().borrow_mut().set_values(values);
+        mask.tensor().deref().borrow_mut().set_values(values)?;
 
         let mul = Mul::new(device);
         let mask = Self { mask, mul };

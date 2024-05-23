@@ -16,7 +16,7 @@ impl Linear {
         weights_cols: usize,
         weights_random: bool,
         bias_rows: usize,
-    ) -> Self {
+    ) -> Result<Self, Error> {
         // Xavier Initialization, or Glorot Initialization,
         let mut rng = thread_rng();
         let right = (6.0 as f32).sqrt() / (weights_cols as f32 + weights_rows as f32).sqrt();
@@ -30,7 +30,8 @@ impl Linear {
                 weights[index] = rng.sample(uniform);
             }
         }
-        let weights = device.tensor_with_grad(weights_rows, weights_cols, weights, &[], true, true);
+        let weights =
+            device.tensor_with_grad(weights_rows, weights_cols, weights, &[], true, true)?;
 
         let biases_len = bias_rows * weights_rows;
         let biases = device.tensor_with_grad(
@@ -40,15 +41,16 @@ impl Linear {
             &[],
             true,
             true,
-        );
+        )?;
 
         let transb = true;
-        Self {
+        let op = Self {
             weights,
             biases,
             matmul: MatMul::new(device, transb),
             add: Add::new(device),
-        }
+        };
+        Ok(op)
     }
 }
 

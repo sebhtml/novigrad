@@ -28,8 +28,8 @@ impl OptimizerTrait for GradientDescent {
             debug_assert_eq!(gradient.size(), tensor.size(),);
 
             let scaled_gradient =
-                device.tensor(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()]);
-            let zero = device.tensor(1, 1, vec![0.0]);
+                device.tensor(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()])?;
+            let zero = device.tensor(1, 1, vec![0.0])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&zero, &scaled_gradient],
@@ -42,7 +42,7 @@ impl OptimizerTrait for GradientDescent {
                 &[&scaled_gradient],
             ));
 
-            let alpha = device.tensor(1, 1, vec![-self.learning_rate]);
+            let alpha = device.tensor(1, 1, vec![-self.learning_rate])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&alpha, &scaled_gradient],

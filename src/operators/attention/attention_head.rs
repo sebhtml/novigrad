@@ -19,9 +19,9 @@ impl AttentionHead {
         mask: bool,
         dropout_probability: f32,
     ) -> Result<Self, Error> {
-        let q = Linear::new(device, head_cols, cols, true, rows);
-        let k = Linear::new(device, head_cols, cols, true, rows);
-        let v = Linear::new(device, head_cols, cols, true, rows);
+        let q = Linear::new(device, head_cols, cols, true, rows)?;
+        let k = Linear::new(device, head_cols, cols, true, rows)?;
+        let v = Linear::new(device, head_cols, cols, true, rows)?;
         let attention =
             ScaledDotProductAttention::try_new(device, rows, cols, mask, dropout_probability)
                 .unwrap();

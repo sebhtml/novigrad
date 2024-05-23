@@ -59,19 +59,19 @@ pub fn into_one_hot_encoded_rows(
         input_tokens.len(),
         num_classes,
         vec![Default::default(); len],
-    );
+    )?;
     let mut result_values = result.get_values()?;
     for (index, token) in input_tokens.iter().enumerate() {
         result_values[result.index(index, *token)] = 1.0;
     }
-    Ok(device.tensor_with_grad(
+    device.tensor_with_grad(
         input_tokens.len(),
         num_classes,
         result_values,
         &[],
         false,
         false,
-    ))
+    )
 }
 
 fn load_examples(

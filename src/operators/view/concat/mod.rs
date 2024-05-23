@@ -49,14 +49,14 @@ impl NaryOperator for Concat {
         let values = vec![0.0; len];
         let output = self
             .device
-            .tensor_with_grad(rows, cols, values, inputs_n, true, false);
+            .tensor_with_grad(rows, cols, values, inputs_n, true, false)?;
         let inputs = inputs_n;
         let outputs = [&output];
         let inputs: Vec<Tensor> = inputs
             .iter()
             .map(|t| t.tensor().deref().borrow().clone())
             .collect();
-        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],

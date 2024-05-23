@@ -35,7 +35,7 @@ impl MultiHeadAttention {
         }
 
         let concat = Concat::new(device);
-        let linear = Linear::new(device, cols, cols, true, rows);
+        let linear = Linear::new(device, cols, cols, true, rows)?;
 
         let multi_head_attention = Self {
             attention_heads,

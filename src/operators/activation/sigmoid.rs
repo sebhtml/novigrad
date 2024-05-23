@@ -37,8 +37,7 @@ impl Sigmoid {
             }
             row += 1;
         }
-        output.set_values(result_values);
-        Ok(())
+        output.set_values(result_values)
     }
 }
 
@@ -50,11 +49,11 @@ impl UnaryOperator for Sigmoid {
         let len = rows * cols;
         let output =
             self.device
-                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false);
+                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false)?;
 
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -71,7 +70,7 @@ impl UnaryOperator for Sigmoid {
             &[&outputs[0].tensor().deref().borrow()],
         ));
 
-        emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output);
+        emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output)?;
 
         Ok(output)
     }

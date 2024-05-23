@@ -23,16 +23,23 @@ impl PartialEq for Tensor {
 }
 
 impl Tensor {
-    pub fn new(name: usize, rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
+    pub fn new(
+        name: usize,
+        rows: usize,
+        cols: usize,
+        values: Vec<f32>,
+        device: &Device,
+    ) -> Result<Self, Error> {
         debug_assert_eq!(values.len(), rows * cols);
         let mut buffer = device.buffer(values.len());
-        buffer.set_values(values);
-        Self {
+        buffer.set_values(values)?;
+        let tensor = Self {
             name,
             device: device.clone(),
             size: Rc::new(RefCell::new(vec![rows, cols])),
             device_slice: Rc::new(RefCell::new(buffer)),
-        }
+        };
+        Ok(tensor)
     }
 
     pub fn device(&self) -> &Device {
@@ -99,8 +106,7 @@ impl Tensor {
             }
             row += 1;
         }
-        other.set_values(other_values);
-        Ok(())
+        other.set_values(other_values)
     }
 
     pub fn device_slice(&self) -> &Rc<RefCell<DevSlice>> {
@@ -119,17 +125,16 @@ impl Tensor {
         self.device_slice.deref().borrow().get_values()
     }
 
-    pub fn reallocate(&mut self, new_size: &[usize]) {
+    pub fn reallocate(&mut self, new_size: &[usize]) -> Result<(), Error> {
         if *new_size == *self.size.deref().borrow() {
-            return;
+            return Ok(());
         }
         *self.size.deref().borrow_mut() = new_size.to_owned();
         let len = self.len();
-        self.set_values(vec![0.0; len]);
+        self.set_values(vec![0.0; len])
     }
 
-    // TODO This method should return a Result.
-    pub fn set_values(&self, new_values: Vec<f32>) {
+    pub fn set_values(&self, new_values: Vec<f32>) -> Result<(), Error> {
         debug_assert_eq!(new_values.len(), self.len());
         if self.device_slice.deref().borrow().len() != self.len() {
             self.device_slice.deref().borrow_mut().resize(self.len())
@@ -447,7 +452,7 @@ impl Tensor {
         }
         let alpha = 1.0 / l2_norm * norm;
         let x = self;
-        let alpha = self.device.tensor(1, 8, vec![alpha; 8]);
+        let alpha = self.device.tensor(1, 1, vec![alpha]).unwrap();
         Tensor::scalar_mul(&alpha, x)
     }
 
@@ -477,8 +482,7 @@ impl Tensor {
             input_values.as_ptr(),
             output_values.as_mut_ptr(),
         )?;
-        output.set_values(output_values);
-        Ok(())
+        output.set_values(output_values)
     }
 }
 

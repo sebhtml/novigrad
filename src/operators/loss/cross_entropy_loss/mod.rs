@@ -21,8 +21,7 @@ impl CrossEntropyLoss {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = CrossEntropyLoss::evaluate(expected, actual)?;
-        outputs[0].set_values(vec![loss; 1]);
-        Ok(())
+        outputs[0].set_values(vec![loss; 1])
     }
 
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
@@ -65,10 +64,10 @@ impl BinaryOperator for CrossEntropyLoss {
     ) -> Result<TensorWithGrad, Error> {
         let output =
             self.device
-                .tensor_with_grad(1, 1, vec![0.0], &[input_1, input_2], true, false);
+                .tensor_with_grad(1, 1, vec![0.0], &[input_1, input_2], true, false)?;
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],

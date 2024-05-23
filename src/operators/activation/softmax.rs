@@ -41,10 +41,10 @@ impl UnaryOperator for Softmax {
         let len = rows * cols;
         let output =
             self.device
-                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false);
+                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false)?;
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -71,7 +71,7 @@ impl UnaryOperator for Softmax {
                 &[&input.gradient().deref().borrow()],
             ));
         } else {
-            emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output);
+            emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output)?;
         }
 
         Ok(output)
@@ -82,7 +82,7 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
     device: &Device,
     input: &TensorWithGrad,
     output: &TensorWithGrad,
-) {
+) -> Result<(), Error> {
     let inputs = [&output];
     let outputs = [input];
     let inputs: &[&Tensor] = &[
@@ -100,21 +100,21 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
         let rows = output_.rows();
         let cols = output_.cols();
         let len = rows * cols;
-        let ones = device.tensor(rows, cols, vec![1.0; len]);
-        let one_minus_output = device.tensor(rows, cols, vec![0.0; len]);
+        let ones = device.tensor(rows, cols, vec![1.0; len])?;
+        let one_minus_output = device.tensor(rows, cols, vec![0.0; len])?;
 
         output.push_instruction(gradient_instruction!(
             OpCode::Sub,
             &[&ones, input],
             &[&one_minus_output],
         ));
-        let layer_f_derivative = device.tensor(rows, cols, vec![0.0; len]);
+        let layer_f_derivative = device.tensor(rows, cols, vec![0.0; len])?;
         output.push_instruction(gradient_instruction!(
             OpCode::Mul,
             &[input, &one_minus_output],
             &[&layer_f_derivative],
         ));
-        let tmp = device.tensor(rows, cols, vec![0.0; len]);
+        let tmp = device.tensor(rows, cols, vec![0.0; len])?;
 
         output.push_instruction(gradient_instruction!(
             OpCode::Mul,
@@ -127,4 +127,5 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
             &[output_gradient],
         ));
     }
+    Ok(())
 }

@@ -35,10 +35,10 @@ impl UnaryOperator for ScalarMul {
         let len = rows * cols;
         let output =
             self.device
-                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false);
+                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false)?;
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -49,7 +49,7 @@ impl UnaryOperator for ScalarMul {
             &[&zero, &outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
-        let alpha = self.device.tensor(1, 1, vec![self.alpha]);
+        let alpha = self.device.tensor(1, 1, vec![self.alpha])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&alpha, &inputs[0].tensor().deref().borrow()],

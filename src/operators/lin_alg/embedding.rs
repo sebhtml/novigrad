@@ -9,13 +9,15 @@ pub struct Embedding {
 }
 
 impl Embedding {
-    pub fn new(device: &Device, num_embeddings: usize, embedding_dim: usize) -> Self {
-        let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim);
+    pub fn new(
+        device: &Device,
+        num_embeddings: usize,
+        embedding_dim: usize,
+    ) -> Result<Self, Error> {
+        let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim)?;
         let len = embedding_table.len();
-        let mut transposed = device.tensor(embedding_dim, num_embeddings, vec![0.0; len]);
-        // TODO don't unwrap directly
-        embedding_table.transpose(&mut transposed).unwrap();
-        // TODO don't unwrap directly
+        let mut transposed = device.tensor(embedding_dim, num_embeddings, vec![0.0; len])?;
+        embedding_table.transpose(&mut transposed)?;
         let embedding_table = device.tensor_with_grad(
             transposed.rows(),
             transposed.cols(),
@@ -23,15 +25,16 @@ impl Embedding {
             &[],
             true,
             true,
-        );
+        )?;
 
         let transb = true;
         let matmul = MatMul::new(device, transb);
 
-        Self {
+        let op = Self {
             embedding_table,
             matmul,
-        }
+        };
+        Ok(op)
     }
 }
 
@@ -41,7 +44,11 @@ impl UnaryOperator for Embedding {
     }
 }
 
-fn get_embedding_table(device: &Device, num_embeddings: usize, embedding_dim: usize) -> Tensor {
+fn get_embedding_table(
+    device: &Device,
+    num_embeddings: usize,
+    embedding_dim: usize,
+) -> Result<Tensor, Error> {
     let mut rng = thread_rng();
     let mut embeddings_table: Vec<f32> = Vec::new();
     let left = 0.0;

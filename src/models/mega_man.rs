@@ -20,11 +20,11 @@ struct MegaManModel {
 impl UnaryModel for MegaManModel {}
 
 impl MegaManModel {
-    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Self {
+    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
         let n_embd = 384;
         let output_rows = 1;
 
-        Self {
+        let model = Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![output_rows, vocab_size],
             parameters: device.tensor_with_grad(
@@ -34,8 +34,8 @@ impl MegaManModel {
                 &[],
                 true,
                 true,
-            ),
-            embedding: Embedding::new(device, vocab_size, n_embd),
+            )?,
+            embedding: Embedding::new(device, vocab_size, n_embd)?,
             matmul: MatMul::new(device, true),
             reshape: Reshape::new(
                 device,
@@ -48,9 +48,10 @@ impl MegaManModel {
                 sequence_length * n_embd,
                 true,
                 output_rows,
-            ),
+            )?,
             softmax: Softmax::new_with_next_is_cross_entropy_loss(device),
-        }
+        };
+        Ok(model)
     }
 }
 
@@ -92,7 +93,7 @@ pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails, Error> {
         &mut tokenizer,
     )?;
     let vocab_size = tokenizer.vocab_size();
-    let model = MegaManModel::new(device, sequence_length, vocab_size);
+    let model = MegaManModel::new(device, sequence_length, vocab_size)?;
     let loss_operator = CrossEntropyLoss::new(device);
     let learning_rate = 0.5;
     let details = ModelDetails {

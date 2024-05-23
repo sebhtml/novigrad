@@ -39,12 +39,13 @@ impl UnaryOperator for Reshape {
         let rows = self.output_size[0];
         let cols = self.output_size[1];
         let len = rows * cols;
-        let output =
-            self.device
-                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false);
+        let output = self
+            .device
+            .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false)
+            .unwrap();
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0]).unwrap();
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],

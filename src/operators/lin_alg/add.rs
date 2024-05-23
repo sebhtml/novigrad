@@ -44,10 +44,10 @@ impl BinaryOperator for Add {
             &[input_1, input_2],
             true,
             false,
-        );
+        )?;
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],

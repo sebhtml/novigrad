@@ -43,10 +43,10 @@ impl BinaryOperator for Mul {
             &[input_0, input_1],
             true,
             false,
-        );
+        )?;
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -90,12 +90,12 @@ impl BinaryOperator for Mul {
             if outputs[1].requires_grad() {
                 let output_1_gradient = outputs[1];
                 let output_0 = inputs[0];
-                let mut tmp = self.device.tensor(rows, cols, vec![0.0; len]);
+                let tmp = self.device.tensor(rows, cols, vec![0.0; len])?;
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
                     &[output_0, input_gradient],
-                    &[&mut tmp],
+                    &[&tmp],
                 ));
 
                 output.push_instruction(gradient_instruction!(
@@ -108,12 +108,12 @@ impl BinaryOperator for Mul {
             if outputs[0].requires_grad() {
                 let output_0_gradient = outputs[0];
                 let output_ = inputs[1];
-                let mut tmp = self.device.tensor(rows, cols, vec![0.0; len]);
+                let tmp = self.device.tensor(rows, cols, vec![0.0; len])?;
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
                     &[output_, input_gradient],
-                    &[&mut tmp],
+                    &[&tmp],
                 ));
 
                 output.push_instruction(gradient_instruction!(

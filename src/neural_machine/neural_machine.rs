@@ -34,7 +34,7 @@ impl<T> NeuralMachine<T> {
             &[],
             false,
             false,
-        );
+        )?;
         // output
         let output_shape = model.output_size();
         let output_len = output_shape[0] * output_shape[1];
@@ -45,7 +45,7 @@ impl<T> NeuralMachine<T> {
             &[],
             false,
             false,
-        );
+        )?;
 
         let program_output = model.forward(&example_input)?;
         let loss =

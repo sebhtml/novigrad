@@ -24,8 +24,7 @@ impl ResidualSumOfSquares {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = ResidualSumOfSquares::evaluate(expected, actual)?;
-        outputs[0].set_values(vec![loss; 1]);
-        Ok(())
+        outputs[0].set_values(vec![loss; 1])
     }
 
     /// RSS = Σ (y_i - f(x_i))^2
@@ -60,10 +59,10 @@ impl BinaryOperator for ResidualSumOfSquares {
     ) -> Result<TensorWithGrad, Error> {
         let output =
             self.device
-                .tensor_with_grad(1, 1, vec![0.0], &[input_1, input_2], true, false);
+                .tensor_with_grad(1, 1, vec![0.0], &[input_1, input_2], true, false)?;
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -101,7 +100,7 @@ impl BinaryOperator for ResidualSumOfSquares {
                 &[expected, actual],
                 &[output_gradient],
             ));
-            let minus_two = self.device.tensor(1, 1, vec![-2.0]);
+            let minus_two = self.device.tensor(1, 1, vec![-2.0])?;
             output.push_instruction(gradient_instruction!(
                 OpCode::ScalarMul,
                 &[&minus_two, output_gradient],

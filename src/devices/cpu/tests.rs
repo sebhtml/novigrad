@@ -39,7 +39,7 @@ fn cblas_sgemm_column_major() {
     );
 
     device
-        .sgemm(
+        .gemm(
             false,
             false,
             m,
@@ -112,7 +112,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
     );
 
     device
-        .sgemm(
+        .gemm(
             false,
             false,
             n,

@@ -41,7 +41,7 @@ pub trait DeviceInterface {
     /// op(B) is a k by n matrix
     /// C is an m by n matrix.
     ///
-    fn sgemm(
+    fn gemm(
         &self,
         transa: bool,
         transb: bool,
@@ -60,7 +60,7 @@ pub trait DeviceInterface {
 
     /// SAXPY constant times a vector plus a vector.
     /// y = alpha * x + y
-    fn saxpy(
+    fn axpy(
         &self,
         n: i32,
         alpha: f32,
@@ -71,22 +71,23 @@ pub trait DeviceInterface {
     ) -> Result<(), Error>;
 
     /// SDOT forms the dot product of two vectors.
-    fn sdot(
-        &self,
-        n: i32,
-        x: *const f32,
-        incx: i32,
-        y: *const f32,
-        incy: i32,
-    ) -> Result<f32, Error>;
+    fn dot(&self, n: i32, x: *const f32, incx: i32, y: *const f32, incy: i32)
+        -> Result<f32, Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
-    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
+    fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
 
     fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error>;
 
+    fn mul(
+        &self,
+        left: &GenericTensor,
+        right: &GenericTensor,
+        result: &GenericTensor,
+    ) -> Result<(), Error>;
+
     /// Allocate a slice on the device.
-    fn slice(&self, n: i32) -> Result<DevBufferEnum, Error>;
+    fn slice(&self, n: i32) -> Result<DevSliceEnum, Error>;
 
     fn softmax(
         &self,
@@ -111,7 +112,7 @@ pub struct Device {
     used: Rc<RefCell<usize>>,
     tensors_to_optimize: Rc<RefCell<Vec<Tensor>>>,
     device: Rc<dyn DeviceInterface>,
-    available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevBuffer>>>>,
+    available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevSlice>>>>,
 }
 
 impl Default for Device {
@@ -135,8 +136,8 @@ impl Device {
         Self::new(Rc::new(CpuDevice::default()))
     }
 
-    pub fn recycle(&self, len: usize, buffer: &mut DevBuffer) {
-        let mut recycled_buffer = DevBuffer::new(self, 0);
+    pub fn recycle(&self, len: usize, buffer: &mut DevSlice) {
+        let mut recycled_buffer = DevSlice::new(self, 0);
         swap(&mut recycled_buffer, buffer);
 
         let available_buffers: &mut HashMap<_, _> =
@@ -155,7 +156,7 @@ impl Device {
 
     #[cfg(feature = "cuda")]
     pub fn cuda() -> Result<Self, Error> {
-        match CudaDevice::try_default() {
+        match CudaDev::try_default() {
             Ok(cuda) => Ok(Self::new(Rc::new(cuda))),
             Err(error) => Err(error),
         }
@@ -209,7 +210,7 @@ impl Device {
         &self.tensors_to_optimize
     }
 
-    pub fn buffer(&self, len: usize) -> DevBuffer {
+    pub fn buffer(&self, len: usize) -> DevSlice {
         let recycled = self
             .available_buffers
             .deref()
@@ -225,14 +226,14 @@ impl Device {
             None => {
                 let used: &mut usize = &mut self.used.deref().borrow_mut();
                 *used += len;
-                DevBuffer::new(self, len)
+                DevSlice::new(self, len)
             }
         }
     }
 }
 
 impl DeviceInterface for Device {
-    fn sgemm(
+    fn gemm(
         &self,
         transa: bool,
         transb: bool,
@@ -249,10 +250,10 @@ impl DeviceInterface for Device {
         ldc: i32,
     ) -> Result<(), Error> {
         self.device
-            .sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+            .gemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
     }
 
-    fn sdot(
+    fn dot(
         &self,
         n: i32,
         x: *const f32,
@@ -260,14 +261,14 @@ impl DeviceInterface for Device {
         y: *const f32,
         incy: i32,
     ) -> Result<f32, Error> {
-        self.device.sdot(n, x, incx, y, incy)
+        self.device.dot(n, x, incx, y, incy)
     }
 
-    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
-        self.device.scopy(n, x, incx, y, incy)
+    fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
+        self.device.copy(n, x, incx, y, incy)
     }
 
-    fn saxpy(
+    fn axpy(
         &self,
         n: i32,
         alpha: f32,
@@ -276,14 +277,14 @@ impl DeviceInterface for Device {
         y: *mut f32,
         incy: i32,
     ) -> Result<(), Error> {
-        self.device.saxpy(n, alpha, x, incx, y, incy)
+        self.device.axpy(n, alpha, x, incx, y, incy)
     }
 
     fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
         self.device.scalar_mul(alpha, x)
     }
 
-    fn slice(&self, n: i32) -> Result<DevBufferEnum, Error> {
+    fn slice(&self, n: i32) -> Result<DevSliceEnum, Error> {
         self.device.slice(n)
     }
 
@@ -299,5 +300,14 @@ impl DeviceInterface for Device {
 
     fn sum(&self, x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
         self.device.sum(x, y)
+    }
+
+    fn mul(
+        &self,
+        left: &GenericTensor,
+        right: &GenericTensor,
+        result: &GenericTensor,
+    ) -> Result<(), Error> {
+        self.device.mul(left, right, result)
     }
 }

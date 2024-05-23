@@ -40,7 +40,7 @@ fn cublas_sgemm_column_major() {
     );
 
     device
-        .sgemm(
+        .gemm(
             false,
             false,
             m,
@@ -130,9 +130,9 @@ fn htod_sync_copy_into() {
 
 #[test]
 fn sum_kernel() {
-    use crate::CudaDevice;
+    use crate::CudaDev;
     use cudarc::driver::{LaunchAsync, LaunchConfig};
-    let cuda_device = CudaDevice::try_default().unwrap();
+    let cuda_device = CudaDev::try_default().unwrap();
     let dev = cuda_device.dev;
 
     // allocate buffers
@@ -150,9 +150,9 @@ fn sum_kernel() {
 /// Example from https://github.com/coreylowman/cudarc
 #[test]
 fn sin_kernel() {
-    use crate::CudaDevice;
+    use crate::CudaDev;
     use cudarc::driver::{LaunchAsync, LaunchConfig};
-    let cuda_device = CudaDevice::try_default().unwrap();
+    let cuda_device = CudaDev::try_default().unwrap();
     let dev = cuda_device.dev;
 
     // allocate buffers

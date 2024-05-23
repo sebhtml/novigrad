@@ -2,7 +2,7 @@ use std::f32::consts::E;
 
 use cblas::{Layout, Transpose};
 extern crate cblas_sys as ffi;
-use crate::{DevBufferEnum, Error, GenericTensor};
+use crate::{error, DevSliceEnum, Error, ErrorEnum, GenericTensor};
 
 use super::DeviceInterface;
 extern crate blas_src;
@@ -19,7 +19,7 @@ impl Default for CpuDevice {
 }
 
 impl DeviceInterface for CpuDevice {
-    fn sgemm(
+    fn gemm(
         &self,
         transa: bool,
         transb: bool,
@@ -65,7 +65,7 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
-    fn sdot(
+    fn dot(
         &self,
         n: i32,
         x: *const f32,
@@ -77,12 +77,12 @@ impl DeviceInterface for CpuDevice {
         Ok(result)
     }
 
-    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
+    fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
         unsafe { ffi::cblas_scopy(n, x, incx, y, incy) }
         Ok(())
     }
 
-    fn saxpy(
+    fn axpy(
         &self,
         n: i32,
         alpha: f32,
@@ -105,10 +105,10 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
-    fn slice(&self, n: i32) -> Result<crate::DevBufferEnum, Error> {
+    fn slice(&self, n: i32) -> Result<crate::DevSliceEnum, Error> {
         let len = n as usize;
         let values = vec![0.0; len];
-        let slice = DevBufferEnum::CpuBuffer(values);
+        let slice = DevSliceEnum::CpuDevSlice(values);
         Ok(slice)
     }
 
@@ -124,6 +124,46 @@ impl DeviceInterface for CpuDevice {
 
     fn sum(&self, _input: &GenericTensor, _output: &GenericTensor) -> Result<(), Error> {
         todo!()
+    }
+
+    fn mul(
+        &self,
+        left: &GenericTensor,
+        right: &GenericTensor,
+        result: &GenericTensor,
+    ) -> Result<(), Error> {
+        if left.size() != right.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+
+        debug_assert_eq!(result.size(), left.size());
+
+        let mut result_values = result.get_values()?;
+        let left_values = left.get_values()?;
+        let right_values = right.get_values()?;
+
+        let result_ptr = result_values.as_mut_ptr();
+        let left_ptr = left_values.as_ptr();
+        let right_ptr = right_values.as_ptr();
+
+        unsafe {
+            let mut index = 0;
+            let len = left_values.len();
+            while index < len {
+                let left_cell = left_ptr.add(index);
+                let right_cell = right_ptr.add(index);
+                let result_cell = result_ptr.add(index);
+                let left = *left_cell;
+                let right = *right_cell;
+                let value = left * right;
+                *result_cell = value;
+                index += 1;
+            }
+        }
+
+        result.set_values(result_values);
+
+        Ok(())
     }
 }
 

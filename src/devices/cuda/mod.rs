@@ -10,20 +10,20 @@ use cudarc::{
         },
         CudaBlas,
     },
-    driver::{self, LaunchAsync, LaunchConfig},
+    driver::{self, CudaDevice, LaunchAsync, LaunchConfig},
 };
 
-use crate::{error, DevBufferEnum, DeviceInterface, Error, ErrorEnum, GenericTensor};
+use crate::{error, DevSliceEnum, DeviceInterface, Error, ErrorEnum, GenericTensor};
 
 #[derive(Debug)]
-pub struct CudaDevice {
+pub struct CudaDev {
     cuda_blas: CudaBlas,
-    pub dev: Arc<driver::CudaDevice>,
+    pub dev: Arc<CudaDevice>,
 }
 
-impl CudaDevice {
-    pub fn try_default() -> Result<CudaDevice, Error> {
-        let dev = cudarc::driver::CudaDevice::new(0);
+impl CudaDev {
+    pub fn try_default() -> Result<CudaDev, Error> {
+        let dev = CudaDevice::new(0);
         let cuda_blas = dev.clone().map(|x| CudaBlas::new(x));
         match (cuda_blas, dev) {
             (Ok(Ok(cuda_blas)), Ok(dev)) => Self::try_new(cuda_blas, dev),
@@ -33,7 +33,7 @@ impl CudaDevice {
     }
 
     pub fn try_new(cuda_blas: CudaBlas, dev: Arc<driver::CudaDevice>) -> Result<Self, Error> {
-        let device = CudaDevice { cuda_blas, dev };
+        let device = CudaDev { cuda_blas, dev };
 
         device.load_module(
             "sin_kernel_module",
@@ -51,6 +51,12 @@ impl CudaDevice {
             "scalar_mul_kernel_module",
             &["scalar_mul_kernel"],
             "./src/devices/cuda/kernels/scalar_mul_kernel.cu",
+        )?;
+
+        device.load_module(
+            "mul_kernel_module",
+            &["mul_kernel"],
+            "./src/devices/cuda/kernels/mul_kernel.cu",
         )?;
 
         Ok(device)
@@ -77,8 +83,8 @@ impl CudaDevice {
     }
 }
 
-impl DeviceInterface for CudaDevice {
-    fn sgemm(
+impl DeviceInterface for CudaDev {
+    fn gemm(
         &self,
         transa: bool,
         transb: bool,
@@ -123,7 +129,7 @@ impl DeviceInterface for CudaDevice {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn saxpy(
+    fn axpy(
         &self,
         n: i32,
         alpha: f32,
@@ -140,7 +146,7 @@ impl DeviceInterface for CudaDevice {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn sdot(
+    fn dot(
         &self,
         n: i32,
         x: *const f32,
@@ -160,7 +166,7 @@ impl DeviceInterface for CudaDevice {
         Ok(result)
     }
 
-    fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
+    fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
         let status = unsafe { cublasScopy_v2(handle, n, x, incx, y, incy) };
         status
@@ -178,7 +184,7 @@ impl DeviceInterface for CudaDevice {
             .unwrap();
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
-            (DevBufferEnum::CudaBuffer(alpha), DevBufferEnum::CudaBuffer(x)) => {
+            (DevSliceEnum::CudaDevSlice(alpha), DevSliceEnum::CudaDevSlice(x)) => {
                 let result = unsafe { kernel.launch(cfg, (n, x, alpha)) };
                 match result {
                     Ok(_) => Ok(()),
@@ -189,9 +195,9 @@ impl DeviceInterface for CudaDevice {
         }
     }
 
-    fn slice(&self, n: i32) -> Result<DevBufferEnum, Error> {
+    fn slice(&self, n: i32) -> Result<DevSliceEnum, Error> {
         match self.dev.alloc_zeros(n as usize) {
-            Ok(slice) => Ok(DevBufferEnum::CudaBuffer(slice)),
+            Ok(slice) => Ok(DevSliceEnum::CudaDevSlice(slice)),
             _ => Err(error!(ErrorEnum::UnsupportedOperation)),
         }
     }
@@ -216,7 +222,7 @@ impl DeviceInterface for CudaDevice {
         let input = &input.device_slice().deref().borrow().buffer;
         let output = &output.device_slice().deref().borrow().buffer;
         match (input, output) {
-            (DevBufferEnum::CudaBuffer(input), DevBufferEnum::CudaBuffer(output)) => {
+            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
                 let result = unsafe { sum_kernel.launch(cfg, (input, n, output)) };
                 match result {
                     Ok(_) => Ok(()),
@@ -224,6 +230,39 @@ impl DeviceInterface for CudaDevice {
                 }
             }
             _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
+    }
+
+    fn mul(
+        &self,
+        left: &GenericTensor,
+        right: &GenericTensor,
+        result: &GenericTensor,
+    ) -> Result<(), Error> {
+        let n = left.len();
+        let kernel = self
+            .dev
+            .get_func("mul_kernel_module", "mul_kernel")
+            .unwrap();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+
+        let left: &_ = &left.device_slice().deref().borrow().buffer;
+        let right = &right.device_slice().deref().borrow().buffer;
+        let result: &_ = &result.device_slice().deref().borrow().buffer;
+
+        match (left, right, result) {
+            (
+                DevSliceEnum::CudaDevSlice(left),
+                DevSliceEnum::CudaDevSlice(right),
+                DevSliceEnum::CudaDevSlice(result),
+            ) => {
+                let result = unsafe { kernel.launch(cfg, (left, right, result, n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
         }
     }
 }

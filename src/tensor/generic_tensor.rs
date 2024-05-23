@@ -2,7 +2,7 @@ use crate::{
     devices::{Device, DeviceInterface},
     error, CpuDevice, Error,
 };
-use crate::{DevBuffer, ErrorEnum};
+use crate::{DevSlice, ErrorEnum};
 
 use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc, vec};
 
@@ -11,7 +11,7 @@ pub struct GenericTensor {
     name: usize,
     device: Device,
     size: Rc<RefCell<Vec<usize>>>,
-    device_slice: Rc<RefCell<DevBuffer>>,
+    device_slice: Rc<RefCell<DevSlice>>,
 }
 
 impl PartialEq for GenericTensor {
@@ -99,7 +99,7 @@ impl GenericTensor {
         Ok(())
     }
 
-    pub fn device_slice(&self) -> &Rc<RefCell<DevBuffer>> {
+    pub fn device_slice(&self) -> &Rc<RefCell<DevSlice>> {
         &self.device_slice
     }
 
@@ -136,7 +136,6 @@ impl GenericTensor {
             .set_values(new_values)
     }
 
-    // TODO use device for element_wise_mul
     pub fn mul(
         left: &GenericTensor,
         right: &GenericTensor,
@@ -145,35 +144,11 @@ impl GenericTensor {
         if left.size() != right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-
-        debug_assert_eq!(result.size(), left.size());
-
-        let mut result_values = result.get_values()?;
-        let left_values = left.get_values()?;
-        let right_values = right.get_values()?;
-
-        let result_ptr = result_values.as_mut_ptr();
-        let left_ptr = left_values.as_ptr();
-        let right_ptr = right_values.as_ptr();
-
-        unsafe {
-            let mut index = 0;
-            let len = left_values.len();
-            while index < len {
-                let left_cell = left_ptr.add(index);
-                let right_cell = right_ptr.add(index);
-                let result_cell = result_ptr.add(index);
-                let left = *left_cell;
-                let right = *right_cell;
-                let value = left * right;
-                *result_cell = value;
-                index += 1;
-            }
+        if left.size() != result.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-
-        result.set_values(result_values);
-
-        Ok(())
+        let device = left.device.clone();
+        device.mul(left, right, result)
     }
 
     pub fn is_finite(&self) -> bool {
@@ -204,7 +179,7 @@ impl GenericTensor {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.sdot(n, x.as_ptr(), incx, y.as_ptr(), incy)
+        device.dot(n, x.as_ptr(), incx, y.as_ptr(), incy)
     }
 
     pub fn copy(x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
@@ -214,7 +189,7 @@ impl GenericTensor {
         let incy = 1;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
-        device.scopy(n, x, incx, y, incy)
+        device.copy(n, x, incx, y, incy)
     }
 
     pub fn copy_slice(
@@ -234,7 +209,7 @@ impl GenericTensor {
         let y = dst
             .as_mut_ptr()
             .wrapping_add(dst_row * dst.cols() + dst_col);
-        device.scopy(n, x, incx, y, incy)
+        device.copy(n, x, incx, y, incy)
     }
 
     pub fn gemm(
@@ -290,7 +265,7 @@ impl GenericTensor {
                 return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             let (m, n, k) = (a.rows(), b.cols(), a.cols());
-            device.sgemm(
+            device.gemm(
                 false,
                 false,
                 n as i32,
@@ -318,7 +293,7 @@ impl GenericTensor {
 
             let (m, n, k) = (a.cols(), b.cols(), a.rows());
 
-            device.sgemm(
+            device.gemm(
                 false,
                 true,
                 n as i32,
@@ -345,7 +320,7 @@ impl GenericTensor {
             }
             let (m, n, k) = (a.rows(), b.rows(), a.cols());
 
-            device.sgemm(
+            device.gemm(
                 true,
                 false,
                 n as i32,
@@ -372,7 +347,7 @@ impl GenericTensor {
             }
             let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
-            device.sgemm(
+            device.gemm(
                 true,
                 true,
                 n as i32,
@@ -399,7 +374,7 @@ impl GenericTensor {
             }
             let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
-            device.sgemm(
+            device.gemm(
                 false,
                 false,
                 m as i32,
@@ -426,7 +401,7 @@ impl GenericTensor {
             }
             let (m, n, k) = (a.cols(), b.cols(), a.rows());
 
-            device.sgemm(
+            device.gemm(
                 false,
                 true,
                 m as i32,
@@ -467,7 +442,7 @@ impl GenericTensor {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.saxpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
+        device.axpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
     }
 
     pub fn l2_norm(&self) -> Result<f32, Error> {

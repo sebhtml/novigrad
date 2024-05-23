@@ -2,7 +2,7 @@ use std::f32::consts::E;
 
 use cblas::{Layout, Transpose};
 extern crate cblas_sys as ffi;
-use crate::{error, DevSliceEnum, Error, ErrorEnum, GenericTensor};
+use crate::{error, DevSliceEnum, Error, ErrorEnum, Tensor};
 
 use super::DeviceInterface;
 extern crate blas_src;
@@ -26,13 +26,13 @@ impl DeviceInterface for CpuDevice {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &GenericTensor,
-        a: &GenericTensor,
+        alpha: &Tensor,
+        a: &Tensor,
         lda: i32,
-        b: &GenericTensor,
+        b: &Tensor,
         ldb: i32,
-        beta: &GenericTensor,
-        c: &GenericTensor,
+        beta: &Tensor,
+        c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error> {
         let layout = Layout::ColumnMajor;
@@ -102,7 +102,7 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
-    fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
+    fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         let n = x.len() as i32;
         let x = x.as_mut_ptr();
         let incx = 1;
@@ -129,16 +129,11 @@ impl DeviceInterface for CpuDevice {
         CpuDevice::_softmax(rows, cols, input, output)
     }
 
-    fn sum(&self, _input: &GenericTensor, _output: &GenericTensor) -> Result<(), Error> {
+    fn sum(&self, _input: &Tensor, _output: &Tensor) -> Result<(), Error> {
         todo!()
     }
 
-    fn mul(
-        &self,
-        left: &GenericTensor,
-        right: &GenericTensor,
-        result: &GenericTensor,
-    ) -> Result<(), Error> {
+    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
         if left.size() != right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }

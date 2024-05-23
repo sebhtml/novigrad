@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, inference_instruction, BinaryOperator, Device, Error, GenericTensor,
-    OpCode, Tensor,
+    gradient_instruction, inference_instruction, BinaryOperator, Device, Error, OpCode, Tensor,
+    TensorWithGrad,
 };
 
 pub struct Mul {
@@ -16,28 +16,37 @@ impl Mul {
         }
     }
 
-    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];
-        GenericTensor::mul(input_0, input_1, output)
+        Tensor::mul(input_0, input_1, output)
     }
 }
 
 impl BinaryOperator for Mul {
-    fn forward(&self, input_0: &Tensor, input_1: &Tensor) -> Result<Tensor, Error> {
-        let input_0_t: &GenericTensor = &input_0.tensor().deref().borrow();
-        let input_1_t: &GenericTensor = &input_1.tensor().deref().borrow();
+    fn forward(
+        &self,
+        input_0: &TensorWithGrad,
+        input_1: &TensorWithGrad,
+    ) -> Result<TensorWithGrad, Error> {
+        let input_0_t: &Tensor = &input_0.tensor().deref().borrow();
+        let input_1_t: &Tensor = &input_1.tensor().deref().borrow();
         debug_assert_eq!(input_0_t.size(), input_1_t.size());
         let rows = input_0_t.rows();
         let cols = input_0_t.cols();
         let len = rows * cols;
-        let output =
-            self.device
-                .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
+        let output = self.device.tensor_with_grad(
+            rows,
+            cols,
+            vec![0.0; len],
+            &[input_0, input_1],
+            true,
+            false,
+        );
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0]);
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -81,7 +90,7 @@ impl BinaryOperator for Mul {
             if outputs[1].requires_grad() {
                 let output_1_gradient = outputs[1];
                 let output_0 = inputs[0];
-                let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+                let mut tmp = self.device.tensor(rows, cols, vec![0.0; len]);
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
@@ -99,7 +108,7 @@ impl BinaryOperator for Mul {
             if outputs[0].requires_grad() {
                 let output_0_gradient = outputs[0];
                 let output_ = inputs[1];
-                let mut tmp = self.device.tensor_f32(rows, cols, vec![0.0; len]);
+                let mut tmp = self.device.tensor(rows, cols, vec![0.0; len]);
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Mul,

@@ -6,7 +6,7 @@ fn cublas_sgemm_column_major() {
     let device = Device::cuda().unwrap();
 
     let (m, n, k) = (2, 4, 3);
-    let a = device.tensor_f32(
+    let a = device.tensor(
         2,
         3,
         vec![
@@ -16,7 +16,7 @@ fn cublas_sgemm_column_major() {
             3.0, 6.0, //
         ],
     );
-    let b = device.tensor_f32(
+    let b = device.tensor(
         3,
         4,
         vec![
@@ -27,7 +27,7 @@ fn cublas_sgemm_column_major() {
             4.0, 8.0, 12.0, //
         ],
     );
-    let c = device.tensor_f32(
+    let c = device.tensor(
         2,
         4,
         vec![
@@ -39,8 +39,8 @@ fn cublas_sgemm_column_major() {
         ],
     );
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
     device
         .gemm(false, false, m, n, k, &alpha, &a, m, &b, k, &beta, &c, m)
         .unwrap();
@@ -63,7 +63,7 @@ fn cublas_sgemm_column_major() {
 fn cuda_tensor() {
     use crate::Device;
     let device = Device::cuda().unwrap();
-    let tensor = device.tensor_f32(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    let tensor = device.tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     assert_eq!(
         tensor.get_values().unwrap(),
         vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0,]
@@ -74,7 +74,7 @@ fn cuda_tensor() {
 fn cuda_set_value() {
     use crate::Device;
     let device = Device::cuda().unwrap();
-    let tensor = device.tensor_f32(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    let tensor = device.tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     tensor.set_values(vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     assert_eq!(
         tensor.get_values().unwrap(),

@@ -5,7 +5,7 @@ fn cblas_sgemm_column_major() {
     use crate::Device;
     let device = Device::cpu();
     let (m, n, k) = (2, 4, 3);
-    let a = device.tensor_f32(
+    let a = device.tensor(
         2,
         3,
         vec![
@@ -15,7 +15,7 @@ fn cblas_sgemm_column_major() {
             3.0, 6.0, //
         ],
     );
-    let b = device.tensor_f32(
+    let b = device.tensor(
         3,
         4,
         vec![
@@ -26,7 +26,7 @@ fn cblas_sgemm_column_major() {
             4.0, 8.0, 12.0, //
         ],
     );
-    let c = device.tensor_f32(
+    let c = device.tensor(
         2,
         4,
         vec![
@@ -38,8 +38,8 @@ fn cblas_sgemm_column_major() {
         ],
     );
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
     device
         .gemm(false, false, m, n, k, &alpha, &a, m, &b, k, &beta, &c, m)
         .unwrap();
@@ -68,7 +68,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
     let n = 4;
     let k = 3;
 
-    let a = device.tensor_f32(
+    let a = device.tensor(
         2,
         3,
         vec![
@@ -78,7 +78,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
         ],
     );
 
-    let b = device.tensor_f32(
+    let b = device.tensor(
         3,
         4,
         vec![
@@ -89,7 +89,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
         ],
     );
 
-    let c = device.tensor_f32(
+    let c = device.tensor(
         2,
         4,
         vec![
@@ -99,8 +99,8 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
         ],
     );
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
     device
         .gemm(false, false, n, m, k, &alpha, &b, n, &a, k, &beta, &c, n)
         .unwrap();
@@ -119,7 +119,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
 fn cpu_tensor() {
     use crate::Device;
     let device = Device::cpu();
-    let tensor = device.tensor_f32(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    let tensor = device.tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     assert_eq!(
         tensor.get_values().unwrap(),
         vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0,]
@@ -130,7 +130,7 @@ fn cpu_tensor() {
 fn cpu_set_value() {
     use crate::Device;
     let device = Device::cpu();
-    let tensor = device.tensor_f32(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    let tensor = device.tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     tensor.set_values(vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
     assert_eq!(
         tensor.get_values().unwrap(),

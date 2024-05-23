@@ -1,19 +1,19 @@
 use std::ops::Deref;
 
-use crate::{Device, GenericTensor, Mask, UnaryOperator};
+use crate::{Device, Mask, Tensor, UnaryOperator};
 
 #[test]
 fn forward() {
     let device = Device::default();
     let rows = 3;
     let cols = 3;
-    let input = device.tensor(rows, cols, vec![1.0; rows * cols], &[], false, false);
+    let input = device.tensor_with_grad(rows, cols, vec![1.0; rows * cols], &[], false, false);
     let mask = Mask::try_new(&device, rows, cols).unwrap();
 
     let output = mask.forward(&input).unwrap();
     output.forward().unwrap();
 
-    let actual: &GenericTensor = &output.tensor().deref().borrow();
+    let actual: &Tensor = &output.tensor().deref().borrow();
 
     // A position i is allowed to attend to a position j if and only if i > j.
     // This means that a position can attend to previous positions, but not itself or future positions.++

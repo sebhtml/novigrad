@@ -1,4 +1,4 @@
-use crate::{Error, GenericTensor, OpCode};
+use crate::{Error, OpCode, Tensor};
 use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -24,8 +24,8 @@ impl Into<String> for Category {
 #[derive(Clone, Debug)]
 pub struct Instruction {
     opcode: OpCode,
-    inputs: Rc<Vec<GenericTensor>>,
-    outputs: Rc<Vec<GenericTensor>>,
+    inputs: Rc<Vec<Tensor>>,
+    outputs: Rc<Vec<Tensor>>,
     category: Category,
     #[cfg(debug_assertions)]
     file: String,
@@ -90,19 +90,19 @@ macro_rules! optimization_instruction {
 impl Instruction {
     pub fn new(
         opcode: OpCode,
-        inputs: &[&GenericTensor],
-        outputs: &[&GenericTensor],
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
         category: Category,
         #[cfg(debug_assertions)] file: &str,
         #[cfg(debug_assertions)] line: u32,
         #[cfg(debug_assertions)] column: u32,
     ) -> Self {
-        let inputs: Vec<GenericTensor> = inputs
+        let inputs: Vec<Tensor> = inputs
             .to_owned()
             .into_iter()
             .map(|x| (*x).clone())
             .collect();
-        let outputs: Vec<GenericTensor> = outputs
+        let outputs: Vec<Tensor> = outputs
             .to_owned()
             .into_iter()
             .map(|x| (*x).clone())
@@ -144,15 +144,15 @@ impl Instruction {
     pub fn opcode(&self) -> &OpCode {
         &self.opcode
     }
-    pub fn inputs(&self) -> &Rc<Vec<GenericTensor>> {
+    pub fn inputs(&self) -> &Rc<Vec<Tensor>> {
         &self.inputs
     }
-    pub fn outputs(&self) -> &Rc<Vec<GenericTensor>> {
+    pub fn outputs(&self) -> &Rc<Vec<Tensor>> {
         &self.outputs
     }
     pub fn execute(&self) -> Result<(), Error> {
-        let inputs: Vec<&GenericTensor> = self.inputs.iter().collect();
-        let outputs_f32: Vec<&GenericTensor> = self.outputs.iter().collect();
+        let inputs: Vec<&Tensor> = self.inputs.iter().collect();
+        let outputs_f32: Vec<&Tensor> = self.outputs.iter().collect();
         self.opcode.execute(&inputs, &outputs_f32)
     }
 }

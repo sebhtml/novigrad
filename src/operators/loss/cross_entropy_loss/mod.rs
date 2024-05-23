@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     devices::Device, error, gradient_instruction, loss_instruction, BinaryOperator, Error,
-    ErrorEnum, GenericTensor, OpCode, Tensor, EPSILON,
+    ErrorEnum, OpCode, Tensor, TensorWithGrad, EPSILON,
 };
 
 #[derive(Clone)]
@@ -17,7 +17,7 @@ impl CrossEntropyLoss {
         }
     }
 
-    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = CrossEntropyLoss::evaluate(expected, actual)?;
@@ -26,7 +26,7 @@ impl CrossEntropyLoss {
     }
 
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(expected: &GenericTensor, actual: &GenericTensor) -> Result<f32, Error> {
+    fn evaluate(expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
         debug_assert_eq!(actual.size(), expected.size());
         let p = expected;
         let q = actual;
@@ -58,13 +58,17 @@ impl CrossEntropyLoss {
 }
 
 impl BinaryOperator for CrossEntropyLoss {
-    fn forward(&self, input_1: &Tensor, input_2: &Tensor) -> Result<Tensor, Error> {
-        let output = self
-            .device
-            .tensor(1, 1, vec![0.0], &[input_1, input_2], true, false);
+    fn forward(
+        &self,
+        input_1: &TensorWithGrad,
+        input_2: &TensorWithGrad,
+    ) -> Result<TensorWithGrad, Error> {
+        let output =
+            self.device
+                .tensor_with_grad(1, 1, vec![0.0], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0]);
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -86,11 +90,11 @@ impl BinaryOperator for CrossEntropyLoss {
         let inputs = [input_1, input_2];
         let outputs = [input_2];
 
-        let inputs: &[&GenericTensor] = &[
+        let inputs: &[&Tensor] = &[
             &inputs[0].tensor().deref().borrow(),
             &inputs[1].tensor().deref().borrow(),
         ];
-        let outputs: &[&GenericTensor] = &[&outputs[0].gradient().deref().borrow()];
+        let outputs: &[&Tensor] = &[&outputs[0].gradient().deref().borrow()];
 
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);

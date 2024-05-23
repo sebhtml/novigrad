@@ -3,15 +3,15 @@ use std::ops::Deref;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
-    inference_instruction, BinaryOperator, Device, Error, GenericTensor, Mul, OpCode, ScalarMul,
-    Tensor, UnaryOperator,
+    inference_instruction, BinaryOperator, Device, Error, Mul, OpCode, ScalarMul, Tensor,
+    TensorWithGrad, UnaryOperator,
 };
 
 #[cfg(test)]
 mod tests;
 
 pub struct Dropout {
-    mask: Tensor,
+    mask: TensorWithGrad,
     mul: Mul,
     scalar_mul: ScalarMul,
     dropout_probability: f32,
@@ -26,7 +26,7 @@ impl Dropout {
     ) -> Result<Self, Error> {
         let len = mask_rows * mask_cols;
         let mask = vec![1.0; len];
-        let mask = device.tensor(mask_rows, mask_cols, mask, &[], false, false);
+        let mask = device.tensor_with_grad(mask_rows, mask_cols, mask, &[], false, false);
         let mul = Mul::new(device);
         let alpha = 1.0 / (1.0 - dropout_probability);
         let scalar_mul = ScalarMul::new(device, alpha);
@@ -41,8 +41,8 @@ impl Dropout {
 
     pub fn execute(
         dropout_probability: f32,
-        inputs: &[&GenericTensor],
-        outputs: &[&GenericTensor],
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
     ) -> Result<(), Error> {
         // zero each element of the mask with probability p.
         let input = inputs[0];
@@ -63,7 +63,7 @@ impl Dropout {
 }
 
 impl UnaryOperator for Dropout {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let mask = &self.mask;
         mask.push_instruction(inference_instruction!(
             OpCode::Dropout(self.dropout_probability),

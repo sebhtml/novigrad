@@ -3,7 +3,7 @@ use crate::{
     CrossEntropyLoss, Device, GradientDescent, MultiHeadAttention, TernaryOperator, Tokenizer,
     TokenizerTrait, UnaryModel, UnaryOperator,
 };
-use crate::{Embedding, Linear, Model, Softmax, Tensor};
+use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 use crate::{Error, ModelDetails};
 
 struct MegaManAttentionModel {
@@ -52,7 +52,7 @@ impl MegaManAttentionModel {
 }
 
 impl UnaryOperator for MegaManAttentionModel {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let embedding = self.embedding.forward(input)?;
         let attentions = self
             .multi_head_attention

@@ -10,7 +10,7 @@ use cudarc::{
     driver::{self, CudaDevice, LaunchAsync, LaunchConfig},
 };
 
-use crate::{error, DevSliceEnum, DeviceInterface, Error, ErrorEnum, GenericTensor};
+use crate::{error, DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor};
 
 #[derive(Debug)]
 pub struct CudaDev {
@@ -88,13 +88,13 @@ impl DeviceInterface for CudaDev {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &GenericTensor,
-        a: &GenericTensor,
+        alpha: &Tensor,
+        a: &Tensor,
         lda: i32,
-        b: &GenericTensor,
+        b: &Tensor,
         ldb: i32,
-        beta: &GenericTensor,
-        c: &GenericTensor,
+        beta: &Tensor,
+        c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
@@ -174,7 +174,7 @@ impl DeviceInterface for CudaDev {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
+    fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         let n = x.len();
         let alpha = &alpha.device_slice().deref().borrow().buffer;
         let x = &x.device_slice().deref().borrow().buffer;
@@ -212,7 +212,7 @@ impl DeviceInterface for CudaDev {
         todo!()
     }
 
-    fn sum(&self, input: &GenericTensor, output: &GenericTensor) -> Result<(), Error> {
+    fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let sum_kernel = self
             .dev
             .get_func("sum_kernel_module", "sum_kernel")
@@ -233,12 +233,7 @@ impl DeviceInterface for CudaDev {
         }
     }
 
-    fn mul(
-        &self,
-        left: &GenericTensor,
-        right: &GenericTensor,
-        result: &GenericTensor,
-    ) -> Result<(), Error> {
+    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
         let n = left.len();
         let kernel = self
             .dev

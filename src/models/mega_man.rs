@@ -3,13 +3,13 @@ use crate::{
     BinaryOperator, CrossEntropyLoss, Device, GradientDescent, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
 };
-use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, Tensor};
+use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, TensorWithGrad};
 use crate::{Error, ModelDetails};
 
 struct MegaManModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
-    parameters: Tensor,
+    parameters: TensorWithGrad,
     embedding: Embedding,
     matmul: MatMul,
     reshape: Reshape,
@@ -27,7 +27,14 @@ impl MegaManModel {
         Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![output_rows, vocab_size],
-            parameters: device.tensor(n_embd, n_embd, vec![0.0; n_embd * n_embd], &[], true, true),
+            parameters: device.tensor_with_grad(
+                n_embd,
+                n_embd,
+                vec![0.0; n_embd * n_embd],
+                &[],
+                true,
+                true,
+            ),
             embedding: Embedding::new(device, vocab_size, n_embd),
             matmul: MatMul::new(device, true),
             reshape: Reshape::new(
@@ -48,7 +55,7 @@ impl MegaManModel {
 }
 
 impl UnaryOperator for MegaManModel {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let state_0 = self.embedding.forward(input)?;
         let state_0b = self.matmul.forward(&state_0, &self.parameters)?;
         let state_1 = self.reshape.forward(&state_0b)?;

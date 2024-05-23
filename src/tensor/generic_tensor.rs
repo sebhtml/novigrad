@@ -7,14 +7,14 @@ use crate::{DevSlice, ErrorEnum};
 use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc, vec};
 
 #[derive(Clone, Debug)]
-pub struct GenericTensor {
+pub struct Tensor {
     name: usize,
     device: Device,
     size: Rc<RefCell<Vec<usize>>>,
     device_slice: Rc<RefCell<DevSlice>>,
 }
 
-impl PartialEq for GenericTensor {
+impl PartialEq for Tensor {
     fn eq(&self, other: &Self) -> bool {
         self.rows() == other.rows()
             && self.cols() == other.cols()
@@ -22,7 +22,7 @@ impl PartialEq for GenericTensor {
     }
 }
 
-impl GenericTensor {
+impl Tensor {
     pub fn new(name: usize, rows: usize, cols: usize, values: Vec<f32>, device: &Device) -> Self {
         debug_assert_eq!(values.len(), rows * cols);
         let mut buffer = device.buffer(values.len());
@@ -84,7 +84,7 @@ impl GenericTensor {
         }
     }
 
-    pub fn transpose(&self, other: &mut GenericTensor) -> Result<(), Error> {
+    pub fn transpose(&self, other: &mut Tensor) -> Result<(), Error> {
         let self_values = self.get_values()?;
         let mut other_values = other.get_values()?;
         let rows = self.rows();
@@ -140,11 +140,7 @@ impl GenericTensor {
             .set_values(new_values)
     }
 
-    pub fn mul(
-        left: &GenericTensor,
-        right: &GenericTensor,
-        result: &GenericTensor,
-    ) -> Result<(), Error> {
+    pub fn mul(left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
         if left.size() != right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
@@ -175,7 +171,7 @@ impl GenericTensor {
         Ok(false)
     }
 
-    pub fn dot_product(x: &GenericTensor, y: &GenericTensor) -> Result<f32, Error> {
+    pub fn dot_product(x: &Tensor, y: &Tensor) -> Result<f32, Error> {
         let device = &x.device;
         if x.size() != y.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
@@ -186,7 +182,7 @@ impl GenericTensor {
         device.dot(n, x.as_ptr(), incx, y.as_ptr(), incy)
     }
 
-    pub fn copy(x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
+    pub fn copy(x: &Tensor, y: &Tensor) -> Result<(), Error> {
         let device = &x.device;
         let n = x.len() as i32;
         let incx = 1;
@@ -198,10 +194,10 @@ impl GenericTensor {
 
     pub fn copy_slice(
         n: usize,
-        src: &GenericTensor,
+        src: &Tensor,
         src_row: usize,
         src_col: usize,
-        dst: &GenericTensor,
+        dst: &Tensor,
         dst_row: usize,
         dst_col: usize,
     ) -> Result<(), Error> {
@@ -219,11 +215,11 @@ impl GenericTensor {
     pub fn gemm(
         transa: bool,
         transb: bool,
-        alpha: &GenericTensor,
-        a: &GenericTensor,
-        b: &GenericTensor,
-        beta: &GenericTensor,
-        c: &GenericTensor,
+        alpha: &Tensor,
+        a: &Tensor,
+        b: &Tensor,
+        beta: &Tensor,
+        c: &Tensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
         let op_result = Self::_gemm(transa, transb, alpha, a, b, beta, c, transpose_result);
@@ -250,11 +246,11 @@ impl GenericTensor {
     fn _gemm(
         transa: bool,
         transb: bool,
-        alpha: &GenericTensor,
-        a: &GenericTensor,
-        b: &GenericTensor,
-        beta: &GenericTensor,
-        c: &GenericTensor,
+        alpha: &Tensor,
+        a: &Tensor,
+        b: &Tensor,
+        beta: &Tensor,
+        c: &Tensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
         let device = &a.device;
@@ -414,17 +410,17 @@ impl GenericTensor {
         }
     }
 
-    pub fn sub(x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
+    pub fn sub(x: &Tensor, y: &Tensor) -> Result<(), Error> {
         let alpha = -1.0;
         Self::a_x_plus_y(alpha, x, y)
     }
 
-    pub fn add(x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
+    pub fn add(x: &Tensor, y: &Tensor) -> Result<(), Error> {
         let alpha = 1.0;
         Self::a_x_plus_y(alpha, x, y)
     }
 
-    fn a_x_plus_y(alpha: f32, x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
+    fn a_x_plus_y(alpha: f32, x: &Tensor, y: &Tensor) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
             println!("Incompatible sizes");
@@ -439,7 +435,7 @@ impl GenericTensor {
     }
 
     pub fn l2_norm(&self) -> Result<f32, Error> {
-        let squared_l2_norm = GenericTensor::dot_product(self, self)?;
+        let squared_l2_norm = Tensor::dot_product(self, self)?;
         let l2_norm = squared_l2_norm.sqrt();
         Ok(l2_norm)
     }
@@ -451,11 +447,11 @@ impl GenericTensor {
         }
         let alpha = 1.0 / l2_norm * norm;
         let x = self;
-        let alpha = self.device.tensor_f32(1, 8, vec![alpha; 8]);
-        GenericTensor::scalar_mul(&alpha, x)
+        let alpha = self.device.tensor(1, 8, vec![alpha; 8]);
+        Tensor::scalar_mul(&alpha, x)
     }
 
-    pub fn scalar_mul(alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
+    pub fn scalar_mul(alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         let device = x.device.clone();
         let result = device.scalar_mul(alpha, x);
         result
@@ -472,7 +468,7 @@ impl GenericTensor {
         Ok(())
     }
 
-    pub fn softmax(input: &GenericTensor, output: &GenericTensor) -> Result<(), Error> {
+    pub fn softmax(input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let input_values = input.get_values()?;
         let mut output_values = output.get_values()?;
         CpuDevice::_softmax(
@@ -486,7 +482,7 @@ impl GenericTensor {
     }
 }
 
-impl Display for GenericTensor {
+impl Display for Tensor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let self_values = self.get_values().map_err(|_| std::fmt::Error)?;
         _ = write!(
@@ -511,7 +507,7 @@ impl Display for GenericTensor {
     }
 }
 
-impl TryInto<f32> for &GenericTensor {
+impl TryInto<f32> for &Tensor {
     type Error = Error;
 
     fn try_into(self) -> Result<f32, Self::Error> {

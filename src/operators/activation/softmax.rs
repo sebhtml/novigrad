@@ -1,6 +1,6 @@
 use crate::devices::Device;
-use crate::{gradient_instruction, inference_instruction, GenericTensor, OpCode, UnaryOperator};
-use crate::{Error, Tensor};
+use crate::{gradient_instruction, inference_instruction, OpCode, Tensor, UnaryOperator};
+use crate::{Error, TensorWithGrad};
 use std::ops::Deref;
 
 pub struct Softmax {
@@ -23,28 +23,28 @@ impl Softmax {
         }
     }
 
-    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
         debug_assert_eq!(false, input.is_nan()?,);
-        GenericTensor::softmax(input, output)?;
+        Tensor::softmax(input, output)?;
         debug_assert_eq!(false, output.is_nan()?,);
         Ok(())
     }
 }
 
 impl UnaryOperator for Softmax {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        let input_t: &GenericTensor = &input.tensor().deref().borrow();
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
+        let input_t: &Tensor = &input.tensor().deref().borrow();
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output = self
-            .device
-            .tensor(rows, cols, vec![0.0; len], &[input], true, false);
+        let output =
+            self.device
+                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0]);
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -80,17 +80,17 @@ impl UnaryOperator for Softmax {
 
 pub fn emit_softmax_and_sigmoid_gradient_instructions(
     device: &Device,
-    input: &Tensor,
-    output: &Tensor,
+    input: &TensorWithGrad,
+    output: &TensorWithGrad,
 ) {
     let inputs = [&output];
     let outputs = [input];
-    let inputs: &[&GenericTensor] = &[
+    let inputs: &[&Tensor] = &[
         &inputs[0].tensor().deref().borrow(),
         &inputs[0].gradient().deref().borrow(),
         &outputs[0].tensor().deref().borrow(),
     ];
-    let outputs: &[&GenericTensor] = &[&outputs[0].gradient().deref().borrow()];
+    let outputs: &[&Tensor] = &[&outputs[0].gradient().deref().borrow()];
 
     if outputs[0].requires_grad() {
         let output_gradient = outputs[0];
@@ -100,21 +100,21 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
         let rows = output_.rows();
         let cols = output_.cols();
         let len = rows * cols;
-        let ones = device.tensor_f32(rows, cols, vec![1.0; len]);
-        let one_minus_output = device.tensor_f32(rows, cols, vec![0.0; len]);
+        let ones = device.tensor(rows, cols, vec![1.0; len]);
+        let one_minus_output = device.tensor(rows, cols, vec![0.0; len]);
 
         output.push_instruction(gradient_instruction!(
             OpCode::Sub,
             &[&ones, input],
             &[&one_minus_output],
         ));
-        let layer_f_derivative = device.tensor_f32(rows, cols, vec![0.0; len]);
+        let layer_f_derivative = device.tensor(rows, cols, vec![0.0; len]);
         output.push_instruction(gradient_instruction!(
             OpCode::Mul,
             &[input, &one_minus_output],
             &[&layer_f_derivative],
         ));
-        let tmp = device.tensor_f32(rows, cols, vec![0.0; len]);
+        let tmp = device.tensor(rows, cols, vec![0.0; len]);
 
         output.push_instruction(gradient_instruction!(
             OpCode::Mul,

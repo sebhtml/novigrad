@@ -1,6 +1,6 @@
 use crate::{
     error, into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, GradientDescent,
-    ModelDetails, Tensor, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
+    ModelDetails, TensorWithGrad, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
 };
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
 
@@ -53,7 +53,7 @@ impl SimpleModel {
 }
 
 impl UnaryOperator for SimpleModel {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let state_0 = self.embedding.forward(input)?;
         let state_1 = self.linear_0.forward(&state_0)?;
         let state_2 = self.sigmoid_0.forward(&state_1)?;
@@ -78,7 +78,7 @@ impl Model for SimpleModel {
 fn load_examples(
     device: &Device,
     tokenizer: &mut Tokenizer,
-) -> Result<Vec<(Tensor, Tensor)>, Error> {
+) -> Result<Vec<(TensorWithGrad, TensorWithGrad)>, Error> {
     let examples: Vec<_> = ["quizzed", "fuzzing"]
         .iter()
         .map(|text| {

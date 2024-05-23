@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{BinaryOperator, Device, Error, Mul, Tensor, UnaryOperator};
+use crate::{BinaryOperator, Device, Error, Mul, TensorWithGrad, UnaryOperator};
 
 #[cfg(test)]
 mod tests;
@@ -8,7 +8,7 @@ mod tests;
 /// Attention Is All You Need
 /// https://arxiv.org/abs/1706.03762
 pub struct Mask {
-    mask: Tensor,
+    mask: TensorWithGrad,
     mul: Mul,
 }
 
@@ -17,7 +17,7 @@ impl Mask {
         let len = mask_rows * mask_cols;
         let mask = vec![1.0; len];
 
-        let mask = device.tensor(mask_rows, mask_cols, mask, &[], true, true);
+        let mask = device.tensor_with_grad(mask_rows, mask_cols, mask, &[], true, true);
         let mut values = mask.tensor().deref().borrow().get_values()?;
         for row in 0..mask_rows {
             for col in 0..mask_cols {
@@ -36,7 +36,7 @@ impl Mask {
 }
 
 impl UnaryOperator for Mask {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         self.mul.forward(input, &self.mask)
     }
 }

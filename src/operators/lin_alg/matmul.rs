@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     devices::Device, error, gradient_instruction, inference_instruction, BinaryOperator, Error,
-    ErrorEnum, GenericTensor, OpCode, Tensor,
+    ErrorEnum, OpCode, Tensor, TensorWithGrad,
 };
 
 pub struct MatMul {
@@ -20,9 +20,13 @@ impl MatMul {
 }
 
 impl BinaryOperator for MatMul {
-    fn forward(&self, input_0: &Tensor, input_1: &Tensor) -> Result<Tensor, Error> {
-        let input_0_tensor: &GenericTensor = &input_0.tensor().deref().borrow();
-        let input_1_tensor: &GenericTensor = &input_1.tensor().deref().borrow();
+    fn forward(
+        &self,
+        input_0: &TensorWithGrad,
+        input_1: &TensorWithGrad,
+    ) -> Result<TensorWithGrad, Error> {
+        let input_0_tensor: &Tensor = &input_0.tensor().deref().borrow();
+        let input_1_tensor: &Tensor = &input_1.tensor().deref().borrow();
         /*println!("a size {:?}, b size {:?} transb {}",
             input_0_tensor.size().deref().borrow(),
                     input_1_tensor.size().deref().borrow(),
@@ -52,15 +56,20 @@ impl BinaryOperator for MatMul {
             input_1_tensor.cols()
         };
         let len = rows * cols;
-        let output =
-            self.device
-                .tensor(rows, cols, vec![0.0; len], &[input_0, input_1], true, false);
+        let output = self.device.tensor_with_grad(
+            rows,
+            cols,
+            vec![0.0; len],
+            &[input_0, input_1],
+            true,
+            false,
+        );
 
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
-        let alpha = self.device.tensor_f32(1, 1, vec![1.0]);
-        let beta = self.device.tensor_f32(1, 1, vec![1.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0]);
+        let alpha = self.device.tensor(1, 1, vec![1.0]);
+        let beta = self.device.tensor(1, 1, vec![1.0]);
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],

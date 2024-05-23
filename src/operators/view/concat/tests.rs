@@ -4,7 +4,7 @@ use crate::{Concat, Device, Unconcat};
 fn concat() {
     let device = Device::default();
 
-    let input_1 = device.tensor_f32(
+    let input_1 = device.tensor(
         2,
         3,
         vec![
@@ -14,7 +14,7 @@ fn concat() {
         ],
     );
 
-    let input_2 = device.tensor_f32(
+    let input_2 = device.tensor(
         2,
         3,
         vec![
@@ -24,7 +24,7 @@ fn concat() {
         ],
     );
 
-    let input_3 = device.tensor_f32(
+    let input_3 = device.tensor(
         2,
         3,
         vec![
@@ -34,9 +34,9 @@ fn concat() {
         ],
     );
 
-    let output = device.tensor_f32(2, 9, vec![0.0; 2 * 9]);
+    let output = device.tensor(2, 9, vec![0.0; 2 * 9]);
 
-    let expected = device.tensor_f32(
+    let expected = device.tensor(
         2,
         9,
         vec![
@@ -57,7 +57,7 @@ fn concat() {
 fn unconcat() {
     let device = Device::default();
 
-    let input = device.tensor_f32(
+    let input = device.tensor(
         2,
         9,
         vec![
@@ -66,14 +66,14 @@ fn unconcat() {
         ],
     );
 
-    let output_1 = device.tensor_f32(2, 3, vec![0.0; 2 * 3]);
-    let output_2 = device.tensor_f32(2, 3, vec![0.0; 2 * 3]);
-    let output_3 = device.tensor_f32(2, 3, vec![0.0; 2 * 3]);
+    let output_1 = device.tensor(2, 3, vec![0.0; 2 * 3]);
+    let output_2 = device.tensor(2, 3, vec![0.0; 2 * 3]);
+    let output_3 = device.tensor(2, 3, vec![0.0; 2 * 3]);
 
     let inputs = &[&input];
     let outputs = &[&output_1, &output_2, &output_3];
 
-    let expected_output_1 = device.tensor_f32(
+    let expected_output_1 = device.tensor(
         2,
         3,
         vec![
@@ -83,7 +83,7 @@ fn unconcat() {
         ],
     );
 
-    let expected_output_2 = device.tensor_f32(
+    let expected_output_2 = device.tensor(
         2,
         3,
         vec![
@@ -93,7 +93,7 @@ fn unconcat() {
         ],
     );
 
-    let expected_output_3 = device.tensor_f32(
+    let expected_output_3 = device.tensor(
         2,
         3,
         vec![

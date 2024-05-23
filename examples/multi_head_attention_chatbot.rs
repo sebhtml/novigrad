@@ -1,7 +1,7 @@
 use novigrad::{
     error, get_row_argmaxes, into_one_hot_encoded_rows, BinaryOperator, CrossEntropyLoss, Device,
-    Embedding, Error, ErrorEnum, GenericTensor, GradientDescent, Linear, Model, MultiHeadAttention,
-    NeuralMachine, OptimizerTrait, Softmax, Tensor, TernaryOperator, Tokenizer, TokenizerTrait,
+    Embedding, Error, ErrorEnum, GradientDescent, Linear, Model, MultiHeadAttention, NeuralMachine,
+    OptimizerTrait, Softmax, Tensor, TensorWithGrad, TernaryOperator, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
 };
 use rand::prelude::SliceRandom;
@@ -55,7 +55,7 @@ impl ChatbotModel {
 }
 
 impl UnaryOperator for ChatbotModel {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let embedding = self.embedding.forward(input)?;
         let attentions = self
             .multi_head_attention
@@ -148,7 +148,7 @@ fn main() -> Result<(), Error> {
 
             let _actual_output_one_hot = chatbot.infer(&input_one_hot)?;
             let loss = chatbot.loss(&expected_output_one_hot)?;
-            let loss: &GenericTensor = &loss.tensor().deref().borrow();
+            let loss: &Tensor = &loss.tensor().deref().borrow();
             let _loss: f32 = loss.try_into()?;
             if print_in_console {
                 //println!("Loss {}", loss);

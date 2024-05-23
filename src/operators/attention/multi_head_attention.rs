@@ -1,5 +1,5 @@
 use crate::{
-    error, AttentionHead, Concat, Device, Error, ErrorEnum, Linear, NaryOperator, Tensor,
+    error, AttentionHead, Concat, Device, Error, ErrorEnum, Linear, NaryOperator, TensorWithGrad,
     TernaryOperator, UnaryOperator,
 };
 
@@ -47,7 +47,12 @@ impl MultiHeadAttention {
 }
 
 impl TernaryOperator for MultiHeadAttention {
-    fn forward(&self, q: &Tensor, k: &Tensor, v: &Tensor) -> Result<Tensor, Error> {
+    fn forward(
+        &self,
+        q: &TensorWithGrad,
+        k: &TensorWithGrad,
+        v: &TensorWithGrad,
+    ) -> Result<TensorWithGrad, Error> {
         let mut attention_head_attentions = vec![];
         for attention_head in self.attention_heads.iter() {
             let attentions = attention_head.forward(q, k, v)?;

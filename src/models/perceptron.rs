@@ -1,5 +1,5 @@
 use crate::{
-    Device, Error, GradientDescent, ModelDetails, ResidualSumOfSquares, Tensor, UnaryModel,
+    Device, Error, GradientDescent, ModelDetails, ResidualSumOfSquares, TensorWithGrad, UnaryModel,
     UnaryOperator,
 };
 use crate::{Linear, Model};
@@ -18,7 +18,7 @@ impl PerceptronModel {
 }
 
 impl UnaryOperator for PerceptronModel {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         self.linear.forward(input)
     }
 }
@@ -32,7 +32,7 @@ impl Model for PerceptronModel {
     }
 }
 
-fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
+fn load_examples(device: &Device) -> Result<Vec<(TensorWithGrad, TensorWithGrad)>, Error> {
     let examples = vec![
         (vec![2.0, 3.0], vec![5.0]),
         (vec![2.0, 2.0], vec![4.0]),
@@ -42,8 +42,8 @@ fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
         .into_iter()
         .map(|(x, y)| {
             (
-                device.tensor(1, x.len(), x, &[], false, false),
-                device.tensor(1, y.len(), y, &[], false, false),
+                device.tensor_with_grad(1, x.len(), x, &[], false, false),
+                device.tensor_with_grad(1, y.len(), y, &[], false, false),
             )
         })
         .collect();

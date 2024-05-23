@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{tensor::GenericTensor, Device, ErrorEnum};
+use crate::{tensor::Tensor, Device, ErrorEnum};
 
 #[test]
 fn new() {
@@ -9,7 +9,7 @@ fn new() {
     // When a matrix is built
     // Then it has the appropriate shape
 
-    let matrix = device.tensor_f32(
+    let matrix = device.tensor(
         4,
         3,
         vec![
@@ -25,7 +25,7 @@ fn new() {
 #[test]
 fn reshape_result() {
     let device = Device::default();
-    let lhs = device.tensor_f32(
+    let lhs = device.tensor(
         2,
         4,
         vec![
@@ -34,7 +34,7 @@ fn reshape_result() {
         ],
     );
 
-    let expected = device.tensor_f32(
+    let expected = device.tensor(
         1,
         8,
         vec![
@@ -52,7 +52,7 @@ fn reshape_result() {
 #[test]
 fn reshape_error() {
     let device = Device::default();
-    let lhs = device.tensor_f32(
+    let lhs = device.tensor(
         2,
         4,
         vec![
@@ -71,7 +71,7 @@ fn reshape_error() {
 #[test]
 fn index() {
     let device = Device::default();
-    let tensor = device.tensor_f32(
+    let tensor = device.tensor(
         2,
         2,
         vec![
@@ -87,7 +87,7 @@ fn index() {
 #[test]
 fn clip() {
     let device = Device::default();
-    let tensor = device.tensor_f32(
+    let tensor = device.tensor(
         1,
         4,
         vec![
@@ -105,7 +105,7 @@ fn clip() {
 #[test]
 fn set_values() {
     let device = Device::default();
-    let tensor = device.tensor_f32(
+    let tensor = device.tensor(
         2,
         2,
         vec![
@@ -125,7 +125,7 @@ fn set_values() {
 #[test]
 fn assign() {
     let device = Device::default();
-    let mut tensor = device.tensor_f32(
+    let mut tensor = device.tensor(
         3,
         3,
         vec![
@@ -135,7 +135,7 @@ fn assign() {
         ],
     );
 
-    let tensor2 = device.tensor_f32(
+    let tensor2 = device.tensor(
         3,
         3,
         vec![
@@ -144,7 +144,7 @@ fn assign() {
             17.0, 18.0, 19.0, //
         ],
     );
-    GenericTensor::copy(&tensor2, &mut tensor).unwrap();
+    Tensor::copy(&tensor2, &mut tensor).unwrap();
     assert_eq!(tensor, tensor2);
 }
 
@@ -155,7 +155,7 @@ fn matrix_multiplication_result() {
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor_f32(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -164,7 +164,7 @@ fn matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs = device.tensor_f32(
+    let rhs = device.tensor(
         2,
         3,
         vec![
@@ -172,7 +172,7 @@ fn matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let expected_result = device.tensor_f32(
+    let expected_result = device.tensor(
         3,
         3,
         vec![
@@ -191,11 +191,11 @@ fn matrix_multiplication_result() {
     let rows = lhs.rows();
     let cols = rhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor(rows, cols, vec![0.0; len]);
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
-    GenericTensor::gemm(false, false, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
+    Tensor::gemm(false, false, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -206,7 +206,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs2 = device.tensor_f32(
+    let lhs2 = device.tensor(
         3,
         2,
         vec![
@@ -215,9 +215,9 @@ fn transposed_lhs_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let mut lhs = device.tensor_f32(2, 3, vec![0.0; 6]);
+    let mut lhs = device.tensor(2, 3, vec![0.0; 6]);
     lhs2.transpose(&mut lhs).unwrap();
-    let rhs = device.tensor_f32(
+    let rhs = device.tensor(
         2,
         3,
         vec![
@@ -225,7 +225,7 @@ fn transposed_lhs_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let expected_result = device.tensor_f32(
+    let expected_result = device.tensor(
         3,
         3,
         vec![
@@ -244,11 +244,11 @@ fn transposed_lhs_matrix_multiplication_result() {
     let rows = lhs.cols();
     let cols = rhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor(rows, cols, vec![0.0; len]);
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
-    GenericTensor::gemm(true, false, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
+    Tensor::gemm(true, false, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -259,7 +259,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor_f32(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -268,7 +268,7 @@ fn transposed_rhs_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs2 = device.tensor_f32(
+    let rhs2 = device.tensor(
         2,
         3,
         vec![
@@ -276,9 +276,9 @@ fn transposed_rhs_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let mut rhs = device.tensor_f32(3, 2, vec![0.0; 6]);
+    let mut rhs = device.tensor(3, 2, vec![0.0; 6]);
     rhs2.transpose(&mut rhs).unwrap();
-    let expected_result = device.tensor_f32(
+    let expected_result = device.tensor(
         3,
         3,
         vec![
@@ -297,18 +297,18 @@ fn transposed_rhs_matrix_multiplication_result() {
     let rows = lhs.rows();
     let cols = rhs.rows();
     let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor(rows, cols, vec![0.0; len]);
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
-    GenericTensor::gemm(false, true, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
+    Tensor::gemm(false, true, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
 #[test]
 fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let device = Device::default();
-    let lhs2 = device.tensor_f32(
+    let lhs2 = device.tensor(
         3,
         2,
         vec![
@@ -317,9 +317,9 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
             5.0, 6.0, //
         ],
     );
-    let mut lhs = device.tensor_f32(2, 3, vec![0.0; 6]);
+    let mut lhs = device.tensor(2, 3, vec![0.0; 6]);
     lhs2.transpose(&mut lhs).unwrap();
-    let rhs2 = device.tensor_f32(
+    let rhs2 = device.tensor(
         2,
         3,
         vec![
@@ -327,9 +327,9 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
             14.0, 15.0, 16.0, //
         ],
     );
-    let mut rhs = device.tensor_f32(3, 2, vec![0.0; 6]);
+    let mut rhs = device.tensor(3, 2, vec![0.0; 6]);
     rhs2.transpose(&mut rhs).unwrap();
-    let expected_result = device.tensor_f32(
+    let expected_result = device.tensor(
         3,
         3,
         vec![
@@ -348,18 +348,18 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let rows = lhs.cols();
     let cols = rhs.rows();
     let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor(rows, cols, vec![0.0; len]);
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
-    GenericTensor::gemm(true, true, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
+    Tensor::gemm(true, true, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
 #[test]
 fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let device = Device::default();
-    let lhs2 = device.tensor_f32(
+    let lhs2 = device.tensor(
         4,
         2,
         vec![
@@ -369,10 +369,10 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
             7.0, 8.0,
         ],
     );
-    let mut lhs = device.tensor_f32(2, 4, vec![0.0; 8]);
+    let mut lhs = device.tensor(2, 4, vec![0.0; 8]);
     lhs2.transpose(&mut lhs).unwrap();
 
-    let rhs2 = device.tensor_f32(
+    let rhs2 = device.tensor(
         2,
         3,
         vec![
@@ -381,10 +381,10 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
         ],
     );
 
-    let mut rhs = device.tensor_f32(3, 2, vec![0.0; 6]);
+    let mut rhs = device.tensor(3, 2, vec![0.0; 6]);
     rhs2.transpose(&mut rhs).unwrap();
 
-    let expected_result2 = device.tensor_f32(
+    let expected_result2 = device.tensor(
         4,
         3,
         vec![
@@ -402,24 +402,24 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
             7.0 * 13.0 + 8.0 * 16.0, //
         ],
     );
-    let mut expected_result = device.tensor_f32(3, 4, vec![0.0; 12]);
+    let mut expected_result = device.tensor(3, 4, vec![0.0; 12]);
     expected_result2.transpose(&mut expected_result).unwrap();
 
     let rows = rhs.rows();
     let cols = lhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor(rows, cols, vec![0.0; len]);
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
-    GenericTensor::gemm(true, true, &alpha, &lhs, &rhs, &beta, &mut result, true).unwrap();
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
+    Tensor::gemm(true, true, &alpha, &lhs, &rhs, &beta, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
 #[test]
 fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let device = Device::default();
-    let lhs2 = device.tensor_f32(
+    let lhs2 = device.tensor(
         4,
         2,
         vec![
@@ -429,10 +429,10 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
             7.0, 8.0, //
         ],
     );
-    let mut lhs = device.tensor_f32(2, 4, vec![0.0; 8]);
+    let mut lhs = device.tensor(2, 4, vec![0.0; 8]);
     lhs2.transpose(&mut lhs).unwrap();
 
-    let rhs = device.tensor_f32(
+    let rhs = device.tensor(
         2,
         3,
         vec![
@@ -441,7 +441,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
         ],
     );
 
-    let expected_result2 = device.tensor_f32(
+    let expected_result2 = device.tensor(
         4,
         3,
         vec![
@@ -459,17 +459,17 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
             7.0 * 13.0 + 8.0 * 16.0, //
         ],
     );
-    let mut expected_result = device.tensor_f32(3, 4, vec![0.0; 12]);
+    let mut expected_result = device.tensor(3, 4, vec![0.0; 12]);
     expected_result2.transpose(&mut expected_result).unwrap();
 
     let rows = rhs.cols();
     let cols = lhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor(rows, cols, vec![0.0; len]);
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
-    GenericTensor::gemm(true, false, &alpha, &lhs, &rhs, &beta, &mut result, true).unwrap();
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
+    Tensor::gemm(true, false, &alpha, &lhs, &rhs, &beta, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -480,7 +480,7 @@ fn matrix_addition_result() {
     // When the addition lhs + rhs is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor_f32(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -489,7 +489,7 @@ fn matrix_addition_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs: GenericTensor = device.tensor_f32(
+    let rhs: Tensor = device.tensor(
         3,
         2,
         vec![
@@ -498,7 +498,7 @@ fn matrix_addition_result() {
             13.0, 16.0, //
         ],
     );
-    let expected_result = device.tensor_f32(
+    let expected_result = device.tensor(
         3,
         2,
         vec![
@@ -514,9 +514,9 @@ fn matrix_addition_result() {
     let rows = rhs.rows();
     let cols = rhs.cols();
     let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
-    GenericTensor::copy(&rhs, &mut result).unwrap();
-    GenericTensor::add(&lhs, &mut result).unwrap();
+    let mut result = device.tensor(rows, cols, vec![0.0; len]);
+    Tensor::copy(&rhs, &mut result).unwrap();
+    Tensor::add(&lhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -527,7 +527,7 @@ fn element_wise_mul_result() {
     // When the element-wise multiplication is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor_f32(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -536,7 +536,7 @@ fn element_wise_mul_result() {
             5.0, 6.0, //
         ],
     );
-    let rhs: GenericTensor = device.tensor_f32(
+    let rhs: Tensor = device.tensor(
         3,
         2,
         vec![
@@ -545,7 +545,7 @@ fn element_wise_mul_result() {
             13.0, 16.0, //
         ],
     );
-    let expected_result = device.tensor_f32(
+    let expected_result = device.tensor(
         3,
         2,
         vec![
@@ -558,8 +558,8 @@ fn element_wise_mul_result() {
         ],
     );
 
-    let mut result = device.tensor_f32(3, 2, vec![0.0; 6]);
-    GenericTensor::mul(&lhs, &rhs, &mut result).unwrap();
+    let mut result = device.tensor(3, 2, vec![0.0; 6]);
+    Tensor::mul(&lhs, &rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -570,7 +570,7 @@ fn scalar_mul() {
     // When scalar multiplication is done
     // Then the resulting matrix has the correct values
 
-    let lhs = device.tensor_f32(
+    let lhs = device.tensor(
         3,
         2,
         vec![
@@ -580,7 +580,7 @@ fn scalar_mul() {
         ],
     );
     let rhs = -2.0;
-    let expected_result = device.tensor_f32(
+    let expected_result = device.tensor(
         3,
         2,
         vec![
@@ -593,10 +593,10 @@ fn scalar_mul() {
         ],
     );
 
-    let mut result = device.tensor_f32(3, 2, vec![0.0; 6]);
-    GenericTensor::copy(&lhs, &mut result).unwrap();
-    let rhs = device.tensor_f32(1, 1, vec![rhs]);
-    GenericTensor::scalar_mul(&rhs, &mut result).unwrap();
+    let mut result = device.tensor(3, 2, vec![0.0; 6]);
+    Tensor::copy(&lhs, &mut result).unwrap();
+    let rhs = device.tensor(1, 1, vec![rhs]);
+    Tensor::scalar_mul(&rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -610,16 +610,16 @@ fn big_matrix_multiplication() {
     for index in 0..values.len() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
-    let m = device.tensor_f32(rows, cols, values);
+    let m = device.tensor(rows, cols, values);
 
     let rows = m.rows();
     let cols = m.cols();
     let len = rows * cols;
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; len]);
+    let mut result = device.tensor(rows, cols, vec![0.0; len]);
 
-    let alpha = device.tensor_f32(1, 1, vec![1.0]);
-    let beta = device.tensor_f32(1, 1, vec![1.0]);
-    GenericTensor::gemm(false, false, &alpha, &m, &m, &beta, &mut result, false).unwrap();
+    let alpha = device.tensor(1, 1, vec![1.0]);
+    let beta = device.tensor(1, 1, vec![1.0]);
+    Tensor::gemm(false, false, &alpha, &m, &m, &beta, &mut result, false).unwrap();
 }
 
 #[test]
@@ -632,18 +632,18 @@ fn big_matrix_addition() {
     for index in 0..values.len() {
         values[index] = rand::thread_rng().gen_range(0.0..1.0)
     }
-    let m = device.tensor_f32(rows, cols, values);
+    let m = device.tensor(rows, cols, values);
 
-    let mut result = device.tensor_f32(rows, cols, vec![0.0; rows * cols]);
-    GenericTensor::copy(&m, &mut result).unwrap();
-    GenericTensor::add(&m, &mut result).unwrap();
+    let mut result = device.tensor(rows, cols, vec![0.0; rows * cols]);
+    Tensor::copy(&m, &mut result).unwrap();
+    Tensor::add(&m, &mut result).unwrap();
 }
 
 #[test]
 fn transpose() {
     let device = Device::default();
-    let matrix = device.tensor_f32(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
-    let mut matrix2 = device.tensor_f32(2, 3, vec![0.0; 6]);
+    let matrix = device.tensor(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    let mut matrix2 = device.tensor(2, 3, vec![0.0; 6]);
     matrix.transpose(&mut matrix2).unwrap();
     let matrix_values = matrix.get_values().unwrap();
     let matrix2_values = matrix2.get_values().unwrap();
@@ -660,7 +660,7 @@ fn transpose() {
 #[test]
 fn copy() {
     let device = Device::default();
-    let expected = device.tensor_f32(
+    let expected = device.tensor(
         2,
         4,
         vec![
@@ -669,16 +669,16 @@ fn copy() {
         ],
     );
 
-    let mut actual = device.tensor_f32(2, 4, vec![0.0; 2 * 4]);
+    let mut actual = device.tensor(2, 4, vec![0.0; 2 * 4]);
 
-    GenericTensor::copy(&expected, &mut actual).unwrap();
+    Tensor::copy(&expected, &mut actual).unwrap();
     assert_eq!(actual, expected);
 }
 
 #[test]
 fn copy_slice() {
     let device = Device::default();
-    let from = device.tensor_f32(
+    let from = device.tensor(
         2,
         2,
         vec![
@@ -687,7 +687,7 @@ fn copy_slice() {
         ],
     );
 
-    let mut actual = device.tensor_f32(
+    let mut actual = device.tensor(
         2,
         4,
         vec![
@@ -696,7 +696,7 @@ fn copy_slice() {
         ],
     );
 
-    let expected = device.tensor_f32(
+    let expected = device.tensor(
         2,
         4,
         vec![
@@ -705,6 +705,6 @@ fn copy_slice() {
         ],
     );
 
-    GenericTensor::copy_slice(from.cols(), &from, 0, 0, &mut actual, 1, 2).unwrap();
+    Tensor::copy_slice(from.cols(), &from, 0, 0, &mut actual, 1, 2).unwrap();
     assert_eq!(actual, expected);
 }

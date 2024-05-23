@@ -1,10 +1,10 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{Add, BinaryOperator, Device, Error, MatMul, Tensor, UnaryOperator};
+use crate::{Add, BinaryOperator, Device, Error, MatMul, TensorWithGrad, UnaryOperator};
 
 pub struct Linear {
-    weights: Tensor,
-    biases: Tensor,
+    weights: TensorWithGrad,
+    biases: TensorWithGrad,
     matmul: MatMul,
     add: Add,
 }
@@ -30,10 +30,10 @@ impl Linear {
                 weights[index] = rng.sample(uniform);
             }
         }
-        let weights = device.tensor(weights_rows, weights_cols, weights, &[], true, true);
+        let weights = device.tensor_with_grad(weights_rows, weights_cols, weights, &[], true, true);
 
         let biases_len = bias_rows * weights_rows;
-        let biases = device.tensor(
+        let biases = device.tensor_with_grad(
             bias_rows,
             weights_rows,
             vec![0.0; biases_len],
@@ -53,7 +53,7 @@ impl Linear {
 }
 
 impl UnaryOperator for Linear {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let product = self.matmul.forward(input, &self.weights)?;
         let sum = self.add.forward(&product, &self.biases)?;
         Ok(sum)

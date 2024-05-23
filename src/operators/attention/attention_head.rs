@@ -1,5 +1,6 @@
 use crate::{
-    Device, Error, Linear, ScaledDotProductAttention, Tensor, TernaryOperator, UnaryOperator,
+    Device, Error, Linear, ScaledDotProductAttention, TensorWithGrad, TernaryOperator,
+    UnaryOperator,
 };
 
 pub struct AttentionHead {
@@ -31,7 +32,12 @@ impl AttentionHead {
 }
 
 impl TernaryOperator for AttentionHead {
-    fn forward(&self, q: &Tensor, k: &Tensor, v: &Tensor) -> Result<Tensor, Error> {
+    fn forward(
+        &self,
+        q: &TensorWithGrad,
+        k: &TensorWithGrad,
+        v: &TensorWithGrad,
+    ) -> Result<TensorWithGrad, Error> {
         let q = self.q.forward(q)?;
         let k = self.k.forward(k)?;
         let v = self.v.forward(v)?;

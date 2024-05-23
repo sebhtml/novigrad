@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, gradient_instruction, inference_instruction, Error, GenericTensor, OpCode,
-    Tensor, UnaryOperator,
+    devices::Device, gradient_instruction, inference_instruction, Error, OpCode, Tensor,
+    TensorWithGrad, UnaryOperator,
 };
 
 pub struct Reshape {
@@ -22,29 +22,29 @@ impl Reshape {
 
     pub fn execute(
         output_size: &[usize],
-        inputs: &[&GenericTensor],
-        outputs: &[&GenericTensor],
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        GenericTensor::copy(input, output)?;
+        Tensor::copy(input, output)?;
         output.resize(output_size)
     }
 }
 
 impl UnaryOperator for Reshape {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        let input_tensor: &GenericTensor = &input.tensor().deref().borrow();
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
+        let input_tensor: &Tensor = &input.tensor().deref().borrow();
         debug_assert_eq!(*input_tensor.size().deref().borrow_mut(), self.input_size);
         let rows = self.output_size[0];
         let cols = self.output_size[1];
         let len = rows * cols;
-        let output = self
-            .device
-            .tensor(rows, cols, vec![0.0; len], &[input], true, false);
+        let output =
+            self.device
+                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0]);
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],

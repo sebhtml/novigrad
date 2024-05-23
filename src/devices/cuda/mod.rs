@@ -13,7 +13,7 @@ use cudarc::{
     driver::{self, LaunchAsync, LaunchConfig},
 };
 
-use crate::{DevBufferEnum, DeviceInterface, Error, ErrorEnum, GenericTensor};
+use crate::{error, DevBufferEnum, DeviceInterface, Error, ErrorEnum, GenericTensor};
 
 #[derive(Debug)]
 pub struct CudaDevice {
@@ -28,12 +28,7 @@ impl CudaDevice {
         match (cuda_blas, dev) {
             (Ok(Ok(cuda_blas)), Ok(dev)) => Self::try_new(cuda_blas, dev),
 
-            _ => Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::UnsupportedOperation,
-            )),
+            _ => Err(error!(ErrorEnum::UnsupportedOperation)),
         }
     }
 
@@ -69,21 +64,15 @@ impl CudaDevice {
     ) -> Result<(), Error> {
         let mut cuda_code = String::default();
         File::open(src_file_path)
-            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::InputOutputError))?
+            .map_err(|_| error!(ErrorEnum::InputOutputError))?
             .read_to_string(&mut cuda_code)
-            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::InputOutputError))?;
-        let ptx = cudarc::nvrtc::compile_ptx(cuda_code).map_err(|err| {
-            Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::NvRtcCompilePtxError(err),
-            )
-        })?;
+            .map_err(|_| error!(ErrorEnum::InputOutputError))?;
+        let ptx = cudarc::nvrtc::compile_ptx(cuda_code)
+            .map_err(|err| error!(ErrorEnum::NvRtcCompilePtxError(err)))?;
 
         self.dev
             .load_ptx(ptx, module_name, func_names)
-            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::NvRtcLoadPtxError))?;
+            .map_err(|_| error!(ErrorEnum::NvRtcLoadPtxError))?;
         Ok(())
     }
 }
@@ -131,7 +120,7 @@ impl DeviceInterface for CudaDevice {
         };
         status
             .result()
-            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
     fn saxpy(
@@ -148,7 +137,7 @@ impl DeviceInterface for CudaDevice {
         let status = unsafe { cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
         status
             .result()
-            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
     fn sdot(
@@ -165,9 +154,9 @@ impl DeviceInterface for CudaDevice {
             let result = &mut result as *mut f32;
             cublasSdot_v2(handle, n, x, incx, y, incy, result)
         };
-        status.result().map_err(|_| {
-            Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation)
-        })?;
+        status
+            .result()
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
         Ok(result)
     }
 
@@ -176,7 +165,7 @@ impl DeviceInterface for CudaDevice {
         let status = unsafe { cublasScopy_v2(handle, n, x, incx, y, incy) };
         status
             .result()
-            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
     fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
@@ -193,32 +182,17 @@ impl DeviceInterface for CudaDevice {
                 let result = unsafe { kernel.launch(cfg, (n, x, alpha)) };
                 match result {
                     Ok(_) => Ok(()),
-                    Err(_) => Err(Error::new(
-                        file!(),
-                        line!(),
-                        column!(),
-                        ErrorEnum::NvLaunchError,
-                    )),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
                 }
             }
-            _ => Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::NvLaunchError,
-            )),
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
         }
     }
 
     fn slice(&self, n: i32) -> Result<DevBufferEnum, Error> {
         match self.dev.alloc_zeros(n as usize) {
             Ok(slice) => Ok(DevBufferEnum::CudaBuffer(slice)),
-            _ => Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::UnsupportedOperation,
-            )),
+            _ => Err(error!(ErrorEnum::UnsupportedOperation)),
         }
     }
 
@@ -246,20 +220,10 @@ impl DeviceInterface for CudaDevice {
                 let result = unsafe { sum_kernel.launch(cfg, (input, n, output)) };
                 match result {
                     Ok(_) => Ok(()),
-                    Err(_) => Err(Error::new(
-                        file!(),
-                        line!(),
-                        column!(),
-                        ErrorEnum::NvRtcLoadPtxError,
-                    )),
+                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
                 }
             }
-            _ => Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::NvRtcLoadPtxError,
-            )),
+            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
         }
     }
 }

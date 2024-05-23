@@ -1,5 +1,5 @@
 use novigrad::{
-    get_row_argmaxes, into_one_hot_encoded_rows, BinaryOperator, CrossEntropyLoss, Device,
+    error, get_row_argmaxes, into_one_hot_encoded_rows, BinaryOperator, CrossEntropyLoss, Device,
     Embedding, Error, ErrorEnum, GenericTensor, GradientDescent, Linear, Model, MultiHeadAttention,
     NeuralMachine, OptimizerTrait, Softmax, Tensor, TernaryOperator, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
@@ -181,11 +181,6 @@ fn read_prompt() -> Result<String, Error> {
     let stdin = io::stdin();
     match stdin.read_line(&mut prompt) {
         Ok(_) => Ok(prompt),
-        Err(_) => Err(Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::InputOutputError,
-        )),
+        Err(_) => Err(error!(ErrorEnum::InputOutputError)),
     }
 }

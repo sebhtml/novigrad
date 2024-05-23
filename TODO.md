@@ -31,7 +31,6 @@
 
 ---------------------
 
-- use macro for errors
 - make sure that all OpCode have >= 2 inputs
 - no values in OpCode, put them instead in OpCodeArguments
 

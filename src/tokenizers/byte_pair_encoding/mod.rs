@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, collections::HashMap, mem::swap};
 
-use crate::{Error, ErrorEnum, TokenizerTrait};
+use crate::{error, Error, ErrorEnum, TokenizerTrait};
 
 #[cfg(test)]
 mod tests;
@@ -154,8 +154,7 @@ impl TokenizerTrait for BytePairEncoding {
             let byte = self.token_to_byte.get(&token).unwrap_or(&('?' as u8));
             output.push(*byte);
         }
-        String::from_utf8(output)
-            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
+        String::from_utf8(output).map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
     fn vocab_size(&self) -> usize {

@@ -1,6 +1,6 @@
 use crate::{
-    AttentionHead, Concat, Device, Error, ErrorEnum, Linear, NaryOperator, Tensor, TernaryOperator,
-    UnaryOperator,
+    error, AttentionHead, Concat, Device, Error, ErrorEnum, Linear, NaryOperator, Tensor,
+    TernaryOperator, UnaryOperator,
 };
 
 pub struct MultiHeadAttention {
@@ -19,12 +19,7 @@ impl MultiHeadAttention {
         dropout_probability: f32,
     ) -> Result<Self, Error> {
         if cols % num_heads > 0 {
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncorrectOperatorConfiguration,
-            ));
+            return Err(error!(ErrorEnum::IncorrectOperatorConfiguration));
         }
         let head_cols = cols / num_heads;
         let mut attention_heads = vec![];

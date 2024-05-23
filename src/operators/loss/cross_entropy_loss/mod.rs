@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    GenericTensor, OpCode, Tensor, EPSILON,
+    devices::Device, error, gradient_instruction, loss_instruction, BinaryOperator, Error,
+    ErrorEnum, GenericTensor, OpCode, Tensor, EPSILON,
 };
 
 #[derive(Clone)]
@@ -34,12 +34,7 @@ impl CrossEntropyLoss {
             println!("Incompatible sizes");
             println!("p {}", p);
             println!("q {}", q);
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            ));
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         let rows = p.rows();
         let cols = p.cols();

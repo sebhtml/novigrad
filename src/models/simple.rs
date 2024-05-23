@@ -1,5 +1,5 @@
 use crate::{
-    into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, GradientDescent,
+    error, into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, GradientDescent,
     ModelDetails, Tensor, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
 };
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
@@ -102,12 +102,7 @@ fn load_examples(
                 acc.push((a, b));
                 Ok(acc)
             }
-            _ => Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::UnsupportedOperation,
-            )),
+            _ => Err(error!(ErrorEnum::UnsupportedOperation)),
         });
 
     examples

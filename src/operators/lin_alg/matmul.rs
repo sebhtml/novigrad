@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, gradient_instruction, inference_instruction, BinaryOperator, Error, ErrorEnum,
-    GenericTensor, OpCode, Tensor,
+    devices::Device, error, gradient_instruction, inference_instruction, BinaryOperator, Error,
+    ErrorEnum, GenericTensor, OpCode, Tensor,
 };
 
 pub struct MatMul {
@@ -41,12 +41,7 @@ impl BinaryOperator for MatMul {
                 input_1_tensor.size().deref().borrow(),
             );
             debug_assert!(false);
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            ));
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
 
         let rows = input_0_tensor.rows();

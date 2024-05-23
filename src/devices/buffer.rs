@@ -2,6 +2,7 @@ use std::{borrow::BorrowMut, mem::swap};
 
 use cudarc::driver::{CudaSlice, DevicePtr, DevicePtrMut, DeviceSlice};
 
+use crate::error;
 use crate::DeviceInterface;
 use crate::Error;
 use crate::{Device, ErrorEnum};
@@ -65,12 +66,7 @@ impl DevBuffer {
                 let result = dev.dtoh_sync_copy_into(buffer, &mut values);
                 match result {
                     Ok(_) => Ok(values),
-                    _ => Err(Error::new(
-                        file!(),
-                        line!(),
-                        column!(),
-                        ErrorEnum::UnsupportedOperation,
-                    )),
+                    _ => Err(error!(ErrorEnum::UnsupportedOperation)),
                 }
             }
         }

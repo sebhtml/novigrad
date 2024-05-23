@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    GenericTensor, OpCode, Tensor,
+    devices::Device, error, gradient_instruction, loss_instruction, BinaryOperator, Error,
+    ErrorEnum, GenericTensor, OpCode, Tensor,
 };
 
 #[cfg(test)]
@@ -31,12 +31,7 @@ impl ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
     fn evaluate(expected: &GenericTensor, actual: &GenericTensor) -> Result<f32, Error> {
         if expected.size() != actual.size() {
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            ));
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         let expected_values = expected.get_values()?;
         let actual_values = actual.get_values()?;

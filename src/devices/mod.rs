@@ -92,7 +92,9 @@ pub trait DeviceInterface {
         output: *mut f32,
     ) -> Result<(), Error>;
 
-    fn sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error>;
+    fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+
+    fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 }
 
 impl Debug for dyn DeviceInterface {
@@ -299,5 +301,9 @@ impl DeviceInterface for Device {
 
     fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
         self.device.mul(left, right, result)
+    }
+
+    fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        self.device.sigmoid(input, output)
     }
 }

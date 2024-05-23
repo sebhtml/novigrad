@@ -56,6 +56,12 @@ impl CudaDev {
             "./src/devices/cuda/kernels/mul_kernel.cu",
         )?;
 
+        device.load_module(
+            "sigmoid_module",
+            &["sigmoid"],
+            "./src/devices/cuda/kernels/sigmoid.cu",
+        )?;
+
         Ok(device)
     }
 
@@ -258,6 +264,24 @@ impl DeviceInterface for CudaDev {
                 }
             }
             _ => Err(error!(ErrorEnum::NvLaunchError)),
+        }
+    }
+
+    fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let kernel = self.dev.get_func("sigmoid_module", "sigmoid").unwrap();
+        let n = input.len();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        let input = &input.device_slice().deref().borrow().buffer;
+        let output = &output.device_slice().deref().borrow().buffer;
+        match (input, output) {
+            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+                let result = unsafe { kernel.launch(cfg, (input, output, n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
         }
     }
 }

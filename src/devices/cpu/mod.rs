@@ -165,6 +165,25 @@ impl DeviceInterface for CpuDevice {
 
         result.set_values(result_values)
     }
+
+    fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let rows = input.rows();
+        let cols = input.cols();
+        let values = input.get_values()?;
+        let mut result_values = output.get_values()?;
+        let mut row = 0;
+        while row < rows {
+            let mut col = 0;
+            while col < cols {
+                let x = values[input.index(row, col)];
+                let y = 1.0 / (1.0 + E.powf(-x));
+                result_values[output.index(row, col)] = y;
+                col += 1;
+            }
+            row += 1;
+        }
+        output.set_values(result_values)
+    }
 }
 
 impl CpuDevice {

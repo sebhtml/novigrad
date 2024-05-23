@@ -38,22 +38,10 @@ fn cblas_sgemm_column_major() {
         ],
     );
 
+    let alpha = device.tensor_f32(1, 1, vec![1.0]);
+    let beta = device.tensor_f32(1, 1, vec![1.0]);
     device
-        .sgemm(
-            false,
-            false,
-            m,
-            n,
-            k,
-            1.0,
-            a.as_ptr(),
-            m,
-            b.as_ptr(),
-            k,
-            1.0,
-            c.as_mut_ptr(),
-            m,
-        )
+        .gemm(false, false, m, n, k, &alpha, &a, m, &b, k, &beta, &c, m)
         .unwrap();
 
     assert_eq!(
@@ -111,22 +99,10 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
         ],
     );
 
+    let alpha = device.tensor_f32(1, 1, vec![1.0]);
+    let beta = device.tensor_f32(1, 1, vec![1.0]);
     device
-        .sgemm(
-            false,
-            false,
-            n,
-            m,
-            k,
-            1.0,
-            b.as_ptr(),
-            n,
-            a.as_ptr(),
-            k,
-            1.0,
-            c.as_mut_ptr(),
-            n,
-        )
+        .gemm(false, false, n, m, k, &alpha, &b, n, &a, k, &beta, &c, n)
         .unwrap();
 
     assert_eq!(

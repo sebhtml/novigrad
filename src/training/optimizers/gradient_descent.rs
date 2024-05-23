@@ -25,10 +25,10 @@ impl OptimizerTrait for GradientDescent {
 
             let scaled_gradient =
                 device.tensor_f32(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()]);
-
+            let zero = device.tensor_f32(1, 1, vec![0.0]);
             instructions.push(optimization_instruction!(
-                OpCode::ScalarMul(0.0),
-                &[&scaled_gradient],
+                OpCode::ScalarMul,
+                &[&zero, &scaled_gradient],
                 &[&scaled_gradient],
             ));
 
@@ -38,9 +38,10 @@ impl OptimizerTrait for GradientDescent {
                 &[&scaled_gradient],
             ));
 
+            let alpha = device.tensor_f32(1, 1, vec![-self.learning_rate]);
             instructions.push(optimization_instruction!(
-                OpCode::ScalarMul(-self.learning_rate),
-                &[&scaled_gradient],
+                OpCode::ScalarMul,
+                &[&alpha, &scaled_gradient],
                 &[&scaled_gradient],
             ));
 

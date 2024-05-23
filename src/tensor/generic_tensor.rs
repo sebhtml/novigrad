@@ -1,8 +1,8 @@
 use crate::{
     devices::{Device, DeviceInterface},
-    CpuDevice, Error,
+    error, CpuDevice, Error,
 };
-use crate::{DevBuffer, ErrorEnum};
+use crate::{DevSlice, ErrorEnum};
 
 use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc, vec};
 
@@ -11,7 +11,7 @@ pub struct GenericTensor {
     name: usize,
     device: Device,
     size: Rc<RefCell<Vec<usize>>>,
-    buffer: Rc<RefCell<DevBuffer>>,
+    device_slice: Rc<RefCell<DevSlice>>,
 }
 
 impl PartialEq for GenericTensor {
@@ -31,8 +31,12 @@ impl GenericTensor {
             name,
             device: device.clone(),
             size: Rc::new(RefCell::new(vec![rows, cols])),
-            buffer: Rc::new(RefCell::new(buffer)),
+            device_slice: Rc::new(RefCell::new(buffer)),
         }
+    }
+
+    pub fn device(&self) -> &Device {
+        &self.device
     }
 
     pub fn name(&self) -> usize {
@@ -99,16 +103,20 @@ impl GenericTensor {
         Ok(())
     }
 
+    pub fn device_slice(&self) -> &Rc<RefCell<DevSlice>> {
+        &self.device_slice
+    }
+
     pub fn as_ptr(&self) -> *const f32 {
-        self.buffer.deref().borrow().as_ptr()
+        self.device_slice.deref().borrow().as_ptr()
     }
 
     pub fn as_mut_ptr(&self) -> *mut f32 {
-        self.buffer.deref().borrow_mut().as_mut_ptr()
+        self.device_slice.deref().borrow_mut().as_mut_ptr()
     }
 
     pub fn get_values(&self) -> Result<Vec<f32>, Error> {
-        self.buffer.deref().borrow().get_values()
+        self.device_slice.deref().borrow().get_values()
     }
 
     pub fn reallocate(&mut self, new_size: &[usize]) {
@@ -123,59 +131,28 @@ impl GenericTensor {
     // TODO This method should return a Result.
     pub fn set_values(&self, new_values: Vec<f32>) {
         debug_assert_eq!(new_values.len(), self.len());
-        if self.buffer.deref().borrow().len() != self.len() {
-            self.buffer.deref().borrow_mut().resize(self.len())
+        if self.device_slice.deref().borrow().len() != self.len() {
+            self.device_slice.deref().borrow_mut().resize(self.len())
         }
-        self.buffer.deref().borrow_mut().set_values(new_values)
+        self.device_slice
+            .deref()
+            .borrow_mut()
+            .set_values(new_values)
     }
 
-    pub fn zero(&self) -> Result<(), Error> {
-        GenericTensor::scalar_mul(0.0, self)
-    }
-
-    // TODO use device for element_wise_mul
     pub fn mul(
         left: &GenericTensor,
         right: &GenericTensor,
         result: &GenericTensor,
     ) -> Result<(), Error> {
         if left.size() != right.size() {
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            ));
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-
-        debug_assert_eq!(result.size(), left.size());
-
-        let mut result_values = result.get_values()?;
-        let left_values = left.get_values()?;
-        let right_values = right.get_values()?;
-
-        let result_ptr = result_values.as_mut_ptr();
-        let left_ptr = left_values.as_ptr();
-        let right_ptr = right_values.as_ptr();
-
-        unsafe {
-            let mut index = 0;
-            let len = left_values.len();
-            while index < len {
-                let left_cell = left_ptr.add(index);
-                let right_cell = right_ptr.add(index);
-                let result_cell = result_ptr.add(index);
-                let left = *left_cell;
-                let right = *right_cell;
-                let value = left * right;
-                *result_cell = value;
-                index += 1;
-            }
+        if left.size() != result.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-
-        result.set_values(result_values);
-
-        Ok(())
+        let device = left.device.clone();
+        device.mul(left, right, result)
     }
 
     pub fn is_finite(&self) -> bool {
@@ -201,17 +178,12 @@ impl GenericTensor {
     pub fn dot_product(x: &GenericTensor, y: &GenericTensor) -> Result<f32, Error> {
         let device = &x.device;
         if x.size() != y.size() {
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            ));
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.sdot(n, x.as_ptr(), incx, y.as_ptr(), incy)
+        device.dot(n, x.as_ptr(), incx, y.as_ptr(), incy)
     }
 
     pub fn copy(x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
@@ -221,7 +193,7 @@ impl GenericTensor {
         let incy = 1;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
-        device.scopy(n, x, incx, y, incy)
+        device.copy(n, x, incx, y, incy)
     }
 
     pub fn copy_slice(
@@ -241,16 +213,16 @@ impl GenericTensor {
         let y = dst
             .as_mut_ptr()
             .wrapping_add(dst_row * dst.cols() + dst_col);
-        device.scopy(n, x, incx, y, incy)
+        device.copy(n, x, incx, y, incy)
     }
 
     pub fn gemm(
         transa: bool,
         transb: bool,
-        alpha: f32,
+        alpha: &GenericTensor,
         a: &GenericTensor,
         b: &GenericTensor,
-        beta: f32,
+        beta: &GenericTensor,
         c: &GenericTensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
@@ -278,273 +250,167 @@ impl GenericTensor {
     fn _gemm(
         transa: bool,
         transb: bool,
-        alpha: f32,
+        alpha: &GenericTensor,
         a: &GenericTensor,
         b: &GenericTensor,
-        beta: f32,
+        beta: &GenericTensor,
         c: &GenericTensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
         let device = &a.device;
         if !transa && !transb && !transpose_result {
             if a.cols() != b.rows() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if a.rows() != c.rows() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if b.cols() != c.cols() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             let (m, n, k) = (a.rows(), b.cols(), a.cols());
-            device.sgemm(
-                false,
-                false,
-                n as i32,
-                m as i32,
-                k as i32,
-                alpha,
-                b.as_ptr(),
-                n as i32,
-                a.as_ptr(),
-                k as i32,
-                beta,
-                c.as_mut_ptr(),
-                n as i32,
+            device.gemm(
+                false, false, n as i32, m as i32, k as i32, alpha, b, n as i32, a, k as i32, beta,
+                c, n as i32,
             )
         } else if transa && !transb && !transpose_result {
             if a.rows() != b.rows() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if a.cols() != c.rows() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if b.cols() != c.cols() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
 
             let (m, n, k) = (a.cols(), b.cols(), a.rows());
 
-            device.sgemm(
+            device.gemm(
                 false,
                 true,
                 n as i32,
                 m as i32,
                 k as i32,
                 alpha,
-                b.as_ptr(),
+                b,
                 n as i32,
-                a.as_ptr(),
+                a,
                 a.cols() as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 n as i32,
             )
         } else if !transa && transb && !transpose_result {
             if a.cols() != b.cols() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if a.rows() != c.rows() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if b.rows() != c.cols() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             let (m, n, k) = (a.rows(), b.rows(), a.cols());
 
-            device.sgemm(
+            device.gemm(
                 true,
                 false,
                 n as i32,
                 m as i32,
                 k as i32,
                 alpha,
-                b.as_ptr(),
+                b,
                 b.cols() as i32,
-                a.as_ptr(),
+                a,
                 k as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 n as i32,
             )
         } else if transa && transb && !transpose_result {
             if a.rows() != b.cols() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if a.cols() != c.rows() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if b.rows() != c.cols() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
-            device.sgemm(
+            device.gemm(
                 true,
                 true,
                 n as i32,
                 m as i32,
                 k as i32,
                 alpha,
-                b.as_ptr(),
+                b,
                 b.cols() as i32,
-                a.as_ptr(),
+                a,
                 a.cols() as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 n as i32,
             )
         } else if transa && transb && transpose_result {
             if a.rows() != b.cols() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if a.cols() != c.cols() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if b.rows() != c.rows() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             let (m, n, k) = (a.cols(), b.rows(), a.rows());
 
-            device.sgemm(
+            device.gemm(
                 false,
                 false,
                 m as i32,
                 n as i32,
                 k as i32,
                 alpha,
-                a.as_ptr(),
+                a,
                 a.cols() as i32,
-                b.as_ptr(),
+                b,
                 b.cols() as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 m as i32,
             )
         } else if transa && !transb && transpose_result {
             if a.rows() != b.rows() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if a.cols() != c.cols() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             if b.cols() != c.rows() {
-                return Err(Error::new(
-                    file!(),
-                    line!(),
-                    column!(),
-                    ErrorEnum::IncompatibleTensorShapes,
-                ));
+                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
             }
             let (m, n, k) = (a.cols(), b.cols(), a.rows());
 
-            device.sgemm(
+            device.gemm(
                 false,
                 true,
                 m as i32,
                 n as i32,
                 k as i32,
                 alpha,
-                a.as_ptr(),
+                a,
                 a.cols() as i32,
-                b.as_ptr(),
+                b,
                 b.cols() as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 m as i32,
             )
         } else {
-            Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::UnsupportedOperation,
-            ))
+            Err(error!(ErrorEnum::UnsupportedOperation))
         }
     }
 
@@ -564,17 +430,12 @@ impl GenericTensor {
             println!("Incompatible sizes");
             println!("x {}", x);
             println!("y {}", y);
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            ));
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.saxpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
+        device.axpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
     }
 
     pub fn l2_norm(&self) -> Result<f32, Error> {
@@ -590,25 +451,20 @@ impl GenericTensor {
         }
         let alpha = 1.0 / l2_norm * norm;
         let x = self;
-        GenericTensor::scalar_mul(alpha, x)
+        let alpha = self.device.tensor_f32(1, 8, vec![alpha; 8]);
+        GenericTensor::scalar_mul(&alpha, x)
     }
 
-    pub fn scalar_mul(alpha: f32, x: &GenericTensor) -> Result<(), Error> {
+    pub fn scalar_mul(alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
         let device = x.device.clone();
-        let n = x.len() as i32;
-        let incx = 1;
-        device.sscal(n, alpha, x.as_mut_ptr(), incx)
+        let result = device.scalar_mul(alpha, x);
+        result
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {
         let new_len = new_size.iter().fold(1, |acc, value| acc * value);
         if new_len != self.len() {
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::UnsupportedOperation,
-            ));
+            return Err(error!(ErrorEnum::UnsupportedOperation));
         }
 
         *self.size.deref().borrow_mut() = new_size.to_owned();
@@ -665,12 +521,7 @@ impl TryInto<f32> for &GenericTensor {
                 let self_values = self.get_values()?;
                 Ok(self_values[self.index(0, 0)])
             }
-            _ => Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::UnsupportedOperation,
-            )),
+            _ => Err(error!(ErrorEnum::UnsupportedOperation)),
         }
     }
 }

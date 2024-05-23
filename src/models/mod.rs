@@ -5,7 +5,7 @@ mod mega_man;
 mod mega_man_attention;
 mod perceptron;
 mod simple;
-use crate::{BinaryOperator, OptimizerTrait};
+use crate::{error, BinaryOperator, OptimizerTrait};
 pub use perceptron::*;
 use std::fs;
 
@@ -84,14 +84,8 @@ fn load_examples(
     tokenizer: &mut Tokenizer,
 ) -> Result<Vec<(Tensor, Tensor)>, Error> {
     let mut examples = Vec::new();
-    let mut text = fs::read_to_string(file_path).map_err(|_| {
-        Error::new(
-            file!(),
-            line!(),
-            column!(),
-            ErrorEnum::IncompatibleTensorShapes,
-        )
-    })?;
+    let mut text =
+        fs::read_to_string(file_path).map_err(|_| error!(ErrorEnum::IncompatibleTensorShapes))?;
     if let Some(max_chars) = max_chars {
         text = text[0..max_chars].to_owned();
     }

@@ -52,14 +52,15 @@ impl UnaryOperator for Sigmoid {
 
         let inputs = [input];
         let outputs = [&output];
+        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
         output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].tensor().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].gradient().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(

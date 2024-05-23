@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, gradient_instruction, loss_instruction, BinaryOperator, Error, ErrorEnum,
-    GenericTensor, OpCode, Tensor,
+    devices::Device, error, gradient_instruction, loss_instruction, BinaryOperator, Error,
+    ErrorEnum, GenericTensor, OpCode, Tensor,
 };
 
 #[cfg(test)]
@@ -31,12 +31,7 @@ impl ResidualSumOfSquares {
     /// RSS = Σ (y_i - f(x_i))^2
     fn evaluate(expected: &GenericTensor, actual: &GenericTensor) -> Result<f32, Error> {
         if expected.size() != actual.size() {
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            ));
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         let expected_values = expected.get_values()?;
         let actual_values = actual.get_values()?;
@@ -64,14 +59,15 @@ impl BinaryOperator for ResidualSumOfSquares {
             .tensor(1, 1, vec![0.0], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
+        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
         output.push_instruction(loss_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].tensor().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].gradient().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
@@ -101,9 +97,10 @@ impl BinaryOperator for ResidualSumOfSquares {
                 &[expected, actual],
                 &[output_gradient],
             ));
+            let minus_two = self.device.tensor_f32(1, 1, vec![-2.0]);
             output.push_instruction(gradient_instruction!(
-                OpCode::ScalarMul(-2.0),
-                &[output_gradient],
+                OpCode::ScalarMul,
+                &[&minus_two, output_gradient],
                 &[output_gradient],
             ));
         }

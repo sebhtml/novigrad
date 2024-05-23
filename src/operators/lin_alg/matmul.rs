@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, gradient_instruction, inference_instruction, BinaryOperator, Error, ErrorEnum,
-    GenericTensor, OpCode, Tensor,
+    devices::Device, error, gradient_instruction, inference_instruction, BinaryOperator, Error,
+    ErrorEnum, GenericTensor, OpCode, Tensor,
 };
 
 pub struct MatMul {
@@ -41,12 +41,7 @@ impl BinaryOperator for MatMul {
                 input_1_tensor.size().deref().borrow(),
             );
             debug_assert!(false);
-            return Err(Error::new(
-                file!(),
-                line!(),
-                column!(),
-                ErrorEnum::IncompatibleTensorShapes,
-            ));
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
 
         let rows = input_0_tensor.rows();
@@ -63,19 +58,24 @@ impl BinaryOperator for MatMul {
 
         let inputs = [input_0, input_1];
         let outputs = [&output];
+        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
+        let alpha = self.device.tensor_f32(1, 1, vec![1.0]);
+        let beta = self.device.tensor_f32(1, 1, vec![1.0]);
         output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].tensor().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].gradient().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Gemm(false, transb, false),
             &[
+                &alpha,
+                &beta,
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
             ],
@@ -86,6 +86,8 @@ impl BinaryOperator for MatMul {
             output.push_instruction(gradient_instruction!(
                 OpCode::Gemm(true, false, transb),
                 &[
+                    &alpha,
+                    &beta,
                     &input_0.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
                 ],
@@ -97,6 +99,8 @@ impl BinaryOperator for MatMul {
             output.push_instruction(gradient_instruction!(
                 OpCode::Gemm(false, !transb, false),
                 &[
+                    &alpha,
+                    &beta,
                     &output.gradient().deref().borrow(),
                     &input_1.tensor().deref().borrow(),
                 ],

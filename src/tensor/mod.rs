@@ -25,6 +25,13 @@ impl Error {
     }
 }
 
+#[macro_export]
+macro_rules! error {
+    ( $error:expr ) => {
+        crate::Error::new(file!(), line!(), column!(), $error)
+    };
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ErrorEnum {
     IncompatibleTensorShapes,
@@ -33,4 +40,5 @@ pub enum ErrorEnum {
     InputOutputError,
     NvRtcCompilePtxError(CompileError),
     NvRtcLoadPtxError,
+    NvLaunchError,
 }

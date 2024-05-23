@@ -1,3 +1,8 @@
+- use device pointers for alpha and beta in CudaDevice
+
+------------------------
+
+- rename CudaDevice to CuDevice
 - device interface use <T>
 - make list of things that are using Tensorf32::set_value
 
@@ -7,6 +12,14 @@
 - implement a softmax cuda kernel
 
 - Implement code with f16
+- rename ClipNorm to Normalize and ClipNorm == Normalize + ScalarMul
+- rewrite CrossEntropyLoss using Sum
+- rewrite ResidualSumOfSquares using Sum
+- implement Conv2D with im2col + GEMM
+- add Standardize
+- implement LayerNormalization which is Standardize + ScalarMul + Add
+- use cublasSgemm instead of cublasSgemmEx
+- implement dot-product that returns Result<(), Error>
 
 == GPT-1 Transformer ==
 
@@ -18,7 +31,6 @@
 
 ---------------------
 
-- use macro for errors
 - make sure that all OpCode have >= 2 inputs
 - no values in OpCode, put them instead in OpCodeArguments
 

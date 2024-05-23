@@ -83,7 +83,7 @@ pub trait DeviceInterface {
     /// SCOPY copies a vector, x, to a vector, y.
     fn scopy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
 
-    fn scalar_mul(&self, n: i32, alpha: *const f32, x: *mut f32, incx: i32) -> Result<(), Error>;
+    fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error>;
 
     /// Allocate a slice on the device.
     fn slice(&self, n: i32) -> Result<DevBufferEnum, Error>;
@@ -279,8 +279,8 @@ impl DeviceInterface for Device {
         self.device.saxpy(n, alpha, x, incx, y, incy)
     }
 
-    fn scalar_mul(&self, n: i32, alpha: *const f32, x: *mut f32, incx: i32) -> Result<(), Error> {
-        self.device.scalar_mul(n, alpha, x, incx)
+    fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
+        self.device.scalar_mul(alpha, x)
     }
 
     fn slice(&self, n: i32) -> Result<DevBufferEnum, Error> {

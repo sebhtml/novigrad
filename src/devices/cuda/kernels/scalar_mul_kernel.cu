@@ -1,10 +1,8 @@
-extern "C" __global__ void scalar_mul_kernel(float scalar, float *A, int rows, int cols)
+extern "C" __global__ void scalar_mul_kernel(int n, float *vec, float *scalar)
 {
-    int i = blockIdx.y * blockDim.y + threadIdx.y;
-    int j = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < rows && j < cols)
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n)
     {
-        A[i * cols + j] *= scalar;
+        vec[i] = *scalar * vec[i];
     }
 }

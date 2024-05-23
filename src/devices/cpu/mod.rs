@@ -95,8 +95,13 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
-    fn scalar_mul(&self, n: i32, alpha: *const f32, x: *mut f32, incx: i32) -> Result<(), Error> {
-        unsafe { ffi::cblas_sscal(n, *alpha, x, incx) }
+    fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
+        let n = x.len() as i32;
+        let x = x.as_mut_ptr();
+        let incx = 1;
+        let alpha = alpha.get_values()?;
+        let alpha = alpha[0];
+        unsafe { ffi::cblas_sscal(n, alpha, x, incx) }
         Ok(())
     }
 

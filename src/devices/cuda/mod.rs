@@ -6,7 +6,7 @@ use cudarc::{
     cublas::{
         sys::{
             cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2, cublasSgemmEx,
-            cublasSscal_v2, cudaDataType,
+            cudaDataType,
         },
         CudaBlas,
     },
@@ -179,12 +179,35 @@ impl DeviceInterface for CudaDevice {
             .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
     }
 
-    fn scalar_mul(&self, n: i32, alpha: *const f32, x: *mut f32, incx: i32) -> Result<(), Error> {
-        let handle = *self.cuda_blas.handle();
-        let status = unsafe { cublasSscal_v2(handle, n, alpha, x, incx) };
-        status
-            .result()
-            .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
+    fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
+        let n = x.len();
+        let alpha = &alpha.device_slice().deref().borrow().buffer;
+        let x = &x.device_slice().deref().borrow().buffer;
+        let kernel = self
+            .dev
+            .get_func("scalar_mul_kernel_module", "scalar_mul_kernel")
+            .unwrap();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        match (alpha, x) {
+            (DevBufferEnum::CudaBuffer(alpha), DevBufferEnum::CudaBuffer(x)) => {
+                let result = unsafe { kernel.launch(cfg, (n, x, alpha)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(Error::new(
+                        file!(),
+                        line!(),
+                        column!(),
+                        ErrorEnum::NvLaunchError,
+                    )),
+                }
+            }
+            _ => Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::NvLaunchError,
+            )),
+        }
     }
 
     fn slice(&self, n: i32) -> Result<DevBufferEnum, Error> {

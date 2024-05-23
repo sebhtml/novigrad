@@ -599,16 +599,7 @@ impl GenericTensor {
 
     pub fn scalar_mul(alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
         let device = x.device.clone();
-        let n = x.len() as i32;
-        let incx = 1;
-        // TODO The documentation says that alpha Memory can be on the host or on the device.
-        // But when it's on the device, cublas does a segmentation fault.
-        // See https://docs.nvidia.com/cuda/cublas/#cublas-level-1-function-reference
-        let alpha = alpha.get_values()?;
-        let alpha = alpha[0];
-        let alpha = &alpha;
-        //let alpha = alpha.as_ptr();
-        let result = device.scalar_mul(n, alpha, x.as_mut_ptr(), incx);
+        let result = device.scalar_mul(alpha, x);
         result
     }
 

@@ -64,14 +64,15 @@ impl BinaryOperator for ResidualSumOfSquares {
             .tensor(1, 1, vec![0.0], &[input_1, input_2], true, false);
         let inputs = [input_1, input_2];
         let outputs = [&output];
+        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
         output.push_instruction(loss_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].tensor().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].gradient().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
@@ -101,9 +102,10 @@ impl BinaryOperator for ResidualSumOfSquares {
                 &[expected, actual],
                 &[output_gradient],
             ));
+            let minus_two = self.device.tensor_f32(1, 1, vec![-2.0]);
             output.push_instruction(gradient_instruction!(
-                OpCode::ScalarMul(-2.0),
-                &[output_gradient],
+                OpCode::ScalarMul,
+                &[&minus_two, output_gradient],
                 &[output_gradient],
             ));
         }

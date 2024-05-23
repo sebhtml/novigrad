@@ -19,11 +19,11 @@ impl ScalarMul {
     }
 
     pub fn execute(
-        alpha: f32,
         inputs: &[&GenericTensor],
         outputs: &[&GenericTensor],
     ) -> Result<(), crate::Error> {
-        let input = inputs[0];
+        let alpha = inputs[0];
+        let input = inputs[1];
         let output = outputs[0];
         GenericTensor::copy(input, output)?;
         GenericTensor::scalar_mul(alpha, output)
@@ -41,19 +41,21 @@ impl UnaryOperator for ScalarMul {
             .tensor(rows, cols, vec![0.0; len], &[input], true, false);
         let inputs = [input];
         let outputs = [&output];
+        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
         output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].tensor().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul(0.0),
-            &[&outputs[0].gradient().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&zero, &outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));
+        let alpha = self.device.tensor_f32(1, 1, vec![self.alpha]);
         output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul(self.alpha),
-            &[&inputs[0].tensor().deref().borrow()],
+            OpCode::ScalarMul,
+            &[&alpha, &inputs[0].tensor().deref().borrow()],
             &[&outputs[0].tensor().deref().borrow()],
         ));
         let inputs = [&output];

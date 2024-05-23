@@ -129,10 +129,6 @@ impl GenericTensor {
         self.buffer.deref().borrow_mut().set_values(new_values)
     }
 
-    pub fn zero(&self) -> Result<(), Error> {
-        GenericTensor::scalar_mul(0.0, self)
-    }
-
     // TODO use device for element_wise_mul
     pub fn mul(
         left: &GenericTensor,
@@ -590,14 +586,23 @@ impl GenericTensor {
         }
         let alpha = 1.0 / l2_norm * norm;
         let x = self;
-        GenericTensor::scalar_mul(alpha, x)
+        let alpha = self.device.tensor_f32(1, 8, vec![alpha; 8]);
+        GenericTensor::scalar_mul(&alpha, x)
     }
 
-    pub fn scalar_mul(alpha: f32, x: &GenericTensor) -> Result<(), Error> {
+    pub fn scalar_mul(alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
         let device = x.device.clone();
         let n = x.len() as i32;
         let incx = 1;
-        device.sscal(n, alpha, x.as_mut_ptr(), incx)
+        // TODO The documentation says that alpha Memory can be on the host or on the device.
+        // But when it's on the device, cublas does a segmentation fault.
+        // See https://docs.nvidia.com/cuda/cublas/#cublas-level-1-function-reference
+        let alpha = alpha.get_values()?;
+        let alpha = alpha[0];
+        let alpha = &alpha;
+        //let alpha = alpha.as_ptr();
+        let result = device.sscal(n, alpha, x.as_mut_ptr(), incx);
+        result
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {

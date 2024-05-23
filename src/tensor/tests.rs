@@ -577,7 +577,8 @@ fn scalar_mul() {
 
     let mut result = device.tensor_f32(3, 2, vec![0.0; 6]);
     GenericTensor::copy(&lhs, &mut result).unwrap();
-    GenericTensor::scalar_mul(rhs, &mut result).unwrap();
+    let rhs = device.tensor_f32(1, 1, vec![rhs]);
+    GenericTensor::scalar_mul(&rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 

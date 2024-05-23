@@ -173,9 +173,8 @@ impl DeviceInterface for CudaDevice {
             .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
     }
 
-    fn sscal(&self, n: i32, alpha: f32, x: *mut f32, incx: i32) -> Result<(), Error> {
+    fn sscal(&self, n: i32, alpha: *const f32, x: *mut f32, incx: i32) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
-        let alpha = &alpha as *const f32;
         let status = unsafe { cublasSscal_v2(handle, n, alpha, x, incx) };
         status
             .result()

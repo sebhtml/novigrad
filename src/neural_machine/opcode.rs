@@ -13,7 +13,7 @@ pub enum OpCode {
 
     /// Not ONNX-compliant
     /// TODO remove this op code and use Mul with broadcast
-    ScalarMul(f32),
+    ScalarMul,
 
     /// Not ONNX-compliant
     /// similar op codes:
@@ -73,7 +73,7 @@ impl Into<String> for OpCode {
             OpCode::Add => "Add".into(),
             OpCode::Sub => "Sub".into(),
             OpCode::Mul => "Mul".into(),
-            OpCode::ScalarMul(alpha) => format!("ScalarMul {}", alpha),
+            OpCode::ScalarMul => "ScalarMul".into(),
             OpCode::ClipNorm(clipped_norm) => format!("Clip {}", clipped_norm),
             OpCode::Softmax => "Softmax".into(),
             OpCode::Sigmoid => "Sigmoid".into(),
@@ -99,7 +99,7 @@ impl OpCode {
                 Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)
             }
             OpCode::Add => Add::execute(inputs, outputs),
-            OpCode::ScalarMul(alpha) => ScalarMul::execute(*alpha, inputs, outputs),
+            OpCode::ScalarMul => ScalarMul::execute(inputs, outputs),
             OpCode::ClipNorm(clipped_norm) => ClipNorm::execute(*clipped_norm, inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
             OpCode::Softmax => Softmax::execute(inputs, outputs),

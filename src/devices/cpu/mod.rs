@@ -119,13 +119,11 @@ impl DeviceInterface for CpuDevice {
         Ok(slice)
     }
 
-    fn softmax(
-        &self,
-        rows: i32,
-        cols: i32,
-        input: *const f32,
-        output: *mut f32,
-    ) -> Result<(), Error> {
+    fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let rows = input.rows() as i32;
+        let cols = input.cols() as i32;
+        let input = input.as_ptr();
+        let output = output.as_mut_ptr();
         CpuDevice::_softmax(rows, cols, input, output)
     }
 

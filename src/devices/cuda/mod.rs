@@ -62,6 +62,12 @@ impl CudaDev {
             "./src/devices/cuda/kernels/sigmoid.cu",
         )?;
 
+        device.load_module(
+            "softmax_module",
+            &["softmax"],
+            "./src/devices/cuda/kernels/softmax.cu",
+        )?;
+
         Ok(device)
     }
 
@@ -208,14 +214,24 @@ impl DeviceInterface for CudaDev {
         }
     }
 
-    fn softmax(
-        &self,
-        _rows: i32,
-        _cols: i32,
-        _input: *const f32,
-        _output: *mut f32,
-    ) -> Result<(), Error> {
-        todo!()
+    fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let kernel = self.dev.get_func("softmax_module", "softmax").unwrap();
+        let rows = input.rows();
+        let cols = input.cols();
+        let n = input.len();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        let input = &input.device_slice().deref().borrow().buffer;
+        let output = &output.device_slice().deref().borrow().buffer;
+        match (input, output) {
+            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+                let result = unsafe { kernel.launch(cfg, (input, output, rows, cols)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
     }
 
     fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {

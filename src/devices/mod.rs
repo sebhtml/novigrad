@@ -84,13 +84,7 @@ pub trait DeviceInterface {
     /// Allocate a slice on the device.
     fn slice(&self, n: i32) -> Result<DevSliceEnum, Error>;
 
-    fn softmax(
-        &self,
-        rows: i32,
-        cols: i32,
-        input: *const f32,
-        output: *mut f32,
-    ) -> Result<(), Error>;
+    fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
@@ -285,14 +279,8 @@ impl DeviceInterface for Device {
         self.device.slice(n)
     }
 
-    fn softmax(
-        &self,
-        rows: i32,
-        cols: i32,
-        input: *const f32,
-        output: *mut f32,
-    ) -> Result<(), Error> {
-        self.device.softmax(rows, cols, input, output)
+    fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        self.device.softmax(input, output)
     }
 
     fn sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {

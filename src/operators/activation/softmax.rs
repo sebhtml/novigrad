@@ -1,5 +1,7 @@
 use crate::devices::Device;
-use crate::{gradient_instruction, inference_instruction, OpCode, Tensor, UnaryOperator};
+use crate::{
+    gradient_instruction, inference_instruction, CpuDevice, OpCode, Tensor, UnaryOperator,
+};
 use crate::{Error, TensorWithGrad};
 use std::ops::Deref;
 
@@ -26,10 +28,22 @@ impl Softmax {
     pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
+        /*
         debug_assert_eq!(false, input.is_nan()?,);
-        Tensor::softmax(input, output)?;
+        let device = input.device();
+        device.softmax(input, output)?;
         debug_assert_eq!(false, output.is_nan()?,);
         Ok(())
+        */
+        let input_values = input.get_values()?;
+        let mut output_values = output.get_values()?;
+        CpuDevice::_softmax(
+            input.rows() as i32,
+            input.cols() as i32,
+            input_values.as_ptr(),
+            output_values.as_mut_ptr(),
+        )?;
+        output.set_values(output_values)
     }
 }
 

@@ -601,7 +601,7 @@ impl GenericTensor {
         let alpha = alpha[0];
         let alpha = &alpha;
         //let alpha = alpha.as_ptr();
-        let result = device.sscal(n, alpha, x.as_mut_ptr(), incx);
+        let result = device.scalar_mul(n, alpha, x.as_mut_ptr(), incx);
         result
     }
 

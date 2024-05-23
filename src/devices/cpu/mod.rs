@@ -95,7 +95,7 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
-    fn sscal(&self, n: i32, alpha: *const f32, x: *mut f32, incx: i32) -> Result<(), Error> {
+    fn scalar_mul(&self, n: i32, alpha: *const f32, x: *mut f32, incx: i32) -> Result<(), Error> {
         unsafe { ffi::cblas_sscal(n, *alpha, x, incx) }
         Ok(())
     }

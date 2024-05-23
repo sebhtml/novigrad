@@ -43,13 +43,13 @@ impl CudaDevice {
         device.load_module(
             "sin_kernel_module",
             &["sin_kernel"],
-            "./src/devices/cuda/sin_kernel.cu",
+            "./src/devices/cuda/kernels/sin_kernel.cu",
         )?;
 
         device.load_module(
             "sum_kernel_module",
             &["sum_kernel"],
-            "./src/devices/cuda/sum_kernel.cu",
+            "./src/devices/cuda/kernels/sum_kernel.cu",
         )?;
 
         Ok(device)
@@ -173,7 +173,7 @@ impl DeviceInterface for CudaDevice {
             .map_err(|_| Error::new(file!(), line!(), column!(), ErrorEnum::UnsupportedOperation))
     }
 
-    fn sscal(&self, n: i32, alpha: *const f32, x: *mut f32, incx: i32) -> Result<(), Error> {
+    fn scalar_mul(&self, n: i32, alpha: *const f32, x: *mut f32, incx: i32) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
         let status = unsafe { cublasSscal_v2(handle, n, alpha, x, incx) };
         status

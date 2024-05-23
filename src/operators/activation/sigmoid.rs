@@ -1,9 +1,9 @@
 use crate::devices::Device;
 use crate::{
-    emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, Error, TensorWithGrad,
+    emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, DeviceInterface, Error,
+    TensorWithGrad,
 };
 use crate::{OpCode, Tensor, UnaryOperator};
-use std::f32::consts::E;
 use std::ops::Deref;
 
 #[derive(Clone)]
@@ -21,23 +21,8 @@ impl Sigmoid {
     pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-
-        let rows = input.rows();
-        let cols = input.cols();
-        let values = input.get_values()?;
-        let mut result_values = output.get_values()?;
-        let mut row = 0;
-        while row < rows {
-            let mut col = 0;
-            while col < cols {
-                let x = values[input.index(row, col)];
-                let y = 1.0 / (1.0 + E.powf(-x));
-                result_values[output.index(row, col)] = y;
-                col += 1;
-            }
-            row += 1;
-        }
-        output.set_values(result_values)
+        let device = input.device();
+        device.sigmoid(input, output)
     }
 }
 

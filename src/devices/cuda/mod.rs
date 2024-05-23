@@ -1,13 +1,10 @@
-use std::{ffi::c_void, fs::File, io::Read, ops::Deref, sync::Arc};
+use std::{fs::File, io::Read, ops::Deref, sync::Arc};
 
 mod tests;
 
 use cudarc::{
     cublas::{
-        sys::{
-            cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2, cublasSgemmEx,
-            cudaDataType,
-        },
+        sys::{cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2, cublasSgemm_v2},
         CudaBlas,
     },
     driver::{self, CudaDevice, LaunchAsync, LaunchConfig},
@@ -111,23 +108,20 @@ impl DeviceInterface for CudaDev {
         };
         // TODO cublas does a segmentation fault when alpha and beta are on the GPU.
         // When they are on the host, it's fine though.
+        //let alpha = alpha.as_ptr();
         let alpha = alpha.get_values()?;
         let alpha = alpha[0];
         let alpha = &alpha;
         let beta = beta.get_values()?;
         let beta = beta[0];
         let beta = &beta;
-        let a = a.as_ptr() as *const c_void;
-        let b = b.as_ptr() as *const c_void;
-        let c = c.as_mut_ptr() as *mut c_void;
-        let a_type = cudaDataType::CUDA_R_32F;
-        let b_type = cudaDataType::CUDA_R_32F;
-        let c_type = cudaDataType::CUDA_R_32F;
+        let a = a.as_ptr();
+        let b = b.as_ptr();
+        let c = c.as_mut_ptr();
 
         let status = unsafe {
-            cublasSgemmEx(
-                handle, transa, transb, m, n, k, alpha, a, a_type, lda, b, b_type, ldb, beta, c,
-                c_type, ldc,
+            cublasSgemm_v2(
+                handle, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
             )
         };
         status

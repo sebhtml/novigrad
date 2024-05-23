@@ -91,13 +91,13 @@ impl DeviceInterface for CudaDev {
         m: i32,
         n: i32,
         k: i32,
-        alpha: f32,
-        a: *const f32,
+        alpha: &GenericTensor,
+        a: &GenericTensor,
         lda: i32,
-        b: *const f32,
+        b: &GenericTensor,
         ldb: i32,
-        beta: f32,
-        c: *mut f32,
+        beta: &GenericTensor,
+        c: &GenericTensor,
         ldc: i32,
     ) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
@@ -109,14 +109,20 @@ impl DeviceInterface for CudaDev {
             false => cublasOperation_t::CUBLAS_OP_N,
             true => cublasOperation_t::CUBLAS_OP_T,
         };
-        let a = a as *const c_void;
-        let b = b as *const c_void;
-        let c = c as *mut c_void;
+        // TODO cublas does a segmentation fault when alpha and beta are on the GPU.
+        // When they are on the host, it's fine though.
+        let alpha = alpha.get_values()?;
+        let alpha = alpha[0];
+        let alpha = &alpha;
+        let beta = beta.get_values()?;
+        let beta = beta[0];
+        let beta = &beta;
+        let a = a.as_ptr() as *const c_void;
+        let b = b.as_ptr() as *const c_void;
+        let c = c.as_mut_ptr() as *mut c_void;
         let a_type = cudaDataType::CUDA_R_32F;
         let b_type = cudaDataType::CUDA_R_32F;
         let c_type = cudaDataType::CUDA_R_32F;
-        let alpha = &alpha as *const f32;
-        let beta = &beta as *const f32;
 
         let status = unsafe {
             cublasSgemmEx(

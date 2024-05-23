@@ -35,6 +35,10 @@ impl GenericTensor {
         }
     }
 
+    pub fn device(&self) -> &Device {
+        &self.device
+    }
+
     pub fn name(&self) -> usize {
         self.name
     }
@@ -215,10 +219,10 @@ impl GenericTensor {
     pub fn gemm(
         transa: bool,
         transb: bool,
-        alpha: f32,
+        alpha: &GenericTensor,
         a: &GenericTensor,
         b: &GenericTensor,
-        beta: f32,
+        beta: &GenericTensor,
         c: &GenericTensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
@@ -246,10 +250,10 @@ impl GenericTensor {
     fn _gemm(
         transa: bool,
         transb: bool,
-        alpha: f32,
+        alpha: &GenericTensor,
         a: &GenericTensor,
         b: &GenericTensor,
-        beta: f32,
+        beta: &GenericTensor,
         c: &GenericTensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
@@ -266,19 +270,8 @@ impl GenericTensor {
             }
             let (m, n, k) = (a.rows(), b.cols(), a.cols());
             device.gemm(
-                false,
-                false,
-                n as i32,
-                m as i32,
-                k as i32,
-                alpha,
-                b.as_ptr(),
-                n as i32,
-                a.as_ptr(),
-                k as i32,
-                beta,
-                c.as_mut_ptr(),
-                n as i32,
+                false, false, n as i32, m as i32, k as i32, alpha, b, n as i32, a, k as i32, beta,
+                c, n as i32,
             )
         } else if transa && !transb && !transpose_result {
             if a.rows() != b.rows() {
@@ -300,12 +293,12 @@ impl GenericTensor {
                 m as i32,
                 k as i32,
                 alpha,
-                b.as_ptr(),
+                b,
                 n as i32,
-                a.as_ptr(),
+                a,
                 a.cols() as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 n as i32,
             )
         } else if !transa && transb && !transpose_result {
@@ -327,12 +320,12 @@ impl GenericTensor {
                 m as i32,
                 k as i32,
                 alpha,
-                b.as_ptr(),
+                b,
                 b.cols() as i32,
-                a.as_ptr(),
+                a,
                 k as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 n as i32,
             )
         } else if transa && transb && !transpose_result {
@@ -354,12 +347,12 @@ impl GenericTensor {
                 m as i32,
                 k as i32,
                 alpha,
-                b.as_ptr(),
+                b,
                 b.cols() as i32,
-                a.as_ptr(),
+                a,
                 a.cols() as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 n as i32,
             )
         } else if transa && transb && transpose_result {
@@ -381,12 +374,12 @@ impl GenericTensor {
                 n as i32,
                 k as i32,
                 alpha,
-                a.as_ptr(),
+                a,
                 a.cols() as i32,
-                b.as_ptr(),
+                b,
                 b.cols() as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 m as i32,
             )
         } else if transa && !transb && transpose_result {
@@ -408,12 +401,12 @@ impl GenericTensor {
                 n as i32,
                 k as i32,
                 alpha,
-                a.as_ptr(),
+                a,
                 a.cols() as i32,
-                b.as_ptr(),
+                b,
                 b.cols() as i32,
                 beta,
-                c.as_mut_ptr(),
+                c,
                 m as i32,
             )
         } else {

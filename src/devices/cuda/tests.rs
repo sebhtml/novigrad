@@ -39,22 +39,10 @@ fn cublas_sgemm_column_major() {
         ],
     );
 
+    let alpha = device.tensor_f32(1, 1, vec![1.0]);
+    let beta = device.tensor_f32(1, 1, vec![1.0]);
     device
-        .gemm(
-            false,
-            false,
-            m,
-            n,
-            k,
-            1.0,
-            a.as_ptr(),
-            m,
-            b.as_ptr(),
-            k,
-            1.0,
-            c.as_mut_ptr(),
-            m,
-        )
+        .gemm(false, false, m, n, k, &alpha, &a, m, &b, k, &beta, &c, m)
         .unwrap();
 
     let values = c.get_values().unwrap();

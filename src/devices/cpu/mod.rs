@@ -26,13 +26,13 @@ impl DeviceInterface for CpuDevice {
         m: i32,
         n: i32,
         k: i32,
-        alpha: f32,
-        a: *const f32,
+        alpha: &GenericTensor,
+        a: &GenericTensor,
         lda: i32,
-        b: *const f32,
+        b: &GenericTensor,
         ldb: i32,
-        beta: f32,
-        c: *mut f32,
+        beta: &GenericTensor,
+        c: &GenericTensor,
         ldc: i32,
     ) -> Result<(), Error> {
         let layout = Layout::ColumnMajor;
@@ -44,6 +44,13 @@ impl DeviceInterface for CpuDevice {
             false => Transpose::None,
             true => Transpose::Ordinary,
         };
+        let alpha = alpha.get_values()?;
+        let alpha = alpha[0];
+        let beta = beta.get_values()?;
+        let beta = beta[0];
+        let a = a.as_ptr();
+        let b = b.as_ptr();
+        let c = c.as_mut_ptr();
         unsafe {
             ffi::cblas_sgemm(
                 layout.into(),

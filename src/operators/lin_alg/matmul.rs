@@ -59,6 +59,8 @@ impl BinaryOperator for MatMul {
         let inputs = [input_0, input_1];
         let outputs = [&output];
         let zero = self.device.tensor_f32(1, 1, vec![0.0]);
+        let alpha = self.device.tensor_f32(1, 1, vec![1.0]);
+        let beta = self.device.tensor_f32(1, 1, vec![1.0]);
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -72,6 +74,8 @@ impl BinaryOperator for MatMul {
         output.push_instruction(inference_instruction!(
             OpCode::Gemm(false, transb, false),
             &[
+                &alpha,
+                &beta,
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
             ],
@@ -82,6 +86,8 @@ impl BinaryOperator for MatMul {
             output.push_instruction(gradient_instruction!(
                 OpCode::Gemm(true, false, transb),
                 &[
+                    &alpha,
+                    &beta,
                     &input_0.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
                 ],
@@ -93,6 +99,8 @@ impl BinaryOperator for MatMul {
             output.push_instruction(gradient_instruction!(
                 OpCode::Gemm(false, !transb, false),
                 &[
+                    &alpha,
+                    &beta,
                     &output.gradient().deref().borrow(),
                     &input_1.tensor().deref().borrow(),
                 ],

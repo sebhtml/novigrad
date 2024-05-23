@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{Device, GenericTensor, ScaledDotProductAttention, TernaryOperator};
+use crate::{Device, ScaledDotProductAttention, Tensor, TernaryOperator};
 
 #[test]
 fn forward() {
@@ -8,7 +8,9 @@ fn forward() {
     let rows = 16;
     let cols = 384;
     let mask = true;
-    let input = device.tensor(rows, cols, vec![1.0; rows * cols], &[], false, false);
+    let input = device
+        .tensor_with_grad(rows, cols, vec![1.0; rows * cols], &[], false, false)
+        .unwrap();
     let dropout_probability = 0.1;
     let attention =
         ScaledDotProductAttention::try_new(&device, rows, cols, mask, dropout_probability).unwrap();
@@ -16,7 +18,7 @@ fn forward() {
     let output = attention.forward(&input, &input, &input).unwrap();
     output.forward().unwrap();
 
-    let actual: &GenericTensor = &output.tensor().deref().borrow();
+    let actual: &Tensor = &output.tensor().deref().borrow();
 
     let actual_values = actual.get_values().unwrap();
     for actual_value in actual_values {

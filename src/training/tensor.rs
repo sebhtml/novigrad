@@ -1,19 +1,19 @@
-use crate::{Category, Error, GenericTensor, Instruction};
+use crate::{Category, Error, Instruction, Tensor};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
 
 #[derive(Clone, Debug)]
-pub struct Tensor {
-    inputs: Rc<Vec<Tensor>>,
+pub struct TensorWithGrad {
+    inputs: Rc<Vec<TensorWithGrad>>,
     instructions: Rc<RefCell<Vec<Instruction>>>,
-    tensor: Rc<RefCell<GenericTensor>>,
-    gradient: Rc<RefCell<GenericTensor>>,
+    tensor: Rc<RefCell<Tensor>>,
+    gradient: Rc<RefCell<Tensor>>,
 }
 
-impl Tensor {
-    pub fn new(tensor: GenericTensor, gradient: GenericTensor, inputs: &[&Tensor]) -> Self {
-        let inputs: Vec<Tensor> = inputs.iter().map(|x| (*x).to_owned()).collect();
+impl TensorWithGrad {
+    pub fn new(tensor: Tensor, gradient: Tensor, inputs: &[&TensorWithGrad]) -> Self {
+        let inputs: Vec<TensorWithGrad> = inputs.iter().map(|x| (*x).to_owned()).collect();
         Self {
             inputs: Rc::new(inputs),
             instructions: Default::default(),
@@ -44,15 +44,15 @@ impl Tensor {
             .collect()
     }
 
-    pub fn tensor(&self) -> &Rc<RefCell<GenericTensor>> {
+    pub fn tensor(&self) -> &Rc<RefCell<Tensor>> {
         &self.tensor
     }
 
-    pub fn gradient(&self) -> &Rc<RefCell<GenericTensor>> {
+    pub fn gradient(&self) -> &Rc<RefCell<Tensor>> {
         &self.gradient
     }
 
-    pub fn get_tape(&self) -> Vec<Tensor> {
+    pub fn get_tape(&self) -> Vec<TensorWithGrad> {
         let mut tape = vec![];
         let mut stack = LinkedList::new();
         stack.push_back(self.clone());
@@ -88,17 +88,17 @@ impl Tensor {
     }
 }
 
-impl PartialEq for Tensor {
+impl PartialEq for TensorWithGrad {
     fn eq(&self, other: &Self) -> bool {
-        let t1: &GenericTensor = &self.tensor().deref().borrow();
-        let t2: &GenericTensor = &other.tensor().deref().borrow();
+        let t1: &Tensor = &self.tensor().deref().borrow();
+        let t2: &Tensor = &other.tensor().deref().borrow();
         t1 == t2
     }
 }
 
-impl Display for Tensor {
+impl Display for TensorWithGrad {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let tensor: &GenericTensor = &self.tensor().deref().borrow();
+        let tensor: &Tensor = &self.tensor().deref().borrow();
         std::fmt::Display::fmt(&tensor, f)
     }
 }

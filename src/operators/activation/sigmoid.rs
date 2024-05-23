@@ -1,6 +1,8 @@
 use crate::devices::Device;
-use crate::{emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, Error, Tensor};
-use crate::{GenericTensor, OpCode, UnaryOperator};
+use crate::{
+    emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, Error, TensorWithGrad,
+};
+use crate::{OpCode, Tensor, UnaryOperator};
 use std::f32::consts::E;
 use std::ops::Deref;
 
@@ -16,7 +18,7 @@ impl Sigmoid {
         }
     }
 
-    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
 
@@ -35,24 +37,23 @@ impl Sigmoid {
             }
             row += 1;
         }
-        output.set_values(result_values);
-        Ok(())
+        output.set_values(result_values)
     }
 }
 
 impl UnaryOperator for Sigmoid {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
-        let input_t: &GenericTensor = &input.tensor().deref().borrow();
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
+        let input_t: &Tensor = &input.tensor().deref().borrow();
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output = self
-            .device
-            .tensor(rows, cols, vec![0.0; len], &[input], true, false);
+        let output =
+            self.device
+                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false)?;
 
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor_f32(1, 1, vec![0.0]);
+        let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor().deref().borrow()],
@@ -69,7 +70,7 @@ impl UnaryOperator for Sigmoid {
             &[&outputs[0].tensor().deref().borrow()],
         ));
 
-        emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output);
+        emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output)?;
 
         Ok(output)
     }

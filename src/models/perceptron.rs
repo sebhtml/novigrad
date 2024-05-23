@@ -1,5 +1,5 @@
 use crate::{
-    Device, Error, GradientDescent, ModelDetails, ResidualSumOfSquares, Tensor, UnaryModel,
+    Device, Error, GradientDescent, ModelDetails, ResidualSumOfSquares, TensorWithGrad, UnaryModel,
     UnaryOperator,
 };
 use crate::{Linear, Model};
@@ -11,14 +11,15 @@ struct PerceptronModel {
 impl UnaryModel for PerceptronModel {}
 
 impl PerceptronModel {
-    pub fn new(device: &Device) -> Self {
-        let linear = Linear::new(device, 1, 2, false, 1);
-        Self { linear }
+    pub fn new(device: &Device) -> Result<Self, Error> {
+        let linear = Linear::new(device, 1, 2, false, 1)?;
+        let model = Self { linear };
+        Ok(model)
     }
 }
 
 impl UnaryOperator for PerceptronModel {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         self.linear.forward(input)
     }
 }
@@ -32,7 +33,7 @@ impl Model for PerceptronModel {
     }
 }
 
-fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
+fn load_examples(device: &Device) -> Result<Vec<(TensorWithGrad, TensorWithGrad)>, Error> {
     let examples = vec![
         (vec![2.0, 3.0], vec![5.0]),
         (vec![2.0, 2.0], vec![4.0]),
@@ -40,18 +41,24 @@ fn load_examples(device: &Device) -> Result<Vec<(Tensor, Tensor)>, Error> {
     ];
     let examples = examples
         .into_iter()
-        .map(|(x, y)| {
-            (
-                device.tensor(1, x.len(), x, &[], false, false),
-                device.tensor(1, y.len(), y, &[], false, false),
-            )
+        .filter_map(|(x, y)| {
+            let x = device
+                .tensor_with_grad(1, x.len(), x, &[], false, false)
+                .ok();
+            let y = device
+                .tensor_with_grad(1, y.len(), y, &[], false, false)
+                .ok();
+            match (x, y) {
+                (Some(x), Some(y)) => Some((x, y)),
+                _ => None,
+            }
         })
         .collect();
     Ok(examples)
 }
 
 pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
-    let model = PerceptronModel::new(device);
+    let model = PerceptronModel::new(device)?;
     let examples = load_examples(&device)?;
     let loss_operator = ResidualSumOfSquares::new(device);
     let learning_rate = 0.5;

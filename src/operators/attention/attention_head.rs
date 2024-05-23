@@ -1,5 +1,6 @@
 use crate::{
-    Device, Error, Linear, ScaledDotProductAttention, Tensor, TernaryOperator, UnaryOperator,
+    Device, Error, Linear, ScaledDotProductAttention, TensorWithGrad, TernaryOperator,
+    UnaryOperator,
 };
 
 pub struct AttentionHead {
@@ -18,9 +19,9 @@ impl AttentionHead {
         mask: bool,
         dropout_probability: f32,
     ) -> Result<Self, Error> {
-        let q = Linear::new(device, head_cols, cols, true, rows);
-        let k = Linear::new(device, head_cols, cols, true, rows);
-        let v = Linear::new(device, head_cols, cols, true, rows);
+        let q = Linear::new(device, head_cols, cols, true, rows)?;
+        let k = Linear::new(device, head_cols, cols, true, rows)?;
+        let v = Linear::new(device, head_cols, cols, true, rows)?;
         let attention =
             ScaledDotProductAttention::try_new(device, rows, cols, mask, dropout_probability)
                 .unwrap();
@@ -31,7 +32,12 @@ impl AttentionHead {
 }
 
 impl TernaryOperator for AttentionHead {
-    fn forward(&self, q: &Tensor, k: &Tensor, v: &Tensor) -> Result<Tensor, Error> {
+    fn forward(
+        &self,
+        q: &TensorWithGrad,
+        k: &TensorWithGrad,
+        v: &TensorWithGrad,
+    ) -> Result<TensorWithGrad, Error> {
         let q = self.q.forward(q)?;
         let k = self.k.forward(k)?;
         let v = self.v.forward(v)?;

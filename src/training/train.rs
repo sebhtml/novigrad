@@ -3,7 +3,7 @@ use rand::thread_rng;
 use std::{ops::Deref, time::SystemTime};
 
 use crate::{
-    Device, Error, GenericTensor, ModelDetails, NeuralMachine, Tensor, Tokenizer, TokenizerTrait,
+    Device, Error, ModelDetails, NeuralMachine, Tensor, TensorWithGrad, Tokenizer, TokenizerTrait,
 };
 
 trait IsPrintable {
@@ -52,9 +52,9 @@ pub fn print_expected_output_and_actual_output(
     epoch: usize,
     tokenizer: &mut Option<Tokenizer>,
     example: usize,
-    input: &GenericTensor,
-    expected_output: &GenericTensor,
-    actual_output: &GenericTensor,
+    input: &Tensor,
+    expected_output: &Tensor,
+    actual_output: &Tensor,
     expected_output_token: usize,
     actual_output_token: usize,
     loss: f32,
@@ -107,8 +107,8 @@ fn print_device_mem_info(device: &Device) -> Result<(), Error> {
 fn print_total_loss<T>(
     device: &Device,
     program: &NeuralMachine<T>,
-    inputs: &Vec<Tensor>,
-    outputs: &Vec<Tensor>,
+    inputs: &Vec<TensorWithGrad>,
+    outputs: &Vec<TensorWithGrad>,
     last_total_loss: f32,
     epoch: usize,
 ) -> Result<f32, Error> {
@@ -202,8 +202,8 @@ fn print_results<T>(
     epoch: usize,
     program: &NeuralMachine<T>,
     tokenizer: &mut Option<Tokenizer>,
-    inputs: &[Tensor],
-    outputs: &[Tensor],
+    inputs: &[TensorWithGrad],
+    outputs: &[TensorWithGrad],
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();
@@ -214,15 +214,15 @@ fn print_results<T>(
         let expected_output = &outputs[i];
         let actual_output = program.infer(input)?;
         let loss = program.loss(expected_output)?;
-        let loss: &GenericTensor = &loss.tensor().deref().borrow();
+        let loss: &Tensor = &loss.tensor().deref().borrow();
         let loss: f32 = loss.try_into()?;
 
-        let expected_output: &GenericTensor = &outputs[i].tensor().deref().borrow();
+        let expected_output: &Tensor = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
         let expected_argmax = expected_output_argmaxes[last_row].to_owned();
         expected_argmax_values.push(expected_argmax);
 
-        let actual_output: &GenericTensor = &actual_output.tensor().deref().borrow();
+        let actual_output: &Tensor = &actual_output.tensor().deref().borrow();
         let actual_output_argmaxes = get_row_argmaxes(actual_output)?;
         let actual_argmax = actual_output_argmaxes[last_row].to_owned();
         actual_argmax_values.push(actual_argmax);
@@ -243,7 +243,7 @@ fn print_results<T>(
     Ok((expected_argmax_values, actual_argmax_values))
 }
 
-pub fn get_row_argmaxes(tensor: &GenericTensor) -> Result<Vec<usize>, Error> {
+pub fn get_row_argmaxes(tensor: &Tensor) -> Result<Vec<usize>, Error> {
     let values = tensor.get_values()?;
     let cols = tensor.cols();
     let mut argmaxes = vec![];
@@ -264,8 +264,8 @@ pub fn get_row_argmaxes(tensor: &GenericTensor) -> Result<Vec<usize>, Error> {
 pub fn train<T>(
     program: &NeuralMachine<T>,
     shuffle_examples: bool,
-    inputs: &Vec<Tensor>,
-    outputs: &Vec<Tensor>,
+    inputs: &Vec<TensorWithGrad>,
+    outputs: &Vec<TensorWithGrad>,
 ) -> Result<(), Error> {
     let mut indices: Vec<usize> = (0..inputs.len()).collect();
     if shuffle_examples {
@@ -279,15 +279,15 @@ pub fn train<T>(
 
 pub fn total_loss<T>(
     program: &NeuralMachine<T>,
-    inputs: &[Tensor],
-    outputs: &[Tensor],
+    inputs: &[TensorWithGrad],
+    outputs: &[TensorWithGrad],
 ) -> Result<f32, Error> {
     let mut total_error = 0.0;
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
         let _ = program.infer(&inputs[i])?;
         let example_loss = program.loss(expected_output)?;
-        let example_loss: &GenericTensor = &example_loss.tensor().deref().borrow();
+        let example_loss: &Tensor = &example_loss.tensor().deref().borrow();
         let example_loss: f32 = example_loss.try_into()?;
         total_error += example_loss;
     }
@@ -297,8 +297,8 @@ pub fn total_loss<T>(
 
 fn train_with_one_example<T>(
     program: &NeuralMachine<T>,
-    input: &Tensor,
-    output: &Tensor,
+    input: &TensorWithGrad,
+    output: &TensorWithGrad,
 ) -> Result<(), Error> {
     let _output = program.infer(input)?;
     let _loss = program.loss(output)?;

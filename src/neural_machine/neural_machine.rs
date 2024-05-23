@@ -2,16 +2,16 @@ use more_asserts::debug_assert_lt;
 use std::{marker::PhantomData, ops::Deref};
 
 use crate::{
-    gradient_instruction, BinaryOperator, Category, Device, Error, GenericTensor, Instruction,
-    OpCode, OptimizerTrait, Tensor, UnaryModel,
+    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, OpCode,
+    OptimizerTrait, Tensor, TensorWithGrad, UnaryModel,
 };
 
 pub struct NeuralMachine<T> {
     device: Device,
-    example_input: Tensor,
-    example_output: Tensor,
-    program_output: Tensor,
-    loss: Tensor,
+    example_input: TensorWithGrad,
+    example_output: TensorWithGrad,
+    program_output: TensorWithGrad,
+    loss: TensorWithGrad,
     instructions: Vec<Instruction>,
     phantom_data: PhantomData<T>,
 }
@@ -27,25 +27,25 @@ impl<T> NeuralMachine<T> {
         // input
         let input_shape = model.input_size();
         let input_len = input_shape[0] * input_shape[1];
-        let example_input = device.tensor(
+        let example_input = device.tensor_with_grad(
             input_shape[0],
             input_shape[1],
             vec![0.7; input_len],
             &[],
             false,
             false,
-        );
+        )?;
         // output
         let output_shape = model.output_size();
         let output_len = output_shape[0] * output_shape[1];
-        let example_output = device.tensor(
+        let example_output = device.tensor_with_grad(
             output_shape[0],
             output_shape[1],
             vec![0.7; output_len],
             &[],
             false,
             false,
-        );
+        )?;
 
         let program_output = model.forward(&example_input)?;
         let loss =
@@ -61,9 +61,9 @@ impl<T> NeuralMachine<T> {
 
         for tensor in tape.iter().rev() {
             for instruction in tensor.gradient_instructions().into_iter() {
-                let outputs: Vec<GenericTensor> =
+                let outputs: Vec<Tensor> =
                     instruction.outputs().deref().clone().into_iter().collect();
-                let outputs: Vec<&GenericTensor> = outputs.iter().collect();
+                let outputs: Vec<&Tensor> = outputs.iter().collect();
 
                 instructions.push(instruction);
 
@@ -96,13 +96,13 @@ impl<T> NeuralMachine<T> {
         Ok(program)
     }
 
-    pub fn loss(&self, expected_output: &Tensor) -> Result<Tensor, Error> {
+    pub fn loss(&self, expected_output: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         // Copy expected output
         {
-            let example_output: &mut GenericTensor =
+            let example_output: &mut Tensor =
                 &mut self.example_output.tensor().deref().borrow_mut();
-            let expected_output: &GenericTensor = &expected_output.tensor().deref().borrow_mut();
-            GenericTensor::copy(expected_output, example_output)?;
+            let expected_output: &Tensor = &expected_output.tensor().deref().borrow_mut();
+            Tensor::copy(expected_output, example_output)?;
         }
 
         self.forward(Category::Loss)?;
@@ -203,13 +203,12 @@ impl<T> NeuralMachine<T> {
         Ok(())
     }
 
-    pub fn infer(&self, input: &Tensor) -> Result<Tensor, Error> {
+    pub fn infer(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         // Copy input
         {
-            let example_input: &mut GenericTensor =
-                &mut self.example_input.tensor().deref().borrow_mut();
-            let input: &GenericTensor = &input.tensor().deref().borrow_mut();
-            GenericTensor::copy(input, example_input)?;
+            let example_input: &mut Tensor = &mut self.example_input.tensor().deref().borrow_mut();
+            let input: &Tensor = &input.tensor().deref().borrow_mut();
+            Tensor::copy(input, example_input)?;
         }
 
         self.forward(Category::Inference)?;

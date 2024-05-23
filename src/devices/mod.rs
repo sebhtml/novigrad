@@ -14,7 +14,7 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{GenericTensor, Tensor};
+use crate::{Tensor, TensorWithGrad};
 mod buffer;
 pub use buffer::*;
 use core::fmt::Debug;
@@ -48,13 +48,13 @@ pub trait DeviceInterface {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &GenericTensor,
-        a: &GenericTensor,
+        alpha: &Tensor,
+        a: &Tensor,
         lda: i32,
-        b: &GenericTensor,
+        b: &Tensor,
         ldb: i32,
-        beta: &GenericTensor,
-        c: &GenericTensor,
+        beta: &Tensor,
+        c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error>;
 
@@ -77,14 +77,9 @@ pub trait DeviceInterface {
     /// SCOPY copies a vector, x, to a vector, y.
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
 
-    fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error>;
+    fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error>;
 
-    fn mul(
-        &self,
-        left: &GenericTensor,
-        right: &GenericTensor,
-        result: &GenericTensor,
-    ) -> Result<(), Error>;
+    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error>;
 
     /// Allocate a slice on the device.
     fn slice(&self, n: i32) -> Result<DevSliceEnum, Error>;
@@ -97,7 +92,7 @@ pub trait DeviceInterface {
         output: *mut f32,
     ) -> Result<(), Error>;
 
-    fn sum(&self, x: &GenericTensor, y: &GenericTensor) -> Result<(), Error>;
+    fn sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error>;
 }
 
 impl Debug for dyn DeviceInterface {
@@ -110,7 +105,7 @@ impl Debug for dyn DeviceInterface {
 pub struct Device {
     next_name: Rc<RefCell<usize>>,
     used: Rc<RefCell<usize>>,
-    tensors_to_optimize: Rc<RefCell<Vec<Tensor>>>,
+    tensors_to_optimize: Rc<RefCell<Vec<TensorWithGrad>>>,
     device: Rc<dyn DeviceInterface>,
     available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevSlice>>>>,
 }
@@ -162,36 +157,36 @@ impl Device {
         }
     }
 
-    pub fn tensor_f32(&self, rows: usize, cols: usize, values: Vec<f32>) -> GenericTensor {
+    pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Result<Tensor, Error> {
         let name = *self.next_name.deref().borrow();
         *self.next_name.deref().borrow_mut() += 1;
-        GenericTensor::new(name, rows, cols, values, self)
+        Tensor::new(name, rows, cols, values, self)
     }
 
-    pub fn tensor(
+    pub fn tensor_with_grad(
         &self,
         rows: usize,
         cols: usize,
         values: Vec<f32>,
-        inputs: &[&Tensor],
+        inputs: &[&TensorWithGrad],
         requires_grad: bool,
         optimize: bool,
-    ) -> Tensor {
+    ) -> Result<TensorWithGrad, Error> {
         let len = rows * cols;
-        let tensor = Self::tensor_f32(&self, rows, cols, values);
+        let tensor = Self::tensor(&self, rows, cols, values)?;
         let gradient = if requires_grad {
-            Self::tensor_f32(&self, rows, cols, vec![0.0; len])
+            Self::tensor(&self, rows, cols, vec![0.0; len])?
         } else {
-            Self::tensor_f32(&self, 0, 0, vec![])
+            Self::tensor(&self, 0, 0, vec![])?
         };
-        let tensor = Tensor::new(tensor, gradient, inputs);
+        let tensor = TensorWithGrad::new(tensor, gradient, inputs);
         if optimize {
             self.tensors_to_optimize
                 .deref()
                 .borrow_mut()
                 .push(tensor.clone())
         }
-        tensor
+        Ok(tensor)
     }
 
     pub fn tensor_count(&self) -> usize {
@@ -206,7 +201,7 @@ impl Device {
         count
     }
 
-    pub fn tensors_to_optimize(&self) -> &Rc<RefCell<Vec<Tensor>>> {
+    pub fn tensors_to_optimize(&self) -> &Rc<RefCell<Vec<TensorWithGrad>>> {
         &self.tensors_to_optimize
     }
 
@@ -240,13 +235,13 @@ impl DeviceInterface for Device {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &GenericTensor,
-        a: &GenericTensor,
+        alpha: &Tensor,
+        a: &Tensor,
         lda: i32,
-        b: &GenericTensor,
+        b: &Tensor,
         ldb: i32,
-        beta: &GenericTensor,
-        c: &GenericTensor,
+        beta: &Tensor,
+        c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error> {
         self.device
@@ -280,7 +275,7 @@ impl DeviceInterface for Device {
         self.device.axpy(n, alpha, x, incx, y, incy)
     }
 
-    fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
+    fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         self.device.scalar_mul(alpha, x)
     }
 
@@ -298,16 +293,11 @@ impl DeviceInterface for Device {
         self.device.softmax(rows, cols, input, output)
     }
 
-    fn sum(&self, x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
+    fn sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
         self.device.sum(x, y)
     }
 
-    fn mul(
-        &self,
-        left: &GenericTensor,
-        right: &GenericTensor,
-        result: &GenericTensor,
-    ) -> Result<(), Error> {
+    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
         self.device.mul(left, right, result)
     }
 }

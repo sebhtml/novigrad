@@ -9,7 +9,7 @@ use crate::{error, BinaryOperator, OptimizerTrait};
 pub use perceptron::*;
 use std::fs;
 
-use crate::{Device, Error, ErrorEnum, Tensor, Tokenizer, TokenizerTrait};
+use crate::{Device, Error, ErrorEnum, TensorWithGrad, Tokenizer, TokenizerTrait};
 
 use self::{
     mega_man::load_mega_man_model, mega_man_attention::load_mega_man_attention_model,
@@ -26,7 +26,7 @@ pub enum ModelEnum {
 pub struct ModelDetails {
     pub device: Device,
     pub tokenizer: Option<Tokenizer>,
-    pub examples: Vec<(Tensor, Tensor)>,
+    pub examples: Vec<(TensorWithGrad, TensorWithGrad)>,
     pub model: Box<dyn UnaryModel>,
     pub loss_operator: Box<dyn BinaryOperator>,
     pub optimizer: Box<dyn OptimizerTrait>,
@@ -52,26 +52,26 @@ pub fn into_one_hot_encoded_rows(
     device: &Device,
     input_tokens: &[usize],
     num_classes: usize,
-) -> Result<Tensor, Error> {
+) -> Result<TensorWithGrad, Error> {
     debug_assert_lt!(*input_tokens.iter().max().unwrap(), num_classes);
     let len = input_tokens.len() * num_classes;
-    let result = device.tensor_f32(
+    let result = device.tensor(
         input_tokens.len(),
         num_classes,
         vec![Default::default(); len],
-    );
+    )?;
     let mut result_values = result.get_values()?;
     for (index, token) in input_tokens.iter().enumerate() {
         result_values[result.index(index, *token)] = 1.0;
     }
-    Ok(device.tensor(
+    device.tensor_with_grad(
         input_tokens.len(),
         num_classes,
         result_values,
         &[],
         false,
         false,
-    ))
+    )
 }
 
 fn load_examples(
@@ -82,7 +82,7 @@ fn load_examples(
     input_sequence_length: usize,
     output_sequence_length: usize,
     tokenizer: &mut Tokenizer,
-) -> Result<Vec<(Tensor, Tensor)>, Error> {
+) -> Result<Vec<(TensorWithGrad, TensorWithGrad)>, Error> {
     let mut examples = Vec::new();
     let mut text =
         fs::read_to_string(file_path).map_err(|_| error!(ErrorEnum::IncompatibleTensorShapes))?;

@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    optimization_instruction, Device, Error, GenericTensor, Instruction, OpCode, OptimizerTrait,
-    Tensor,
+    optimization_instruction, Device, Error, Instruction, OpCode, OptimizerTrait, Tensor,
+    TensorWithGrad,
 };
 
 pub struct GradientDescent {
@@ -16,16 +16,20 @@ impl GradientDescent {
 }
 
 impl OptimizerTrait for GradientDescent {
-    fn optimize(&self, device: &Device, tensors: &[Tensor]) -> Result<Vec<Instruction>, Error> {
+    fn optimize(
+        &self,
+        device: &Device,
+        tensors: &[TensorWithGrad],
+    ) -> Result<Vec<Instruction>, Error> {
         let mut instructions = vec![];
         for optimizable_tensor in tensors {
-            let tensor: &GenericTensor = &optimizable_tensor.tensor().deref().borrow();
-            let gradient: &GenericTensor = &optimizable_tensor.gradient().deref().borrow();
+            let tensor: &Tensor = &optimizable_tensor.tensor().deref().borrow();
+            let gradient: &Tensor = &optimizable_tensor.gradient().deref().borrow();
             debug_assert_eq!(gradient.size(), tensor.size(),);
 
             let scaled_gradient =
-                device.tensor_f32(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()]);
-            let zero = device.tensor_f32(1, 1, vec![0.0]);
+                device.tensor(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()])?;
+            let zero = device.tensor(1, 1, vec![0.0])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&zero, &scaled_gradient],
@@ -38,7 +42,7 @@ impl OptimizerTrait for GradientDescent {
                 &[&scaled_gradient],
             ));
 
-            let alpha = device.tensor_f32(1, 1, vec![-self.learning_rate]);
+            let alpha = device.tensor(1, 1, vec![-self.learning_rate])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&alpha, &scaled_gradient],

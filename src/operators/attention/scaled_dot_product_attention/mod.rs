@@ -1,5 +1,5 @@
 use crate::{
-    BinaryOperator, Device, Dropout, Error, Mask, MatMul, ScalarMul, Softmax, Tensor,
+    BinaryOperator, Device, Dropout, Error, Mask, MatMul, ScalarMul, Softmax, TensorWithGrad,
     TernaryOperator, UnaryOperator,
 };
 
@@ -56,7 +56,12 @@ impl ScaledDotProductAttention {
 }
 
 impl TernaryOperator for ScaledDotProductAttention {
-    fn forward(&self, q: &Tensor, k: &Tensor, v: &Tensor) -> Result<Tensor, Error> {
+    fn forward(
+        &self,
+        q: &TensorWithGrad,
+        k: &TensorWithGrad,
+        v: &TensorWithGrad,
+    ) -> Result<TensorWithGrad, Error> {
         let weights = self.qk_matmul.forward(q, k)?;
         let scaled_weights = self.scale.forward(&weights)?;
         let masked_weights = match &self.mask {

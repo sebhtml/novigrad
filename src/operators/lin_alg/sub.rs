@@ -1,13 +1,13 @@
-use crate::{Error, GenericTensor};
+use crate::{Error, Tensor};
 
 pub struct Sub {}
 
 impl Sub {
-    pub fn execute(inputs: &[&GenericTensor], outputs: &[&GenericTensor]) -> Result<(), Error> {
+    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];
-        GenericTensor::copy(input_0, output)?;
-        GenericTensor::sub(input_1, output)
+        Tensor::copy(input_0, output)?;
+        Tensor::sub(input_1, output)
     }
 }

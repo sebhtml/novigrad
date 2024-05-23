@@ -8,7 +8,6 @@
 
 == Cuda ==
 
-- implement a mul cuda kernel
 - implement a softmax cuda kernel
 
 - Implement code with f16
@@ -18,7 +17,6 @@
 - implement Conv2D with im2col + GEMM
 - add Standardize
 - implement LayerNormalization which is Standardize + ScalarMul + Add
-- use cublasSgemm instead of cublasSgemmEx
 - implement dot-product that returns Result<(), Error>
 
 == GPT-1 Transformer ==

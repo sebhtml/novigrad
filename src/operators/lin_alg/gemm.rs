@@ -1,4 +1,4 @@
-use crate::{devices::Device, Error, GenericTensor};
+use crate::{devices::Device, Error, Tensor};
 
 pub struct Gemm {}
 
@@ -11,8 +11,8 @@ impl Gemm {
         trans_a: bool,
         trans_b: bool,
         trans_result: bool,
-        inputs: &[&GenericTensor],
-        outputs: &[&GenericTensor],
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);
@@ -27,6 +27,6 @@ impl Gemm {
         let transa = trans_a;
         let transb = trans_b;
         let transpose_result = trans_result;
-        GenericTensor::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)
+        Tensor::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)
     }
 }

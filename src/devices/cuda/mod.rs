@@ -1,19 +1,16 @@
-use std::{ffi::c_void, fs::File, io::Read, ops::Deref, sync::Arc};
+use std::{fs::File, io::Read, ops::Deref, sync::Arc};
 
 mod tests;
 
 use cudarc::{
     cublas::{
-        sys::{
-            cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2, cublasSgemmEx,
-            cudaDataType,
-        },
+        sys::{cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2, cublasSgemm_v2},
         CudaBlas,
     },
     driver::{self, CudaDevice, LaunchAsync, LaunchConfig},
 };
 
-use crate::{error, DevSliceEnum, DeviceInterface, Error, ErrorEnum, GenericTensor};
+use crate::{error, DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor};
 
 #[derive(Debug)]
 pub struct CudaDev {
@@ -91,13 +88,13 @@ impl DeviceInterface for CudaDev {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &GenericTensor,
-        a: &GenericTensor,
+        alpha: &Tensor,
+        a: &Tensor,
         lda: i32,
-        b: &GenericTensor,
+        b: &Tensor,
         ldb: i32,
-        beta: &GenericTensor,
-        c: &GenericTensor,
+        beta: &Tensor,
+        c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
@@ -111,23 +108,20 @@ impl DeviceInterface for CudaDev {
         };
         // TODO cublas does a segmentation fault when alpha and beta are on the GPU.
         // When they are on the host, it's fine though.
+        //let alpha = alpha.as_ptr();
         let alpha = alpha.get_values()?;
         let alpha = alpha[0];
         let alpha = &alpha;
         let beta = beta.get_values()?;
         let beta = beta[0];
         let beta = &beta;
-        let a = a.as_ptr() as *const c_void;
-        let b = b.as_ptr() as *const c_void;
-        let c = c.as_mut_ptr() as *mut c_void;
-        let a_type = cudaDataType::CUDA_R_32F;
-        let b_type = cudaDataType::CUDA_R_32F;
-        let c_type = cudaDataType::CUDA_R_32F;
+        let a = a.as_ptr();
+        let b = b.as_ptr();
+        let c = c.as_mut_ptr();
 
         let status = unsafe {
-            cublasSgemmEx(
-                handle, transa, transb, m, n, k, alpha, a, a_type, lda, b, b_type, ldb, beta, c,
-                c_type, ldc,
+            cublasSgemm_v2(
+                handle, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
             )
         };
         status
@@ -180,7 +174,7 @@ impl DeviceInterface for CudaDev {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn scalar_mul(&self, alpha: &GenericTensor, x: &GenericTensor) -> Result<(), Error> {
+    fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         let n = x.len();
         let alpha = &alpha.device_slice().deref().borrow().buffer;
         let x = &x.device_slice().deref().borrow().buffer;
@@ -218,7 +212,7 @@ impl DeviceInterface for CudaDev {
         todo!()
     }
 
-    fn sum(&self, input: &GenericTensor, output: &GenericTensor) -> Result<(), Error> {
+    fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let sum_kernel = self
             .dev
             .get_func("sum_kernel_module", "sum_kernel")
@@ -239,12 +233,7 @@ impl DeviceInterface for CudaDev {
         }
     }
 
-    fn mul(
-        &self,
-        left: &GenericTensor,
-        right: &GenericTensor,
-        result: &GenericTensor,
-    ) -> Result<(), Error> {
+    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
         let n = left.len();
         let kernel = self
             .dev

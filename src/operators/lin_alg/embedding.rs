@@ -1,40 +1,45 @@
-use crate::{devices::Device, BinaryOperator, Error, GenericTensor, MatMul, Tensor, UnaryOperator};
+use crate::{
+    devices::Device, BinaryOperator, Error, MatMul, Tensor, TensorWithGrad, UnaryOperator,
+};
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
-    embedding_table: Tensor,
+    embedding_table: TensorWithGrad,
     matmul: MatMul,
 }
 
 impl Embedding {
-    pub fn new(device: &Device, num_embeddings: usize, embedding_dim: usize) -> Self {
-        let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim);
+    pub fn new(
+        device: &Device,
+        num_embeddings: usize,
+        embedding_dim: usize,
+    ) -> Result<Self, Error> {
+        let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim)?;
         let len = embedding_table.len();
-        let mut transposed = device.tensor_f32(embedding_dim, num_embeddings, vec![0.0; len]);
-        // TODO don't unwrap directly
-        embedding_table.transpose(&mut transposed).unwrap();
-        // TODO don't unwrap directly
-        let embedding_table = device.tensor(
+        let mut transposed = device.tensor(embedding_dim, num_embeddings, vec![0.0; len])?;
+        embedding_table.transpose(&mut transposed)?;
+        let embedding_table = device.tensor_with_grad(
             transposed.rows(),
             transposed.cols(),
             transposed.get_values().unwrap(),
             &[],
             true,
             true,
-        );
+        )?;
 
         let transb = true;
         let matmul = MatMul::new(device, transb);
 
-        Self {
+        let op = Self {
             embedding_table,
             matmul,
-        }
+        };
+        Ok(op)
     }
 }
 
 impl UnaryOperator for Embedding {
-    fn forward(&self, input: &Tensor) -> Result<Tensor, Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         self.matmul.forward(input, &self.embedding_table)
     }
 }
@@ -43,7 +48,7 @@ fn get_embedding_table(
     device: &Device,
     num_embeddings: usize,
     embedding_dim: usize,
-) -> GenericTensor {
+) -> Result<Tensor, Error> {
     let mut rng = thread_rng();
     let mut embeddings_table: Vec<f32> = Vec::new();
     let left = 0.0;
@@ -60,5 +65,5 @@ fn get_embedding_table(
         embeddings_table.append(&mut token_embeddings);
         token += 1;
     }
-    device.tensor_f32(num_embeddings, embedding_dim, embeddings_table)
+    device.tensor(num_embeddings, embedding_dim, embeddings_table)
 }

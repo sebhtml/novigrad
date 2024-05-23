@@ -2,7 +2,7 @@ use std::f32::consts::E;
 
 use cblas::{Layout, Transpose};
 extern crate cblas_sys as ffi;
-use crate::{DevBufferEnum, Error};
+use crate::{DevBufferEnum, Error, GenericTensor};
 
 use super::DeviceInterface;
 extern crate blas_src;
@@ -117,7 +117,7 @@ impl DeviceInterface for CpuDevice {
         CpuDevice::_softmax(rows, cols, input, output)
     }
 
-    fn sum(&self, _n: i32, _x: *const f32, _incx: i32, _y: *mut f32) -> Result<(), Error> {
+    fn sum(&self, _input: &GenericTensor, _output: &GenericTensor) -> Result<(), Error> {
         todo!()
     }
 }

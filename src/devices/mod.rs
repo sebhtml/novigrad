@@ -96,7 +96,7 @@ pub trait DeviceInterface {
         output: *mut f32,
     ) -> Result<(), Error>;
 
-    fn sum(&self, n: i32, x: *const f32, incx: i32, y: *mut f32) -> Result<(), Error>;
+    fn sum(&self, x: &GenericTensor, y: &GenericTensor) -> Result<(), Error>;
 }
 
 impl Debug for dyn DeviceInterface {
@@ -297,7 +297,7 @@ impl DeviceInterface for Device {
         self.device.softmax(rows, cols, input, output)
     }
 
-    fn sum(&self, n: i32, x: *const f32, incx: i32, y: *mut f32) -> Result<(), Error> {
-        self.device.sum(n, x, incx, y)
+    fn sum(&self, x: &GenericTensor, y: &GenericTensor) -> Result<(), Error> {
+        self.device.sum(x, y)
     }
 }

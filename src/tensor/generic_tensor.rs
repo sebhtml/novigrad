@@ -11,7 +11,7 @@ pub struct GenericTensor {
     name: usize,
     device: Device,
     size: Rc<RefCell<Vec<usize>>>,
-    buffer: Rc<RefCell<DevBuffer>>,
+    device_slice: Rc<RefCell<DevBuffer>>,
 }
 
 impl PartialEq for GenericTensor {
@@ -31,7 +31,7 @@ impl GenericTensor {
             name,
             device: device.clone(),
             size: Rc::new(RefCell::new(vec![rows, cols])),
-            buffer: Rc::new(RefCell::new(buffer)),
+            device_slice: Rc::new(RefCell::new(buffer)),
         }
     }
 
@@ -99,16 +99,20 @@ impl GenericTensor {
         Ok(())
     }
 
+    pub fn device_slice(&self) -> &Rc<RefCell<DevBuffer>> {
+        &self.device_slice
+    }
+
     pub fn as_ptr(&self) -> *const f32 {
-        self.buffer.deref().borrow().as_ptr()
+        self.device_slice.deref().borrow().as_ptr()
     }
 
     pub fn as_mut_ptr(&self) -> *mut f32 {
-        self.buffer.deref().borrow_mut().as_mut_ptr()
+        self.device_slice.deref().borrow_mut().as_mut_ptr()
     }
 
     pub fn get_values(&self) -> Result<Vec<f32>, Error> {
-        self.buffer.deref().borrow().get_values()
+        self.device_slice.deref().borrow().get_values()
     }
 
     pub fn reallocate(&mut self, new_size: &[usize]) {
@@ -123,10 +127,13 @@ impl GenericTensor {
     // TODO This method should return a Result.
     pub fn set_values(&self, new_values: Vec<f32>) {
         debug_assert_eq!(new_values.len(), self.len());
-        if self.buffer.deref().borrow().len() != self.len() {
-            self.buffer.deref().borrow_mut().resize(self.len())
+        if self.device_slice.deref().borrow().len() != self.len() {
+            self.device_slice.deref().borrow_mut().resize(self.len())
         }
-        self.buffer.deref().borrow_mut().set_values(new_values)
+        self.device_slice
+            .deref()
+            .borrow_mut()
+            .set_values(new_values)
     }
 
     // TODO use device for element_wise_mul

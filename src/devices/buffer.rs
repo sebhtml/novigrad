@@ -9,7 +9,7 @@ use crate::{Device, ErrorEnum};
 #[derive(Debug)]
 pub struct DevBuffer {
     device: Device,
-    buffer: DevBufferEnum,
+    pub buffer: DevBufferEnum,
 }
 
 impl Drop for DevBuffer {

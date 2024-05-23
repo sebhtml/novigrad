@@ -1,4 +1,4 @@
-use std::{ffi::c_void, fs::File, io::Read, sync::Arc};
+use std::{ffi::c_void, fs::File, io::Read, ops::Deref, sync::Arc};
 
 mod tests;
 
@@ -10,10 +10,10 @@ use cudarc::{
         },
         CudaBlas,
     },
-    driver,
+    driver::{self, LaunchAsync, LaunchConfig},
 };
 
-use crate::{DevBufferEnum, DeviceInterface, Error, ErrorEnum};
+use crate::{DevBufferEnum, DeviceInterface, Error, ErrorEnum, GenericTensor};
 
 #[derive(Debug)]
 pub struct CudaDevice {
@@ -50,6 +50,12 @@ impl CudaDevice {
             "sum_kernel_module",
             &["sum_kernel"],
             "./src/devices/cuda/kernels/sum_kernel.cu",
+        )?;
+
+        device.load_module(
+            "scalar_mul_kernel_module",
+            &["scalar_mul_kernel"],
+            "./src/devices/cuda/kernels/scalar_mul_kernel.cu",
         )?;
 
         Ok(device)
@@ -203,7 +209,34 @@ impl DeviceInterface for CudaDevice {
         todo!()
     }
 
-    fn sum(&self, _n: i32, _x: *const f32, _incx: i32, _y: *mut f32) -> Result<(), Error> {
-        todo!()
+    fn sum(&self, input: &GenericTensor, output: &GenericTensor) -> Result<(), Error> {
+        let sum_kernel = self
+            .dev
+            .get_func("sum_kernel_module", "sum_kernel")
+            .unwrap();
+        let n = input.len();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        let input = &input.device_slice().deref().borrow().buffer;
+        let output = &output.device_slice().deref().borrow().buffer;
+        match (input, output) {
+            (DevBufferEnum::CudaBuffer(input), DevBufferEnum::CudaBuffer(output)) => {
+                let result = unsafe { sum_kernel.launch(cfg, (input, n, output)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(Error::new(
+                        file!(),
+                        line!(),
+                        column!(),
+                        ErrorEnum::NvRtcLoadPtxError,
+                    )),
+                }
+            }
+            _ => Err(Error::new(
+                file!(),
+                line!(),
+                column!(),
+                ErrorEnum::NvRtcLoadPtxError,
+            )),
+        }
     }
 }

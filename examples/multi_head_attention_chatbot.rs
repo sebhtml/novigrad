@@ -107,7 +107,7 @@ fn main() -> Result<(), Error> {
     println!("Corpus: {}", corpus);
     println!("");
 
-    for turn in 0..200 {
+    for turn in 0..1000 {
         println!("Turn: {}", turn);
 
         // Learn things

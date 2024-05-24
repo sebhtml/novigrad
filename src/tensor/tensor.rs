@@ -125,15 +125,6 @@ impl Tensor {
         self.device_slice.deref().borrow().get_values()
     }
 
-    pub fn reallocate(&mut self, new_size: &[usize]) -> Result<(), Error> {
-        if *new_size == *self.size.deref().borrow() {
-            return Ok(());
-        }
-        *self.size.deref().borrow_mut() = new_size.to_owned();
-        let len = self.len();
-        self.set_values(vec![0.0; len])
-    }
-
     pub fn set_values(&self, new_values: Vec<f32>) -> Result<(), Error> {
         debug_assert_eq!(new_values.len(), self.len());
         if self.device_slice.deref().borrow().len() != self.len() {

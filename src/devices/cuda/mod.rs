@@ -63,8 +63,8 @@ impl CudaDev {
         )?;
 
         device.load_module(
-            "softmax_module",
-            &["softmax"],
+            "softmax_kernel_module",
+            &["softmax_kernel"],
             "./src/devices/cuda/kernels/softmax.cu",
         )?;
 
@@ -214,7 +214,10 @@ impl DeviceInterface for CudaDev {
     }
 
     fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let kernel = self.dev.get_func("softmax_module", "softmax").unwrap();
+        let kernel = self
+            .dev
+            .get_func("softmax_kernel_module", "softmax_kernel")
+            .unwrap();
         let rows = input.rows();
         let cols = input.cols();
         let n = input.len();

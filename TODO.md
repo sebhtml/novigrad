@@ -1,4 +1,3 @@
-- fix softmax.cu
 - make list of things that are using Tensorf32::set_value
 
 - use host pointers for alpha and beta in CudaDevice

@@ -20,7 +20,7 @@ impl<T> NeuralMachine<T> {
         device: &Device,
         model: &Box<dyn UnaryModel>,
         loss_operator: &Box<dyn BinaryOperator>,
-        clipped_gradient_norm: f32,
+        _clipped_gradient_norm: f32, // Usually 1.0, so it is not used.
         optimizer: &Box<dyn OptimizerTrait>,
     ) -> Result<Self, Error> {
         // input
@@ -67,11 +67,8 @@ impl<T> NeuralMachine<T> {
                 instructions.push(instruction);
 
                 for output in outputs {
-                    let clip_instruction = gradient_instruction!(
-                        OpCode::ClipNorm(clipped_gradient_norm),
-                        &[output],
-                        &[output],
-                    );
+                    let clip_instruction =
+                        gradient_instruction!(OpCode::Normalize, &[output], &[output],);
                     instructions.push(clip_instruction);
                 }
             }

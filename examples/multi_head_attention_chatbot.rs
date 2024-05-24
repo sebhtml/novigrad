@@ -1,15 +1,12 @@
 use novigrad::{
-    error, get_row_argmaxes, into_one_hot_encoded_rows, BinaryOperator, CrossEntropyLoss, Device,
+    error, get_row_argmax, into_one_hot_encoded_rows, BinaryOperator, CrossEntropyLoss, Device,
     Embedding, Error, ErrorEnum, GradientDescent, Linear, Model, MultiHeadAttention, NeuralMachine,
     OptimizerTrait, Softmax, Tensor, TensorWithGrad, TernaryOperator, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
 };
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
-use std::{
-    io::{self},
-    ops::Deref,
-};
+use std::{fs::read_to_string, io, ops::Deref};
 
 struct ChatbotModel {
     input_shape: Vec<usize>,
@@ -77,10 +74,7 @@ impl Model for ChatbotModel {
 }
 
 fn main() -> Result<(), Error> {
-    let debug = true;
-    let print_in_console = true;
     let device = Device::cuda()?;
-    //let device = Device::cpu();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
     let vocab_size = tokenizer.vocab_size();
@@ -100,33 +94,25 @@ fn main() -> Result<(), Error> {
     )
     .unwrap();
 
-    if print_in_console {
-        println!("-------------------------------------------------------------------");
-        println!("This is a Novigrad-powered chatbot");
-        println!("A forward pass is all you need");
-        println!("The chatbot knows nothing and will learn as you interact with it.");
-        println!("-------------------------------------------------------------------");
-    }
+    println!("-------------------------------------------------------------------");
+    println!("This is a Novigrad-powered chatbot");
+    println!("A forward pass is all you need");
+    println!("The chatbot knows nothing and will learn as you interact with it. (TODO)");
+    println!("-------------------------------------------------------------------");
+
+    // From https://en.wikipedia.org/wiki/Geoffrey_Hinton
+    let corpus = read_to_string("examples/Geoffrey_Hinton.txt").unwrap();
+
+    println!("");
+    println!("Corpus: {}", corpus);
+    println!("");
 
     for turn in 0..1000 {
-        if print_in_console {
-            println!("Turn: {}", turn);
-            println!("Prompt: ");
-        }
+        println!("Turn: {}", turn);
 
-        let mut prompt: String = if debug {
-            let prompt =
-                "Taylor Alison Swift (born December 13, 1989) is an American singer-songwriter.";
-            prompt.into()
-        } else {
-            read_prompt()?
-        };
-        while prompt.len() < sequence_length {
-            prompt += " ";
-        }
         // Learn things
-        let end = if (sequence_length + 1) < prompt.len() {
-            prompt.len() - (sequence_length + 1)
+        let end = if (sequence_length + 1) < corpus.len() {
+            corpus.len() - (sequence_length + 1)
         } else {
             0
         };
@@ -138,11 +124,11 @@ fn main() -> Result<(), Error> {
             let start = i;
             let end = start + sequence_length;
 
-            let input = &prompt[start..end];
+            let input = &corpus[start..end];
             let input_tokens = tokenizer.encode(&input);
             let input_one_hot = into_one_hot_encoded_rows(&device, &input_tokens, vocab_size)?;
 
-            let expected_output = &prompt[start + 1..end + 1];
+            let expected_output = &corpus[start + 1..end + 1];
             let expected_output_tokens = tokenizer.encode(expected_output);
             let expected_output_one_hot =
                 into_one_hot_encoded_rows(&device, &expected_output_tokens, vocab_size)?;
@@ -150,38 +136,61 @@ fn main() -> Result<(), Error> {
             let _actual_output_one_hot = chatbot.infer(&input_one_hot)?;
             let loss = chatbot.loss(&expected_output_one_hot)?;
             let loss: &Tensor = &loss.tensor().deref().borrow();
-            let _loss: f32 = loss.try_into()?;
-            if print_in_console {
-                //println!("Loss {}", loss);
-            }
+            let loss: f32 = loss.try_into()?;
 
+            println!("Loss: {}", loss);
             chatbot.compute_gradient()?;
             chatbot.optimize()?;
         }
 
-        let input = &prompt[(prompt.len() - sequence_length)..];
-        let input_tokens = tokenizer.encode(&input);
-        let input_one_hot = into_one_hot_encoded_rows(&device, &input_tokens, vocab_size)?;
+        let start = 0;
+        let prompt = &corpus[start..sequence_length];
+        println!("Prompt: {}", prompt);
+        let prompt_tokens = tokenizer.encode(&prompt);
+        let max_len = corpus.len();
+        let auto_regressive_tokens =
+            auto_regressive_inference(&model, &chatbot, &device, &prompt_tokens, max_len)?;
+        let actual_output = tokenizer.decode(&auto_regressive_tokens)?;
 
-        let actual_output_one_hot = chatbot.infer(&input_one_hot)?;
-
-        let actual_output_tokens =
-            get_row_argmaxes(&actual_output_one_hot.tensor().deref().borrow())?;
-        let actual_output = tokenizer.decode(&actual_output_tokens)?;
-
-        if print_in_console {
-            println!("Chatbot: {}", actual_output);
-        }
+        println!("Chatbot: {}", actual_output);
     }
 
     Ok(())
 }
 
-fn read_prompt() -> Result<String, Error> {
+fn _read_prompt() -> Result<String, Error> {
     let mut prompt = String::new();
     let stdin = io::stdin();
     match stdin.read_line(&mut prompt) {
         Ok(_) => Ok(prompt),
         Err(_) => Err(error!(ErrorEnum::InputOutputError)),
     }
+}
+
+fn auto_regressive_inference(
+    model: &Box<dyn UnaryModel>,
+    chatbot: &NeuralMachine<f32>,
+    device: &Device,
+    prompt_tokens: &[usize],
+    max_len: usize,
+) -> Result<Vec<usize>, Error> {
+    let mut auto_regressive_tokens = vec![0 as usize; 0];
+    for token in prompt_tokens {
+        auto_regressive_tokens.push(token.clone());
+    }
+    let sequence_length = model.input_size()[0];
+    let vocab_size = model.input_size()[1];
+    // TODO implement another stopping criterion.
+    while auto_regressive_tokens.len() < max_len {
+        let input_tokens =
+            &auto_regressive_tokens[(auto_regressive_tokens.len() - sequence_length)..];
+        let input_one_hot = into_one_hot_encoded_rows(&device, input_tokens, vocab_size)?;
+
+        let actual_output_one_hot = chatbot.infer(&input_one_hot)?;
+        let last_row = &actual_output_one_hot.tensor().deref().borrow().rows() - 1;
+        let predicted_next_token =
+            get_row_argmax(&actual_output_one_hot.tensor().deref().borrow(), last_row)?;
+        auto_regressive_tokens.push(predicted_next_token);
+    }
+    Ok(auto_regressive_tokens)
 }

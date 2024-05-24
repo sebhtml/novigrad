@@ -1,6 +1,6 @@
 use crate::{
     devices::{Device, DeviceInterface},
-    error, CpuDevice, Error,
+    error, Error,
 };
 use crate::{DevSlice, ErrorEnum};
 
@@ -471,18 +471,6 @@ impl Tensor {
         *self.size.deref().borrow_mut() = new_size.to_owned();
 
         Ok(())
-    }
-
-    pub fn softmax(input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let input_values = input.get_values()?;
-        let mut output_values = output.get_values()?;
-        CpuDevice::_softmax(
-            input.rows() as i32,
-            input.cols() as i32,
-            input_values.as_ptr(),
-            output_values.as_mut_ptr(),
-        )?;
-        output.set_values(output_values)
     }
 }
 

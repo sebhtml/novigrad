@@ -14,7 +14,7 @@ impl Gemm {
         inputs: &[&Tensor],
         outputs: &[&Tensor],
     ) -> Result<(), Error> {
-        debug_assert_eq!(inputs.len(), 2);
+        debug_assert_eq!(inputs.len(), 4);
         debug_assert_eq!(outputs.len(), 1);
         let alpha = inputs[0];
         let beta = inputs[1];

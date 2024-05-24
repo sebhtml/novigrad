@@ -1,4 +1,3 @@
-use more_asserts::debug_assert_lt;
 use std::{marker::PhantomData, ops::Deref};
 
 use crate::{
@@ -274,7 +273,6 @@ impl<T> NeuralMachine<T> {
 
     fn print_instruction(&self, i: usize, instruction: &Instruction) {
         let opcode: String = instruction.opcode().clone().into();
-        debug_assert_lt!(instruction.inputs().len(), 10);
         let inputs = instruction
             .inputs()
             .iter()

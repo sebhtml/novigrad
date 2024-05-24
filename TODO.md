@@ -1,10 +1,10 @@
+- make list of things that are using Tensorf32::set_value
+
 - use device pointers for alpha and beta in CudaDevice
 
 ------------------------
 
-- rename CudaDevice to CuDevice
 - device interface use <T>
-- make list of things that are using Tensorf32::set_value
 
 == Cuda ==
 

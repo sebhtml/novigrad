@@ -1,5 +1,5 @@
 use crate::{
-    Add, ClipNorm, Concat, CrossEntropyLoss, Dropout, Error, Gemm, Mul, Reshape,
+    Add, Concat, CrossEntropyLoss, Dropout, Error, Gemm, Mul, Normalize, ReduceSum, Reshape,
     ResidualSumOfSquares, ScalarMul, Sigmoid, Softmax, Sub, Tensor, Unconcat,
 };
 
@@ -11,6 +11,9 @@ pub enum OpCode {
     GemmTNN,
     GemmTNT,
 
+    /// https://onnx.ai/onnx/operators/onnx__ReduceSum.html
+    ReduceSum,
+
     /// https://onnx.ai/onnx/operators/onnx__Add.html
     Add,
 
@@ -20,9 +23,8 @@ pub enum OpCode {
 
     /// Not ONNX-compliant
     /// similar op codes:
-    /// - https://onnx.ai/onnx/operators/onnx__Clip.html
     /// - https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
-    ClipNorm(f32),
+    Normalize,
 
     /// https://onnx.ai/onnx/operators/onnx__Mul.html
     Mul,
@@ -74,11 +76,12 @@ impl Into<String> for OpCode {
             OpCode::GemmNNN => "GemmNNN".into(),
             OpCode::GemmTNN => "GemmTNN".into(),
             OpCode::GemmTNT => "GemmTNT".into(),
+            OpCode::ReduceSum => "ReduceSum".into(),
             OpCode::Add => "Add".into(),
             OpCode::Sub => "Sub".into(),
             OpCode::Mul => "Mul".into(),
             OpCode::ScalarMul => "ScalarMul".into(),
-            OpCode::ClipNorm(clipped_norm) => format!("Clip {}", clipped_norm),
+            OpCode::Normalize => "Normalize".into(),
             OpCode::Softmax => "Softmax".into(),
             OpCode::Sigmoid => "Sigmoid".into(),
             OpCode::Reshape(output_size) => format!("Reshape {:?}", output_size),
@@ -99,9 +102,10 @@ impl OpCode {
             OpCode::GemmNNN => Gemm::execute(false, false, false, inputs, outputs),
             OpCode::GemmTNN => Gemm::execute(true, false, false, inputs, outputs),
             OpCode::GemmTNT => Gemm::execute(true, false, true, inputs, outputs),
+            OpCode::ReduceSum => ReduceSum::execute(inputs, outputs),
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::ScalarMul => ScalarMul::execute(inputs, outputs),
-            OpCode::ClipNorm(clipped_norm) => ClipNorm::execute(*clipped_norm, inputs, outputs),
+            OpCode::Normalize => Normalize::execute(inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
             OpCode::Softmax => Softmax::execute(inputs, outputs),
             OpCode::Sub => Sub::execute(inputs, outputs),

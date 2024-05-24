@@ -8,6 +8,8 @@ mod lin_alg;
 pub use lin_alg::*;
 mod attention;
 pub use attention::*;
+mod reduce;
+pub use reduce::*;
 
 use crate::{Error, TensorWithGrad};
 

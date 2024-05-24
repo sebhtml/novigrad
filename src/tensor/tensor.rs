@@ -246,14 +246,14 @@ impl Tensor {
         Ok(())
     }
 
-    pub fn clip(&self, norm: f32) -> Result<(), Error> {
+    pub fn normalize(&self) -> Result<(), Error> {
         let l2_norm = self.device.tensor(1, 1, vec![0.0]).unwrap();
         self.l2_norm(&l2_norm)?;
         let l2_norm = l2_norm.get_values()?[0];
         if l2_norm == 0.0 {
             return Ok(());
         }
-        let alpha = 1.0 / l2_norm * norm;
+        let alpha = 1.0 / l2_norm;
         let x = self;
         let alpha = self.device.tensor(1, 1, vec![alpha]).unwrap();
         Tensor::scalar_mul(&alpha, x)

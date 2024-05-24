@@ -97,7 +97,7 @@ fn index() {
 }
 
 #[test]
-fn clip() {
+fn normalize() {
     let device = Device::default();
     let tensor = device
         .tensor(
@@ -116,7 +116,7 @@ fn clip() {
     tensor.l2_norm(&actual_norm).unwrap();
     assert_ne!(actual_norm.get_values().unwrap()[0], expected_norm);
 
-    tensor.clip(expected_norm).unwrap();
+    tensor.normalize().unwrap();
 
     tensor.l2_norm(&actual_norm).unwrap();
     assert_eq!(actual_norm.get_values().unwrap()[0], expected_norm);

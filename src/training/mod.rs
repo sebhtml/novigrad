@@ -4,5 +4,5 @@ pub mod tests;
 mod train;
 pub use optimizers::*;
 pub use train::*;
-mod tensor;
-pub use tensor::*;
+mod tensor_with_grad;
+pub use tensor_with_grad::*;

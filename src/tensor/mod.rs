@@ -1,7 +1,7 @@
 use std::fmt::Debug;
-mod generic_tensor;
+mod tensor;
 use cudarc::nvrtc::CompileError;
-pub use generic_tensor::*;
+pub use tensor::*;
 
 #[cfg(test)]
 mod tests;

@@ -16,8 +16,8 @@ impl Gemm {
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);
-        let input = inputs[2];
-        let weights = inputs[3];
+        let input = inputs[0];
+        let weights = inputs[1];
         let biases = outputs[0];
         let a = input;
         let b = weights;

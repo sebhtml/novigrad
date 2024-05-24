@@ -72,16 +72,15 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
-    fn dot(
-        &self,
-        n: i32,
-        x: *const f32,
-        incx: i32,
-        y: *const f32,
-        incy: i32,
-    ) -> Result<f32, Error> {
+    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let n = x.len() as i32;
+        let incx = 1;
+        let incy = 1;
+        let x = x.as_ptr();
+        let y = y.as_ptr();
         let result = unsafe { ffi::cblas_sdot(n, x, incx, y, incy) };
-        Ok(result)
+        output.set_values(vec![result])?;
+        Ok(())
     }
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {

@@ -176,15 +176,12 @@ impl Tensor {
         Ok(false)
     }
 
-    pub fn dot_product(x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    pub fn dot_product(x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
         let device = &x.device;
         if x.size() != y.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        let n = x.len() as i32;
-        let incx = 1;
-        let incy = 1;
-        device.dot(n, x.as_ptr(), incx, y.as_ptr(), incy)
+        device.dot(x, y, output)
     }
 
     pub fn copy(x: &Tensor, y: &Tensor) -> Result<(), Error> {
@@ -439,14 +436,18 @@ impl Tensor {
         device.axpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
     }
 
-    pub fn l2_norm(&self) -> Result<f32, Error> {
-        let squared_l2_norm = Tensor::dot_product(self, self)?;
+    pub fn l2_norm(&self, output: &Tensor) -> Result<(), Error> {
+        Tensor::dot_product(self, self, output)?;
+        let squared_l2_norm = output.get_values()?[0];
         let l2_norm = squared_l2_norm.sqrt();
-        Ok(l2_norm)
+        output.set_values(vec![l2_norm])?;
+        Ok(())
     }
 
     pub fn clip(&self, norm: f32) -> Result<(), Error> {
-        let l2_norm = self.l2_norm()?;
+        let l2_norm = self.device.tensor(1, 1, vec![0.0]).unwrap();
+        self.l2_norm(&l2_norm)?;
+        let l2_norm = l2_norm.get_values()?[0];
         if l2_norm == 0.0 {
             return Ok(());
         }

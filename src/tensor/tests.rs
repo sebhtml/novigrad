@@ -1,3 +1,5 @@
+use std::vec;
+
 use rand::Rng;
 
 use crate::{tensor::Tensor, Device, ErrorEnum};
@@ -108,10 +110,16 @@ fn clip() {
         )
         .unwrap();
 
-    let norm = 1.0;
-    assert_ne!(tensor.l2_norm().unwrap(), norm);
-    tensor.clip(norm).unwrap();
-    assert_eq!(tensor.l2_norm().unwrap(), norm);
+    let expected_norm = 1.0;
+    let actual_norm = device.tensor(1, 1, vec![0.0]).unwrap();
+
+    tensor.l2_norm(&actual_norm).unwrap();
+    assert_ne!(actual_norm.get_values().unwrap()[0], expected_norm);
+
+    tensor.clip(expected_norm).unwrap();
+
+    tensor.l2_norm(&actual_norm).unwrap();
+    assert_eq!(actual_norm.get_values().unwrap()[0], expected_norm);
 }
 
 #[test]

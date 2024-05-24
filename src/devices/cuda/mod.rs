@@ -158,14 +158,12 @@ impl DeviceInterface for CudaDev {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn dot(
-        &self,
-        n: i32,
-        x: *const f32,
-        incx: i32,
-        y: *const f32,
-        incy: i32,
-    ) -> Result<f32, Error> {
+    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let n = x.len() as i32;
+        let incx = 1;
+        let incy = 1;
+        let x = x.as_ptr();
+        let y = y.as_ptr();
         let handle = *self.cuda_blas.handle();
         let mut result: f32 = 0.0;
         let status = unsafe {
@@ -175,7 +173,8 @@ impl DeviceInterface for CudaDev {
         status
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-        Ok(result)
+        output.set_values(vec![result])?;
+        Ok(())
     }
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {

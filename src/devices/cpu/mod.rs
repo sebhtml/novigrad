@@ -26,12 +26,12 @@ impl DeviceInterface for CpuDevice {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &Tensor,
+        alpha: f32,
         a: &Tensor,
         lda: i32,
         b: &Tensor,
         ldb: i32,
-        beta: &Tensor,
+        beta: f32,
         c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error> {
@@ -44,10 +44,7 @@ impl DeviceInterface for CpuDevice {
             false => Transpose::None,
             true => Transpose::Ordinary,
         };
-        let alpha = alpha.get_values()?;
-        let alpha = alpha[0];
-        let beta = beta.get_values()?;
-        let beta = beta[0];
+
         let a = a.as_ptr();
         let b = b.as_ptr();
         let c = c.as_mut_ptr();

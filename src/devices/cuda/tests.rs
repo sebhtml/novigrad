@@ -45,10 +45,10 @@ fn cublas_sgemm_column_major() {
         )
         .unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
     device
-        .gemm(false, false, m, n, k, &alpha, &a, m, &b, k, &beta, &c, m)
+        .gemm(false, false, m, n, k, alpha, &a, m, &b, k, beta, &c, m)
         .unwrap();
 
     let values = c.get_values().unwrap();

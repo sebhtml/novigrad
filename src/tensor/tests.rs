@@ -225,9 +225,9 @@ fn matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = device.tensor(rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
-    Tensor::gemm(false, false, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
+    Tensor::gemm(false, false, alpha, &lhs, &rhs, beta, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -284,9 +284,9 @@ fn transposed_lhs_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = device.tensor(rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
-    Tensor::gemm(true, false, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
+    Tensor::gemm(true, false, alpha, &lhs, &rhs, beta, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -343,9 +343,9 @@ fn transposed_rhs_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = device.tensor(rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
-    Tensor::gemm(false, true, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
+    Tensor::gemm(false, true, alpha, &lhs, &rhs, beta, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -400,9 +400,9 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = device.tensor(rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
-    Tensor::gemm(true, true, &alpha, &lhs, &rhs, &beta, &mut result, false).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
+    Tensor::gemm(true, true, alpha, &lhs, &rhs, beta, &mut result, false).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -466,9 +466,9 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = device.tensor(rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
-    Tensor::gemm(true, true, &alpha, &lhs, &rhs, &beta, &mut result, true).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
+    Tensor::gemm(true, true, alpha, &lhs, &rhs, beta, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -529,9 +529,9 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = device.tensor(rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
-    Tensor::gemm(true, false, &alpha, &lhs, &rhs, &beta, &mut result, true).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
+    Tensor::gemm(true, false, alpha, &lhs, &rhs, beta, &mut result, true).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -695,9 +695,9 @@ fn big_matrix_multiplication() {
     let len = rows * cols;
     let mut result = device.tensor(rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
-    Tensor::gemm(false, false, &alpha, &m, &m, &beta, &mut result, false).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
+    Tensor::gemm(false, false, alpha, &m, &m, beta, &mut result, false).unwrap();
 }
 
 #[test]

@@ -217,10 +217,10 @@ impl Tensor {
     pub fn gemm(
         transa: bool,
         transb: bool,
-        alpha: &Tensor,
+        alpha: f32,
         a: &Tensor,
         b: &Tensor,
-        beta: &Tensor,
+        beta: f32,
         c: &Tensor,
         transpose_result: bool,
     ) -> Result<(), Error> {
@@ -248,10 +248,10 @@ impl Tensor {
     fn _gemm(
         transa: bool,
         transb: bool,
-        alpha: &Tensor,
+        alpha: f32,
         a: &Tensor,
         b: &Tensor,
-        beta: &Tensor,
+        beta: f32,
         c: &Tensor,
         transpose_result: bool,
     ) -> Result<(), Error> {

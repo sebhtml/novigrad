@@ -7,7 +7,7 @@
 
 - add Standardize
 - implement LayerNormalization which is Standardize + ScalarMul + Add
-
+- rename ClipNorm to Normalize and ClipNorm == Normalize + ScalarMul
 
 == GPT-1 Transformer ==
 

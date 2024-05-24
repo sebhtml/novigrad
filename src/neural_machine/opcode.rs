@@ -1,5 +1,5 @@
 use crate::{
-    Add, ClipNorm, Concat, CrossEntropyLoss, Dropout, Error, Gemm, Mul, Reshape,
+    Add, ClipNorm, Concat, CrossEntropyLoss, Dropout, Error, Gemm, Mul, ReduceSum, Reshape,
     ResidualSumOfSquares, ScalarMul, Sigmoid, Softmax, Sub, Tensor, Unconcat,
 };
 
@@ -10,6 +10,9 @@ pub enum OpCode {
     GemmNNN,
     GemmTNN,
     GemmTNT,
+
+    /// https://onnx.ai/onnx/operators/onnx__ReduceSum.html
+    ReduceSum,
 
     /// https://onnx.ai/onnx/operators/onnx__Add.html
     Add,
@@ -74,6 +77,7 @@ impl Into<String> for OpCode {
             OpCode::GemmNNN => "GemmNNN".into(),
             OpCode::GemmTNN => "GemmTNN".into(),
             OpCode::GemmTNT => "GemmTNT".into(),
+            OpCode::ReduceSum => "ReduceSum".into(),
             OpCode::Add => "Add".into(),
             OpCode::Sub => "Sub".into(),
             OpCode::Mul => "Mul".into(),
@@ -99,6 +103,7 @@ impl OpCode {
             OpCode::GemmNNN => Gemm::execute(false, false, false, inputs, outputs),
             OpCode::GemmTNN => Gemm::execute(true, false, false, inputs, outputs),
             OpCode::GemmTNT => Gemm::execute(true, false, true, inputs, outputs),
+            OpCode::ReduceSum => ReduceSum::execute(inputs, outputs),
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::ScalarMul => ScalarMul::execute(inputs, outputs),
             OpCode::ClipNorm(clipped_norm) => ClipNorm::execute(*clipped_norm, inputs, outputs),

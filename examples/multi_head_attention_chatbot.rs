@@ -120,6 +120,7 @@ fn main() -> Result<(), Error> {
         let mut indices = (0..end).collect::<Vec<_>>();
         indices.shuffle(&mut thread_rng());
 
+        let mut total_loss = 0.0;
         for i in indices {
             let start = i;
             let end = start + sequence_length;
@@ -137,11 +138,11 @@ fn main() -> Result<(), Error> {
             let loss = chatbot.loss(&expected_output_one_hot)?;
             let loss: &Tensor = &loss.tensor().deref().borrow();
             let loss: f32 = loss.try_into()?;
-
-            println!("Loss: {}", loss);
+            total_loss += loss;
             chatbot.compute_gradient()?;
             chatbot.optimize()?;
         }
+        println!("Loss: {}", total_loss);
 
         let start = 0;
         let prompt = &corpus[start..sequence_length];

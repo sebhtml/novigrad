@@ -261,6 +261,20 @@ pub fn get_row_argmaxes(tensor: &Tensor) -> Result<Vec<usize>, Error> {
     Ok(argmaxes)
 }
 
+pub fn get_row_argmax(tensor: &Tensor, row: usize) -> Result<usize, Error> {
+    let values = tensor.get_values()?;
+    let cols = tensor.cols();
+    let mut argmax_col = 0;
+    for col in 0..cols {
+        let acc = values[tensor.index(row, argmax_col)];
+        let item = values[tensor.index(row, col)];
+        if item > acc {
+            argmax_col = col;
+        }
+    }
+    Ok(argmax_col)
+}
+
 pub fn train<T>(
     program: &NeuralMachine<T>,
     shuffle_examples: bool,

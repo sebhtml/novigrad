@@ -1,5 +1,5 @@
 use novigrad::{
-    error, get_row_argmaxes, into_one_hot_encoded_rows, BinaryOperator, CrossEntropyLoss, Device,
+    error, get_row_argmax, into_one_hot_encoded_rows, BinaryOperator, CrossEntropyLoss, Device,
     Embedding, Error, ErrorEnum, GradientDescent, Linear, Model, MultiHeadAttention, NeuralMachine,
     OptimizerTrait, Softmax, Tensor, TensorWithGrad, TernaryOperator, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
@@ -108,10 +108,9 @@ fn main() -> Result<(), Error> {
         println!("-------------------------------------------------------------------");
     }
 
-    for turn in 0..1000 {
+    for turn in 0..100 {
         if print_in_console {
             println!("Turn: {}", turn);
-            println!("Prompt: ");
         }
 
         let mut prompt: String = if debug {
@@ -159,19 +158,31 @@ fn main() -> Result<(), Error> {
             chatbot.optimize()?;
         }
 
-        let input = &prompt[(prompt.len() - sequence_length)..];
-        let input_tokens = tokenizer.encode(&input);
-        let input_one_hot = into_one_hot_encoded_rows(&device, &input_tokens, vocab_size)?;
+        let input = &prompt[0..sequence_length];
+        println!("Prompt: {}", input);
+        let prompt_tokens = tokenizer.encode(&input);
 
-        let actual_output_one_hot = chatbot.infer(&input_one_hot)?;
-
-        let actual_output_tokens =
-            get_row_argmaxes(&actual_output_one_hot.tensor().deref().borrow())?;
-        let actual_output = tokenizer.decode(&actual_output_tokens)?;
-
-        if print_in_console {
-            println!("Chatbot: {}", actual_output);
+        let mut auto_regressive_tokens = vec![0 as usize; 0];
+        for token in prompt_tokens {
+            auto_regressive_tokens.push(token);
         }
+
+        // TODO implement another stopping criterion.
+        while auto_regressive_tokens.len() < prompt.len() {
+            let input_tokens =
+                &auto_regressive_tokens[(auto_regressive_tokens.len() - sequence_length)..];
+            let input_one_hot = into_one_hot_encoded_rows(&device, input_tokens, vocab_size)?;
+
+            let actual_output_one_hot = chatbot.infer(&input_one_hot)?;
+            let last_row = &actual_output_one_hot.tensor().deref().borrow().rows() - 1;
+            let predicted_next_token =
+                get_row_argmax(&actual_output_one_hot.tensor().deref().borrow(), last_row)?;
+            auto_regressive_tokens.push(predicted_next_token);
+        }
+
+        let actual_output = tokenizer.decode(&auto_regressive_tokens)?;
+
+        println!("Chatbot: {}", actual_output);
     }
 
     Ok(())

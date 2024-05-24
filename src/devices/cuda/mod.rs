@@ -63,8 +63,8 @@ impl CudaDev {
         )?;
 
         device.load_module(
-            "softmax_module",
-            &["softmax"],
+            "softmax_kernel_module",
+            &["softmax_kernel"],
             "./src/devices/cuda/kernels/softmax.cu",
         )?;
 
@@ -93,6 +93,23 @@ impl CudaDev {
 }
 
 impl DeviceInterface for CudaDev {
+    /// On the web page
+    /// https://docs.nvidia.com/cuda/cublas/#cublas-level-3-function-reference
+    ///
+    /// It says that the Param alpha Memory can be on host or device.
+    /// But if I put it on device, libcublas.so does a SIGSEGV ! (a Segmentation fault)
+    ///
+    /// LOL.
+    ///
+    /// In https://github.com/coreylowman/dfdx, alpha is stored on host Memory.
+    /// So this is done like that here too since the NVIDIA SGEMM documentation is bad.
+    ///
+    /// Maybe alpha can be on device Memory for a
+    /// "NVIDIA H100 Tensor Core GPU"
+    /// but not a
+    /// "NVIDIA GeForce RTX™ 4060 4060"
+    /// .
+    /// Who knows...
     fn gemm(
         &self,
         transa: bool,
@@ -100,12 +117,12 @@ impl DeviceInterface for CudaDev {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &Tensor,
+        alpha: f32,
         a: &Tensor,
         lda: i32,
         b: &Tensor,
         ldb: i32,
-        beta: &Tensor,
+        beta: f32,
         c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error> {
@@ -119,13 +136,10 @@ impl DeviceInterface for CudaDev {
             true => cublasOperation_t::CUBLAS_OP_T,
         };
         // TODO cublas does a segmentation fault when alpha and beta are on the GPU.
+        // But the documentation says that alpha can be on the device:
+        // https://docs.nvidia.com/cuda/cublas/#cublas-level-3-function-reference
         // When they are on the host, it's fine though.
-        //let alpha = alpha.as_ptr();
-        let alpha = alpha.get_values()?;
-        let alpha = alpha[0];
         let alpha = &alpha;
-        let beta = beta.get_values()?;
-        let beta = beta[0];
         let beta = &beta;
         let a = a.as_ptr();
         let b = b.as_ptr();
@@ -158,14 +172,12 @@ impl DeviceInterface for CudaDev {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn dot(
-        &self,
-        n: i32,
-        x: *const f32,
-        incx: i32,
-        y: *const f32,
-        incy: i32,
-    ) -> Result<f32, Error> {
+    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let n = x.len() as i32;
+        let incx = 1;
+        let incy = 1;
+        let x = x.as_ptr();
+        let y = y.as_ptr();
         let handle = *self.cuda_blas.handle();
         let mut result: f32 = 0.0;
         let status = unsafe {
@@ -175,7 +187,8 @@ impl DeviceInterface for CudaDev {
         status
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-        Ok(result)
+        output.set_values(vec![result])?;
+        Ok(())
     }
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
@@ -215,7 +228,10 @@ impl DeviceInterface for CudaDev {
     }
 
     fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let kernel = self.dev.get_func("softmax_module", "softmax").unwrap();
+        let kernel = self
+            .dev
+            .get_func("softmax_kernel_module", "softmax_kernel")
+            .unwrap();
         let rows = input.rows();
         let cols = input.cols();
         let n = input.len();

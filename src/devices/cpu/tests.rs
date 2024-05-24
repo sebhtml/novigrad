@@ -44,10 +44,10 @@ fn cblas_sgemm_column_major() {
         )
         .unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
     device
-        .gemm(false, false, m, n, k, &alpha, &a, m, &b, k, &beta, &c, m)
+        .gemm(false, false, m, n, k, alpha, &a, m, &b, k, beta, &c, m)
         .unwrap();
 
     assert_eq!(
@@ -111,10 +111,10 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
         )
         .unwrap();
 
-    let alpha = device.tensor(1, 1, vec![1.0]).unwrap();
-    let beta = device.tensor(1, 1, vec![1.0]).unwrap();
+    let alpha = 1.0;
+    let beta = 1.0;
     device
-        .gemm(false, false, n, m, k, &alpha, &b, n, &a, k, &beta, &c, n)
+        .gemm(false, false, n, m, k, alpha, &b, n, &a, k, beta, &c, n)
         .unwrap();
 
     assert_eq!(

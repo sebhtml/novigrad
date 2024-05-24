@@ -176,15 +176,12 @@ impl Tensor {
         Ok(false)
     }
 
-    pub fn dot_product(x: &Tensor, y: &Tensor) -> Result<f32, Error> {
+    pub fn dot_product(x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
         let device = &x.device;
         if x.size() != y.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        let n = x.len() as i32;
-        let incx = 1;
-        let incy = 1;
-        device.dot(n, x.as_ptr(), incx, y.as_ptr(), incy)
+        device.dot(x, y, output)
     }
 
     pub fn copy(x: &Tensor, y: &Tensor) -> Result<(), Error> {
@@ -217,204 +214,6 @@ impl Tensor {
         device.copy(n, x, incx, y, incy)
     }
 
-    pub fn gemm(
-        transa: bool,
-        transb: bool,
-        alpha: &Tensor,
-        a: &Tensor,
-        b: &Tensor,
-        beta: &Tensor,
-        c: &Tensor,
-        transpose_result: bool,
-    ) -> Result<(), Error> {
-        let op_result = Self::_gemm(transa, transb, alpha, a, b, beta, c, transpose_result);
-        match op_result {
-            Ok(value) => Ok(value),
-            Err(error) => {
-                println!("Incompatible sizes in GEMM");
-                println!(
-                    "transa: {}, transb: {}, transpose_result: {}",
-                    transa, transb, transpose_result
-                );
-                println!(
-                    "A size: {:?}  B size:  {:?}  C size:  {:?}",
-                    a.size().deref().borrow(),
-                    b.size().deref().borrow(),
-                    c.size().deref().borrow(),
-                );
-                debug_assert!(false);
-                Err(error)
-            }
-        }
-    }
-
-    fn _gemm(
-        transa: bool,
-        transb: bool,
-        alpha: &Tensor,
-        a: &Tensor,
-        b: &Tensor,
-        beta: &Tensor,
-        c: &Tensor,
-        transpose_result: bool,
-    ) -> Result<(), Error> {
-        let device = &a.device;
-        if !transa && !transb && !transpose_result {
-            if a.cols() != b.rows() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if a.rows() != c.rows() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if b.cols() != c.cols() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            let (m, n, k) = (a.rows(), b.cols(), a.cols());
-            device.gemm(
-                false, false, n as i32, m as i32, k as i32, alpha, b, n as i32, a, k as i32, beta,
-                c, n as i32,
-            )
-        } else if transa && !transb && !transpose_result {
-            if a.rows() != b.rows() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if a.cols() != c.rows() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if b.cols() != c.cols() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-
-            let (m, n, k) = (a.cols(), b.cols(), a.rows());
-
-            device.gemm(
-                false,
-                true,
-                n as i32,
-                m as i32,
-                k as i32,
-                alpha,
-                b,
-                n as i32,
-                a,
-                a.cols() as i32,
-                beta,
-                c,
-                n as i32,
-            )
-        } else if !transa && transb && !transpose_result {
-            if a.cols() != b.cols() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if a.rows() != c.rows() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if b.rows() != c.cols() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            let (m, n, k) = (a.rows(), b.rows(), a.cols());
-
-            device.gemm(
-                true,
-                false,
-                n as i32,
-                m as i32,
-                k as i32,
-                alpha,
-                b,
-                b.cols() as i32,
-                a,
-                k as i32,
-                beta,
-                c,
-                n as i32,
-            )
-        } else if transa && transb && !transpose_result {
-            if a.rows() != b.cols() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if a.cols() != c.rows() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if b.rows() != c.cols() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            let (m, n, k) = (a.cols(), b.rows(), a.rows());
-
-            device.gemm(
-                true,
-                true,
-                n as i32,
-                m as i32,
-                k as i32,
-                alpha,
-                b,
-                b.cols() as i32,
-                a,
-                a.cols() as i32,
-                beta,
-                c,
-                n as i32,
-            )
-        } else if transa && transb && transpose_result {
-            if a.rows() != b.cols() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if a.cols() != c.cols() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if b.rows() != c.rows() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            let (m, n, k) = (a.cols(), b.rows(), a.rows());
-
-            device.gemm(
-                false,
-                false,
-                m as i32,
-                n as i32,
-                k as i32,
-                alpha,
-                a,
-                a.cols() as i32,
-                b,
-                b.cols() as i32,
-                beta,
-                c,
-                m as i32,
-            )
-        } else if transa && !transb && transpose_result {
-            if a.rows() != b.rows() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if a.cols() != c.cols() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            if b.cols() != c.rows() {
-                return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-            }
-            let (m, n, k) = (a.cols(), b.cols(), a.rows());
-
-            device.gemm(
-                false,
-                true,
-                m as i32,
-                n as i32,
-                k as i32,
-                alpha,
-                a,
-                a.cols() as i32,
-                b,
-                b.cols() as i32,
-                beta,
-                c,
-                m as i32,
-            )
-        } else {
-            Err(error!(ErrorEnum::UnsupportedOperation))
-        }
-    }
-
     pub fn sub(x: &Tensor, y: &Tensor) -> Result<(), Error> {
         let alpha = -1.0;
         Self::a_x_plus_y(alpha, x, y)
@@ -439,14 +238,18 @@ impl Tensor {
         device.axpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
     }
 
-    pub fn l2_norm(&self) -> Result<f32, Error> {
-        let squared_l2_norm = Tensor::dot_product(self, self)?;
+    pub fn l2_norm(&self, output: &Tensor) -> Result<(), Error> {
+        Tensor::dot_product(self, self, output)?;
+        let squared_l2_norm = output.get_values()?[0];
         let l2_norm = squared_l2_norm.sqrt();
-        Ok(l2_norm)
+        output.set_values(vec![l2_norm])?;
+        Ok(())
     }
 
     pub fn clip(&self, norm: f32) -> Result<(), Error> {
-        let l2_norm = self.l2_norm()?;
+        let l2_norm = self.device.tensor(1, 1, vec![0.0]).unwrap();
+        self.l2_norm(&l2_norm)?;
+        let l2_norm = l2_norm.get_values()?[0];
         if l2_norm == 0.0 {
             return Ok(());
         }

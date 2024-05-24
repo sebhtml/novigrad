@@ -1,6 +1,6 @@
 - make list of things that are using Tensorf32::set_value
 
-- use device pointers for alpha and beta in CudaDevice
+- use host pointers for alpha and beta in CudaDevice
 
 ------------------------
 
@@ -8,16 +8,16 @@
 
 == Cuda ==
 
-- implement a softmax cuda kernel
-
 - Implement code with f16
 - rename ClipNorm to Normalize and ClipNorm == Normalize + ScalarMul
 - rewrite CrossEntropyLoss using Sum
 - rewrite ResidualSumOfSquares using Sum
-- implement Conv2D with im2col + GEMM
 - add Standardize
 - implement LayerNormalization which is Standardize + ScalarMul + Add
-- implement dot-product that returns Result<(), Error>
+- only use device in Tensor
+- test all tensor operations with all devices
+
+- implement Conv2D with im2col + GEMM
 
 == GPT-1 Transformer ==
 

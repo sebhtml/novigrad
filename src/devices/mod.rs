@@ -48,12 +48,12 @@ pub trait DeviceInterface {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &Tensor,
+        alpha: f32,
         a: &Tensor,
         lda: i32,
         b: &Tensor,
         ldb: i32,
-        beta: &Tensor,
+        beta: f32,
         c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error>;
@@ -71,8 +71,7 @@ pub trait DeviceInterface {
     ) -> Result<(), Error>;
 
     /// SDOT forms the dot product of two vectors.
-    fn dot(&self, n: i32, x: *const f32, incx: i32, y: *const f32, incy: i32)
-        -> Result<f32, Error>;
+    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
@@ -231,12 +230,12 @@ impl DeviceInterface for Device {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &Tensor,
+        alpha: f32,
         a: &Tensor,
         lda: i32,
         b: &Tensor,
         ldb: i32,
-        beta: &Tensor,
+        beta: f32,
         c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error> {
@@ -244,15 +243,8 @@ impl DeviceInterface for Device {
             .gemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
     }
 
-    fn dot(
-        &self,
-        n: i32,
-        x: *const f32,
-        incx: i32,
-        y: *const f32,
-        incy: i32,
-    ) -> Result<f32, Error> {
-        self.device.dot(n, x, incx, y, incy)
+    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
+        self.device.dot(x, y, output)
     }
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {

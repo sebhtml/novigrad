@@ -6,7 +6,10 @@ use crate::{
 #[derive(Clone, Debug)]
 pub enum OpCode {
     /// https://onnx.ai/onnx/operators/onnx__Gemm.html
-    Gemm(bool, bool, bool),
+    GemmNTN,
+    GemmNNN,
+    GemmTNN,
+    GemmTNT,
 
     /// https://onnx.ai/onnx/operators/onnx__Add.html
     Add,
@@ -67,9 +70,10 @@ pub enum OpCode {
 impl Into<String> for OpCode {
     fn into(self) -> String {
         match self {
-            OpCode::Gemm(trans_a, trans_b, trans_result) => {
-                format!("Gemm {} {} {}", trans_a, trans_b, trans_result)
-            }
+            OpCode::GemmNTN => "GemmNTN".into(),
+            OpCode::GemmNNN => "GemmNNN".into(),
+            OpCode::GemmTNN => "GemmTNN".into(),
+            OpCode::GemmTNT => "GemmTNT".into(),
             OpCode::Add => "Add".into(),
             OpCode::Sub => "Sub".into(),
             OpCode::Mul => "Mul".into(),
@@ -91,9 +95,10 @@ impl Into<String> for OpCode {
 impl OpCode {
     pub fn execute(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         match self {
-            OpCode::Gemm(trans_a, trans_b, trans_result) => {
-                Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)
-            }
+            OpCode::GemmNTN => Gemm::execute(false, true, false, inputs, outputs),
+            OpCode::GemmNNN => Gemm::execute(false, false, false, inputs, outputs),
+            OpCode::GemmTNN => Gemm::execute(true, false, false, inputs, outputs),
+            OpCode::GemmTNT => Gemm::execute(true, false, true, inputs, outputs),
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::ScalarMul => ScalarMul::execute(inputs, outputs),
             OpCode::ClipNorm(clipped_norm) => ClipNorm::execute(*clipped_norm, inputs, outputs),

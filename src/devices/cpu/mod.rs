@@ -26,12 +26,12 @@ impl DeviceInterface for CpuDevice {
         m: i32,
         n: i32,
         k: i32,
-        alpha: &Tensor,
+        alpha: f32,
         a: &Tensor,
         lda: i32,
         b: &Tensor,
         ldb: i32,
-        beta: &Tensor,
+        beta: f32,
         c: &Tensor,
         ldc: i32,
     ) -> Result<(), Error> {
@@ -44,10 +44,7 @@ impl DeviceInterface for CpuDevice {
             false => Transpose::None,
             true => Transpose::Ordinary,
         };
-        let alpha = alpha.get_values()?;
-        let alpha = alpha[0];
-        let beta = beta.get_values()?;
-        let beta = beta[0];
+
         let a = a.as_ptr();
         let b = b.as_ptr();
         let c = c.as_mut_ptr();
@@ -72,16 +69,15 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
-    fn dot(
-        &self,
-        n: i32,
-        x: *const f32,
-        incx: i32,
-        y: *const f32,
-        incy: i32,
-    ) -> Result<f32, Error> {
+    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let n = x.len() as i32;
+        let incx = 1;
+        let incy = 1;
+        let x = x.as_ptr();
+        let y = y.as_ptr();
         let result = unsafe { ffi::cblas_sdot(n, x, incx, y, incy) };
-        Ok(result)
+        output.set_values(vec![result])?;
+        Ok(())
     }
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {

@@ -1,4 +1,6 @@
-- remove calls to set_Values outside of tests
+- remove calls to set_values outside of tests
+
+- run tests with cuda for default device
 
 - rewrite CrossEntropyLoss using Sum
 - rewrite ResidualSumOfSquares using Sum

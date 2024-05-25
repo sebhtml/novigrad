@@ -76,7 +76,7 @@ impl Model for ChatbotModel {
 fn main() -> Result<(), Error> {
     let device = Device::cuda()?;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
-    let sequence_length = 32;
+    let sequence_length = 64;
     let vocab_size = tokenizer.vocab_size();
     let model = ChatbotModel::new(&device, sequence_length, vocab_size)?;
     let vocab_size = tokenizer.vocab_size();
@@ -84,7 +84,7 @@ fn main() -> Result<(), Error> {
     let clipped_gradient_norm = 1.0;
     let loss_operator: Box<dyn BinaryOperator> = Box::new(CrossEntropyLoss::new(&device));
     let learning_rate = 0.01;
-    let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
+    let optimizer = Adam::new(learning_rate, 0.9, 0.999, 1e-8);
     let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
     let chatbot = NeuralMachine::<f32>::try_new(
         &device,

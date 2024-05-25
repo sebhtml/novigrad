@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, inference_instruction, Device, OpCode, Tensor, TensorWithGrad,
-    UnaryOperator,
+    gradient_instruction, inference_instruction, Device, DeviceInterface, OpCode, Tensor,
+    TensorWithGrad, UnaryOperator,
 };
 
 pub struct ScalarMul {
@@ -23,7 +23,8 @@ impl ScalarMul {
         let input = inputs[1];
         let output = outputs[0];
         Tensor::copy(input, output)?;
-        Tensor::scalar_mul(alpha, output)
+        let device = input.device();
+        device.scalar_mul(alpha, output)
     }
 }
 

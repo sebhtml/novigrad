@@ -239,18 +239,9 @@ impl Tensor {
         }
         let alpha = 1.0 / l2_norm;
         let x = self;
-        let alpha = self.device.tensor(1, 1, vec![alpha]).unwrap();
-        Tensor::scalar_mul(&alpha, x)
-    }
-
-    pub fn scalar_mul(alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
-        let device = x.device.clone();
-        device.scalar_mul(alpha, x)
-    }
-
-    pub fn scalar_add(alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
-        let device = x.device.clone();
-        device.scalar_add(alpha, x)
+        let device = self.device();
+        let alpha = device.tensor(1, 1, vec![alpha]).unwrap();
+        device.scalar_mul(&alpha, x)
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {

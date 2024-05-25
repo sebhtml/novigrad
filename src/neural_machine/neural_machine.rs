@@ -257,6 +257,34 @@ impl<T> NeuralMachine<T> {
         );
 
         println!("Instructions: {}", self.instructions.len());
+        println!(
+            "Inference Instructions: {}",
+            self.instructions
+                .iter()
+                .filter(|i| i.category() == Category::Inference)
+                .count()
+        );
+        println!(
+            "Loss Instructions: {}",
+            self.instructions
+                .iter()
+                .filter(|i| i.category() == Category::Loss)
+                .count()
+        );
+        println!(
+            "Gradient Instructions: {}",
+            self.instructions
+                .iter()
+                .filter(|i| i.category() == Category::Gradient)
+                .count()
+        );
+        println!(
+            "Optimization Instructions: {}",
+            self.instructions
+                .iter()
+                .filter(|i| i.category() == Category::Optimization)
+                .count()
+        );
         println!("------------------------------");
         for (i, instruction) in self.instructions.iter().enumerate() {
             self.print_instruction(i, instruction);

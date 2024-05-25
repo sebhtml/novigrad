@@ -6,7 +6,6 @@ use crate::{
 use crate::{OpCode, Tensor, UnaryOperator};
 use std::ops::Deref;
 
-#[derive(Clone)]
 pub struct Sigmoid {
     device: Device,
 }

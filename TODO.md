@@ -26,7 +26,6 @@
 
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 
-- clean-up naming for cuda kernels
 - device interface use <T>
 - Implement code with f16
 

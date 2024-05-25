@@ -75,9 +75,9 @@ impl CudaDev {
         )?;
 
         device.load_module(
-            "sigmoid_module",
-            &["sigmoid"],
-            "./src/devices/cuda/kernels/sigmoid.cu",
+            "sigmoid_kernel_module",
+            &["sigmoid_kernel"],
+            "./src/devices/cuda/kernels/sigmoid_kernel.cu",
         )?;
 
         device.load_module(
@@ -89,7 +89,7 @@ impl CudaDev {
         device.load_module(
             "softmax_kernel_module",
             &["softmax_kernel"],
-            "./src/devices/cuda/kernels/softmax.cu",
+            "./src/devices/cuda/kernels/softmax_kernel.cu",
         )?;
 
         Ok(device)
@@ -351,7 +351,7 @@ impl DeviceInterface for CudaDev {
     }
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let kernel = self.dev.get_func("sigmoid_module", "sigmoid").unwrap();
+        let kernel = self.dev.get_func("sigmoid_kernel_module", "sigmoid_kernel").unwrap();
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
         let input = &input.device_slice().deref().borrow().buffer;

@@ -22,6 +22,7 @@ impl OptimizerTrait for GradientDescent {
         tensors: &[TensorWithGrad],
     ) -> Result<Vec<Instruction>, Error> {
         let mut instructions = vec![];
+        let zero = device.tensor(1, 1, vec![0.0])?;
         for optimizable_tensor in tensors {
             let tensor: &Tensor = &optimizable_tensor.tensor().deref().borrow();
             let gradient: &Tensor = &optimizable_tensor.gradient().deref().borrow();
@@ -29,7 +30,6 @@ impl OptimizerTrait for GradientDescent {
 
             let scaled_gradient =
                 device.tensor(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()])?;
-            let zero = device.tensor(1, 1, vec![0.0])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&zero, &scaled_gradient],

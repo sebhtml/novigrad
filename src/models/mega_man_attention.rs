@@ -1,7 +1,7 @@
 use super::load_examples;
 use crate::{
-    CrossEntropyLoss, Device, GradientDescent, MultiHeadAttention, TernaryOperator, Tokenizer,
-    TokenizerTrait, UnaryModel, UnaryOperator,
+    Adam, CrossEntropyLoss, Device, MultiHeadAttention, TernaryOperator, Tokenizer, TokenizerTrait,
+    UnaryModel, UnaryOperator,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 use crate::{Error, ModelDetails};
@@ -98,13 +98,14 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
 
     let loss_operator = CrossEntropyLoss::new(device);
     let learning_rate = 0.05;
+    let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(GradientDescent::new(learning_rate)),
+        optimizer: Box::new(optimizer),
         epochs: 300,
         progress: 10,
         initial_total_error_min: 50.0,

@@ -51,15 +51,33 @@ impl CudaDev {
         )?;
 
         device.load_module(
+            "scalar_add_kernel_module",
+            &["scalar_add_kernel"],
+            "./src/devices/cuda/kernels/scalar_add_kernel.cu",
+        )?;
+
+        device.load_module(
             "mul_kernel_module",
             &["mul_kernel"],
             "./src/devices/cuda/kernels/mul_kernel.cu",
         )?;
 
         device.load_module(
+            "div_kernel_module",
+            &["div_kernel"],
+            "./src/devices/cuda/kernels/div_kernel.cu",
+        )?;
+
+        device.load_module(
             "sigmoid_module",
             &["sigmoid"],
             "./src/devices/cuda/kernels/sigmoid.cu",
+        )?;
+
+        device.load_module(
+            "sqrt_kernel_module",
+            &["sqrt_kernel"],
+            "./src/devices/cuda/kernels/sqrt_kernel.cu",
         )?;
 
         device.load_module(
@@ -220,6 +238,27 @@ impl DeviceInterface for CudaDev {
         }
     }
 
+    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+        let n = x.len();
+        let alpha = &alpha.device_slice().deref().borrow().buffer;
+        let x = &x.device_slice().deref().borrow().buffer;
+        let kernel = self
+            .dev
+            .get_func("scalar_add_kernel_module", "scalar_add_kernel")
+            .unwrap();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        match (alpha, x) {
+            (DevSliceEnum::CudaDevSlice(alpha), DevSliceEnum::CudaDevSlice(x)) => {
+                let result = unsafe { kernel.launch(cfg, (n, x, alpha)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
+        }
+    }
+
     fn slice(&self, n: i32) -> Result<DevSliceEnum, Error> {
         match self.dev.alloc_zeros(n as usize) {
             Ok(slice) => Ok(DevSliceEnum::CudaDevSlice(slice)),
@@ -301,6 +340,55 @@ impl DeviceInterface for CudaDev {
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let kernel = self.dev.get_func("sigmoid_module", "sigmoid").unwrap();
+        let n = input.len();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        let input = &input.device_slice().deref().borrow().buffer;
+        let output = &output.device_slice().deref().borrow().buffer;
+        match (input, output) {
+            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+                let result = unsafe { kernel.launch(cfg, (input, output, n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
+    }
+
+    fn div(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+        let n = left.len();
+        let kernel = self
+            .dev
+            .get_func("div_kernel_module", "div_kernel")
+            .unwrap();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+
+        let left: &_ = &left.device_slice().deref().borrow().buffer;
+        let right = &right.device_slice().deref().borrow().buffer;
+        let result: &_ = &result.device_slice().deref().borrow().buffer;
+
+        match (left, right, result) {
+            (
+                DevSliceEnum::CudaDevSlice(left),
+                DevSliceEnum::CudaDevSlice(right),
+                DevSliceEnum::CudaDevSlice(result),
+            ) => {
+                let result = unsafe { kernel.launch(cfg, (left, right, result, n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
+        }
+    }
+
+    fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let kernel = self
+            .dev
+            .get_func("sqrt_kernel_module", "sqrt_kernel")
+            .unwrap();
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
         let input = &input.device_slice().deref().borrow().buffer;

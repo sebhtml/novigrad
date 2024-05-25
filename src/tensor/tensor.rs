@@ -252,8 +252,12 @@ impl Tensor {
 
     pub fn scalar_mul(alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         let device = x.device.clone();
-        let result = device.scalar_mul(alpha, x);
-        result
+        device.scalar_mul(alpha, x)
+    }
+
+    pub fn scalar_add(alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+        let device = x.device.clone();
+        device.scalar_add(alpha, x)
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {

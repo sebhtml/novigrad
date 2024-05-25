@@ -108,6 +108,18 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
+    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+        let n = x.len();
+        let x = x.as_mut_ptr();
+        let alpha = alpha.as_ptr();
+        for i in 0..n {
+            unsafe {
+                *x.add(i) += *alpha;
+            }
+        }
+        Ok(())
+    }
+
     fn slice(&self, n: i32) -> Result<crate::DevSliceEnum, Error> {
         let len = n as usize;
         let values = vec![0.0; len];
@@ -170,13 +182,65 @@ impl DeviceInterface for CpuDevice {
             let mut col = 0;
             while col < cols {
                 let x = values[input.index(row, col)];
-                let y = 1.0 / (1.0 + E.powf(-x));
+                let y = sigmoid(x);
                 result_values[output.index(row, col)] = y;
                 col += 1;
             }
             row += 1;
         }
         output.set_values(result_values)
+    }
+
+    fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let rows = input.rows();
+        let cols = input.cols();
+        let values = input.get_values()?;
+        let mut result_values = output.get_values()?;
+        let mut row = 0;
+        while row < rows {
+            let mut col = 0;
+            while col < cols {
+                let x = values[input.index(row, col)];
+                let y = x.sqrt();
+                result_values[output.index(row, col)] = y;
+                col += 1;
+            }
+            row += 1;
+        }
+        output.set_values(result_values)
+    }
+
+    fn div(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+        if left.size() != right.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+
+        debug_assert_eq!(result.size(), left.size());
+
+        let mut result_values = result.get_values()?;
+        let left_values = left.get_values()?;
+        let right_values = right.get_values()?;
+
+        let result_ptr = result_values.as_mut_ptr();
+        let left_ptr = left_values.as_ptr();
+        let right_ptr = right_values.as_ptr();
+
+        unsafe {
+            let mut index = 0;
+            let len = left_values.len();
+            while index < len {
+                let left_cell = left_ptr.add(index);
+                let right_cell = right_ptr.add(index);
+                let result_cell = result_ptr.add(index);
+                let left = *left_cell;
+                let right = *right_cell;
+                let value = left / right;
+                *result_cell = value;
+                index += 1;
+            }
+        }
+
+        result.set_values(result_values)
     }
 }
 
@@ -233,4 +297,8 @@ impl CpuDevice {
 
         Ok(())
     }
+}
+
+fn sigmoid(x: f32) -> f32 {
+    1.0 / (1.0 + E.powf(-x))
 }

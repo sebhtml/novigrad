@@ -1,6 +1,6 @@
 use novigrad::{
-    error, get_row_argmax, into_one_hot_encoded_rows, BinaryOperator, CrossEntropyLoss, Device,
-    Embedding, Error, ErrorEnum, GradientDescent, Linear, Model, MultiHeadAttention, NeuralMachine,
+    error, get_row_argmax, into_one_hot_encoded_rows, Adam, BinaryOperator, CrossEntropyLoss,
+    Device, Embedding, Error, ErrorEnum, Linear, Model, MultiHeadAttention, NeuralMachine,
     OptimizerTrait, Softmax, Tensor, TensorWithGrad, TernaryOperator, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
 };
@@ -82,9 +82,10 @@ fn main() -> Result<(), Error> {
     let vocab_size = tokenizer.vocab_size();
     let model: Box<dyn UnaryModel> = Box::new(model);
     let clipped_gradient_norm = 1.0;
-    let learning_rate = 0.05;
     let loss_operator: Box<dyn BinaryOperator> = Box::new(CrossEntropyLoss::new(&device));
-    let optimizer: Box<dyn OptimizerTrait> = Box::new(GradientDescent::new(learning_rate));
+    let learning_rate = 0.01;
+    let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
+    let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
     let chatbot = NeuralMachine::<f32>::try_new(
         &device,
         &model,
@@ -120,6 +121,7 @@ fn main() -> Result<(), Error> {
         let mut indices = (0..end).collect::<Vec<_>>();
         indices.shuffle(&mut thread_rng());
 
+        let mut total_loss = 0.0;
         for i in indices {
             let start = i;
             let end = start + sequence_length;
@@ -137,11 +139,11 @@ fn main() -> Result<(), Error> {
             let loss = chatbot.loss(&expected_output_one_hot)?;
             let loss: &Tensor = &loss.tensor().deref().borrow();
             let loss: f32 = loss.try_into()?;
-
-            println!("Loss: {}", loss);
+            total_loss += loss;
             chatbot.compute_gradient()?;
             chatbot.optimize()?;
         }
+        println!("Loss: {}", total_loss);
 
         let start = 0;
         let prompt = &corpus[start..sequence_length];

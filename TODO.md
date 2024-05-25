@@ -1,5 +1,4 @@
-- remove calls to set_Values outside of tests
-
+- remove calls to set_values outside of tests
 - rewrite CrossEntropyLoss using Sum
 - rewrite ResidualSumOfSquares using Sum
 
@@ -12,6 +11,7 @@
 - implement Gelu
 - implement LayerNorm
 - implement Transformer
+- increase examples in mega_man_attention from 10 to 100
 
 ---------------
 - use const* f32 instead of &Tensor in DeviceInterface

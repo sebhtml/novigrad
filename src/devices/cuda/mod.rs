@@ -4,7 +4,7 @@ mod tests;
 
 use cudarc::{
     cublas::{
-        sys::{cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2, cublasSgemm_v2},
+        sys::{cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSgemm_v2},
         CudaBlas,
     },
     driver::{self, CudaDevice, LaunchAsync, LaunchConfig},
@@ -194,23 +194,6 @@ impl DeviceInterface for CudaDev {
     }
 
     fn dot(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
-        let n = left.len() as i32;
-        let incx = 1;
-        let incy = 1;
-        let x = left.as_ptr();
-        let y = right.as_ptr();
-        let handle = *self.cuda_blas.handle();
-        let mut dot_result: f32 = 0.0;
-        let status = unsafe {
-            let dot_result = &mut dot_result as *mut f32;
-            cublasSdot_v2(handle, n, x, incx, y, incy, dot_result)
-        };
-        status
-            .result()
-            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-        result.set_values(vec![dot_result])?;
-        Ok(())
-        /*
         let n = left.len();
         let kernel = self
             .dev
@@ -236,7 +219,6 @@ impl DeviceInterface for CudaDev {
             }
             _ => Err(error!(ErrorEnum::NvLaunchError)),
         }
-         */
     }
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {

@@ -1,5 +1,6 @@
 - remove calls to set_values outside of tests
 
+- fix precision in cuda dot kernel test with large size
 - run tests with cuda for default device
 
 - rewrite CrossEntropyLoss using Sum

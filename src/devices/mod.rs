@@ -1,5 +1,5 @@
 mod cpu;
-use crate::Error;
+use crate::{error, Error, ErrorEnum};
 use std::{
     cell::RefCell,
     collections::{HashMap, LinkedList},
@@ -72,8 +72,8 @@ pub trait DeviceInterface {
         incy: i32,
     ) -> Result<(), Error>;
 
-    /// SDOT forms the dot product of two vectors.
-    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error>;
+    /// dot performs the dot product of two vectors.
+    fn dot(&self, left: &Tensor, right: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
@@ -113,7 +113,10 @@ pub struct Device {
 
 impl Default for Device {
     fn default() -> Self {
-        Self::cpu()
+        #[cfg(feature = "default_is_cuda")]
+        return Self::cuda().unwrap();
+        #[cfg(not(feature = "default_is_cuda"))]
+        return Self::cpu();
     }
 }
 
@@ -249,8 +252,14 @@ impl DeviceInterface for Device {
             .gemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
     }
 
-    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
-        self.device.dot(x, y, output)
+    fn dot(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+        if left.size() != right.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        if &result.size().deref().borrow() as &[usize] != &[1, 1] {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        self.device.dot(left, right, result)
     }
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
@@ -286,6 +295,9 @@ impl DeviceInterface for Device {
     }
 
     fn sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
+        if &y.size().deref().borrow() as &[usize] != &[1, 1] {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
         self.device.sum(x, y)
     }
 

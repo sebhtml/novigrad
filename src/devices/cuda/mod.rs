@@ -45,6 +45,12 @@ impl CudaDev {
         )?;
 
         device.load_module(
+            "dot_kernel_module",
+            &["dot_kernel"],
+            "./src/devices/cuda/kernels/dot_kernel.cu",
+        )?;
+
+        device.load_module(
             "scalar_mul_kernel_module",
             &["scalar_mul_kernel"],
             "./src/devices/cuda/kernels/scalar_mul_kernel.cu",
@@ -187,23 +193,50 @@ impl DeviceInterface for CudaDev {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let n = x.len() as i32;
+    fn dot(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+        let n = left.len() as i32;
         let incx = 1;
         let incy = 1;
-        let x = x.as_ptr();
-        let y = y.as_ptr();
+        let x = left.as_ptr();
+        let y = right.as_ptr();
         let handle = *self.cuda_blas.handle();
-        let mut result: f32 = 0.0;
+        let mut dot_result: f32 = 0.0;
         let status = unsafe {
-            let result = &mut result as *mut f32;
-            cublasSdot_v2(handle, n, x, incx, y, incy, result)
+            let dot_result = &mut dot_result as *mut f32;
+            cublasSdot_v2(handle, n, x, incx, y, incy, dot_result)
         };
         status
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-        output.set_values(vec![result])?;
+        result.set_values(vec![dot_result])?;
         Ok(())
+        /*
+        let n = left.len();
+        let kernel = self
+            .dev
+            .get_func("dot_kernel_module", "dot_kernel")
+            .unwrap();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+
+        let left: &_ = &left.device_slice().deref().borrow().buffer;
+        let right = &right.device_slice().deref().borrow().buffer;
+        let result: &_ = &result.device_slice().deref().borrow().buffer;
+
+        match (left, right, result) {
+            (
+                DevSliceEnum::CudaDevSlice(left),
+                DevSliceEnum::CudaDevSlice(right),
+                DevSliceEnum::CudaDevSlice(result),
+            ) => {
+                let result = unsafe { kernel.launch(cfg, (left, right, result, n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
+        }
+         */
     }
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {

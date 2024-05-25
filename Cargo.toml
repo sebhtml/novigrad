@@ -16,8 +16,10 @@ inherits = "release"
 debug = true
 
 [features]
-default = ["cuda"]
+#default = ["cuda", "default_is_cuda" ]
+default = ["cuda", ]
 cuda = ["cudarc"]
+default_is_cuda = []
 
 [dependencies]
 # CPU Blas

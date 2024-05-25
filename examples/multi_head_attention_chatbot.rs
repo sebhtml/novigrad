@@ -83,7 +83,7 @@ fn main() -> Result<(), Error> {
     let model: Box<dyn UnaryModel> = Box::new(model);
     let clipped_gradient_norm = 1.0;
     let loss_operator: Box<dyn BinaryOperator> = Box::new(CrossEntropyLoss::new(&device));
-    let learning_rate = 0.05;
+    let learning_rate = 0.01;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
     let chatbot = NeuralMachine::<f32>::try_new(

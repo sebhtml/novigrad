@@ -1,29 +1,34 @@
-- TODO adam t should be in 0..num_iterations
-- make list of things that are using Tensorf32::set_value
-- device interface use <T>
+- remove calls to set_Values outside of tests
+
 - rewrite CrossEntropyLoss using Sum
 - rewrite ResidualSumOfSquares using Sum
 
 ---------------------
 
+== Transformer ==
+
 - add Standardize
 - implement LayerNormalization which is Standardize + ScalarMul + Add
-- rename ClipNorm to Normalize and ClipNorm == Normalize + ScalarMul
-
-== GPT-1 Transformer ==
-
 - implement Gelu
 - implement LayerNorm
 - implement Transformer
 
+---------------
+- use const* f32 instead of &Tensor in DeviceInterface
+- TODO adam t should be in 0..num_iterations
+- add device stream support in devices to execute attention heads in parallel
+
 - investigate performance issue with tons of call to pthread_rwlock_unlock
+
+- clean-up naming for cuda kernels
+- device interface use <T>
 - Implement code with f16
+
 ---------------------
 
 - make sure that all OpCode have >= 2 inputs
-- only use device in Tensor
 - test all tensor operations with all devices
-- implement Conv2D with im2col + GEMM
+- implement Conv2D
 - no values in OpCode, put them instead in OpCodeArguments
 
 == Performance ==
@@ -70,10 +75,6 @@
 
 - CIFAR-10
 - MNIST
-
-== Program ==
-
-- implement parallel execution of certain branches in parallel using a execution_group_id
 
 == Import / Export ==
 

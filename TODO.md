@@ -4,6 +4,8 @@
 
 ---------------------
 
+- don't break during training when loss reaches 0.0
+
 == Transformer ==
 
 - add Standardize

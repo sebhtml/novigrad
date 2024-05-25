@@ -25,7 +25,7 @@ impl ChatbotModel {
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
         let n_embd = 768;
         let num_heads = 12;
-        let dropout_probability = 0.1;
+        let dropout_probability = 0.01;
 
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
         let multi_head_attention = MultiHeadAttention::try_new(
@@ -76,15 +76,15 @@ impl Model for ChatbotModel {
 fn main() -> Result<(), Error> {
     let device = Device::cuda()?;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
-    let sequence_length = 64;
+    let sequence_length = 32;
     let vocab_size = tokenizer.vocab_size();
     let model = ChatbotModel::new(&device, sequence_length, vocab_size)?;
     let vocab_size = tokenizer.vocab_size();
     let model: Box<dyn UnaryModel> = Box::new(model);
     let clipped_gradient_norm = 1.0;
     let loss_operator: Box<dyn BinaryOperator> = Box::new(CrossEntropyLoss::new(&device));
-    let learning_rate = 0.01;
-    let optimizer = Adam::new(learning_rate, 0.9, 0.999, 1e-8);
+    let learning_rate = 0.05;
+    let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
     let chatbot = NeuralMachine::<f32>::try_new(
         &device,
@@ -101,14 +101,17 @@ fn main() -> Result<(), Error> {
     println!("The chatbot knows nothing and will learn as you interact with it. (TODO)");
     println!("-------------------------------------------------------------------");
 
+    let max_number_of_examples = 20;
     // From https://en.wikipedia.org/wiki/Geoffrey_Hinton
-    let corpus = read_to_string("examples/Geoffrey_Hinton.txt").unwrap();
+    let corpus = read_to_string("data/Geoffrey_Hinton.txt").unwrap()
+        [0..(sequence_length + max_number_of_examples - 1)]
+        .to_owned();
 
     println!("");
     println!("Corpus: {}", corpus);
     println!("");
 
-    for turn in 0..1000 {
+    for turn in 0..100 {
         println!("Turn: {}", turn);
 
         // Learn things

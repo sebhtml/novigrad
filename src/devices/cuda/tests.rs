@@ -240,3 +240,59 @@ fn cuda_softmax_kernel() {
 
     assert_eq!(expected, actual,);
 }
+
+#[ignore]
+#[test]
+fn cuda_dot_kernel() {
+    use crate::CudaDev;
+    use crate::{Device, DeviceInterface};
+    use cudarc::driver::{LaunchAsync, LaunchConfig};
+
+    let cuda_device = CudaDev::try_default().unwrap();
+    let dev = cuda_device.dev;
+
+    let n = 6;
+    let left_data = vec![
+        //
+        0.2 as f32, 0.4, 0.6, //
+        0.8, 0.2, 0.4, //
+    ];
+    let right_data = vec![
+        //
+        0.5 as f32, 1.0, 0.5, //
+        1.0, 4.0, 2.0, //
+    ];
+    let left = dev.htod_copy(left_data.clone()).unwrap();
+    let right = dev.htod_copy(right_data.clone()).unwrap();
+    let mut gpu_out = dev.alloc_zeros::<f32>(1).unwrap();
+
+    let kernel = dev
+        .get_func("softmax_kernel_module", "softmax_kernel")
+        .unwrap();
+    let cfg = LaunchConfig::for_num_elems(n);
+    unsafe { kernel.launch(cfg, (&left, &right, &mut gpu_out, n)) }.unwrap();
+
+    let out_host: Vec<f32> = dev.dtoh_sync_copy(&gpu_out).unwrap();
+
+    let cpu_output = {
+        let device = Device::cpu();
+        let left = device.tensor(2, 3, left_data).unwrap();
+        let right = device.tensor(2, 3, right_data).unwrap();
+        let output = device.tensor(1, 1, vec![0.0]).unwrap();
+        device.dot(&left, &right, &output).unwrap();
+        output.get_values().unwrap()
+    };
+
+    let precision = 10e-7;
+    let expected = cpu_output
+        .into_iter()
+        .map(|x| ((x / precision).round()) * precision)
+        .collect::<Vec<_>>();
+
+    let actual = out_host
+        .into_iter()
+        .map(|x| ((x / precision).round()) * precision)
+        .collect::<Vec<_>>();
+
+    assert_eq!(expected, actual,);
+}

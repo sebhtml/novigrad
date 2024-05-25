@@ -30,7 +30,6 @@ fn derive() {
     let expected_derived_loss = device
         .tensor(1, 8, vec![-6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0])
         .unwrap();
-    let device = Device::cpu();
     let operator = ResidualSumOfSquares::new(&device);
     let loss = operator.forward(&expected_tensor, &actual_tensor).unwrap();
     loss.forward().unwrap();

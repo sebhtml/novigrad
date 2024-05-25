@@ -7,7 +7,7 @@ use cudarc::{
         sys::{cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSgemm_v2},
         CudaBlas,
     },
-    driver::{self, CudaDevice, LaunchAsync, LaunchConfig},
+    driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
 };
 
 use crate::{error, DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor};
@@ -75,9 +75,9 @@ impl CudaDev {
         )?;
 
         device.load_module(
-            "sigmoid_module",
-            &["sigmoid"],
-            "./src/devices/cuda/kernels/sigmoid.cu",
+            "sigmoid_kernel_module",
+            &["sigmoid_kernel"],
+            "./src/devices/cuda/kernels/sigmoid_kernel.cu",
         )?;
 
         device.load_module(
@@ -89,10 +89,18 @@ impl CudaDev {
         device.load_module(
             "softmax_kernel_module",
             &["softmax_kernel"],
-            "./src/devices/cuda/kernels/softmax.cu",
+            "./src/devices/cuda/kernels/softmax_kernel.cu",
         )?;
 
         Ok(device)
+    }
+
+    fn get_func(&self, module_name: &str, func_name: &str) -> Result<CudaFunction, Error> {
+        let kernel = self
+            .dev
+            .get_func(module_name, func_name)
+            .ok_or(error!(ErrorEnum::NvGetFuncError))?;
+        Ok(kernel)
     }
 
     fn load_module(
@@ -195,10 +203,7 @@ impl DeviceInterface for CudaDev {
 
     fn dot(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
         let n = left.len();
-        let kernel = self
-            .dev
-            .get_func("dot_kernel_module", "dot_kernel")
-            .unwrap();
+        let kernel = self.get_func("dot_kernel_module", "dot_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
 
         let left: &_ = &left.device_slice().deref().borrow().buffer;
@@ -233,10 +238,7 @@ impl DeviceInterface for CudaDev {
         let n = x.len();
         let alpha = &alpha.device_slice().deref().borrow().buffer;
         let x = &x.device_slice().deref().borrow().buffer;
-        let kernel = self
-            .dev
-            .get_func("scalar_mul_kernel_module", "scalar_mul_kernel")
-            .unwrap();
+        let kernel = self.get_func("scalar_mul_kernel_module", "scalar_mul_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
             (DevSliceEnum::CudaDevSlice(alpha), DevSliceEnum::CudaDevSlice(x)) => {
@@ -254,10 +256,7 @@ impl DeviceInterface for CudaDev {
         let n = x.len();
         let alpha = &alpha.device_slice().deref().borrow().buffer;
         let x = &x.device_slice().deref().borrow().buffer;
-        let kernel = self
-            .dev
-            .get_func("scalar_add_kernel_module", "scalar_add_kernel")
-            .unwrap();
+        let kernel = self.get_func("scalar_add_kernel_module", "scalar_add_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
             (DevSliceEnum::CudaDevSlice(alpha), DevSliceEnum::CudaDevSlice(x)) => {
@@ -279,10 +278,7 @@ impl DeviceInterface for CudaDev {
     }
 
     fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let kernel = self
-            .dev
-            .get_func("softmax_kernel_module", "softmax_kernel")
-            .unwrap();
+        let kernel = self.get_func("softmax_kernel_module", "softmax_kernel")?;
         let rows = input.rows();
         let cols = input.cols();
         let n = input.len();
@@ -302,10 +298,7 @@ impl DeviceInterface for CudaDev {
     }
 
     fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let sum_kernel = self
-            .dev
-            .get_func("sum_kernel_module", "sum_kernel")
-            .unwrap();
+        let sum_kernel = self.get_func("sum_kernel_module", "sum_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
         let input = &input.device_slice().deref().borrow().buffer;
@@ -324,10 +317,7 @@ impl DeviceInterface for CudaDev {
 
     fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
         let n = left.len();
-        let kernel = self
-            .dev
-            .get_func("mul_kernel_module", "mul_kernel")
-            .unwrap();
+        let kernel = self.get_func("mul_kernel_module", "mul_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
 
         let left: &_ = &left.device_slice().deref().borrow().buffer;
@@ -351,7 +341,7 @@ impl DeviceInterface for CudaDev {
     }
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let kernel = self.dev.get_func("sigmoid_module", "sigmoid").unwrap();
+        let kernel = self.get_func("sigmoid_kernel_module", "sigmoid_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
         let input = &input.device_slice().deref().borrow().buffer;
@@ -370,10 +360,7 @@ impl DeviceInterface for CudaDev {
 
     fn div(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
         let n = left.len();
-        let kernel = self
-            .dev
-            .get_func("div_kernel_module", "div_kernel")
-            .unwrap();
+        let kernel = self.get_func("div_kernel_module", "div_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
 
         let left: &_ = &left.device_slice().deref().borrow().buffer;
@@ -397,10 +384,7 @@ impl DeviceInterface for CudaDev {
     }
 
     fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let kernel = self
-            .dev
-            .get_func("sqrt_kernel_module", "sqrt_kernel")
-            .unwrap();
+        let kernel = self.get_func("sqrt_kernel_module", "sqrt_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
         let input = &input.device_slice().deref().borrow().buffer;

@@ -1,8 +1,7 @@
 - remove calls to set_values outside of tests
 
 - fix precision in cuda dot kernel test with large size
-- run tests with cuda for default device
-
+- fix code when feature "cuda" is disabled.
 - rewrite CrossEntropyLoss using Sum
 - rewrite ResidualSumOfSquares using Sum
 
@@ -26,7 +25,6 @@
 
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 
-- clean-up naming for cuda kernels
 - device interface use <T>
 - Implement code with f16
 

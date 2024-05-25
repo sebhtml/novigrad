@@ -40,5 +40,6 @@ pub enum ErrorEnum {
     InputOutputError,
     NvRtcCompilePtxError(CompileError),
     NvRtcLoadPtxError,
+    NvGetFuncError,
     NvLaunchError,
 }

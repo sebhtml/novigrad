@@ -24,7 +24,7 @@ impl MegaManAttentionModel {
         let n_embd = 768;
         let num_heads = 12;
         let _n_layer = 1;
-        let dropout_probability = 0.1;
+        let dropout_probability = 0.01;
         let _block_size = 2048;
 
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
@@ -106,7 +106,7 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
         optimizer: Box::new(optimizer),
-        epochs: 300,
+        epochs: 100,
         progress: 10,
         initial_total_error_min: 50.0,
         final_total_error_max: 0.05,

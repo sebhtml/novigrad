@@ -2,7 +2,7 @@ use std::vec;
 
 use rand::Rng;
 
-use crate::{tensor::Tensor, Device, ErrorEnum};
+use crate::{tensor::Tensor, Device, DeviceInterface, ErrorEnum};
 
 #[test]
 fn new() {
@@ -313,7 +313,7 @@ fn scalar_mul() {
     let mut result = device.tensor(3, 2, vec![0.0; 6]).unwrap();
     Tensor::copy(&lhs, &mut result).unwrap();
     let rhs = device.tensor(1, 1, vec![rhs]).unwrap();
-    Tensor::scalar_mul(&rhs, &mut result).unwrap();
+    device.scalar_mul(&rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
 }
 

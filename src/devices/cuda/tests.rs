@@ -241,7 +241,6 @@ fn cuda_softmax_kernel() {
     assert_eq!(expected, actual,);
 }
 
-#[ignore]
 #[test]
 fn cuda_dot_kernel() {
     use crate::CudaDev;
@@ -260,15 +259,13 @@ fn cuda_dot_kernel() {
     let right_data = vec![
         //
         0.5 as f32, 1.0, 0.5, //
-        1.0, 4.0, 2.0, //
+        1.0, 4.0, 5.0, //
     ];
     let left = dev.htod_copy(left_data.clone()).unwrap();
     let right = dev.htod_copy(right_data.clone()).unwrap();
     let mut gpu_out = dev.alloc_zeros::<f32>(1).unwrap();
 
-    let kernel = dev
-        .get_func("softmax_kernel_module", "softmax_kernel")
-        .unwrap();
+    let kernel = dev.get_func("dot_kernel_module", "dot_kernel").unwrap();
     let cfg = LaunchConfig::for_num_elems(n);
     unsafe { kernel.launch(cfg, (&left, &right, &mut gpu_out, n)) }.unwrap();
 

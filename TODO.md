@@ -1,3 +1,4 @@
+- TODO adam t should be in 0..num_iterations
 - make list of things that are using Tensorf32::set_value
 - device interface use <T>
 - rewrite CrossEntropyLoss using Sum

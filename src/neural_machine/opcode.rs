@@ -1,6 +1,6 @@
 use crate::{
-    Add, Concat, CrossEntropyLoss, Dropout, Error, Gemm, Mul, Normalize, ReduceSum, Reshape,
-    ResidualSumOfSquares, ScalarMul, Sigmoid, Softmax, Sub, Tensor, Unconcat,
+    Add, Concat, CrossEntropyLoss, Div, Dropout, Error, Gemm, Mul, Normalize, ReduceSum, Reshape,
+    ResidualSumOfSquares, ScalarAdd, ScalarMul, Sigmoid, Softmax, Sqrt, Sub, Tensor, Unconcat,
 };
 
 #[derive(Clone, Debug)]
@@ -18,6 +18,10 @@ pub enum OpCode {
     Add,
 
     /// Not ONNX-compliant
+    /// TODO remove this op code and use Add with broadcast
+    ScalarAdd,
+
+    /// Not ONNX-compliant
     /// TODO remove this op code and use Mul with broadcast
     ScalarMul,
 
@@ -28,6 +32,12 @@ pub enum OpCode {
 
     /// https://onnx.ai/onnx/operators/onnx__Mul.html
     Mul,
+
+    /// https://onnx.ai/onnx/operators/onnx__Div.html
+    Div,
+
+    /// https://onnx.ai/onnx/operators/onnx__Sqrt.html
+    Sqrt,
 
     /// https://onnx.ai/onnx/operators/onnx__Softmax.html
     Softmax,
@@ -81,6 +91,7 @@ impl Into<String> for OpCode {
             OpCode::Sub => "Sub".into(),
             OpCode::Mul => "Mul".into(),
             OpCode::ScalarMul => "ScalarMul".into(),
+            OpCode::ScalarAdd => "ScalarAdd".into(),
             OpCode::Normalize => "Normalize".into(),
             OpCode::Softmax => "Softmax".into(),
             OpCode::Sigmoid => "Sigmoid".into(),
@@ -90,6 +101,8 @@ impl Into<String> for OpCode {
             OpCode::CrossEntropyLoss => "CrossEntropyLoss".into(),
             OpCode::ResidualSumOfSquares => "ResidualSumOfSquares".into(),
             OpCode::Dropout(_) => "Dropout".into(),
+            OpCode::Div => "Div".into(),
+            OpCode::Sqrt => "Sqrt".into(),
         }
         .into()
     }
@@ -118,6 +131,9 @@ impl OpCode {
             OpCode::Dropout(dropout_probability) => {
                 Dropout::execute(*dropout_probability, inputs, outputs)
             }
+            OpCode::Div => Div::execute(inputs, outputs),
+            OpCode::Sqrt => Sqrt::execute(inputs, outputs),
+            OpCode::ScalarAdd => ScalarAdd::execute(inputs, outputs),
         }
     }
 }

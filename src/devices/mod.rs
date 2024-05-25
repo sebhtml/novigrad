@@ -58,6 +58,8 @@ pub trait DeviceInterface {
         ldc: i32,
     ) -> Result<(), Error>;
 
+    fn div(&self, input1: &Tensor, input2: &Tensor, output: &Tensor) -> Result<(), Error>;
+
     /// SAXPY constant times a vector plus a vector.
     /// y = alpha * x + y
     fn axpy(
@@ -78,6 +80,8 @@ pub trait DeviceInterface {
 
     fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error>;
 
+    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error>;
+
     fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error>;
 
     /// Allocate a slice on the device.
@@ -86,6 +90,8 @@ pub trait DeviceInterface {
     fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+
+    fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 }
@@ -267,6 +273,10 @@ impl DeviceInterface for Device {
         self.device.scalar_mul(alpha, x)
     }
 
+    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+        self.device.scalar_add(alpha, x)
+    }
+
     fn slice(&self, n: i32) -> Result<DevSliceEnum, Error> {
         self.device.slice(n)
     }
@@ -285,5 +295,13 @@ impl DeviceInterface for Device {
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         self.device.sigmoid(input, output)
+    }
+
+    fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        self.device.sigmoid(input, output)
+    }
+
+    fn div(&self, input1: &Tensor, input2: &Tensor, output: &Tensor) -> Result<(), Error> {
+        self.device.div(input1, input2, output)
     }
 }

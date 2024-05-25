@@ -46,8 +46,23 @@ fn cblas_sgemm_column_major() {
 
     let alpha = 1.0;
     let beta = 1.0;
+
     device
-        .gemm(false, false, m, n, k, alpha, &a, m, &b, k, beta, &c, m)
+        .gemm(
+            false,
+            false,
+            m,
+            n,
+            k,
+            alpha,
+            a.as_ptr(),
+            m,
+            b.as_ptr(),
+            k,
+            beta,
+            c.as_mut_ptr(),
+            m,
+        )
         .unwrap();
 
     assert_eq!(
@@ -114,7 +129,21 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
     let alpha = 1.0;
     let beta = 1.0;
     device
-        .gemm(false, false, n, m, k, alpha, &b, n, &a, k, beta, &c, n)
+        .gemm(
+            false,
+            false,
+            n,
+            m,
+            k,
+            alpha,
+            b.as_ptr(),
+            n,
+            a.as_ptr(),
+            k,
+            beta,
+            c.as_mut_ptr(),
+            n,
+        )
         .unwrap();
 
     assert_eq!(

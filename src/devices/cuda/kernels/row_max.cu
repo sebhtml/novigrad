@@ -1,5 +1,3 @@
-#define BLOCK_SIZE 32 * 32
-
 extern "C" __global__ void row_max_kernel(const float *input, float *output, int rows, int cols)
 {
     // Thread indices

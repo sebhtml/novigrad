@@ -48,7 +48,21 @@ fn cublas_sgemm_column_major() {
     let alpha = 1.0;
     let beta = 1.0;
     device
-        .gemm(false, false, m, n, k, alpha, &a, m, &b, k, beta, &c, m)
+        .gemm(
+            false,
+            false,
+            m,
+            n,
+            k,
+            alpha,
+            a.as_ptr(),
+            m,
+            b.as_ptr(),
+            k,
+            beta,
+            c.as_mut_ptr(),
+            m,
+        )
         .unwrap();
 
     let values = c.get_values().unwrap();
@@ -214,6 +228,108 @@ fn cuda_softmax_kernel() {
     }
 
     let precision = 10e-7;
+    let expected = cpu_output
+        .into_iter()
+        .map(|x| ((x / precision).round()) * precision)
+        .collect::<Vec<_>>();
+
+    let actual = out_host
+        .into_iter()
+        .map(|x| ((x / precision).round()) * precision)
+        .collect::<Vec<_>>();
+
+    assert_eq!(expected, actual,);
+}
+
+#[test]
+fn cuda_dot_kernel() {
+    use crate::CudaDev;
+    use crate::{Device, DeviceInterface};
+    use cudarc::driver::{LaunchAsync, LaunchConfig};
+
+    let cuda_device = CudaDev::try_default().unwrap();
+    let dev = cuda_device.dev;
+
+    let n = 6;
+    let left_data = vec![
+        //
+        0.2 as f32, 0.4, 0.6, //
+        0.8, 0.2, 0.4, //
+    ];
+    let right_data = vec![
+        //
+        0.5 as f32, 1.0, 0.5, //
+        1.0, 4.0, 5.0, //
+    ];
+    let left = dev.htod_copy(left_data.clone()).unwrap();
+    let right = dev.htod_copy(right_data.clone()).unwrap();
+    let mut gpu_out = dev.alloc_zeros::<f32>(1).unwrap();
+
+    let kernel = dev.get_func("dot_kernel_module", "dot_kernel").unwrap();
+    let cfg = LaunchConfig::for_num_elems(n);
+    unsafe { kernel.launch(cfg, (&left, &right, &mut gpu_out, n)) }.unwrap();
+
+    let out_host: Vec<f32> = dev.dtoh_sync_copy(&gpu_out).unwrap();
+
+    let cpu_output = {
+        let device = Device::cpu();
+        let left = device.tensor(1, n as usize, left_data).unwrap();
+        let right = device.tensor(1, n as usize, right_data).unwrap();
+        let output = device.tensor(1, 1 as usize, vec![0.0]).unwrap();
+        device.dot(&left, &right, &output).unwrap();
+        output.get_values().unwrap()
+    };
+
+    let precision = 10e-7;
+    let expected = cpu_output
+        .into_iter()
+        .map(|x| ((x / precision).round()) * precision)
+        .collect::<Vec<_>>();
+
+    let actual = out_host
+        .into_iter()
+        .map(|x| ((x / precision).round()) * precision)
+        .collect::<Vec<_>>();
+
+    assert_eq!(expected, actual,);
+}
+
+#[test]
+fn cuda_dot_kernel_big_vectors() {
+    use crate::CudaDev;
+    use crate::{Device, DeviceInterface};
+    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    use rand::Rng;
+
+    let cuda_device = CudaDev::try_default().unwrap();
+    let dev = cuda_device.dev;
+
+    let n = 1000000; // Larger than block_dim, which is 1024 in cudarc
+    let mut rng = rand::thread_rng();
+
+    let left_data: Vec<f32> = (0..n).map(|_| rng.gen_range(0.0..1.0)).collect();
+    let right_data: Vec<f32> = (0..n).map(|_| rng.gen_range(0.0..1.0)).collect();
+
+    let left = dev.htod_copy(left_data.clone()).unwrap();
+    let right = dev.htod_copy(right_data.clone()).unwrap();
+    let mut gpu_out = dev.alloc_zeros::<f32>(1).unwrap();
+
+    let kernel = dev.get_func("dot_kernel_module", "dot_kernel").unwrap();
+    let cfg = LaunchConfig::for_num_elems(n);
+    unsafe { kernel.launch(cfg, (&left, &right, &mut gpu_out, n)) }.unwrap();
+
+    let out_host: Vec<f32> = dev.dtoh_sync_copy(&gpu_out).unwrap();
+
+    let cpu_output = {
+        let device = Device::cpu();
+        let left = device.tensor(1, n as usize, left_data).unwrap();
+        let right = device.tensor(1, n as usize, right_data).unwrap();
+        let output = device.tensor(1, 1 as usize, vec![0.0]).unwrap();
+        device.dot(&left, &right, &output).unwrap();
+        output.get_values().unwrap()
+    };
+
+    let precision = 10e-1;
     let expected = cpu_output
         .into_iter()
         .map(|x| ((x / precision).round()) * precision)

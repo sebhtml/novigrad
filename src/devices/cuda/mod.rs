@@ -4,7 +4,7 @@ mod tests;
 
 use cudarc::{
     cublas::{
-        sys::{cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSdot_v2, cublasSgemm_v2},
+        sys::{cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSgemm_v2},
         CudaBlas,
     },
     driver::{self, CudaDevice, LaunchAsync, LaunchConfig},
@@ -42,6 +42,12 @@ impl CudaDev {
             "sum_kernel_module",
             &["sum_kernel"],
             "./src/devices/cuda/kernels/sum_kernel.cu",
+        )?;
+
+        device.load_module(
+            "dot_kernel_module",
+            &["dot_kernel"],
+            "./src/devices/cuda/kernels/dot_kernel.cu",
         )?;
 
         device.load_module(
@@ -136,12 +142,12 @@ impl DeviceInterface for CudaDev {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &Tensor,
+        a: *const f32,
         lda: i32,
-        b: &Tensor,
+        b: *const f32,
         ldb: i32,
         beta: f32,
-        c: &Tensor,
+        c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
@@ -159,9 +165,6 @@ impl DeviceInterface for CudaDev {
         // When they are on the host, it's fine though.
         let alpha = &alpha;
         let beta = &beta;
-        let a = a.as_ptr();
-        let b = b.as_ptr();
-        let c = c.as_mut_ptr();
 
         let status = unsafe {
             cublasSgemm_v2(
@@ -190,23 +193,32 @@ impl DeviceInterface for CudaDev {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let n = x.len() as i32;
-        let incx = 1;
-        let incy = 1;
-        let x = x.as_ptr();
-        let y = y.as_ptr();
-        let handle = *self.cuda_blas.handle();
-        let mut result: f32 = 0.0;
-        let status = unsafe {
-            let result = &mut result as *mut f32;
-            cublasSdot_v2(handle, n, x, incx, y, incy, result)
-        };
-        status
-            .result()
-            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-        output.set_values(vec![result])?;
-        Ok(())
+    fn dot(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+        let n = left.len();
+        let kernel = self
+            .dev
+            .get_func("dot_kernel_module", "dot_kernel")
+            .unwrap();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+
+        let left: &_ = &left.device_slice().deref().borrow().buffer;
+        let right = &right.device_slice().deref().borrow().buffer;
+        let result: &_ = &result.device_slice().deref().borrow().buffer;
+
+        match (left, right, result) {
+            (
+                DevSliceEnum::CudaDevSlice(left),
+                DevSliceEnum::CudaDevSlice(right),
+                DevSliceEnum::CudaDevSlice(result),
+            ) => {
+                let result = unsafe { kernel.launch(cfg, (left, right, result, n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
+        }
     }
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {

@@ -1,4 +1,5 @@
 extern "C" __global__ void max_kernel(float* data, int size, float* result) {
+  const int block_dim = 1024;
   // Thread index within the block
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -8,7 +9,7 @@ extern "C" __global__ void max_kernel(float* data, int size, float* result) {
     float local_max = data[tid];
 
     // Shared memory for efficient reduction within a block (optional)
-    __shared__ float block_max[32 * 32];
+    __shared__ float block_max[block_dim];
 
     // Loop for parallel reduction within a block
     for (int stride = blockDim.x; stride > 1; stride /= 2) {

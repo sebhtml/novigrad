@@ -1,4 +1,4 @@
-use crate::{Error, Tensor};
+use crate::{DeviceInterface, Error, Tensor};
 
 pub struct ScalarAdd {}
 
@@ -7,7 +7,8 @@ impl ScalarAdd {
         let alpha = inputs[0];
         let input = inputs[1];
         let output = outputs[0];
+        let device = input.device();
         Tensor::copy(input, output)?;
-        Tensor::scalar_add(alpha, output)
+        device.scalar_add(alpha, output)
     }
 }

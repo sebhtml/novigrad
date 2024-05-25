@@ -167,14 +167,6 @@ impl Tensor {
         Ok(false)
     }
 
-    pub fn dot_product(x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let device = &x.device;
-        if x.size() != y.size() {
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        device.dot(x, y, output)
-    }
-
     pub fn copy(x: &Tensor, y: &Tensor) -> Result<(), Error> {
         let device = &x.device;
         let n = x.len() as i32;
@@ -230,7 +222,8 @@ impl Tensor {
     }
 
     pub fn l2_norm(&self, output: &Tensor) -> Result<(), Error> {
-        Tensor::dot_product(self, self, output)?;
+        let device = self.device();
+        device.dot(self, self, output)?;
         let squared_l2_norm = output.get_values()?[0];
         let l2_norm = squared_l2_norm.sqrt();
         output.set_values(vec![l2_norm])?;
@@ -246,18 +239,9 @@ impl Tensor {
         }
         let alpha = 1.0 / l2_norm;
         let x = self;
-        let alpha = self.device.tensor(1, 1, vec![alpha]).unwrap();
-        Tensor::scalar_mul(&alpha, x)
-    }
-
-    pub fn scalar_mul(alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
-        let device = x.device.clone();
-        device.scalar_mul(alpha, x)
-    }
-
-    pub fn scalar_add(alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
-        let device = x.device.clone();
-        device.scalar_add(alpha, x)
+        let device = self.device();
+        let alpha = device.tensor(1, 1, vec![alpha]).unwrap();
+        device.scalar_mul(&alpha, x)
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {

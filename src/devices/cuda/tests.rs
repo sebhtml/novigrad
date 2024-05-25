@@ -48,7 +48,21 @@ fn cublas_sgemm_column_major() {
     let alpha = 1.0;
     let beta = 1.0;
     device
-        .gemm(false, false, m, n, k, alpha, &a, m, &b, k, beta, &c, m)
+        .gemm(
+            false,
+            false,
+            m,
+            n,
+            k,
+            alpha,
+            a.as_ptr(),
+            m,
+            b.as_ptr(),
+            k,
+            beta,
+            c.as_mut_ptr(),
+            m,
+        )
         .unwrap();
 
     let values = c.get_values().unwrap();

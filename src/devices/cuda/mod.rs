@@ -136,12 +136,12 @@ impl DeviceInterface for CudaDev {
         n: i32,
         k: i32,
         alpha: f32,
-        a: &Tensor,
+        a: *const f32,
         lda: i32,
-        b: &Tensor,
+        b: *const f32,
         ldb: i32,
         beta: f32,
-        c: &Tensor,
+        c: *mut f32,
         ldc: i32,
     ) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
@@ -159,9 +159,6 @@ impl DeviceInterface for CudaDev {
         // When they are on the host, it's fine though.
         let alpha = &alpha;
         let beta = &beta;
-        let a = a.as_ptr();
-        let b = b.as_ptr();
-        let c = c.as_mut_ptr();
 
         let status = unsafe {
             cublasSgemm_v2(

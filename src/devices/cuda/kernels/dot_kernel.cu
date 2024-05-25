@@ -1,8 +1,9 @@
 /// https://emre-avci.medium.com/dot-product-in-cuda-c-which-might-outperform-cublas-t-dot-732047aa5ec5
+/// https://www.reddit.com/r/CUDA/comments/194cdhn/reference_implementation_for_optimized_sum_reduce/
 extern "C" __global__ void dot_kernel(float *lhs, float *rhs, float *c, int n)
 {
     const int threadsPerBlock = 1024;
-    __shared__ float cache[threadsPerBlock];
+    __shared__ float shared_mem[threadsPerBlock];
 
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int stride = blockDim.x * gridDim.x;
@@ -11,16 +12,20 @@ extern "C" __global__ void dot_kernel(float *lhs, float *rhs, float *c, int n)
     {
         partial += lhs[i] * rhs[i];
     }
-    cache[threadIdx.x] = partial;
+    shared_mem[threadIdx.x] = partial;
     __syncthreads();
 
-    if (idx == 0.0)
+    for (int s = blockDim.x / 2; s > 0; s >>= 1)
     {
-        float sum = 0.0;
-        for (int i = 0; i < threadsPerBlock; i++)
+        if (threadIdx.x < s)
         {
-            sum += cache[i];
+            shared_mem[threadIdx.x] += shared_mem[threadIdx.x + s];
         }
-        *c = sum;
+        __syncthreads();
+    }
+
+    if (idx == 0)
+    {
+        *c = shared_mem[0];
     }
 }

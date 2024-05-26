@@ -44,7 +44,7 @@ pub enum ErrorEnum {
     #[cfg(feature = "cuda")]
     NvRtcLoadPtxError,
     #[cfg(feature = "cuda")]
-    NvGetFuncError,
+    NvGetFuncError(String),
     #[cfg(feature = "cuda")]
     NvLaunchError,
 }

@@ -22,3 +22,4 @@ mod div;
 pub use div::*;
 mod sqrt;
 pub use sqrt::*;
+pub mod clip;

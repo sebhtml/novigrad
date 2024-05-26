@@ -9,6 +9,7 @@ use self::slice::CpuDevSlice;
 use super::DeviceInterface;
 extern crate blas_src;
 
+#[cfg(test)]
 mod tests;
 
 #[derive(Debug)]
@@ -207,6 +208,27 @@ impl DeviceInterface for CpuDevice {
             row += 1;
         }
         output.set_values(result_values)
+    }
+
+    fn clip(
+        &self,
+        min: &Tensor,
+        max: &Tensor,
+        input: &Tensor,
+        output: &Tensor,
+    ) -> Result<(), Error> {
+        let n = input.len();
+        let input = input.as_ptr();
+        let output = output.as_mut_ptr();
+        let min = unsafe { *min.as_ptr() };
+        let max = unsafe { *max.as_ptr() };
+        for idx in 0..n {
+            let x = unsafe { *input.add(idx) };
+            let x = x.max(min);
+            let x = x.min(max);
+            unsafe { *output.add(idx) = x };
+        }
+        Ok(())
     }
 
     fn div(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {

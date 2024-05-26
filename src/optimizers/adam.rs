@@ -8,7 +8,7 @@ use crate::{
 /// Adam: A Method for Stochastic Optimization
 /// https://arxiv.org/abs/1412.6980
 pub struct Adam {
-    learning_rate: f32,
+    alpha: f32,
     beta1: f32,
     beta2: f32,
     epsilon: f32,
@@ -17,7 +17,7 @@ pub struct Adam {
 impl Adam {
     pub fn new(learning_rate: f32, beta1: f32, beta2: f32, epsilon: f32) -> Self {
         Self {
-            learning_rate,
+            alpha: learning_rate,
             beta1,
             beta2,
             epsilon,
@@ -31,17 +31,19 @@ impl OptimizerTrait for Adam {
         device: &Device,
         tensors: &[TensorWithGrad],
     ) -> Result<Vec<Instruction>, Error> {
-        let learning_rate = self.learning_rate;
+        let alpha = self.alpha;
         let beta1 = self.beta1;
         let beta2 = self.beta2;
         let epsilon = self.epsilon;
 
-        let learning_rate_tensor = device.tensor(1, 1, vec![learning_rate])?;
+        let alpha_rate_tensor = device.tensor(1, 1, vec![alpha])?;
         let one_minus_beta1 = device.tensor(1, 1, vec![1.0 - beta1])?;
         let beta1_tensor = device.tensor(1, 1, vec![beta1])?;
         let one_minus_beta2 = device.tensor(1, 1, vec![1.0 - beta2])?;
         let beta2_tensor = device.tensor(1, 1, vec![beta2])?;
         let epsilon_tensor = device.tensor(1, 1, vec![epsilon])?;
+        let zero = device.tensor(1, 1, vec![0.0])?;
+        let f32_max = device.tensor(1, 1, vec![f32::MAX])?;
 
         let mut instructions = vec![];
 
@@ -118,11 +120,16 @@ impl OptimizerTrait for Adam {
             ));
 
             // Update parameters with adaptive learning rate
-            // theta = theta - learning_rate * m_hat / (sqrt(v_hat) + epsilon)
-            instructions.push(optimization_instruction!(OpCode::Sqrt, &[&v_hat], &[&tmp1],));
+            // theta = theta - alpha * m_hat / (sqrt(v_hat) + epsilon)
+            instructions.push(optimization_instruction!(
+                OpCode::Clip,
+                &[&zero, &f32_max, &v_hat],
+                &[&tmp1],
+            ));
+            instructions.push(optimization_instruction!(OpCode::Sqrt, &[&tmp1], &[&tmp1],));
             instructions.push(optimization_instruction!(
                 OpCode::ScalarAdd,
-                &[&epsilon_tensor, &tmp1],
+                &[&epsilon_tensor, &tmp1], // TODO use tmp1
                 &[&tmp1],
             ));
             instructions.push(optimization_instruction!(
@@ -130,9 +137,15 @@ impl OptimizerTrait for Adam {
                 &[&m_hat, &tmp1],
                 &[&tmp1],
             ));
+            // normalize is not in the adam paper. but +inf is reached is this is not done.
+            instructions.push(optimization_instruction!(
+                OpCode::Normalize,
+                &[&tmp1],
+                &[&tmp1],
+            ));
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
-                &[&learning_rate_tensor, &tmp1],
+                &[&alpha_rate_tensor, &tmp1],
                 &[&tmp1],
             ));
             instructions.push(optimization_instruction!(

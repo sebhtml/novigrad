@@ -1,5 +1,6 @@
 use std::{fs::File, io::Read, ops::Deref, sync::Arc};
 pub mod slice;
+#[cfg(test)]
 mod tests;
 
 use cudarc::{
@@ -89,6 +90,12 @@ impl CudaDev {
         )?;
 
         device.load_module(
+            "clip_kernel_module",
+            &["clip_kernel"],
+            "./src/devices/cuda/kernels/clip_kernel.cu",
+        )?;
+
+        device.load_module(
             "softmax_kernel_module",
             &["softmax_kernel"],
             "./src/devices/cuda/kernels/softmax_kernel.cu",
@@ -101,7 +108,7 @@ impl CudaDev {
         let kernel = self
             .dev
             .get_func(module_name, func_name)
-            .ok_or(error!(ErrorEnum::NvGetFuncError))?;
+            .ok_or(error!(ErrorEnum::NvGetFuncError(func_name.into())))?;
         Ok(kernel)
     }
 
@@ -398,6 +405,42 @@ impl DeviceInterface for CudaDev {
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
                 let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
+    }
+
+    fn clip(
+        &self,
+        min: &Tensor,
+        max: &Tensor,
+        input: &Tensor,
+        output: &Tensor,
+    ) -> Result<(), Error> {
+        let kernel = self.get_func("clip_kernel_module", "clip_kernel")?;
+        let n = input.len();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        let min = &min.device_slice().deref().borrow().buffer;
+        let max = &max.device_slice().deref().borrow().buffer;
+        let input = &input.device_slice().deref().borrow().buffer;
+        let output = &output.device_slice().deref().borrow().buffer;
+        match (min, max, input, output) {
+            (
+                DevSliceEnum::CudaDevSlice(min),
+                DevSliceEnum::CudaDevSlice(max),
+                DevSliceEnum::CudaDevSlice(input),
+                DevSliceEnum::CudaDevSlice(output),
+            ) => {
+                let result = unsafe {
+                    kernel.launch(
+                        cfg,
+                        (min.slice(), max.slice(), input.slice(), output.slice(), n),
+                    )
+                };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),

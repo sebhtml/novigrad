@@ -67,9 +67,11 @@ impl<T> NeuralMachine<T> {
                 instructions.push(instruction);
 
                 for output in outputs {
-                    let clip_instruction =
-                        gradient_instruction!(OpCode::Normalize, &[output], &[output],);
-                    instructions.push(clip_instruction);
+                    instructions.push(gradient_instruction!(
+                        OpCode::Normalize,
+                        &[output],
+                        &[output],
+                    ));
                 }
             }
         }
@@ -147,10 +149,19 @@ impl<T> NeuralMachine<T> {
             #[cfg(debug_assertions)]
             for input in instruction.inputs().deref() {
                 let opcode: String = instruction.opcode().clone().into();
-                debug_assert_eq!(
+                assert_eq!(
                     input.is_nan()?,
                     false,
                     "instruction {} {} read nan input {} {}",
+                    i,
+                    opcode,
+                    input.name(),
+                    input,
+                );
+                assert_eq!(
+                    input.is_infinite()?,
+                    false,
+                    "instruction {} {} read inf input {} {}",
                     i,
                     opcode,
                     input.name(),
@@ -169,10 +180,19 @@ impl<T> NeuralMachine<T> {
             #[cfg(debug_assertions)]
             for output in instruction.outputs().deref() {
                 let opcode: String = instruction.opcode().clone().into();
-                debug_assert_eq!(
+                assert_eq!(
                     output.is_nan()?,
                     false,
                     "instruction {} {} wrote nan output {} {}",
+                    i,
+                    opcode,
+                    output.name(),
+                    output,
+                );
+                assert_eq!(
+                    output.is_infinite()?,
+                    false,
+                    "instruction {} {} wrote inf output {} {}",
                     i,
                     opcode,
                     output.name(),

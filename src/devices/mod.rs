@@ -7,6 +7,8 @@ use std::{
     ops::Deref,
     rc::Rc,
 };
+#[cfg(test)]
+mod tests;
 
 pub use cpu::*;
 #[cfg(feature = "cuda")]
@@ -75,6 +77,14 @@ pub trait DeviceInterface {
 
     /// dot performs the dot product of two vectors.
     fn dot(&self, left: &Tensor, right: &Tensor, output: &Tensor) -> Result<(), Error>;
+
+    fn clip(
+        &self,
+        min: &Tensor,
+        max: &Tensor,
+        input: &Tensor,
+        output: &Tensor,
+    ) -> Result<(), Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
@@ -311,10 +321,20 @@ impl DeviceInterface for Device {
     }
 
     fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        self.device.sigmoid(input, output)
+        self.device.sqrt(input, output)
     }
 
     fn div(&self, input1: &Tensor, input2: &Tensor, output: &Tensor) -> Result<(), Error> {
         self.device.div(input1, input2, output)
+    }
+
+    fn clip(
+        &self,
+        min: &Tensor,
+        max: &Tensor,
+        input: &Tensor,
+        output: &Tensor,
+    ) -> Result<(), Error> {
+        self.device.clip(min, max, input, output)
     }
 }

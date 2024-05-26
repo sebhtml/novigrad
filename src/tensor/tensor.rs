@@ -1,6 +1,6 @@
 use crate::{
     devices::{Device, DeviceInterface},
-    error, Error,
+    error, DevSliceTrait, Error,
 };
 use crate::{DevSlice, ErrorEnum};
 
@@ -128,7 +128,7 @@ impl Tensor {
     pub fn set_values(&self, new_values: Vec<f32>) -> Result<(), Error> {
         debug_assert_eq!(new_values.len(), self.len());
         if self.device_slice.deref().borrow().len() != self.len() {
-            self.device_slice.deref().borrow_mut().resize(self.len())
+            return Err(error!(ErrorEnum::UnsupportedOperation));
         }
         self.device_slice
             .deref()

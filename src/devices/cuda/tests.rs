@@ -110,6 +110,7 @@ fn cuda_set_value() {
 
 #[test]
 fn buffer() {
+    use crate::DevSliceTrait;
     use crate::Device;
     use std::ptr::null;
     let device = Device::cuda().unwrap();
@@ -329,7 +330,7 @@ fn cuda_dot_kernel_big_vectors() {
         output.get_values().unwrap()
     };
 
-    let precision = 10e-1;
+    let precision = 1.0;
     let expected = cpu_output
         .into_iter()
         .map(|x| ((x / precision).round()) * precision)

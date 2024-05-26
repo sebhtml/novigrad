@@ -1,15 +1,12 @@
-#[cfg(feature = "cuda")]
 use crate::error;
 use crate::Device;
 use crate::DeviceInterface;
 use crate::Error;
-#[cfg(feature = "cuda")]
 use crate::ErrorEnum;
+
 #[cfg(feature = "cuda")]
 use cudarc::driver::{CudaSlice, DevicePtr, DevicePtrMut, DeviceSlice};
 use std::borrow::BorrowMut;
-#[cfg(feature = "cuda")]
-use std::mem::swap;
 
 #[derive(Debug)]
 pub struct DevSlice {
@@ -34,6 +31,14 @@ pub enum DevSliceEnum {
     CudaDevSlice(CudaSlice<f32>),
 }
 
+pub trait DevSliceTrait {
+    fn as_ptr(&self) -> *const f32;
+    fn as_mut_ptr(&mut self) -> *mut f32;
+    fn get_values(&self) -> Result<Vec<f32>, Error>;
+    fn set_values(&mut self, new_values: Vec<f32>) -> Result<(), Error>;
+    fn len(&self) -> usize;
+}
+
 impl DevSlice {
     pub fn new(device: &Device, len: usize) -> DevSlice {
         // TODO remove unwrap
@@ -43,8 +48,10 @@ impl DevSlice {
             buffer: slice,
         }
     }
+}
 
-    pub fn as_ptr(&self) -> *const f32 {
+impl DevSliceTrait for DevSlice {
+    fn as_ptr(&self) -> *const f32 {
         match &self.buffer {
             DevSliceEnum::CpuDevSlice(ref values) => values.as_ptr(),
             #[cfg(feature = "cuda")]
@@ -52,7 +59,7 @@ impl DevSlice {
         }
     }
 
-    pub fn as_mut_ptr(&mut self) -> *mut f32 {
+    fn as_mut_ptr(&mut self) -> *mut f32 {
         match self.buffer.borrow_mut() {
             DevSliceEnum::CpuDevSlice(ref mut values) => values.as_mut_ptr(),
             #[cfg(feature = "cuda")]
@@ -60,7 +67,7 @@ impl DevSlice {
         }
     }
 
-    pub fn get_values(&self) -> Result<Vec<f32>, Error> {
+    fn get_values(&self) -> Result<Vec<f32>, Error> {
         match self.buffer {
             DevSliceEnum::CpuDevSlice(ref values) => Ok(values.clone()),
             #[cfg(feature = "cuda")]
@@ -76,7 +83,7 @@ impl DevSlice {
         }
     }
 
-    pub fn set_values(&mut self, new_values: Vec<f32>) -> Result<(), Error> {
+    fn set_values(&mut self, new_values: Vec<f32>) -> Result<(), Error> {
         match self.buffer.borrow_mut() {
             DevSliceEnum::CpuDevSlice(ref mut values) => {
                 values.clear();
@@ -92,26 +99,11 @@ impl DevSlice {
         }
     }
 
-    pub fn len(&self) -> usize {
+    fn len(&self) -> usize {
         match &self.buffer {
             DevSliceEnum::CpuDevSlice(buffer) => buffer.len(),
             #[cfg(feature = "cuda")]
             DevSliceEnum::CudaDevSlice(buffer) => buffer.len(),
-        }
-    }
-
-    pub fn resize(&mut self, new_len: usize) {
-        match self.buffer.borrow_mut() {
-            DevSliceEnum::CpuDevSlice(buffer) => buffer.resize(new_len, Default::default()),
-            #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(buffer) => {
-                if buffer.len() != new_len {
-                    let dev = buffer.device();
-                    // TODO don't unwrap
-                    let mut new_buffer = dev.alloc_zeros(new_len).unwrap();
-                    swap(buffer, &mut new_buffer);
-                }
-            }
         }
     }
 }

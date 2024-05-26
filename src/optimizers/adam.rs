@@ -8,7 +8,7 @@ use crate::{
 /// Adam: A Method for Stochastic Optimization
 /// https://arxiv.org/abs/1412.6980
 pub struct Adam {
-    learning_rate: f32,
+    alpha: f32,
     beta1: f32,
     beta2: f32,
     epsilon: f32,
@@ -17,7 +17,7 @@ pub struct Adam {
 impl Adam {
     pub fn new(learning_rate: f32, beta1: f32, beta2: f32, epsilon: f32) -> Self {
         Self {
-            learning_rate,
+            alpha: learning_rate,
             beta1,
             beta2,
             epsilon,
@@ -31,17 +31,19 @@ impl OptimizerTrait for Adam {
         device: &Device,
         tensors: &[TensorWithGrad],
     ) -> Result<Vec<Instruction>, Error> {
-        let learning_rate = self.learning_rate;
+        let alpha = self.alpha;
         let beta1 = self.beta1;
         let beta2 = self.beta2;
         let epsilon = self.epsilon;
 
-        let learning_rate_tensor = device.tensor(1, 1, vec![learning_rate])?;
+        let learning_rate_tensor = device.tensor(1, 1, vec![alpha])?;
         let one_minus_beta1 = device.tensor(1, 1, vec![1.0 - beta1])?;
         let beta1_tensor = device.tensor(1, 1, vec![beta1])?;
         let one_minus_beta2 = device.tensor(1, 1, vec![1.0 - beta2])?;
         let beta2_tensor = device.tensor(1, 1, vec![beta2])?;
         let epsilon_tensor = device.tensor(1, 1, vec![epsilon])?;
+        let zero = device.tensor(1, 1, vec![0.0])?;
+        let inf = device.tensor(1, 1, vec![f32::INFINITY])?;
 
         let mut instructions = vec![];
 
@@ -119,6 +121,12 @@ impl OptimizerTrait for Adam {
 
             // Update parameters with adaptive learning rate
             // theta = theta - learning_rate * m_hat / (sqrt(v_hat) + epsilon)
+            /*instructions.push(optimization_instruction!(
+                OpCode::Clip,
+                &[&zero, &inf, &v_hat],
+                &[&tmp1],
+            ));
+            */
             instructions.push(optimization_instruction!(OpCode::Sqrt, &[&v_hat], &[&tmp1],));
             instructions.push(optimization_instruction!(
                 OpCode::ScalarAdd,

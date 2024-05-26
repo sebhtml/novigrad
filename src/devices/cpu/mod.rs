@@ -1,8 +1,10 @@
 use std::f32::consts::E;
-
+pub mod slice;
 use cblas::{Layout, Transpose};
 extern crate cblas_sys as ffi;
-use crate::{error, DevSliceEnum, Error, ErrorEnum, Tensor};
+use crate::{error, slice::DevSliceEnum, Error, ErrorEnum, Tensor};
+
+use self::slice::CpuDevSlice;
 
 use super::DeviceInterface;
 extern crate blas_src;
@@ -117,10 +119,10 @@ impl DeviceInterface for CpuDevice {
         Ok(())
     }
 
-    fn slice(&self, n: i32) -> Result<crate::DevSliceEnum, Error> {
+    fn slice(&self, n: i32) -> Result<DevSliceEnum, Error> {
         let len = n as usize;
         let values = vec![0.0; len];
-        let slice = DevSliceEnum::CpuDevSlice(values);
+        let slice = DevSliceEnum::CpuDevSlice(CpuDevSlice::new(values));
         Ok(slice)
     }
 

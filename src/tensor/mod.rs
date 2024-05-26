@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 mod tensor;
+#[cfg(feature = "cuda")]
 use cudarc::nvrtc::CompileError;
 pub use tensor::*;
 
@@ -38,8 +39,12 @@ pub enum ErrorEnum {
     UnsupportedOperation,
     IncorrectOperatorConfiguration,
     InputOutputError,
+    #[cfg(feature = "cuda")]
     NvRtcCompilePtxError(CompileError),
+    #[cfg(feature = "cuda")]
     NvRtcLoadPtxError,
+    #[cfg(feature = "cuda")]
     NvGetFuncError,
+    #[cfg(feature = "cuda")]
     NvLaunchError,
 }

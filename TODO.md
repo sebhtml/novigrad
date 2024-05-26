@@ -1,3 +1,4 @@
+- use sqrt in sqrt instead of sigmoid in device
 - remove calls to set_values outside of tests
 
 - fix precision in cuda dot kernel test with large size
@@ -31,7 +32,6 @@
 ---------------------
 
 - make sure that all OpCode have >= 2 inputs
-- test all tensor operations with all devices
 - implement Conv2D
 - no values in OpCode, put them instead in OpCodeArguments
 

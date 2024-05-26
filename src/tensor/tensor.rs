@@ -1,8 +1,11 @@
+use crate::devices::slice::DevSliceTrait;
+use crate::ErrorEnum;
 use crate::{
     devices::{Device, DeviceInterface},
-    error, Error,
+    error,
+    slice::DevSlice,
+    Error,
 };
-use crate::{DevSlice, ErrorEnum};
 
 use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc, vec};
 
@@ -128,7 +131,7 @@ impl Tensor {
     pub fn set_values(&self, new_values: Vec<f32>) -> Result<(), Error> {
         debug_assert_eq!(new_values.len(), self.len());
         if self.device_slice.deref().borrow().len() != self.len() {
-            self.device_slice.deref().borrow_mut().resize(self.len())
+            return Err(error!(ErrorEnum::UnsupportedOperation));
         }
         self.device_slice
             .deref()

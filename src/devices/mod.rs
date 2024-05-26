@@ -15,9 +15,10 @@ mod cuda;
 pub use cuda::*;
 
 use crate::{Tensor, TensorWithGrad};
-mod buffer;
-pub use buffer::*;
+pub mod slice;
 use core::fmt::Debug;
+
+use self::slice::{DevSlice, DevSliceEnum};
 
 pub struct MemoryInfo {
     pub used: usize,
@@ -113,9 +114,9 @@ pub struct Device {
 
 impl Default for Device {
     fn default() -> Self {
-        #[cfg(feature = "default_is_cuda")]
+        #[cfg(feature = "cuda")]
         return Self::cuda().unwrap();
-        #[cfg(not(feature = "default_is_cuda"))]
+        #[cfg(not(feature = "cuda"))]
         return Self::cpu();
     }
 }

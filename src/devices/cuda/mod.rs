@@ -1,5 +1,5 @@
 use std::{fs::File, io::Read, ops::Deref, sync::Arc};
-
+pub mod slice;
 mod tests;
 
 use cudarc::{
@@ -10,7 +10,9 @@ use cudarc::{
     driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
 };
 
-use crate::{error, DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor};
+use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor};
+
+use self::slice::CudaDevSlice;
 
 #[derive(Debug)]
 pub struct CudaDev {
@@ -216,7 +218,8 @@ impl DeviceInterface for CudaDev {
                 DevSliceEnum::CudaDevSlice(right),
                 DevSliceEnum::CudaDevSlice(result),
             ) => {
-                let result = unsafe { kernel.launch(cfg, (left, right, result, n)) };
+                let result =
+                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
@@ -242,7 +245,7 @@ impl DeviceInterface for CudaDev {
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
             (DevSliceEnum::CudaDevSlice(alpha), DevSliceEnum::CudaDevSlice(x)) => {
-                let result = unsafe { kernel.launch(cfg, (n, x, alpha)) };
+                let result = unsafe { kernel.launch(cfg, (n, x.slice(), alpha.slice())) };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
@@ -260,7 +263,7 @@ impl DeviceInterface for CudaDev {
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
             (DevSliceEnum::CudaDevSlice(alpha), DevSliceEnum::CudaDevSlice(x)) => {
-                let result = unsafe { kernel.launch(cfg, (n, x, alpha)) };
+                let result = unsafe { kernel.launch(cfg, (n, x.slice(), alpha.slice())) };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
@@ -272,7 +275,7 @@ impl DeviceInterface for CudaDev {
 
     fn slice(&self, n: i32) -> Result<DevSliceEnum, Error> {
         match self.dev.alloc_zeros(n as usize) {
-            Ok(slice) => Ok(DevSliceEnum::CudaDevSlice(slice)),
+            Ok(slice) => Ok(DevSliceEnum::CudaDevSlice(CudaDevSlice::new(slice))),
             _ => Err(error!(ErrorEnum::UnsupportedOperation)),
         }
     }
@@ -287,7 +290,8 @@ impl DeviceInterface for CudaDev {
         let output = &output.device_slice().deref().borrow().buffer;
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
-                let result = unsafe { kernel.launch(cfg, (input, output, rows, cols)) };
+                let result =
+                    unsafe { kernel.launch(cfg, (input.slice(), output.slice(), rows, cols)) };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
@@ -305,7 +309,7 @@ impl DeviceInterface for CudaDev {
         let output = &output.device_slice().deref().borrow().buffer;
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
-                let result = unsafe { sum_kernel.launch(cfg, (input, n, output)) };
+                let result = unsafe { sum_kernel.launch(cfg, (input.slice(), n, output.slice())) };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
@@ -330,7 +334,8 @@ impl DeviceInterface for CudaDev {
                 DevSliceEnum::CudaDevSlice(right),
                 DevSliceEnum::CudaDevSlice(result),
             ) => {
-                let result = unsafe { kernel.launch(cfg, (left, right, result, n)) };
+                let result =
+                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
@@ -348,7 +353,7 @@ impl DeviceInterface for CudaDev {
         let output = &output.device_slice().deref().borrow().buffer;
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
-                let result = unsafe { kernel.launch(cfg, (input, output, n)) };
+                let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
@@ -373,7 +378,8 @@ impl DeviceInterface for CudaDev {
                 DevSliceEnum::CudaDevSlice(right),
                 DevSliceEnum::CudaDevSlice(result),
             ) => {
-                let result = unsafe { kernel.launch(cfg, (left, right, result, n)) };
+                let result =
+                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
@@ -391,7 +397,7 @@ impl DeviceInterface for CudaDev {
         let output = &output.device_slice().deref().borrow().buffer;
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
-                let result = unsafe { kernel.launch(cfg, (input, output, n)) };
+                let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),

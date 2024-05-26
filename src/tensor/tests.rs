@@ -229,7 +229,7 @@ fn matrix_addition_result() {
 
 #[test]
 fn element_wise_mul_result() {
-    let device = &Device::cpu();
+    let device = &Device::default();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the element-wise multiplication is done
     // Then the resulting matrix has the correct values

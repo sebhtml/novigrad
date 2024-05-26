@@ -8,6 +8,8 @@ use crate::ErrorEnum;
 use cudarc::driver::{CudaSlice, DevicePtr, DevicePtrMut, DeviceSlice};
 use std::borrow::BorrowMut;
 
+use super::cpu::slice::CpuDevSlice;
+
 #[derive(Debug)]
 pub struct DevSlice {
     device: Device,
@@ -26,7 +28,7 @@ impl Drop for DevSlice {
 
 #[derive(Debug)]
 pub enum DevSliceEnum {
-    CpuDevSlice(Vec<f32>),
+    CpuDevSlice(CpuDevSlice),
     #[cfg(feature = "cuda")]
     CudaDevSlice(CudaSlice<f32>),
 }
@@ -69,7 +71,7 @@ impl DevSliceTrait for DevSlice {
 
     fn get_values(&self) -> Result<Vec<f32>, Error> {
         match self.buffer {
-            DevSliceEnum::CpuDevSlice(ref values) => Ok(values.clone()),
+            DevSliceEnum::CpuDevSlice(ref values) => values.get_values(),
             #[cfg(feature = "cuda")]
             DevSliceEnum::CudaDevSlice(ref buffer) => {
                 let mut values = vec![0.0; buffer.len()];
@@ -85,11 +87,7 @@ impl DevSliceTrait for DevSlice {
 
     fn set_values(&mut self, new_values: Vec<f32>) -> Result<(), Error> {
         match self.buffer.borrow_mut() {
-            DevSliceEnum::CpuDevSlice(ref mut values) => {
-                values.clear();
-                values.extend_from_slice(new_values.as_slice());
-                Ok(())
-            }
+            DevSliceEnum::CpuDevSlice(ref mut values) => values.set_values(new_values),
             #[cfg(feature = "cuda")]
             DevSliceEnum::CudaDevSlice(ref mut buffer) => {
                 let dev = buffer.device();

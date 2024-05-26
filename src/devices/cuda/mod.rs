@@ -10,7 +10,7 @@ use cudarc::{
     driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
 };
 
-use crate::{error, DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor};
+use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor};
 
 #[derive(Debug)]
 pub struct CudaDev {

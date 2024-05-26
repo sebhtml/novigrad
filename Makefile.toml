@@ -1,0 +1,32 @@
+[tasks.format]
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--", "--emit=files"]
+
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
+[tasks.build]
+command = "cargo"
+args = ["build"]
+dependencies = ["clean"]
+
+[tasks.test-with-cpu]
+command = "cargo"
+args = ["test", "--release", "--no-default-features"]
+dependencies = ["clean"]
+
+[tasks.test-with-cuda]
+command = "cargo"
+args = ["test", "--release", "--no-default-features", "--features", "cuda"]
+dependencies = ["clean"]
+
+
+[tasks.my-flow]
+dependencies = [
+    "format",
+    "build",
+    "test-with-cpu",
+    "test-with-cuda",
+]

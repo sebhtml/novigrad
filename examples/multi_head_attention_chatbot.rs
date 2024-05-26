@@ -74,7 +74,7 @@ impl Model for ChatbotModel {
 }
 
 fn main() -> Result<(), Error> {
-    let device = Device::cuda()?;
+    let device = Device::default();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
     let vocab_size = tokenizer.vocab_size();

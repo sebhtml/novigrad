@@ -113,9 +113,9 @@ pub struct Device {
 
 impl Default for Device {
     fn default() -> Self {
-        #[cfg(feature = "default_is_cuda")]
+        #[cfg(feature = "cuda")]
         return Self::cuda().unwrap();
-        #[cfg(not(feature = "default_is_cuda"))]
+        #[cfg(not(feature = "cuda"))]
         return Self::cpu();
     }
 }

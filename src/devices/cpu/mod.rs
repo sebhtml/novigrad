@@ -2,7 +2,7 @@ use std::f32::consts::E;
 pub mod slice;
 use cblas::{Layout, Transpose};
 extern crate cblas_sys as ffi;
-use crate::{error, slice::DevSliceEnum, Error, ErrorEnum, Tensor};
+use crate::{error, slice::DevSliceEnum, Error, ErrorEnum, Tensor, EPSILON};
 
 use self::slice::CpuDevSlice;
 
@@ -262,6 +262,42 @@ impl DeviceInterface for CpuDevice {
         }
 
         result.set_values(result_values)
+    }
+
+    fn cross_entropy_loss(
+        &self,
+        expected: &Tensor,
+        actual: &Tensor,
+        result: &Tensor,
+    ) -> Result<(), Error> {
+        debug_assert_eq!(expected.size(), actual.size(),);
+        let p = expected;
+        let q = actual;
+        if p.size() != q.size() {
+            println!("Incompatible sizes");
+            println!("p {}", p);
+            println!("q {}", q);
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        let rows = p.rows();
+        let cols = p.cols();
+        let mut row = 0;
+        let mut col = 0;
+        let mut sum = 0.0;
+        let p_values = p.get_values()?;
+        let q_values = q.get_values()?;
+        while row < rows {
+            while col < cols {
+                let p_i = p_values[p.index(row, col)];
+                let q_i = q_values[q.index(row, col)];
+                sum += p_i * f32::ln(q_i + EPSILON);
+                col += 1;
+            }
+            row += 1;
+        }
+        debug_assert!(sum.is_finite());
+        result.set_values(vec![-sum])?;
+        Ok(())
     }
 }
 

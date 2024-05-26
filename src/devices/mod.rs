@@ -105,6 +105,14 @@ pub trait DeviceInterface {
     fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+
+    /// H(P, Q) = - Σ (P(i) * log(Q(i)))
+    fn cross_entropy_loss(
+        &self,
+        expected: &Tensor,
+        actual: &Tensor,
+        loss: &Tensor,
+    ) -> Result<(), Error>;
 }
 
 impl Debug for dyn DeviceInterface {
@@ -336,5 +344,19 @@ impl DeviceInterface for Device {
         output: &Tensor,
     ) -> Result<(), Error> {
         self.device.clip(min, max, input, output)
+    }
+
+    fn cross_entropy_loss(
+        &self,
+        expected: &Tensor,
+        actual: &Tensor,
+        loss: &Tensor,
+    ) -> Result<(), Error> {
+        self.device.cross_entropy_loss(expected, actual, loss)?;
+        let a = loss.get_values()?[0];
+        self.device.cross_entropy_loss(expected, actual, loss)?;
+        let b = loss.get_values()?[0];
+        assert_eq!(a, b);
+        Ok(())
     }
 }

@@ -463,6 +463,17 @@ impl DeviceInterface for CudaDev {
         result: &Tensor,
     ) -> Result<(), Error> {
         let n = left.len();
+        let left_values = left.get_values()?;
+        let right_values = right.get_values()?;
+        let mut loss = 0.0;
+        for i in 0..n {
+            let p = left_values[i];
+            let q = right_values[i];
+            loss += p * f32::ln(q + EPSILON);
+        }
+        result.set_values(vec![-loss])?;
+        return Ok(());
+
         let kernel = self.get_func(
             "cross_entropy_loss_kernel_module",
             "cross_entropy_loss_kernel",

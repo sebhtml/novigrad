@@ -21,6 +21,7 @@
 ---------------
 - TODO adam t should be in 0..num_iterations
 - add device stream support in devices to execute attention heads in parallel
+- don't break during training when loss reaches 0.0
 
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 

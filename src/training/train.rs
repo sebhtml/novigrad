@@ -131,7 +131,7 @@ pub struct NetworkTestOutput {
 }
 
 pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
-    let mut initial_total_error = f32::NAN;
+    let mut initial_total_loss = f32::NAN;
     let examples = &details.examples;
     let model = details.model;
     let loss_operator = details.loss_operator;
@@ -151,7 +151,7 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error>
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
 
-    let mut last_total_error = f32::NAN;
+    let mut previous_total_loss = f32::NAN;
     let epochs = details.epochs;
     let progress = details.progress;
 
@@ -159,18 +159,21 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error>
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
-            let total_error = print_total_loss(
+            let total_loss = print_total_loss(
                 &device,
                 &program,
                 &inputs,
                 &outputs,
-                last_total_error,
+                previous_total_loss,
                 epoch,
             )?;
             if epoch == 0 {
-                initial_total_error = total_error;
+                initial_total_loss = total_loss;
             }
-            last_total_error = total_error;
+            previous_total_loss = total_loss;
+            if previous_total_loss == 0.0 {
+                break;
+            }
         }
         train(&program, shuffle_examples, &inputs, &outputs)?;
     }
@@ -179,7 +182,7 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error>
         &program,
         &inputs,
         &outputs,
-        last_total_error,
+        previous_total_loss,
         epochs,
     )?;
 
@@ -187,7 +190,7 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error>
         print_results(epochs, &program, &mut tokenizer, &inputs, &outputs)?;
 
     let output = NetworkTestOutput {
-        initial_total_error,
+        initial_total_error: initial_total_loss,
         final_total_error,
         expected_argmax_values,
         actual_argmax_values,

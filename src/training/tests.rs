@@ -11,8 +11,10 @@ fn test_model(model: ModelEnum, device: &Device) {
     let expected_initial_total_error_min = details.initial_total_error_min;
     let expected_final_total_error_max = details.final_total_error_max;
     let training_output = train_model::<f32>(details).unwrap();
-    // TODO fix me
-    //assert_le!(expected_initial_total_error_min, training_output.initial_total_error);
+    assert_le!(
+        expected_initial_total_error_min,
+        training_output.initial_total_error
+    );
     assert_ge!(
         expected_final_total_error_max,
         training_output.final_total_error

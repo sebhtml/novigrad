@@ -110,8 +110,8 @@ fn cuda_set_value() {
 
 #[test]
 fn buffer() {
-    use crate::Device;
     use crate::slice::DevSliceTrait;
+    use crate::Device;
     use std::ptr::null;
     let device = Device::cuda().unwrap();
     let buffer = device.buffer(32);

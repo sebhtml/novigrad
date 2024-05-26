@@ -1,8 +1,11 @@
-use crate::{
-    devices::{Device, DeviceInterface}, error, slice::DevSlice, Error
-};
 use crate::devices::slice::DevSliceTrait;
 use crate::ErrorEnum;
+use crate::{
+    devices::{Device, DeviceInterface},
+    error,
+    slice::DevSlice,
+    Error,
+};
 
 use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc, vec};
 

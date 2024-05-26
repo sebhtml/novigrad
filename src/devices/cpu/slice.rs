@@ -1,16 +1,13 @@
 use crate::{slice::DevSliceTrait, Error};
 
-
 #[derive(Debug)]
 pub struct CpuDevSlice {
     slice: Vec<f32>,
 }
 
 impl CpuDevSlice {
-    pub fn new(slice: Vec<f32>,) -> Self {
-        Self {
-            slice,
-        }
+    pub fn new(slice: Vec<f32>) -> Self {
+        Self { slice }
     }
 }
 

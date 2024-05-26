@@ -1,14 +1,10 @@
-use crate::error;
+use super::cpu::slice::CpuDevSlice;
+#[cfg(feature = "cuda")]
+use super::cuda::slice::CudaDevSlice;
 use crate::Device;
 use crate::DeviceInterface;
 use crate::Error;
-use crate::ErrorEnum;
-
-#[cfg(feature = "cuda")]
-use cudarc::driver::{CudaSlice, DevicePtr, DevicePtrMut, DeviceSlice};
 use std::borrow::BorrowMut;
-
-use super::cpu::slice::CpuDevSlice;
 
 #[derive(Debug)]
 pub struct DevSlice {
@@ -30,7 +26,7 @@ impl Drop for DevSlice {
 pub enum DevSliceEnum {
     CpuDevSlice(CpuDevSlice),
     #[cfg(feature = "cuda")]
-    CudaDevSlice(CudaSlice<f32>),
+    CudaDevSlice(CudaDevSlice),
 }
 
 pub trait DevSliceTrait {
@@ -55,53 +51,41 @@ impl DevSlice {
 impl DevSliceTrait for DevSlice {
     fn as_ptr(&self) -> *const f32 {
         match &self.buffer {
-            DevSliceEnum::CpuDevSlice(ref values) => values.as_ptr(),
+            DevSliceEnum::CpuDevSlice(ref slice) => slice.as_ptr(),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(ref values) => *values.device_ptr() as *const _,
+            DevSliceEnum::CudaDevSlice(ref slice) => slice.as_ptr(),
         }
     }
 
     fn as_mut_ptr(&mut self) -> *mut f32 {
         match self.buffer.borrow_mut() {
-            DevSliceEnum::CpuDevSlice(ref mut values) => values.as_mut_ptr(),
+            DevSliceEnum::CpuDevSlice(ref mut slice) => slice.as_mut_ptr(),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(ref mut values) => *values.device_ptr_mut() as *mut _,
+            DevSliceEnum::CudaDevSlice(ref mut slice) => slice.as_mut_ptr(),
         }
     }
 
     fn get_values(&self) -> Result<Vec<f32>, Error> {
         match self.buffer {
-            DevSliceEnum::CpuDevSlice(ref values) => values.get_values(),
+            DevSliceEnum::CpuDevSlice(ref slice) => slice.get_values(),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(ref buffer) => {
-                let mut values = vec![0.0; buffer.len()];
-                let dev = buffer.device();
-                let result = dev.dtoh_sync_copy_into(buffer, &mut values);
-                match result {
-                    Ok(_) => Ok(values),
-                    _ => Err(error!(ErrorEnum::UnsupportedOperation)),
-                }
-            }
+            DevSliceEnum::CudaDevSlice(ref slice) => slice.get_values(),
         }
     }
 
     fn set_values(&mut self, new_values: Vec<f32>) -> Result<(), Error> {
         match self.buffer.borrow_mut() {
-            DevSliceEnum::CpuDevSlice(ref mut values) => values.set_values(new_values),
+            DevSliceEnum::CpuDevSlice(ref mut slice) => slice.set_values(new_values),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(ref mut buffer) => {
-                let dev = buffer.device();
-                dev.htod_sync_copy_into(&new_values, buffer)
-                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
-            }
+            DevSliceEnum::CudaDevSlice(ref mut slice) => slice.set_values(new_values),
         }
     }
 
     fn len(&self) -> usize {
         match &self.buffer {
-            DevSliceEnum::CpuDevSlice(buffer) => buffer.len(),
+            DevSliceEnum::CpuDevSlice(slice) => slice.len(),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(buffer) => buffer.len(),
+            DevSliceEnum::CudaDevSlice(slice) => slice.len(),
         }
     }
 }

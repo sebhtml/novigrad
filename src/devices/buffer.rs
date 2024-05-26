@@ -1,11 +1,15 @@
-use std::{borrow::BorrowMut, mem::swap};
-
-use cudarc::driver::{CudaSlice, DevicePtr, DevicePtrMut, DeviceSlice};
-
+#[cfg(feature = "cuda")]
 use crate::error;
+use crate::Device;
 use crate::DeviceInterface;
 use crate::Error;
-use crate::{Device, ErrorEnum};
+#[cfg(feature = "cuda")]
+use crate::ErrorEnum;
+#[cfg(feature = "cuda")]
+use cudarc::driver::{CudaSlice, DevicePtr, DevicePtrMut, DeviceSlice};
+use std::borrow::BorrowMut;
+#[cfg(feature = "cuda")]
+use std::mem::swap;
 
 #[derive(Debug)]
 pub struct DevSlice {
@@ -91,6 +95,7 @@ impl DevSlice {
     pub fn len(&self) -> usize {
         match &self.buffer {
             DevSliceEnum::CpuDevSlice(buffer) => buffer.len(),
+            #[cfg(feature = "cuda")]
             DevSliceEnum::CudaDevSlice(buffer) => buffer.len(),
         }
     }
@@ -98,6 +103,7 @@ impl DevSlice {
     pub fn resize(&mut self, new_len: usize) {
         match self.buffer.borrow_mut() {
             DevSliceEnum::CpuDevSlice(buffer) => buffer.resize(new_len, Default::default()),
+            #[cfg(feature = "cuda")]
             DevSliceEnum::CudaDevSlice(buffer) => {
                 if buffer.len() != new_len {
                     let dev = buffer.device();

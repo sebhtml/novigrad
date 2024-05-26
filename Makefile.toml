@@ -10,23 +10,21 @@ args = ["clean"]
 [tasks.build]
 command = "cargo"
 args = ["build"]
-dependencies = ["clean"]
+dependencies = []
 
 [tasks.test-with-cpu]
 command = "cargo"
 args = ["test", "--release", "--no-default-features"]
-dependencies = ["clean"]
+dependencies = []
 
 [tasks.test-with-cuda]
 command = "cargo"
 args = ["test", "--release", "--no-default-features", "--features", "cuda"]
-dependencies = ["clean"]
-
+dependencies = []
 
 [tasks.my-flow]
 dependencies = [
     "format",
-    "build",
     "test-with-cpu",
     "test-with-cuda",
 ]

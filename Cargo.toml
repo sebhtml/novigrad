@@ -17,6 +17,7 @@ debug = true
 
 [features]
 default = ["cuda"]
+#default = []
 cuda = ["cudarc"]
 default_is_cuda = []
 

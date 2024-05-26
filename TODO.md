@@ -31,7 +31,6 @@
 ---------------------
 
 - make sure that all OpCode have >= 2 inputs
-- test all tensor operations with all devices
 - implement Conv2D
 - no values in OpCode, put them instead in OpCodeArguments
 

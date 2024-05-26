@@ -171,9 +171,6 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error>
                 initial_total_error = total_error;
             }
             last_total_error = total_error;
-            if last_total_error == 0.0 {
-                break;
-            }
         }
         train(&program, shuffle_examples, &inputs, &outputs)?;
     }

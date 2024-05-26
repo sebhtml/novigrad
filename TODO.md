@@ -1,3 +1,4 @@
+- maybe there is a total loss bug
 - remove calls to set_values outside of tests
 
 - rewrite CrossEntropyLoss using Sum
@@ -14,7 +15,6 @@
 - implement Transformer
 - increase examples in mega_man_attention from 10 to 100
 
-- don't break during training when loss reaches 0.0
 - fix precision in cuda dot kernel test with large size
 - in cross_entropy_loss, epsilon must noe be a compile-time constant
 

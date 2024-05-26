@@ -5,50 +5,36 @@ extern "C" __global__ void cross_entropy_loss_kernel(float *expected, float *act
     __shared__ float shared_mem[block_dim];
 
     unsigned int tid = threadIdx.x;
-    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
 
-    /**/
-    if (idx != 0)
+    if (i == 0)
     {
-        return;
+        *loss = 0;
     }
-    float sum = 0.0;
-    for (int i = 0; i < n; i++)
+
+    // Each thread in a block do a partial sum.
+    int stride = blockDim.x * gridDim.x;
+    float partial = 0.0;
+    for (int j = i; j < n; j += stride)
     {
-        sum += expected[i] * logf(actual[i] + epsilon);
+        partial += expected[j] * logf(actual[j] + epsilon);
     }
-    *loss = -sum;
+    shared_mem[tid] = partial;
+    __syncthreads();
 
-    /*
-        if (idx == 0)
+    // Parallel reduction.
+    for (int s = 1; s < blockDim.x; s *= 2)
+    {
+        if (tid < s)
         {
-            *loss = 0;
+            shared_mem[tid] += shared_mem[tid + s];
         }
-
-        // Each thread in a block do a partial sum.
-        int stride = blockDim.x * gridDim.x;
-        float partial = 0.0;
-        for (int i = idx; i < n; i += stride)
-        {
-            partial += expected[i] * logf(actual[i] + epsilon);
-        }
-        shared_mem[threadIdx.x] = partial;
         __syncthreads();
+    }
 
-        // Parallel reduction.
-        for (int s = 1; s < blockDim.x; s *= 2)
-        {
-            if (threadIdx.x < s)
-            {
-                shared_mem[threadIdx.x] += shared_mem[threadIdx.x + s];
-            }
-            __syncthreads();
-        }
-
-        // The first thread of each block adds its block sum.
-        if (threadIdx.x == 0)
-        {
-            atomicAdd(loss, -shared_mem[0]);
-        }
-    */
+    // The first thread of each block adds its block sum.
+    if (tid == 0)
+    {
+        atomicAdd(loss, -shared_mem[0]);
+    }
 }

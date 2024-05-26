@@ -352,11 +352,6 @@ impl DeviceInterface for Device {
         actual: &Tensor,
         loss: &Tensor,
     ) -> Result<(), Error> {
-        self.device.cross_entropy_loss(expected, actual, loss)?;
-        let a = loss.get_values()?[0];
-        self.device.cross_entropy_loss(expected, actual, loss)?;
-        let b = loss.get_values()?[0];
-        assert_eq!(a, b);
-        Ok(())
+        self.device.cross_entropy_loss(expected, actual, loss)
     }
 }

@@ -1,8 +1,6 @@
-- fix adam
 - remove calls to set_values outside of tests
 
 - fix precision in cuda dot kernel test with large size
-- fix code when feature "cuda" is disabled.
 - rewrite CrossEntropyLoss using Sum
 - rewrite ResidualSumOfSquares using Sum
 
@@ -20,7 +18,6 @@
 - increase examples in mega_man_attention from 10 to 100
 
 ---------------
-- use const* f32 instead of &Tensor in DeviceInterface
 - TODO adam t should be in 0..num_iterations
 - add device stream support in devices to execute attention heads in parallel
 
@@ -33,7 +30,6 @@
 
 - make sure that all OpCode have >= 2 inputs
 - implement Conv2D
-- no values in OpCode, put them instead in OpCodeArguments
 
 == Performance ==
 

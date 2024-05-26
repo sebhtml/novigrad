@@ -67,9 +67,11 @@ impl<T> NeuralMachine<T> {
                 instructions.push(instruction);
 
                 for output in outputs {
-                    let clip_instruction =
-                        gradient_instruction!(OpCode::Normalize, &[output], &[output],);
-                    instructions.push(clip_instruction);
+                    instructions.push(gradient_instruction!(
+                        OpCode::Normalize,
+                        &[output],
+                        &[output],
+                    ));
                 }
             }
         }

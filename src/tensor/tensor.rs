@@ -86,8 +86,12 @@ impl Tensor {
     }
 
     pub fn index(&self, row: usize, col: usize) -> usize {
-        if self.size.deref().borrow().len() == 2 {
-            let cols = self.size.deref().borrow()[1];
+        Self::get_index(&self.size.deref().borrow(), row, col)
+    }
+
+    pub fn get_index(size: &[usize], row: usize, col: usize) -> usize {
+        if size.len() == 2 {
+            let cols = size[1];
             row * cols + col
         } else {
             panic!()

@@ -321,7 +321,7 @@ impl DeviceInterface for Device {
     }
 
     fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        self.device.sigmoid(input, output)
+        self.device.sqrt(input, output)
     }
 
     fn div(&self, input1: &Tensor, input2: &Tensor, output: &Tensor) -> Result<(), Error> {

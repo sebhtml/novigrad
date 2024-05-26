@@ -170,6 +170,16 @@ impl Tensor {
         Ok(false)
     }
 
+    pub fn is_infinite(&self) -> Result<bool, Error> {
+        let values = self.get_values()?;
+        for value in values {
+            if value.is_infinite() {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
     pub fn copy(x: &Tensor, y: &Tensor) -> Result<(), Error> {
         let device = &x.device;
         let n = x.len() as i32;

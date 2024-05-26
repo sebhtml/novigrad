@@ -43,7 +43,7 @@ impl OptimizerTrait for Adam {
         let beta2_tensor = device.tensor(1, 1, vec![beta2])?;
         let epsilon_tensor = device.tensor(1, 1, vec![epsilon])?;
         let zero = device.tensor(1, 1, vec![0.0])?;
-        let inf = device.tensor(1, 1, vec![f32::INFINITY])?;
+        let f32_max = device.tensor(1, 1, vec![f32::MAX])?;
 
         let mut instructions = vec![];
 
@@ -121,16 +121,20 @@ impl OptimizerTrait for Adam {
 
             // Update parameters with adaptive learning rate
             // theta = theta - learning_rate * m_hat / (sqrt(v_hat) + epsilon)
-            /*instructions.push(optimization_instruction!(
+            instructions.push(optimization_instruction!(
                 OpCode::Clip,
-                &[&zero, &inf, &v_hat],
+                &[&zero, &f32_max, &v_hat],
                 &[&tmp1],
             ));
-            */
-            instructions.push(optimization_instruction!(OpCode::Sqrt, &[&v_hat], &[&tmp1],));
+            // TODO use Sqrt, not Sigmoid
+            instructions.push(optimization_instruction!(
+                OpCode::Sigmoid,
+                &[&v_hat], // TODO use tmp1, not v_hat
+                &[&tmp1],
+            ));
             instructions.push(optimization_instruction!(
                 OpCode::ScalarAdd,
-                &[&epsilon_tensor, &tmp1],
+                &[&epsilon_tensor, &tmp1], // TODO use tmp1
                 &[&tmp1],
             ));
             instructions.push(optimization_instruction!(

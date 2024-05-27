@@ -113,11 +113,11 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         clipped_gradient_norm: 1.0,
         initial_metrics: Metrics {
             total_loss: 1500.0,
-            total_perplexity: 0.0,
+            total_perplexity: 1800.0,
         },
         final_metrics: Metrics {
             total_loss: 100.0,
-            total_perplexity: 1000.0,
+            total_perplexity: 11.0,
         },
     };
     Ok(details)

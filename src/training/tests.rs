@@ -10,7 +10,11 @@ fn test_model(model: ModelEnum, device: &Device) {
     let details = load_model_details(model, device).unwrap();
     let expected_initial_total_loss_min = details.initial_metrics.total_loss;
     let expected_final_total_loss_max = details.final_metrics.total_loss;
+    let expected_initial_total_perplexity_min = details.initial_metrics.total_perplexity;
+    let expected_final_total_perplexity_max = details.final_metrics.total_perplexity;
     let training_output = train_model::<f32>(details).unwrap();
+
+    // Verify total loss
     assert_le!(
         expected_initial_total_loss_min,
         training_output.initial_metrics.total_loss
@@ -19,6 +23,18 @@ fn test_model(model: ModelEnum, device: &Device) {
         expected_final_total_loss_max,
         training_output.final_metrics.total_loss
     );
+
+    // Verify total perplexity
+    assert_le!(
+        expected_initial_total_perplexity_min,
+        training_output.initial_metrics.total_perplexity
+    );
+    assert_ge!(
+        expected_final_total_perplexity_max,
+        training_output.final_metrics.total_perplexity
+    );
+
+    // Verify argmaxes
     for i in 0..training_output.expected_argmax_values.len() {
         let expected = training_output.actual_argmax_values[i];
         let actual = training_output.expected_argmax_values[i];

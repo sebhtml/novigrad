@@ -132,11 +132,11 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
         clipped_gradient_norm: 1.0,
         initial_metrics: Metrics {
             total_loss: 8.0,
-            total_perplexity: 0.0,
+            total_perplexity: 400.0,
         },
         final_metrics: Metrics {
             total_loss: 0.0,
-            total_perplexity: 1000.0,
+            total_perplexity: 4.0,
         },
     };
     Ok(details)

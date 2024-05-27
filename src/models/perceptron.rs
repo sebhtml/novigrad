@@ -77,11 +77,11 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
         clipped_gradient_norm: 1.0,
         initial_metrics: Metrics {
             total_loss: 50.0,
-            total_perplexity: 0.0,
+            total_perplexity: 3.0,
         },
         final_metrics: Metrics {
             total_loss: 2.16778,
-            total_perplexity: 1000.0,
+            total_perplexity: 0.03,
         },
     };
     Ok(details)

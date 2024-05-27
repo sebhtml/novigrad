@@ -14,7 +14,7 @@ dependencies = []
 
 [tasks.test-with-cpu]
 command = "cargo"
-args = ["test", "--release", "--no-default-features"]
+args = ["test", "--release", "--no-default-features", "--features", ""]
 dependencies = []
 
 [tasks.test-with-cuda]

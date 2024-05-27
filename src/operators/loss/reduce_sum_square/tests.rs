@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
-use crate::{BinaryOperator, Device, Tensor};
+use crate::{BinaryOperator, Device, DeviceInterface, Tensor};
 
-use super::ResidualSumOfSquares;
+use super::ReduceSumSquare;
 
 #[test]
 fn derive() {
@@ -30,7 +30,7 @@ fn derive() {
     let expected_derived_loss = device
         .tensor(1, 8, vec![-6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0])
         .unwrap();
-    let operator = ResidualSumOfSquares::new(&device);
+    let operator = ReduceSumSquare::new(&device);
     let loss = operator.forward(&expected_tensor, &actual_tensor).unwrap();
     loss.forward().unwrap();
     loss.compute_gradient().unwrap();
@@ -47,8 +47,12 @@ fn evaluate() {
     let actual_tensor = device
         .tensor(1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         .unwrap();
+    let loss = device.tensor(1, 1, vec![0.0]).unwrap();
+    device
+        .reduce_square_sum(&expected_tensor, &actual_tensor, &loss)
+        .unwrap();
     assert_eq!(
-        ResidualSumOfSquares::evaluate(&expected_tensor, &actual_tensor),
-        Ok((4.0 - 1.0 as f32).powf(2.0) * 8.0)
+        loss.get_values().unwrap()[0],
+        (4.0 - 1.0 as f32).powf(2.0) * 8.0,
     );
 }

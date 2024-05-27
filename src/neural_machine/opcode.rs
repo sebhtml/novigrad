@@ -1,7 +1,7 @@
 use crate::{
-    clip::Clip, Add, ClipNorm, Concat, CrossEntropyLoss, Div, Dropout, Error, Gemm, Mul, ReduceSum,
-    Reshape, ResidualSumOfSquares, ScalarAdd, ScalarMul, Sigmoid, Softmax, Sqrt, Sub, Tensor,
-    Unconcat,
+    clip::Clip, statistics::bernoulli::Bernoulli, Add, ClipNorm, Concat, Div, Error, Gemm, Mul,
+    ReduceSum, ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid, Softmax,
+    SoftmaxCrossEntropyLoss, Sqrt, Sub, Tensor, Unconcat,
 };
 
 #[derive(Clone, Debug)]
@@ -58,13 +58,13 @@ pub enum OpCode {
     Sigmoid,
 
     /// https://onnx.ai/onnx/operators/onnx__SoftmaxCrossEntropyLoss.html
-    CrossEntropyLoss,
+    SoftmaxCrossEntropyLoss,
 
-    /// Not ONNX-compliant
-    ResidualSumOfSquares,
+    /// https://onnx.ai/onnx/operators/onnx__ReduceSumSquare.html
+    ReduceSumSquare,
 
-    /// https://onnx.ai/onnx/operators/onnx__Dropout.html
-    Dropout(f32),
+    /// https://onnx.ai/onnx/operators/onnx__Bernoulli.html
+    Bernoulli(f32),
 
     /// TODO
     /// https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
@@ -105,9 +105,9 @@ impl Into<String> for OpCode {
             OpCode::Reshape(output_size) => format!("Reshape {:?}", output_size),
             OpCode::Concat => "Concat".into(),
             OpCode::Unconcat => "Unconcat".into(),
-            OpCode::CrossEntropyLoss => "CrossEntropyLoss".into(),
-            OpCode::ResidualSumOfSquares => "ResidualSumOfSquares".into(),
-            OpCode::Dropout(_) => "Dropout".into(),
+            OpCode::SoftmaxCrossEntropyLoss => "CrossEntropyLoss".into(),
+            OpCode::ReduceSumSquare => "ResidualSumOfSquares".into(),
+            OpCode::Bernoulli(_) => "Bernoulli".into(),
             OpCode::Div => "Div".into(),
             OpCode::Sqrt => "Sqrt".into(),
         }
@@ -134,11 +134,9 @@ impl OpCode {
             OpCode::Concat => Concat::execute(inputs, outputs),
             OpCode::Unconcat => Unconcat::execute(inputs, outputs),
             OpCode::Sigmoid => Sigmoid::execute(inputs, outputs),
-            OpCode::CrossEntropyLoss => CrossEntropyLoss::execute(inputs, outputs),
-            OpCode::ResidualSumOfSquares => ResidualSumOfSquares::execute(inputs, outputs),
-            OpCode::Dropout(dropout_probability) => {
-                Dropout::execute(*dropout_probability, inputs, outputs)
-            }
+            OpCode::SoftmaxCrossEntropyLoss => SoftmaxCrossEntropyLoss::execute(inputs, outputs),
+            OpCode::ReduceSumSquare => ReduceSumSquare::execute(inputs, outputs),
+            OpCode::Bernoulli(probability) => Bernoulli::execute(*probability, inputs, outputs),
             OpCode::Div => Div::execute(inputs, outputs),
             OpCode::Sqrt => Sqrt::execute(inputs, outputs),
             OpCode::ScalarAdd => ScalarAdd::execute(inputs, outputs),

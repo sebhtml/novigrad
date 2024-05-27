@@ -1,6 +1,7 @@
 use crate::{
-    error, into_one_hot_encoded_rows, CrossEntropyLoss, Device, Error, ErrorEnum, GradientDescent,
-    Metrics, ModelDetails, TensorWithGrad, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
+    error, into_one_hot_encoded_rows, Device, Error, ErrorEnum, GradientDescent, Metrics,
+    ModelDetails, SoftmaxCrossEntropyLoss, TensorWithGrad, Tokenizer, TokenizerTrait, UnaryModel,
+    UnaryOperator,
 };
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
 
@@ -114,7 +115,7 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
     let sequence_length = 6;
     let examples = load_examples(&device, &mut tokenizer)?;
 
-    let loss_operator = CrossEntropyLoss::new(device);
+    let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.5;
     let vocab_size = tokenizer.vocab_size();
     let model = SimpleModel::new(device, sequence_length, vocab_size)?;

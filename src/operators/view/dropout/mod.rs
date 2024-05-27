@@ -1,10 +1,8 @@
 use std::ops::Deref;
 
-use rand::{distributions::Uniform, thread_rng, Rng};
-
 use crate::{
-    inference_instruction, BinaryOperator, Device, Error, Mul, OpCode, ScalarMul, Tensor,
-    TensorWithGrad, UnaryOperator,
+    inference_instruction, BinaryOperator, Device, Error, Mul, OpCode, ScalarMul, TensorWithGrad,
+    UnaryOperator,
 };
 
 #[cfg(test)]
@@ -38,34 +36,13 @@ impl Dropout {
         };
         Ok(mask)
     }
-
-    pub fn execute(
-        dropout_probability: f32,
-        inputs: &[&Tensor],
-        outputs: &[&Tensor],
-    ) -> Result<(), Error> {
-        // zero each element of the mask with probability p.
-        let input = inputs[0];
-        let output = outputs[0];
-        let len = input.len();
-        let mut values = vec![1.0; len];
-        let mut rng = thread_rng();
-        let uniform = Uniform::new(0.0, 1.0);
-
-        for i in 0..len {
-            if rng.sample(uniform) < dropout_probability {
-                values[i] = 0.0;
-            }
-        }
-        output.set_values(values)
-    }
 }
 
 impl UnaryOperator for Dropout {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let mask = &self.mask;
         mask.push_instruction(inference_instruction!(
-            OpCode::Dropout(self.dropout_probability),
+            OpCode::Bernoulli(1.0 - self.dropout_probability),
             &[&mask.tensor().deref().borrow()],
             &[&mask.tensor().deref().borrow()],
         ));

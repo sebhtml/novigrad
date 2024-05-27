@@ -6,11 +6,11 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct CrossEntropyLoss {
+pub struct SoftmaxCrossEntropyLoss {
     device: Device,
 }
 
-impl CrossEntropyLoss {
+impl SoftmaxCrossEntropyLoss {
     pub fn new(device: &Device) -> Self {
         Self {
             device: device.clone(),
@@ -26,7 +26,7 @@ impl CrossEntropyLoss {
     }
 }
 
-impl BinaryOperator for CrossEntropyLoss {
+impl BinaryOperator for SoftmaxCrossEntropyLoss {
     fn forward(
         &self,
         input_1: &TensorWithGrad,
@@ -49,7 +49,7 @@ impl BinaryOperator for CrossEntropyLoss {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
-            OpCode::CrossEntropyLoss,
+            OpCode::SoftmaxCrossEntropyLoss,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),

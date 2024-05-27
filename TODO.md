@@ -1,5 +1,6 @@
+- use Attributes for Gemm, see https://onnx.ai/onnx/intro/concepts.html
+- pass probability in Bernoulli as a Tensor
 - remove all calls to set_values
-- remove set_values
 - rewrite ResidualSumOfSquares using CUDA
 
 ---------------------

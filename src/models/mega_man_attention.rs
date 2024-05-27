@@ -1,6 +1,6 @@
 use super::load_examples;
 use crate::{
-    Adam, CrossEntropyLoss, Device, Metrics, MultiHeadAttention, TernaryOperator, Tokenizer,
+    Adam, Device, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss, TernaryOperator, Tokenizer,
     TokenizerTrait, UnaryModel, UnaryOperator,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
@@ -96,7 +96,7 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
     let vocab_size = tokenizer.vocab_size();
     let model = MegaManAttentionModel::new(device, sequence_length, vocab_size)?;
 
-    let loss_operator = CrossEntropyLoss::new(device);
+    let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let details = ModelDetails {
@@ -113,7 +113,7 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         clipped_gradient_norm: 1.0,
         initial_metrics: Metrics {
             total_loss: 1500.0,
-            total_perplexity: 1600.0,
+            total_perplexity: 1500.0,
         },
         final_metrics: Metrics {
             total_loss: 100.0,

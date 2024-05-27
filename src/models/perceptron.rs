@@ -1,5 +1,5 @@
 use crate::{
-    Device, Error, GradientDescent, Metrics, ModelDetails, ResidualSumOfSquares, TensorWithGrad,
+    Device, Error, GradientDescent, Metrics, ModelDetails, ReduceSumSquare, TensorWithGrad,
     UnaryModel, UnaryOperator,
 };
 use crate::{Linear, Model};
@@ -60,7 +60,7 @@ fn load_examples(device: &Device) -> Result<Vec<(TensorWithGrad, TensorWithGrad)
 pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
     let model = PerceptronModel::new(device)?;
     let examples = load_examples(&device)?;
-    let loss_operator = ResidualSumOfSquares::new(device);
+    let loss_operator = ReduceSumSquare::new(device);
     let learning_rate = 0.5;
     let optimizer = GradientDescent::new(learning_rate);
     let details = ModelDetails {

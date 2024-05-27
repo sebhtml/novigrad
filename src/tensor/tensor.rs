@@ -98,24 +98,6 @@ impl Tensor {
         }
     }
 
-    pub fn transpose(&self, other: &mut Tensor) -> Result<(), Error> {
-        let self_values = self.get_values()?;
-        let mut other_values = other.get_values()?;
-        let rows = self.rows();
-        let cols = self.cols();
-        let mut row = 0;
-        while row < rows {
-            let mut col = 0;
-            while col < cols {
-                let value = self_values[self.index(row, col)];
-                other_values[other.index(col, row)] = value;
-                col += 1;
-            }
-            row += 1;
-        }
-        other.set_values(other_values)
-    }
-
     pub fn device_slice(&self) -> &Rc<RefCell<DevSlice>> {
         &self.device_slice
     }

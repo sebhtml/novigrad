@@ -1,19 +1,18 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, error, gradient_instruction, loss_instruction, BinaryOperator, Error,
-    ErrorEnum, OpCode, Tensor, TensorWithGrad,
+    devices::Device, gradient_instruction, loss_instruction, BinaryOperator, DeviceInterface,
+    Error, OpCode, Tensor, TensorWithGrad,
 };
 
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone)]
-pub struct ResidualSumOfSquares {
+pub struct ReduceSumSquare {
     device: Device,
 }
 
-impl ResidualSumOfSquares {
+impl ReduceSumSquare {
     pub fn new(device: &Device) -> Self {
         Self {
             device: device.clone(),
@@ -23,35 +22,13 @@ impl ResidualSumOfSquares {
     pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
-        let loss = ResidualSumOfSquares::evaluate(expected, actual)?;
-        outputs[0].set_values(vec![loss; 1])
-    }
-
-    /// RSS = Σ (y_i - f(x_i))^2
-    fn evaluate(expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
-        if expected.size() != actual.size() {
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        let expected_values = expected.get_values()?;
-        let actual_values = actual.get_values()?;
-        let mut loss = 0.0;
-        for i in 0..expected_values.len() {
-            let expected = expected_values[i];
-            let actual = actual_values[i];
-            let diff = expected - actual;
-            loss += diff * diff;
-        }
-        Ok(loss)
-        /*
-        TODO use copy, sub, dot_product on GPU.
-        TensorF32::copy(expected, diffs)?;
-        TensorF32::sub(actual, diffs)?;
-        TensorF32::dot_product(diffs, diffs)
-         */
+        let loss = outputs[0];
+        let device = expected.device();
+        device.reduce_square_sum(expected, actual, loss)
     }
 }
 
-impl BinaryOperator for ResidualSumOfSquares {
+impl BinaryOperator for ReduceSumSquare {
     fn forward(
         &self,
         input_1: &TensorWithGrad,
@@ -74,7 +51,7 @@ impl BinaryOperator for ResidualSumOfSquares {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
-            OpCode::ResidualSumOfSquares,
+            OpCode::ReduceSumSquare,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),

@@ -241,7 +241,10 @@ impl Tensor {
     pub fn l2_norm(&self, output: &Tensor) -> Result<(), Error> {
         let device = self.device();
         device.dot(self, self, output)?;
-        device.sqrt(output, output)?;
+        //device.sqrt(output, output)?;
+        let squared_l2_norm = output.get_values()?[0];
+        let l2_norm = squared_l2_norm.sqrt();
+        output.set_values(vec![l2_norm])?;
         Ok(())
     }
 

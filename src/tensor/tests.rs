@@ -116,7 +116,7 @@ fn normalize() {
     tensor.l2_norm(&actual_norm).unwrap();
     assert_ne!(actual_norm.get_values().unwrap()[0], expected_norm);
 
-    tensor.normalize().unwrap();
+    tensor.clip_norm().unwrap();
 
     tensor.l2_norm(&actual_norm).unwrap();
     assert_eq!(actual_norm.get_values().unwrap()[0], expected_norm);

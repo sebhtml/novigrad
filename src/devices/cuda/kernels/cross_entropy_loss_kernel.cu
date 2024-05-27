@@ -4,19 +4,8 @@ extern "C" __global__ void cross_entropy_loss_kernel(float *expected, float *act
     const int block_dim = 1024;
     __shared__ float shared_mem[block_dim];
 
+    int tid = threadIdx.x;
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
-
-    float partial = 0.0;
-    if (idx == 0)
-    {
-        for (int i = 0; i < n; i++)
-        {
-            partial += expected[i] * logf(actual[i] + epsilon);
-        }
-        *loss = -partial;
-    }
-/*
-    return;
 
     if (idx == 0)
     {
@@ -30,23 +19,22 @@ extern "C" __global__ void cross_entropy_loss_kernel(float *expected, float *act
     {
         partial += expected[i] * logf(actual[i] + epsilon);
     }
-    shared_mem[threadIdx.x] = partial;
+    shared_mem[tid] = partial;
     __syncthreads();
 
     // Parallel reduction.
     for (int s = blockDim.x / 2; s > 0; s >>= 1)
     {
-        if (threadIdx.x < s)
+        if (tid < s)
         {
-            shared_mem[threadIdx.x] += shared_mem[threadIdx.x + s];
+            shared_mem[tid] += shared_mem[tid + s];
         }
         __syncthreads();
     }
 
     // The first thread of each block adds its block sum.
-    if (threadIdx.x == 0)
+    if (tid == 0)
     {
         atomicAdd(loss, -shared_mem[0]);
     }
-    */
 }

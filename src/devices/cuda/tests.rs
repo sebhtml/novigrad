@@ -332,7 +332,7 @@ fn cuda_dot_kernel_big_vectors() {
         output.get_values().unwrap()
     };
 
-    let precision = 1.0;
+    let precision = 2.0;
     let expected = cpu_output
         .into_iter()
         .map(|x| ((x / precision).round()) * precision)

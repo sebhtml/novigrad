@@ -516,4 +516,22 @@ impl DeviceInterface for CudaDev {
         loss.set_values(vec![loss_value; 1])?;
         Ok(())
     }
+
+    fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let self_values = input.get_values()?;
+        let mut other_values = output.get_values()?;
+        let rows = input.rows();
+        let cols = input.cols();
+        let mut row = 0;
+        while row < rows {
+            let mut col = 0;
+            while col < cols {
+                let value = self_values[input.index(row, col)];
+                other_values[output.index(col, row)] = value;
+                col += 1;
+            }
+            row += 1;
+        }
+        output.set_values(other_values)
+    }
 }

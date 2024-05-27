@@ -340,8 +340,8 @@ fn transpose() {
     let matrix = device
         .tensor(3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
         .unwrap();
-    let mut matrix2 = device.tensor(2, 3, vec![0.0; 6]).unwrap();
-    matrix.transpose(&mut matrix2).unwrap();
+    let matrix2 = device.tensor(2, 3, vec![0.0; 6]).unwrap();
+    device.transpose(&matrix, &matrix2).unwrap();
     let matrix_values = matrix.get_values().unwrap();
     let matrix2_values = matrix2.get_values().unwrap();
     for row in 0..matrix.rows() {

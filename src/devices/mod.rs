@@ -121,6 +121,8 @@ pub trait DeviceInterface {
         actual: &Tensor,
         loss: &Tensor,
     ) -> Result<(), Error>;
+
+    fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 }
 
 impl Debug for dyn DeviceInterface {
@@ -370,5 +372,9 @@ impl DeviceInterface for Device {
         loss: &Tensor,
     ) -> Result<(), Error> {
         self.device.reduce_square_sum(expected, actual, loss)
+    }
+
+    fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        self.device.transpose(input, output)
     }
 }

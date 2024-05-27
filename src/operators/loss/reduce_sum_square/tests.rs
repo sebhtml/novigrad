@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{BinaryOperator, Device, Tensor};
+use crate::{BinaryOperator, Device, DeviceInterface, Tensor};
 
 use super::ReduceSumSquare;
 
@@ -48,7 +48,9 @@ fn evaluate() {
         .tensor(1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         .unwrap();
     let loss = device.tensor(1, 1, vec![0.0]).unwrap();
-    ReduceSumSquare::execute(&[&expected_tensor, &actual_tensor], &[&loss]).unwrap();
+    device
+        .reduce_square_sum(&expected_tensor, &actual_tensor, &loss)
+        .unwrap();
     assert_eq!(
         loss.get_values().unwrap()[0],
         (4.0 - 1.0 as f32).powf(2.0) * 8.0,

@@ -449,4 +449,13 @@ impl DeviceInterface for CudaDev {
             _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
         }
     }
+
+    fn cross_entropy_loss(
+        &self,
+        expected: &Tensor,
+        actual: &Tensor,
+        loss: &Tensor,
+    ) -> Result<(), Error> {
+        todo!()
+    }
 }

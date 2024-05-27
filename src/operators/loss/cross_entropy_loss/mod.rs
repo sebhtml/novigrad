@@ -20,12 +20,6 @@ impl CrossEntropyLoss {
     pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
-        let loss = CrossEntropyLoss::evaluate(expected, actual)?;
-        outputs[0].set_values(vec![loss; 1])
-    }
-
-    /// H(P, Q) = - Σ (P(i) * log(Q(i)))
-    fn evaluate(expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
         debug_assert_eq!(actual.size(), expected.size());
         let p = expected;
         let q = actual;
@@ -52,7 +46,7 @@ impl CrossEntropyLoss {
             row += 1;
         }
         debug_assert!(sum.is_finite());
-        Ok(-sum)
+        outputs[0].set_values(vec![-sum])
     }
 }
 

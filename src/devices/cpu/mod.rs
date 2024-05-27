@@ -263,6 +263,15 @@ impl DeviceInterface for CpuDevice {
 
         result.set_values(result_values)
     }
+
+    fn cross_entropy_loss(
+        &self,
+        expected: &Tensor,
+        actual: &Tensor,
+        loss: &Tensor,
+    ) -> Result<(), Error> {
+        todo!()
+    }
 }
 
 impl CpuDevice {

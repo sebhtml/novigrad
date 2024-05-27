@@ -13,7 +13,7 @@ extern "C" __global__ void cross_entropy_loss_kernel(float *expected, float *act
         {
             partial += expected[i] * logf(actual[i] + epsilon);
         }
-        *loss = partial;
+        *loss = -partial;
     }
 /*
     return;

@@ -282,19 +282,20 @@ impl DeviceInterface for CpuDevice {
         let rows = p.rows();
         let cols = p.cols();
         let mut row = 0;
-        let mut col = 0;
-        let mut sum = 0.0;
         let p_values = p.get_values()?;
         let q_values = q.get_values()?;
+        let mut sum = 0.0;
         while row < rows {
+            let mut col = 0;
             while col < cols {
                 let p_i = p_values[p.index(row, col)];
-                let q_i = q_values[q.index(row, col)] + EPSILON;
-                sum += p_i * f32::ln(q_i);
+                let q_i = q_values[q.index(row, col)];
+                sum += p_i * f32::ln(q_i + EPSILON);
                 col += 1;
             }
             row += 1;
         }
+
         debug_assert!(sum.is_finite());
         loss.set_values(vec![-sum])
     }

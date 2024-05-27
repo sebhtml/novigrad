@@ -462,65 +462,35 @@ impl DeviceInterface for CudaDev {
         actual: &Tensor,
         loss: &Tensor,
     ) -> Result<(), Error> {
-        debug_assert_eq!(actual.size(), expected.size());
-        let p = expected;
-        let q = actual;
-        if p.size() != q.size() {
-            println!("Incompatible sizes");
-            println!("p {}", p);
-            println!("q {}", q);
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        let rows = p.rows();
-        let cols = p.cols();
-        let mut row = 0;
-        let mut col = 0;
-        let mut sum = 0.0;
-        let p_values = p.get_values()?;
-        let q_values = q.get_values()?;
-        while row < rows {
-            while col < cols {
-                let p_i = p_values[p.index(row, col)];
-                let q_i = q_values[q.index(row, col)] + EPSILON;
-                sum += p_i * f32::ln(q_i);
-                col += 1;
-            }
-            row += 1;
-        }
-        debug_assert!(sum.is_finite());
-        loss.set_values(vec![-sum])
-
-        /*
         let n = expected.len();
-                let kernel = self.get_func(
-                    "cross_entropy_loss_kernel_module",
-                    "cross_entropy_loss_kernel",
-                )?;
-                let cfg = LaunchConfig::for_num_elems(n as u32);
+        let kernel = self.get_func(
+            "cross_entropy_loss_kernel_module",
+            "cross_entropy_loss_kernel",
+        )?;
+        let cfg = LaunchConfig::for_num_elems(n as u32);
 
-                let expected = &expected.device_slice().deref().borrow().buffer;
-                let actual = &actual.device_slice().deref().borrow().buffer;
-                let loss = &loss.device_slice().deref().borrow().buffer;
+        let expected = &expected.device_slice().deref().borrow().buffer;
+        let actual = &actual.device_slice().deref().borrow().buffer;
+        let loss = &loss.device_slice().deref().borrow().buffer;
 
-                match (expected, actual, loss) {
-                    (
-                        DevSliceEnum::CudaDevSlice(expected),
-                        DevSliceEnum::CudaDevSlice(actual),
-                        DevSliceEnum::CudaDevSlice(loss),
-                    ) => {
-                        let result = unsafe {
-                            kernel.launch(
-                                cfg,
-                                (expected.slice(), actual.slice(), loss.slice(), n, EPSILON),
-                            )
-                        };
-                        match result {
-                            Ok(_) => Ok(()),
-                            Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
-                        }
-                    }
-                    _ => Err(error!(ErrorEnum::NvLaunchError)),
+        match (expected, actual, loss) {
+            (
+                DevSliceEnum::CudaDevSlice(expected),
+                DevSliceEnum::CudaDevSlice(actual),
+                DevSliceEnum::CudaDevSlice(loss),
+            ) => {
+                let result = unsafe {
+                    kernel.launch(
+                        cfg,
+                        (expected.slice(), actual.slice(), loss.slice(), n, EPSILON),
+                    )
+                };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
                 }
-                 */
+            }
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
+        }
     }
 }

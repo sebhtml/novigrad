@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, error, gradient_instruction, loss_instruction, BinaryOperator,
-    DeviceInterface, Error, ErrorEnum, OpCode, Tensor, TensorWithGrad, EPSILON,
+    devices::Device, gradient_instruction, loss_instruction, BinaryOperator, DeviceInterface,
+    Error, OpCode, Tensor, TensorWithGrad,
 };
 
 #[derive(Clone)]

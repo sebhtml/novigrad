@@ -68,7 +68,7 @@ impl<T> NeuralMachine<T> {
 
                 for output in outputs {
                     instructions.push(gradient_instruction!(
-                        OpCode::Normalize,
+                        OpCode::ClipNorm,
                         &[output],
                         &[output],
                     ));

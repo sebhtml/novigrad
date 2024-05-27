@@ -1,7 +1,7 @@
 use crate::{
-    clip::Clip, Add, Concat, CrossEntropyLoss, Div, Dropout, Error, Gemm, Mul, Normalize,
-    ReduceSum, Reshape, ResidualSumOfSquares, ScalarAdd, ScalarMul, Sigmoid, Softmax, Sqrt, Sub,
-    Tensor, Unconcat,
+    clip::Clip, Add, ClipNorm, Concat, CrossEntropyLoss, Div, Dropout, Error, Gemm, Mul, ReduceSum,
+    Reshape, ResidualSumOfSquares, ScalarAdd, ScalarMul, Sigmoid, Softmax, Sqrt, Sub, Tensor,
+    Unconcat,
 };
 
 #[derive(Clone, Debug)]
@@ -29,10 +29,12 @@ pub enum OpCode {
     /// https://onnx.ai/onnx/operators/onnx__Clip.html
     Clip,
 
-    /// Not ONNX-compliant
-    /// similar op codes:
     /// https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
-    Normalize,
+    /// LayerNormalization
+
+    /// Not ONNX-compliant
+    /// https://onnx.ai/onnx/operators/onnx__Clip.html
+    ClipNorm,
 
     /// https://onnx.ai/onnx/operators/onnx__Mul.html
     Mul,
@@ -97,7 +99,7 @@ impl Into<String> for OpCode {
             OpCode::ScalarMul => "ScalarMul".into(),
             OpCode::ScalarAdd => "ScalarAdd".into(),
             OpCode::Clip => "Clip".into(),
-            OpCode::Normalize => "Normalize".into(),
+            OpCode::ClipNorm => "ClipNorm".into(),
             OpCode::Softmax => "Softmax".into(),
             OpCode::Sigmoid => "Sigmoid".into(),
             OpCode::Reshape(output_size) => format!("Reshape {:?}", output_size),
@@ -124,7 +126,7 @@ impl OpCode {
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::ScalarMul => ScalarMul::execute(inputs, outputs),
             OpCode::Clip => Clip::execute(inputs, outputs),
-            OpCode::Normalize => Normalize::execute(inputs, outputs),
+            OpCode::ClipNorm => ClipNorm::execute(inputs, outputs),
             OpCode::Mul => Mul::execute(inputs, outputs),
             OpCode::Softmax => Softmax::execute(inputs, outputs),
             OpCode::Sub => Sub::execute(inputs, outputs),

@@ -121,6 +121,7 @@ impl OptimizerTrait for Adam {
 
             // Update parameters with adaptive learning rate
             // theta = theta - alpha * m_hat / (sqrt(v_hat) + epsilon)
+            // Clip is used to remove negative values in v_hat.
             instructions.push(optimization_instruction!(
                 OpCode::Clip,
                 &[&zero, &f32_max, &v_hat],
@@ -137,12 +138,15 @@ impl OptimizerTrait for Adam {
                 &[&m_hat, &tmp1],
                 &[&tmp1],
             ));
-            // normalize is not in the adam paper. but +inf is reached is this is not done.
+
+            // ClipNorm is not in the adam paper. but +inf is reached is this is not done.
+            // It's basically like clipping the gradient.
             instructions.push(optimization_instruction!(
-                OpCode::Normalize,
+                OpCode::ClipNorm,
                 &[&tmp1],
                 &[&tmp1],
             ));
+
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&alpha_rate_tensor, &tmp1],

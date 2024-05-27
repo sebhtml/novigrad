@@ -246,11 +246,16 @@ impl Tensor {
         Ok(())
     }
 
-    pub fn normalize(&self) -> Result<(), Error> {
+    pub fn clip_norm(&self) -> Result<(), Error> {
+        let norm_max = 1.0;
         let l2_norm = self.device.tensor(1, 1, vec![0.0]).unwrap();
         self.l2_norm(&l2_norm)?;
         let l2_norm = l2_norm.get_values()?[0];
+        // Can not normalize a vector with no direction.
         if l2_norm == 0.0 {
+            return Ok(());
+        }
+        if l2_norm <= norm_max {
             return Ok(());
         }
         let alpha = 1.0 / l2_norm;

@@ -296,6 +296,29 @@ impl DeviceInterface for CpuDevice {
         unsafe { *loss.as_mut_ptr() = loss_value };
         Ok(())
     }
+
+    fn reduce_square_sum(
+        &self,
+        expected: &Tensor,
+        actual: &Tensor,
+        loss: &Tensor,
+    ) -> Result<(), Error> {
+        if expected.size() != actual.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        let expected_values = expected.get_values()?;
+        let actual_values = actual.get_values()?;
+        let mut loss_value = 0.0;
+        for i in 0..expected_values.len() {
+            let expected = expected_values[i];
+            let actual = actual_values[i];
+            let diff = expected - actual;
+            loss_value += diff * diff;
+        }
+
+        loss.set_values(vec![loss_value; 1])?;
+        Ok(())
+    }
 }
 
 impl CpuDevice {

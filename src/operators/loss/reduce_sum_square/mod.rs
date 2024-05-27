@@ -1,14 +1,13 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, error, gradient_instruction, loss_instruction, BinaryOperator, Error,
-    ErrorEnum, OpCode, Tensor, TensorWithGrad,
+    devices::Device, gradient_instruction, loss_instruction, BinaryOperator, DeviceInterface,
+    Error, OpCode, Tensor, TensorWithGrad,
 };
 
 #[cfg(test)]
 mod tests;
 
-/// RSS = Σ (y_i - f(x_i))^2
 pub struct ReduceSumSquare {
     device: Device,
 }
@@ -23,27 +22,9 @@ impl ReduceSumSquare {
     pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
-        if expected.size() != actual.size() {
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        let expected_values = expected.get_values()?;
-        let actual_values = actual.get_values()?;
-        let mut loss = 0.0;
-        for i in 0..expected_values.len() {
-            let expected = expected_values[i];
-            let actual = actual_values[i];
-            let diff = expected - actual;
-            loss += diff * diff;
-        }
-
-        /*
-        TODO use copy, sub, dot_product on GPU.
-        TensorF32::copy(expected, diffs)?;
-        TensorF32::sub(actual, diffs)?;
-        TensorF32::dot_product(diffs, diffs)
-         */
-        outputs[0].set_values(vec![loss; 1])?;
-        Ok(())
+        let loss = outputs[0];
+        let device = expected.device();
+        device.reduce_square_sum(expected, actual, loss)
     }
 }
 

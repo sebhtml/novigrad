@@ -113,6 +113,14 @@ pub trait DeviceInterface {
         actual: &Tensor,
         loss: &Tensor,
     ) -> Result<(), Error>;
+
+    /// RSS = Σ (y_i - f(x_i))^2
+    fn reduce_square_sum(
+        &self,
+        expected: &Tensor,
+        actual: &Tensor,
+        loss: &Tensor,
+    ) -> Result<(), Error>;
 }
 
 impl Debug for dyn DeviceInterface {
@@ -353,5 +361,14 @@ impl DeviceInterface for Device {
         loss: &Tensor,
     ) -> Result<(), Error> {
         self.device.cross_entropy_loss(expected, actual, loss)
+    }
+
+    fn reduce_square_sum(
+        &self,
+        expected: &Tensor,
+        actual: &Tensor,
+        loss: &Tensor,
+    ) -> Result<(), Error> {
+        self.device.reduce_square_sum(expected, actual, loss)
     }
 }

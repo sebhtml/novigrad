@@ -132,6 +132,7 @@ impl Tensor {
         self.device_slice.deref().borrow().get_values()
     }
 
+    /// Avoid using set_values unless necessary. It's bad for performance.
     pub fn set_values(&self, new_values: Vec<f32>) -> Result<(), Error> {
         debug_assert_eq!(new_values.len(), self.len());
         if self.device_slice.deref().borrow().len() != self.len() {
@@ -241,10 +242,7 @@ impl Tensor {
     pub fn l2_norm(&self, output: &Tensor) -> Result<(), Error> {
         let device = self.device();
         device.dot(self, self, output)?;
-        //device.sqrt(output, output)?;
-        let squared_l2_norm = output.get_values()?[0];
-        let l2_norm = squared_l2_norm.sqrt();
-        output.set_values(vec![l2_norm])?;
+        device.sqrt(output, output)?;
         Ok(())
     }
 

@@ -9,11 +9,11 @@ use crate::{
 mod tests;
 
 #[derive(Clone)]
-pub struct ResidualSumOfSquares {
+pub struct ReduceSumSquare {
     device: Device,
 }
 
-impl ResidualSumOfSquares {
+impl ReduceSumSquare {
     pub fn new(device: &Device) -> Self {
         Self {
             device: device.clone(),
@@ -23,7 +23,7 @@ impl ResidualSumOfSquares {
     pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
-        let loss = ResidualSumOfSquares::evaluate(expected, actual)?;
+        let loss = ReduceSumSquare::evaluate(expected, actual)?;
         outputs[0].set_values(vec![loss; 1])
     }
 
@@ -51,7 +51,7 @@ impl ResidualSumOfSquares {
     }
 }
 
-impl BinaryOperator for ResidualSumOfSquares {
+impl BinaryOperator for ReduceSumSquare {
     fn forward(
         &self,
         input_1: &TensorWithGrad,
@@ -74,7 +74,7 @@ impl BinaryOperator for ResidualSumOfSquares {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(loss_instruction!(
-            OpCode::ResidualSumOfSquares,
+            OpCode::ReduceSumSquare,
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),

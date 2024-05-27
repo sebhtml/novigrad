@@ -395,11 +395,4 @@ fn cuda_cross_entropy_loss() {
         .collect::<Vec<_>>();
 
     assert_eq!(expected, actual,);
-    /*
-         left: [0.5]
-    right: [0.693147]
-
-      left: [0.5]
-    right: [0.693147]
-     */
 }

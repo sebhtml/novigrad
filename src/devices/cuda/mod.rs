@@ -11,7 +11,7 @@ use cudarc::{
     driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
 };
 
-use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor};
+use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor, EPSILON};
 
 use self::slice::CudaDevSlice;
 
@@ -51,6 +51,12 @@ impl CudaDev {
             "dot_kernel_module",
             &["dot_kernel"],
             "./src/devices/cuda/kernels/dot_kernel.cu",
+        )?;
+
+        device.load_module(
+            "cross_entropy_loss_kernel_module",
+            &["cross_entropy_loss_kernel"],
+            "./src/devices/cuda/kernels/cross_entropy_loss_kernel.cu",
         )?;
 
         device.load_module(
@@ -447,6 +453,44 @@ impl DeviceInterface for CudaDev {
                 }
             }
             _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
+    }
+
+    fn cross_entropy_loss(
+        &self,
+        expected: &Tensor,
+        actual: &Tensor,
+        loss: &Tensor,
+    ) -> Result<(), Error> {
+        let n = expected.len();
+        let kernel = self.get_func(
+            "cross_entropy_loss_kernel_module",
+            "cross_entropy_loss_kernel",
+        )?;
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+
+        let expected = &expected.device_slice().deref().borrow().buffer;
+        let actual = &actual.device_slice().deref().borrow().buffer;
+        let loss = &loss.device_slice().deref().borrow().buffer;
+
+        match (expected, actual, loss) {
+            (
+                DevSliceEnum::CudaDevSlice(expected),
+                DevSliceEnum::CudaDevSlice(actual),
+                DevSliceEnum::CudaDevSlice(loss),
+            ) => {
+                let result = unsafe {
+                    kernel.launch(
+                        cfg,
+                        (expected.slice(), actual.slice(), loss.slice(), n, EPSILON),
+                    )
+                };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
         }
     }
 }

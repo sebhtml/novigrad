@@ -1,7 +1,7 @@
 use super::load_examples;
 use crate::{
-    BinaryOperator, CrossEntropyLoss, Device, GradientDescent, Metrics, Tokenizer, TokenizerTrait,
-    UnaryModel, UnaryOperator,
+    BinaryOperator, Device, GradientDescent, Metrics, SoftmaxCrossEntropyLoss, Tokenizer,
+    TokenizerTrait, UnaryModel, UnaryOperator,
 };
 use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, TensorWithGrad};
 use crate::{Error, ModelDetails};
@@ -94,7 +94,7 @@ pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails, Error> {
     )?;
     let vocab_size = tokenizer.vocab_size();
     let model = MegaManModel::new(device, sequence_length, vocab_size)?;
-    let loss_operator = CrossEntropyLoss::new(device);
+    let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.5;
     let details = ModelDetails {
         device: device.clone(),

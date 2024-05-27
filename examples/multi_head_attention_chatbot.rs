@@ -1,7 +1,7 @@
 use novigrad::{
-    error, get_row_argmax, into_one_hot_encoded_rows, Adam, BinaryOperator, CrossEntropyLoss,
-    Device, Embedding, Error, ErrorEnum, Linear, Model, MultiHeadAttention, NeuralMachine,
-    OptimizerTrait, Softmax, Tensor, TensorWithGrad, TernaryOperator, Tokenizer, TokenizerTrait,
+    error, get_row_argmax, into_one_hot_encoded_rows, Adam, BinaryOperator, Device, Embedding,
+    Error, ErrorEnum, Linear, Model, MultiHeadAttention, NeuralMachine, OptimizerTrait, Softmax,
+    SoftmaxCrossEntropyLoss, Tensor, TensorWithGrad, TernaryOperator, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
 };
 use rand::prelude::SliceRandom;
@@ -82,7 +82,7 @@ fn main() -> Result<(), Error> {
     let vocab_size = tokenizer.vocab_size();
     let model: Box<dyn UnaryModel> = Box::new(model);
     let clipped_gradient_norm = 1.0;
-    let loss_operator: Box<dyn BinaryOperator> = Box::new(CrossEntropyLoss::new(&device));
+    let loss_operator: Box<dyn BinaryOperator> = Box::new(SoftmaxCrossEntropyLoss::new(&device));
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);

@@ -54,6 +54,12 @@ impl CudaDev {
         )?;
 
         device.load_module(
+            "cross_entropy_loss_kernel_module",
+            &["cross_entropy_loss_kernel"],
+            "./src/devices/cuda/kernels/cross_entropy_loss_kernel.cu",
+        )?;
+
+        device.load_module(
             "scalar_mul_kernel_module",
             &["scalar_mul_kernel"],
             "./src/devices/cuda/kernels/scalar_mul_kernel.cu",

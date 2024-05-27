@@ -8,7 +8,7 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone)]
+/// RSS = Σ (y_i - f(x_i))^2
 pub struct ReduceSumSquare {
     device: Device,
 }
@@ -23,12 +23,6 @@ impl ReduceSumSquare {
     pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
-        let loss = ReduceSumSquare::evaluate(expected, actual)?;
-        outputs[0].set_values(vec![loss; 1])
-    }
-
-    /// RSS = Σ (y_i - f(x_i))^2
-    fn evaluate(expected: &Tensor, actual: &Tensor) -> Result<f32, Error> {
         if expected.size() != actual.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
@@ -41,13 +35,15 @@ impl ReduceSumSquare {
             let diff = expected - actual;
             loss += diff * diff;
         }
-        Ok(loss)
+
         /*
         TODO use copy, sub, dot_product on GPU.
         TensorF32::copy(expected, diffs)?;
         TensorF32::sub(actual, diffs)?;
         TensorF32::dot_product(diffs, diffs)
          */
+        outputs[0].set_values(vec![loss; 1])?;
+        Ok(())
     }
 }
 

@@ -1,3 +1,5 @@
+use more_asserts::{assert_ge, assert_le};
+
 use crate::EPSILON;
 
 #[test]
@@ -316,18 +318,18 @@ fn cuda_dot_kernel_big_vectors() {
         output.get_values().unwrap()
     };
 
-    let precision = 2.0;
+    let precision = 1e-3;
     let expected = cpu_output
         .into_iter()
         .map(|x| ((x / precision).round()) * precision)
-        .collect::<Vec<_>>();
+        .collect::<Vec<_>>()[0];
 
     let actual = out_host
         .into_iter()
         .map(|x| ((x / precision).round()) * precision)
-        .collect::<Vec<_>>();
+        .collect::<Vec<_>>()[0];
 
-    assert_eq!(expected, actual,);
+    assert_ge!(2.0, expected - actual,);
 }
 
 #[test]

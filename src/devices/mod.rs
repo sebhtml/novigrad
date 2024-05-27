@@ -107,6 +107,7 @@ pub trait DeviceInterface {
     fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
+    /// https://en.wikipedia.org/wiki/Entropy_(information_theory)
     fn cross_entropy_loss(
         &self,
         expected: &Tensor,

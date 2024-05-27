@@ -1,7 +1,7 @@
 use crate::{
-    clip::Clip, Add, ClipNorm, Concat, Div, Dropout, Error, Gemm, Mul, ReduceSum, ReduceSumSquare,
-    Reshape, ScalarAdd, ScalarMul, Sigmoid, Softmax, SoftmaxCrossEntropyLoss, Sqrt, Sub, Tensor,
-    Unconcat,
+    clip::Clip, statistics::bernoulli::Bernoulli, Add, ClipNorm, Concat, Div, Error, Gemm, Mul,
+    ReduceSum, ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid, Softmax,
+    SoftmaxCrossEntropyLoss, Sqrt, Sub, Tensor, Unconcat,
 };
 
 #[derive(Clone, Debug)]
@@ -63,8 +63,8 @@ pub enum OpCode {
     /// https://onnx.ai/onnx/operators/onnx__ReduceSumSquare.html
     ReduceSumSquare,
 
-    /// https://onnx.ai/onnx/operators/onnx__Dropout.html
-    Dropout(f32),
+    /// https://onnx.ai/onnx/operators/onnx__Bernoulli.html
+    Bernoulli(f32),
 
     /// TODO
     /// https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
@@ -107,7 +107,7 @@ impl Into<String> for OpCode {
             OpCode::Unconcat => "Unconcat".into(),
             OpCode::SoftmaxCrossEntropyLoss => "CrossEntropyLoss".into(),
             OpCode::ReduceSumSquare => "ResidualSumOfSquares".into(),
-            OpCode::Dropout(_) => "Dropout".into(),
+            OpCode::Bernoulli(_) => "Bernoulli".into(),
             OpCode::Div => "Div".into(),
             OpCode::Sqrt => "Sqrt".into(),
         }
@@ -136,9 +136,7 @@ impl OpCode {
             OpCode::Sigmoid => Sigmoid::execute(inputs, outputs),
             OpCode::SoftmaxCrossEntropyLoss => SoftmaxCrossEntropyLoss::execute(inputs, outputs),
             OpCode::ReduceSumSquare => ReduceSumSquare::execute(inputs, outputs),
-            OpCode::Dropout(dropout_probability) => {
-                Dropout::execute(*dropout_probability, inputs, outputs)
-            }
+            OpCode::Bernoulli(probability) => Bernoulli::execute(*probability, inputs, outputs),
             OpCode::Div => Div::execute(inputs, outputs),
             OpCode::Sqrt => Sqrt::execute(inputs, outputs),
             OpCode::ScalarAdd => ScalarAdd::execute(inputs, outputs),

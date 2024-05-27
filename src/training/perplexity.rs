@@ -1,5 +1,6 @@
 use crate::{Error, Tensor};
 
+/// https://en.wikipedia.org/wiki/Perplexity
 pub fn get_perplexity(tensor: &Tensor, row: usize) -> Result<f32, Error> {
     let probabilities = tensor.get_values()?;
     let mut pp = 1.0;

@@ -76,7 +76,10 @@ impl DeviceInterface for CpuDevice {
         let x = x.as_ptr();
         let y = y.as_ptr();
         let result = unsafe { ffi::cblas_sdot(n, x, incx, y, incy) };
-        output.set_values(vec![result])?;
+        let output = output.as_mut_ptr();
+        unsafe {
+            *output = result;
+        };
         Ok(())
     }
 
@@ -144,19 +147,15 @@ impl DeviceInterface for CpuDevice {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
 
+        let len = left.len();
         debug_assert_eq!(result.size(), left.size());
 
-        let mut result_values = result.get_values()?;
-        let left_values = left.get_values()?;
-        let right_values = right.get_values()?;
-
-        let result_ptr = result_values.as_mut_ptr();
-        let left_ptr = left_values.as_ptr();
-        let right_ptr = right_values.as_ptr();
+        let result_ptr = result.as_mut_ptr();
+        let left_ptr = left.as_ptr();
+        let right_ptr = right.as_ptr();
 
         unsafe {
             let mut index = 0;
-            let len = left_values.len();
             while index < len {
                 let left_cell = left_ptr.add(index);
                 let right_cell = right_ptr.add(index);
@@ -168,46 +167,46 @@ impl DeviceInterface for CpuDevice {
                 index += 1;
             }
         }
-
-        result.set_values(result_values)
+        Ok(())
     }
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let rows = input.rows();
         let cols = input.cols();
-        let values = input.get_values()?;
-        let mut result_values = output.get_values()?;
+        let values = input.as_ptr();
+        let result_values = output.as_mut_ptr();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = values[input.index(row, col)];
-                let y = sigmoid(x);
-                result_values[output.index(row, col)] = y;
+                let x = unsafe { values.add(input.index(row, col)) };
+                let y = sigmoid(unsafe { *x });
+                unsafe { *result_values.add(output.index(row, col)) = y };
                 col += 1;
             }
             row += 1;
         }
-        output.set_values(result_values)
+
+        Ok(())
     }
 
     fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let rows = input.rows();
         let cols = input.cols();
-        let values = input.get_values()?;
-        let mut result_values = output.get_values()?;
+        let values = input.as_ptr();
+        let result_values = output.as_mut_ptr();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let x = values[input.index(row, col)];
-                let y = x.sqrt();
-                result_values[output.index(row, col)] = y;
+                let x = values.wrapping_add(input.index(row, col));
+                let y = unsafe { *x }.sqrt();
+                unsafe { *result_values.wrapping_add(output.index(row, col)) = y };
                 col += 1;
             }
             row += 1;
         }
-        output.set_values(result_values)
+        Ok(())
     }
 
     fn clip(
@@ -236,19 +235,15 @@ impl DeviceInterface for CpuDevice {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
 
+        let len = left.len();
         debug_assert_eq!(result.size(), left.size());
 
-        let mut result_values = result.get_values()?;
-        let left_values = left.get_values()?;
-        let right_values = right.get_values()?;
-
-        let result_ptr = result_values.as_mut_ptr();
-        let left_ptr = left_values.as_ptr();
-        let right_ptr = right_values.as_ptr();
+        let result_ptr = result.as_mut_ptr();
+        let left_ptr = left.as_ptr();
+        let right_ptr = right.as_ptr();
 
         unsafe {
             let mut index = 0;
-            let len = left_values.len();
             while index < len {
                 let left_cell = left_ptr.add(index);
                 let right_cell = right_ptr.add(index);
@@ -261,7 +256,7 @@ impl DeviceInterface for CpuDevice {
             }
         }
 
-        result.set_values(result_values)
+        Ok(())
     }
 
     fn cross_entropy_loss(
@@ -282,14 +277,14 @@ impl DeviceInterface for CpuDevice {
         let rows = p.rows();
         let cols = p.cols();
         let mut row = 0;
-        let p_values = p.get_values()?;
-        let q_values = q.get_values()?;
+        let p_values = p.as_ptr();
+        let q_values = q.as_ptr();
         let mut sum = 0.0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let p_i = p_values[p.index(row, col)];
-                let q_i = q_values[q.index(row, col)];
+                let p_i = unsafe { *p_values.add(p.index(row, col)) };
+                let q_i = unsafe { *q_values.add(q.index(row, col)) };
                 sum += p_i * f32::ln(q_i + EPSILON);
                 col += 1;
             }
@@ -297,7 +292,9 @@ impl DeviceInterface for CpuDevice {
         }
 
         debug_assert!(sum.is_finite());
-        loss.set_values(vec![-sum])
+        let loss_value = -sum;
+        unsafe { *loss.as_mut_ptr() = loss_value };
+        Ok(())
     }
 }
 

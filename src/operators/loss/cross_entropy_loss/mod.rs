@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, error, gradient_instruction, loss_instruction, BinaryOperator, Error,
-    ErrorEnum, OpCode, Tensor, TensorWithGrad, EPSILON,
+    devices::Device, error, gradient_instruction, loss_instruction, BinaryOperator,
+    DeviceInterface, Error, ErrorEnum, OpCode, Tensor, TensorWithGrad, EPSILON,
 };
 
 #[derive(Clone)]
@@ -20,33 +20,9 @@ impl CrossEntropyLoss {
     pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
-        debug_assert_eq!(actual.size(), expected.size());
-        let p = expected;
-        let q = actual;
-        if p.size() != q.size() {
-            println!("Incompatible sizes");
-            println!("p {}", p);
-            println!("q {}", q);
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        let rows = p.rows();
-        let cols = p.cols();
-        let mut row = 0;
-        let mut col = 0;
-        let mut sum = 0.0;
-        let p_values = p.get_values()?;
-        let q_values = q.get_values()?;
-        while row < rows {
-            while col < cols {
-                let p_i = p_values[p.index(row, col)];
-                let q_i = q_values[q.index(row, col)] + EPSILON;
-                sum += p_i * f32::ln(q_i);
-                col += 1;
-            }
-            row += 1;
-        }
-        debug_assert!(sum.is_finite());
-        outputs[0].set_values(vec![-sum])
+        let loss = outputs[0];
+        let device = expected.device();
+        device.cross_entropy_loss(expected, actual, loss)
     }
 }
 

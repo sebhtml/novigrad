@@ -11,7 +11,7 @@ use cudarc::{
     driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
 };
 
-use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor};
+use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor, EPSILON};
 
 use self::slice::CudaDevSlice;
 
@@ -456,6 +456,32 @@ impl DeviceInterface for CudaDev {
         actual: &Tensor,
         loss: &Tensor,
     ) -> Result<(), Error> {
-        todo!()
+        debug_assert_eq!(actual.size(), expected.size());
+        let p = expected;
+        let q = actual;
+        if p.size() != q.size() {
+            println!("Incompatible sizes");
+            println!("p {}", p);
+            println!("q {}", q);
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        let rows = p.rows();
+        let cols = p.cols();
+        let mut row = 0;
+        let mut col = 0;
+        let mut sum = 0.0;
+        let p_values = p.get_values()?;
+        let q_values = q.get_values()?;
+        while row < rows {
+            while col < cols {
+                let p_i = p_values[p.index(row, col)];
+                let q_i = q_values[q.index(row, col)] + EPSILON;
+                sum += p_i * f32::ln(q_i);
+                col += 1;
+            }
+            row += 1;
+        }
+        debug_assert!(sum.is_finite());
+        loss.set_values(vec![-sum])
     }
 }

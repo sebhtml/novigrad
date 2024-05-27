@@ -3,7 +3,8 @@ use rand::thread_rng;
 use std::{ops::Deref, time::SystemTime};
 
 use crate::{
-    Device, Error, ModelDetails, NeuralMachine, Tensor, TensorWithGrad, Tokenizer, TokenizerTrait,
+    perplexity::get_perplexity, Device, Error, ModelDetails, NeuralMachine, Tensor, TensorWithGrad,
+    Tokenizer, TokenizerTrait,
 };
 
 trait IsPrintable {
@@ -58,6 +59,7 @@ pub fn print_expected_output_and_actual_output(
     expected_output_token: usize,
     actual_output_token: usize,
     loss: f32,
+    perplexity: f32,
 ) -> Result<(), Error> {
     let input_tokens = get_row_argmaxes(input)?;
 
@@ -83,8 +85,8 @@ pub fn print_expected_output_and_actual_output(
 
     println!("  input_tokens: {:?}", &input_tokens);
     println!(
-        "  epoch: {}, example: {}, loss: {}, expected_output_token: {}, actual_output_token: {}",
-        epoch, example, loss, expected_output_token, actual_output_token
+        "  epoch: {}, example: {}, loss: {}, perplexity: {}, expected_output_token: {}, actual_output_token: {}",
+        epoch, example, loss, perplexity, expected_output_token, actual_output_token
     );
 
     if expected_output.cols() < 10 {
@@ -104,34 +106,48 @@ fn print_device_mem_info(device: &Device) -> Result<(), Error> {
     Ok(())
 }
 
-fn print_total_loss<T>(
-    device: &Device,
-    program: &NeuralMachine<T>,
-    inputs: &Vec<TensorWithGrad>,
-    outputs: &Vec<TensorWithGrad>,
-    last_total_loss: f32,
-    epoch: usize,
-) -> Result<f32, Error> {
-    let total_loss = total_loss(program, inputs, outputs)?;
-    let change = (total_loss - last_total_loss) / last_total_loss;
-    println!("----",);
-    println!(
-        "Epoch {} Total_loss {}, change: {}",
-        epoch, total_loss, change
-    );
-    print_device_mem_info(device)?;
-    Ok(total_loss)
+#[derive(Clone)]
+pub struct Metrics {
+    pub total_loss: f32,
+    pub total_perplexity: f32,
 }
 
-pub struct NetworkTestOutput {
-    pub initial_total_error: f32,
-    pub final_total_error: f32,
+fn print_metrics(epoch: usize, metrics: &Metrics, previous_metrics: &Metrics) -> Result<(), Error> {
+    let total_loss = metrics.total_loss;
+    let previous_total_loss = previous_metrics.total_loss;
+    let total_loss_change = (total_loss - previous_total_loss) / previous_total_loss;
+    println!("----",);
+    println!(
+        "Epoch {} total_loss {}, change: {}",
+        epoch, total_loss, total_loss_change
+    );
+    let total_perplexity = metrics.total_perplexity;
+    let previous_total_perplexity = previous_metrics.total_perplexity;
+    let total_perplexity_change =
+        (total_perplexity - previous_total_perplexity) / previous_total_perplexity;
+    println!(
+        "Epoch {} total_perplexity {}, change: {}",
+        epoch, total_perplexity, total_perplexity_change
+    );
+    Ok(())
+}
+
+pub struct NeuralMachineTestOutput {
+    pub initial_metrics: Metrics,
+    pub final_metrics: Metrics,
     pub expected_argmax_values: Vec<usize>,
     pub actual_argmax_values: Vec<usize>,
 }
 
-pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error> {
-    let mut initial_total_loss = f32::NAN;
+pub fn train_model<T>(details: ModelDetails) -> Result<NeuralMachineTestOutput, Error> {
+    let mut initial_metrics = Metrics {
+        total_loss: f32::NAN,
+        total_perplexity: f32::NAN,
+    };
+    let mut previous_metrics = Metrics {
+        total_loss: f32::NAN,
+        total_perplexity: f32::NAN,
+    };
     let examples = &details.examples;
     let model = details.model;
     let loss_operator = details.loss_operator;
@@ -151,7 +167,6 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error>
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
 
-    let mut previous_total_loss = f32::NAN;
     let epochs = details.epochs;
     let progress = details.progress;
 
@@ -159,39 +174,30 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NetworkTestOutput, Error>
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
-            let total_loss = print_total_loss(
-                &device,
-                &program,
-                &inputs,
-                &outputs,
-                previous_total_loss,
-                epoch,
-            )?;
+            let metrics = total_metrics(&program, &inputs, &outputs)?;
+            print_metrics(epoch, &metrics, &previous_metrics)?;
+            print_device_mem_info(&device)?;
             if epoch == 0 {
-                initial_total_loss = total_loss;
+                initial_metrics = metrics.clone();
             }
-            previous_total_loss = total_loss;
-            if previous_total_loss == 0.0 {
+            previous_metrics = metrics.clone();
+
+            if metrics.total_loss == 0.0 {
                 break;
             }
         }
         train(&program, shuffle_examples, &inputs, &outputs)?;
     }
-    let final_total_error = print_total_loss(
-        &device,
-        &program,
-        &inputs,
-        &outputs,
-        previous_total_loss,
-        epochs,
-    )?;
+    let final_metrics = total_metrics(&program, &inputs, &outputs)?;
+    print_metrics(epochs, &final_metrics, &previous_metrics)?;
+    print_device_mem_info(&device)?;
 
     let (expected_argmax_values, actual_argmax_values) =
         print_results(epochs, &program, &mut tokenizer, &inputs, &outputs)?;
 
-    let output = NetworkTestOutput {
-        initial_total_error: initial_total_loss,
-        final_total_error,
+    let output = NeuralMachineTestOutput {
+        initial_metrics,
+        final_metrics,
         expected_argmax_values,
         actual_argmax_values,
     };
@@ -213,16 +219,19 @@ fn print_results<T>(
         let input = &inputs[i];
         let expected_output = &outputs[i];
         let actual_output = program.infer(input)?;
+
         let loss = program.loss(expected_output)?;
         let loss: &Tensor = &loss.tensor().deref().borrow();
         let loss: f32 = loss.try_into()?;
+
+        let actual_output: &Tensor = &actual_output.tensor().deref().borrow();
+        let perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
 
         let expected_output: &Tensor = &outputs[i].tensor().deref().borrow();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
         let expected_argmax = expected_output_argmaxes[last_row].to_owned();
         expected_argmax_values.push(expected_argmax);
 
-        let actual_output: &Tensor = &actual_output.tensor().deref().borrow();
         let actual_output_argmaxes = get_row_argmaxes(actual_output)?;
         let actual_argmax = actual_output_argmaxes[last_row].to_owned();
         actual_argmax_values.push(actual_argmax);
@@ -237,6 +246,7 @@ fn print_results<T>(
             expected_argmax,
             actual_argmax,
             loss,
+            perplexity,
         )?;
     }
 
@@ -291,22 +301,34 @@ pub fn train<T>(
     Ok(())
 }
 
-pub fn total_loss<T>(
+pub fn total_metrics<T>(
     program: &NeuralMachine<T>,
     inputs: &[TensorWithGrad],
     outputs: &[TensorWithGrad],
-) -> Result<f32, Error> {
-    let mut total_error = 0.0;
+) -> Result<Metrics, Error> {
+    let mut total_loss = 0.0;
+    let mut total_perplexity = 0.0;
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
-        let _ = program.infer(&inputs[i])?;
+        let actual_output = program.infer(&inputs[i])?;
+
+        // Loss
         let example_loss = program.loss(expected_output)?;
         let example_loss: &Tensor = &example_loss.tensor().deref().borrow();
         let example_loss: f32 = example_loss.try_into()?;
-        total_error += example_loss;
+        total_loss += example_loss;
+
+        // Perplexity
+        let actual_output: &Tensor = &actual_output.tensor().deref().borrow();
+        let perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
+        total_perplexity += perplexity;
     }
 
-    Ok(total_error)
+    let metrics = Metrics {
+        total_loss,
+        total_perplexity,
+    };
+    Ok(metrics)
 }
 
 fn train_with_one_example<T>(

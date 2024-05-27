@@ -1,6 +1,6 @@
 use crate::{
-    Device, Error, GradientDescent, ModelDetails, ResidualSumOfSquares, TensorWithGrad, UnaryModel,
-    UnaryOperator,
+    Device, Error, GradientDescent, Metrics, ModelDetails, ResidualSumOfSquares, TensorWithGrad,
+    UnaryModel, UnaryOperator,
 };
 use crate::{Linear, Model};
 
@@ -72,11 +72,17 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
         optimizer: Box::new(optimizer),
         epochs: 100,
         progress: 10,
-        initial_total_error_min: 50.0,
-        final_total_error_max: 2.16778,
         learning_rate,
         shuffle_examples: false,
         clipped_gradient_norm: 1.0,
+        initial_metrics: Metrics {
+            total_loss: 50.0,
+            total_perplexity: 0.0,
+        },
+        final_metrics: Metrics {
+            total_loss: 2.16778,
+            total_perplexity: 1000.0,
+        },
     };
     Ok(details)
 }

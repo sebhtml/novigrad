@@ -1,6 +1,6 @@
 use super::load_examples;
 use crate::{
-    BinaryOperator, CrossEntropyLoss, Device, GradientDescent, Tokenizer, TokenizerTrait,
+    BinaryOperator, CrossEntropyLoss, Device, GradientDescent, Metrics, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
 };
 use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, TensorWithGrad};
@@ -105,11 +105,17 @@ pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails, Error> {
         optimizer: Box::new(GradientDescent::new(learning_rate)),
         epochs: 100,
         progress: 10,
-        initial_total_error_min: 50.0,
-        final_total_error_max: 0.0,
         learning_rate,
         shuffle_examples: true,
         clipped_gradient_norm: 1.0,
+        initial_metrics: Metrics {
+            total_loss: 50.0,
+            total_perplexity: 0.0,
+        },
+        final_metrics: Metrics {
+            total_loss: 0.0,
+            total_perplexity: 1000.0,
+        },
     };
     Ok(details)
 }

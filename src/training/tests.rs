@@ -8,16 +8,16 @@ use crate::ModelEnum;
 
 fn test_model(model: ModelEnum, device: &Device) {
     let details = load_model_details(model, device).unwrap();
-    let expected_initial_total_error_min = details.initial_total_error_min;
-    let expected_final_total_error_max = details.final_total_error_max;
+    let expected_initial_total_loss_min = details.initial_metrics.total_loss;
+    let expected_final_total_loss_max = details.final_metrics.total_loss;
     let training_output = train_model::<f32>(details).unwrap();
     assert_le!(
-        expected_initial_total_error_min,
-        training_output.initial_total_error
+        expected_initial_total_loss_min,
+        training_output.initial_metrics.total_loss
     );
     assert_ge!(
-        expected_final_total_error_max,
-        training_output.final_total_error
+        expected_final_total_loss_max,
+        training_output.final_metrics.total_loss
     );
     for i in 0..training_output.expected_argmax_values.len() {
         let expected = training_output.actual_argmax_values[i];

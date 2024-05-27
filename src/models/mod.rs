@@ -5,7 +5,7 @@ mod mega_man;
 mod mega_man_attention;
 mod perceptron;
 mod simple;
-use crate::{error, BinaryOperator, OptimizerTrait};
+use crate::{error, BinaryOperator, Metrics, OptimizerTrait};
 pub use perceptron::*;
 use std::fs;
 
@@ -35,8 +35,8 @@ pub struct ModelDetails {
     pub clipped_gradient_norm: f32,
     pub epochs: usize,
     pub progress: usize,
-    pub initial_total_error_min: f32,
-    pub final_total_error_max: f32,
+    pub initial_metrics: Metrics,
+    pub final_metrics: Metrics,
 }
 
 pub fn load_model_details(model: ModelEnum, device: &Device) -> Result<ModelDetails, Error> {

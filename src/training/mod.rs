@@ -4,3 +4,4 @@ mod train;
 pub use train::*;
 mod tensor_with_grad;
 pub use tensor_with_grad::*;
+pub mod perplexity;

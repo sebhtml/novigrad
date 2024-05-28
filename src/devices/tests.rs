@@ -81,22 +81,6 @@ fn clip_max() {
 }
 
 #[test]
-fn set_value() {
-    use crate::Device;
-    let device = Device::default();
-    let tensor = device
-        .tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
-        .unwrap();
-    tensor
-        .set_values(vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0])
-        .unwrap();
-    assert_eq!(
-        tensor.get_values().unwrap(),
-        vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0,]
-    );
-}
-
-#[test]
 fn bernoulli() {
     use crate::devices::DeviceInterface;
     use crate::Device;

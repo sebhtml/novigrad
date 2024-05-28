@@ -127,8 +127,8 @@ fn set_values() {
     let device = Device::default();
     let tensor = device
         .tensor(
-            2,
-            2,
+            1,
+            4,
             vec![
                 1.0, 2.0, //
                 3.0, 4.0, //
@@ -136,12 +136,10 @@ fn set_values() {
         )
         .unwrap();
 
-    let mut values = tensor.get_values().unwrap();
-    values[tensor.index(1, 0)] = 99.0;
-    tensor.set_values(values).unwrap();
+    tensor.set_values(vec![4.0, 3.0, 2.0, 1.0]).unwrap();
 
     let values = tensor.get_values().unwrap();
-    assert_eq!(values[tensor.index(1, 0)], 99.0);
+    assert_eq!(vec![4.0, 3.0, 2.0, 1.0], values);
 }
 
 #[test]

@@ -307,36 +307,38 @@ impl DeviceInterface for CpuDevice {
         if expected.size() != actual.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        let expected_values = expected.get_values()?;
-        let actual_values = actual.get_values()?;
+        let len = expected.len();
+        let expected_values_ptr = expected.as_ptr();
+        let actual_values_ptr = actual.as_ptr();
         let mut loss_value = 0.0;
-        for i in 0..expected_values.len() {
-            let expected = expected_values[i];
-            let actual = actual_values[i];
+        for i in 0..len {
+            let expected = unsafe { *expected_values_ptr.add(i) };
+            let actual = unsafe { *actual_values_ptr.add(i) };
             let diff = expected - actual;
             loss_value += diff * diff;
         }
 
-        loss.set_values(vec![loss_value; 1])?;
+        let loss_ptr = loss.as_mut_ptr();
+        unsafe { *loss_ptr = loss_value };
         Ok(())
     }
 
     fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        let self_values = input.get_values()?;
-        let mut other_values = output.get_values()?;
+        let input_ptr = input.as_ptr();
+        let output_ptr = output.as_mut_ptr();
         let rows = input.rows();
         let cols = input.cols();
         let mut row = 0;
         while row < rows {
             let mut col = 0;
             while col < cols {
-                let value = self_values[input.index(row, col)];
-                other_values[output.index(col, row)] = value;
+                let value = unsafe { *input_ptr.add(input.index(row, col)) };
+                unsafe { *output_ptr.add(output.index(col, row)) = value };
                 col += 1;
             }
             row += 1;
         }
-        output.set_values(other_values)
+        Ok(())
     }
 
     fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {

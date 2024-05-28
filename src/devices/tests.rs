@@ -1,3 +1,5 @@
+use more_asserts::{assert_ge, assert_le};
+
 #[test]
 fn clip_min() {
     use crate::devices::DeviceInterface;
@@ -92,4 +94,24 @@ fn set_value() {
         tensor.get_values().unwrap(),
         vec![10.0, 2.0, 3.0, 4.0, 5.0, 6.0,]
     );
+}
+
+#[test]
+fn bernoulli() {
+    use crate::devices::DeviceInterface;
+    use crate::Device;
+    let device = Device::default();
+    let input = device.tensor(1, 100, vec![0.3; 100]).unwrap();
+    let output = device.tensor(1, 100, vec![0.0; 100]).unwrap();
+
+    device.bernoulli(&input, &output).unwrap();
+
+    let values = output.get_values().unwrap();
+    let ones = values.iter().filter(|x| **x == 1.0).count();
+    let zeroes = values.iter().filter(|x| **x == 0.0).count();
+    assert_eq!(100, ones + zeroes);
+    assert_ge!(30 + 5, ones);
+    assert_le!(30 - 5, ones);
+    assert_ge!(70 + 5, zeroes);
+    assert_le!(70 - 5, zeroes);
 }

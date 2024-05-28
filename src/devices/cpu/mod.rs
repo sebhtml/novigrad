@@ -1,6 +1,7 @@
 use std::f32::consts::E;
 pub mod slice;
 use cblas::{Layout, Transpose};
+use rand::{distributions::Uniform, thread_rng, Rng};
 extern crate cblas_sys as ffi;
 use crate::{error, slice::DevSliceEnum, Error, ErrorEnum, Tensor, EPSILON};
 
@@ -336,6 +337,23 @@ impl DeviceInterface for CpuDevice {
             row += 1;
         }
         output.set_values(other_values)
+    }
+
+    fn bernoulli(&self, probability: f32, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let len = input.len();
+        let mut values = vec![1.0; len];
+        let mut rng = thread_rng();
+        let uniform = Uniform::new(0.0, 1.0);
+
+        for i in 0..len {
+            let random_number = if rng.sample(uniform) <= probability {
+                1.0
+            } else {
+                0.0
+            };
+            values[i] = random_number;
+        }
+        output.set_values(values)
     }
 }
 

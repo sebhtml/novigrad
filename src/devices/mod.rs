@@ -102,6 +102,8 @@ pub trait DeviceInterface {
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
+    fn bernoulli(&self, probability: f32, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+
     fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
@@ -377,5 +379,9 @@ impl DeviceInterface for Device {
 
     fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         self.device.transpose(input, output)
+    }
+
+    fn bernoulli(&self, probability: f32, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        self.device.bernoulli(probability, input, output)
     }
 }

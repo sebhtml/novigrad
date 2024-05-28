@@ -10,6 +10,7 @@ use cudarc::{
     },
     driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
 };
+use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor, EPSILON};
 
@@ -533,5 +534,22 @@ impl DeviceInterface for CudaDev {
             row += 1;
         }
         output.set_values(other_values)
+    }
+
+    fn bernoulli(&self, probability: f32, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let len = input.len();
+        let mut values = vec![1.0; len];
+        let mut rng = thread_rng();
+        let uniform = Uniform::new(0.0, 1.0);
+
+        for i in 0..len {
+            let random_number = if rng.sample(uniform) <= probability {
+                1.0
+            } else {
+                0.0
+            };
+            values[i] = random_number;
+        }
+        output.set_values(values)
     }
 }

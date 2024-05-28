@@ -341,21 +341,21 @@ impl DeviceInterface for CpuDevice {
 
     fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let len = input.len();
-        let mut values = vec![1.0; len];
+        let output_ptr = output.as_mut_ptr();
         let mut rng = thread_rng();
         let uniform = Uniform::new(0.0, 1.0);
 
-        let probabilities = input.get_values()?;
+        let input_ptr = input.as_ptr();
         for i in 0..len {
-            let probability = probabilities[i];
+            let probability = unsafe { *input_ptr.add(i) };
             let random_number = if rng.sample(uniform) <= probability {
                 1.0
             } else {
                 0.0
             };
-            values[i] = random_number;
+            unsafe { *output_ptr.add(i) = random_number };
         }
-        output.set_values(values)
+        Ok(())
     }
 }
 

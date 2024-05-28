@@ -359,6 +359,10 @@ impl DeviceInterface for CpuDevice {
         }
         Ok(())
     }
+
+    fn bernoulli_v2(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        self.bernoulli(input, output)
+    }
 }
 
 impl CpuDevice {

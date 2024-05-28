@@ -89,13 +89,26 @@ fn bernoulli() {
     let output = device.tensor(1, 100, vec![0.0; 100]).unwrap();
 
     device.bernoulli(&input, &output).unwrap();
+    //device.bernoulli_v2(&input, &output).unwrap();
 
     let values = output.get_values().unwrap();
+    println!("values {:?}", values);
+    //assert!(false);
     let ones = values.iter().filter(|x| **x == 1.0).count();
     let zeroes = values.iter().filter(|x| **x == 0.0).count();
     assert_eq!(100, ones + zeroes);
-    assert_ge!(30 + 5, ones);
-    assert_le!(30 - 5, ones);
-    assert_ge!(70 + 5, zeroes);
-    assert_le!(70 - 5, zeroes);
+    let diff = {
+        #[cfg(feature = "cuda")]
+        {
+            0
+        }
+        #[cfg(not(feature = "cuda"))]
+        {
+            5
+        }
+    };
+    assert_ge!(30 + diff, ones);
+    assert_le!(30 - diff, ones);
+    assert_ge!(70 + diff, zeroes);
+    assert_le!(70 - diff, zeroes);
 }

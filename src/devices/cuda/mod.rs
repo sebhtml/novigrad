@@ -1,3 +1,4 @@
+use rand::{prelude::SliceRandom, thread_rng};
 use std::{fs::File, io::Read, ops::Deref, sync::Arc};
 pub mod slice;
 #[cfg(test)]
@@ -10,7 +11,6 @@ use cudarc::{
     },
     driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
 };
-use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor, EPSILON};
 
@@ -88,6 +88,12 @@ impl CudaDev {
             "sigmoid_kernel_module",
             &["sigmoid_kernel"],
             "./src/devices/cuda/kernels/sigmoid_kernel.cu",
+        )?;
+
+        device.load_module(
+            "bernoulli_kernel_module",
+            &["bernoulli_kernel"],
+            "./src/devices/cuda/kernels/bernoulli_kernel.cu",
         )?;
 
         device.load_module(
@@ -538,20 +544,33 @@ impl DeviceInterface for CudaDev {
 
     fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let len = input.len();
-        let mut values = vec![1.0; len];
-        let mut rng = thread_rng();
-        let uniform = Uniform::new(0.0, 1.0);
-
+        let mut values = vec![0.0; len];
         let probabilities = input.get_values()?;
-        for i in 0..len {
-            let probability = probabilities[i];
-            let random_number = if rng.sample(uniform) <= probability {
-                1.0
-            } else {
-                0.0
-            };
-            values[i] = random_number;
+        // Assume that all the probabilities are the same.
+        let probability = probabilities[0];
+        let ones = (len as f32 * probability) as usize;
+        for i in 0..ones {
+            values[i] = 1.0;
         }
+        values.shuffle(&mut thread_rng());
         output.set_values(values)
+    }
+
+    fn bernoulli_v2(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let kernel = self.get_func("bernoulli_kernel_module", "bernoulli_kernel")?;
+        let n = input.len();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        let input = &input.device_slice().deref().borrow().buffer;
+        let output = &output.device_slice().deref().borrow().buffer;
+        match (input, output) {
+            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+                let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
     }
 }

@@ -1,3 +1,4 @@
+use cudarc::driver::LaunchAsync;
 use more_asserts::assert_ge;
 
 use crate::EPSILON;
@@ -134,7 +135,7 @@ fn htod_sync_copy_into() {
 #[test]
 fn sum_kernel() {
     use crate::CudaDev;
-    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    use cudarc::driver::LaunchConfig;
     let cuda_device = CudaDev::try_default().unwrap();
     let dev = cuda_device.dev;
 
@@ -154,7 +155,7 @@ fn sum_kernel() {
 #[test]
 fn sin_kernel() {
     use crate::CudaDev;
-    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    use cudarc::driver::LaunchConfig;
     let cuda_device = CudaDev::try_default().unwrap();
     let dev = cuda_device.dev;
 
@@ -184,7 +185,7 @@ fn sin_kernel() {
 fn cuda_softmax_kernel() {
     use crate::CpuDevice;
     use crate::CudaDev;
-    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    use cudarc::driver::LaunchConfig;
 
     let cuda_device = CudaDev::try_default().unwrap();
     let dev = cuda_device.dev;
@@ -234,7 +235,7 @@ fn cuda_softmax_kernel() {
 fn cuda_dot_kernel() {
     use crate::CudaDev;
     use crate::{Device, DeviceInterface};
-    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    use cudarc::driver::LaunchConfig;
 
     let cuda_device = CudaDev::try_default().unwrap();
     let dev = cuda_device.dev;
@@ -287,7 +288,7 @@ fn cuda_dot_kernel() {
 fn cuda_dot_kernel_big_vectors() {
     use crate::CudaDev;
     use crate::{Device, DeviceInterface};
-    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    use cudarc::driver::LaunchConfig;
     use rand::Rng;
 
     let cuda_device = CudaDev::try_default().unwrap();
@@ -336,7 +337,7 @@ fn cuda_dot_kernel_big_vectors() {
 fn cuda_cross_entropy_loss() {
     use crate::CudaDev;
     use crate::{Device, DeviceInterface};
-    use cudarc::driver::{LaunchAsync, LaunchConfig};
+    use cudarc::driver::LaunchConfig;
 
     let cuda_device = CudaDev::try_default().unwrap();
     let dev = cuda_device.dev;

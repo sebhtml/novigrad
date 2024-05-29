@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{BinaryOperator, Device, DeviceInterface, Tensor};
+use crate::{tensor::Tensor, BinaryOperator, Device, DeviceInterface};
 
 use super::ReduceSumSquare;
 

@@ -1,6 +1,6 @@
 use rand::{distributions::Uniform, thread_rng, Rng};
 
-use crate::{Add, BinaryOperator, Device, Error, MatMul, TensorWithGrad, UnaryOperator};
+use crate::{tensor::Error, Add, BinaryOperator, Device, MatMul, TensorWithGrad, UnaryOperator};
 
 pub struct Linear {
     weights: TensorWithGrad,

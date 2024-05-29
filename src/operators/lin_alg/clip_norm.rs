@@ -1,4 +1,4 @@
-use crate::{Error, Tensor};
+use crate::{tensor::Error, tensor::Tensor};
 
 pub struct ClipNorm {}
 

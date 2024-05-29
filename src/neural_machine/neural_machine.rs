@@ -1,8 +1,8 @@
 use std::{marker::PhantomData, ops::Deref};
 
 use crate::{
-    gradient_instruction, BinaryOperator, Category, Device, Error, Instruction, OpCode,
-    OptimizerTrait, Tensor, TensorWithGrad, UnaryModel,
+    gradient_instruction, tensor::Error, tensor::Tensor, BinaryOperator, Category, Device,
+    Instruction, OpCode, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
 
 use super::assign_streams::assign_streams;

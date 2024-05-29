@@ -2,7 +2,7 @@ use std::vec;
 
 use rand::Rng;
 
-use crate::{tensor::Tensor, Device, DeviceInterface, ErrorEnum};
+use crate::{tensor::ErrorEnum, tensor::Tensor, Device, DeviceInterface};
 
 #[test]
 fn new() {

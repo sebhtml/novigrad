@@ -1,4 +1,6 @@
-use crate::{BinaryOperator, Device, Error, Mul, Tensor, TensorWithGrad, UnaryOperator};
+use crate::{
+    tensor::Error, tensor::Tensor, BinaryOperator, Device, Mul, TensorWithGrad, UnaryOperator,
+};
 
 #[cfg(test)]
 mod tests;

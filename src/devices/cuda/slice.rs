@@ -1,6 +1,10 @@
 use cudarc::driver::{CudaSlice, DevicePtr, DevicePtrMut, DeviceSlice};
 
-use crate::{error, slice::DevSliceTrait, ErrorEnum};
+use crate::{
+    error,
+    slice::DevSliceTrait,
+    tensor::{Error, ErrorEnum},
+};
 
 #[derive(Debug)]
 pub struct CudaDevSlice {
@@ -25,7 +29,7 @@ impl DevSliceTrait for CudaDevSlice {
         *self.slice.device_ptr_mut() as *mut _
     }
 
-    fn get_values(&self) -> Result<Vec<f32>, crate::Error> {
+    fn get_values(&self) -> Result<Vec<f32>, Error> {
         let mut values = vec![0.0; self.slice.len()];
         let dev = self.slice.device();
         let result = dev.dtoh_sync_copy_into(&self.slice, &mut values);
@@ -35,7 +39,7 @@ impl DevSliceTrait for CudaDevSlice {
         }
     }
 
-    fn set_values(&mut self, new_values: Vec<f32>) -> Result<(), crate::Error> {
+    fn set_values(&mut self, new_values: Vec<f32>) -> Result<(), Error> {
         let dev = self.slice.device();
         dev.htod_sync_copy_into(&new_values, &mut self.slice)
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))

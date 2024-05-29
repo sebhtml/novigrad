@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    inference_instruction, BinaryOperator, Device, Error, Mul, OpCode, ScalarMul, Tensor,
-    TensorWithGrad, UnaryOperator,
+    inference_instruction, tensor::Error, tensor::Tensor, BinaryOperator, Device, Mul, OpCode,
+    ScalarMul, TensorWithGrad, UnaryOperator,
 };
 
 #[cfg(test)]

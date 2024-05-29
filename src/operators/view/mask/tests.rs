@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{Device, Mask, Tensor, UnaryOperator};
+use crate::{tensor::Tensor, Device, Mask, UnaryOperator};
 
 #[test]
 fn forward() {

@@ -1,6 +1,6 @@
 use crate::{
-    devices::Device, BinaryOperator, DeviceInterface, Error, MatMul, Tensor, TensorWithGrad,
-    UnaryOperator,
+    devices::Device, tensor::Error, tensor::Tensor, BinaryOperator, DeviceInterface, MatMul,
+    TensorWithGrad, UnaryOperator,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};
 

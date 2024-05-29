@@ -1,6 +1,8 @@
 use std::ops::Deref;
 
-use crate::{devices::Device, error, DeviceInterface, Error, ErrorEnum, Tensor};
+use crate::{
+    devices::Device, error, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceInterface,
+};
 
 #[cfg(test)]
 mod tests;

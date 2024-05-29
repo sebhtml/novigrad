@@ -3,7 +3,7 @@ pub use gradient_descent::*;
 mod adam;
 pub use adam::*;
 
-use crate::{Device, Error, Instruction, TensorWithGrad};
+use crate::{tensor::Error, Device, Instruction, TensorWithGrad};
 
 pub trait OptimizerTrait {
     fn optimize(

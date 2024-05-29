@@ -1,5 +1,5 @@
 mod cpu;
-use crate::{error, Error, ErrorEnum};
+use crate::{error, tensor::Error, tensor::ErrorEnum};
 use std::{
     cell::RefCell,
     collections::{HashMap, LinkedList},
@@ -16,7 +16,7 @@ mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
 
-use crate::{Tensor, TensorWithGrad};
+use crate::{tensor::Tensor, TensorWithGrad};
 pub mod slice;
 use core::fmt::Debug;
 

@@ -3,7 +3,9 @@ pub mod slice;
 use cblas::{Layout, Transpose};
 use rand::{distributions::Uniform, thread_rng, Rng};
 extern crate cblas_sys as ffi;
-use crate::{error, slice::DevSliceEnum, Error, ErrorEnum, Tensor, EPSILON};
+use crate::{
+    error, slice::DevSliceEnum, tensor::Error, tensor::ErrorEnum, tensor::Tensor, EPSILON,
+};
 
 use self::slice::CpuDevSlice;
 

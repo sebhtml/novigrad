@@ -1,10 +1,10 @@
 use super::load_examples;
+use crate::{tensor::Error, ModelDetails};
 use crate::{
     Adam, Device, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss, TernaryOperator, Tokenizer,
     TokenizerTrait, UnaryModel, UnaryOperator,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
-use crate::{Error, ModelDetails};
 
 struct MegaManAttentionModel {
     input_shape: Vec<usize>,

@@ -1,6 +1,6 @@
 use crate::{
-    error, AttentionHead, Concat, Device, Error, ErrorEnum, Linear, NaryOperator, TensorWithGrad,
-    TernaryOperator, UnaryOperator,
+    error, tensor::Error, tensor::ErrorEnum, AttentionHead, Concat, Device, Linear, NaryOperator,
+    TensorWithGrad, TernaryOperator, UnaryOperator,
 };
 
 pub struct MultiHeadAttention {

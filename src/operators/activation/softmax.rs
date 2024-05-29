@@ -1,8 +1,9 @@
 use crate::devices::Device;
 use crate::{
-    gradient_instruction, inference_instruction, DeviceInterface, OpCode, Tensor, UnaryOperator,
+    gradient_instruction, inference_instruction, tensor::Tensor, DeviceInterface, OpCode,
+    UnaryOperator,
 };
-use crate::{Error, TensorWithGrad};
+use crate::{tensor::Error, TensorWithGrad};
 use std::ops::Deref;
 
 pub struct Softmax {

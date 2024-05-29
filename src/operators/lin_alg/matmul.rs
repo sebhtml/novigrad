@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, error, gradient_instruction, inference_instruction, BinaryOperator, Error,
-    ErrorEnum, OpCode, Tensor, TensorWithGrad,
+    devices::Device, error, gradient_instruction, inference_instruction, tensor::Error,
+    tensor::ErrorEnum, tensor::Tensor, BinaryOperator, OpCode, TensorWithGrad,
 };
 
 pub struct MatMul {

@@ -12,7 +12,7 @@ mod reduce;
 pub use reduce::*;
 pub mod statistics;
 
-use crate::{Error, TensorWithGrad};
+use crate::{tensor::Error, TensorWithGrad};
 
 pub trait UnaryOperator {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error>;

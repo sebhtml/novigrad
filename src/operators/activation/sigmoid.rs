@@ -1,9 +1,9 @@
 use crate::devices::Device;
 use crate::{
-    emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, DeviceInterface, Error,
-    TensorWithGrad,
+    emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, tensor::Error,
+    DeviceInterface, TensorWithGrad,
 };
-use crate::{OpCode, Tensor, UnaryOperator};
+use crate::{tensor::Tensor, OpCode, UnaryOperator};
 use std::ops::Deref;
 
 pub struct Sigmoid {

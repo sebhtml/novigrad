@@ -9,7 +9,7 @@ use crate::{error, BinaryOperator, Metrics, OptimizerTrait};
 pub use perceptron::*;
 use std::fs;
 
-use crate::{Device, Error, ErrorEnum, TensorWithGrad, Tokenizer, TokenizerTrait};
+use crate::{tensor::Error, tensor::ErrorEnum, Device, TensorWithGrad, Tokenizer, TokenizerTrait};
 
 use self::{
     mega_man::load_mega_man_model, mega_man_attention::load_mega_man_attention_model,

@@ -1,4 +1,4 @@
-use crate::{Error, OpCode, Tensor};
+use crate::{tensor::Error, tensor::Tensor, OpCode};
 use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq)]

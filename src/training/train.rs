@@ -3,8 +3,8 @@ use rand::thread_rng;
 use std::{ops::Deref, time::SystemTime};
 
 use crate::{
-    perplexity::get_perplexity, Device, Error, ModelDetails, NeuralMachine, Tensor, TensorWithGrad,
-    Tokenizer, TokenizerTrait,
+    perplexity::get_perplexity, tensor::Error, tensor::Tensor, Device, ModelDetails, NeuralMachine,
+    TensorWithGrad, Tokenizer, TokenizerTrait,
 };
 
 trait IsPrintable {

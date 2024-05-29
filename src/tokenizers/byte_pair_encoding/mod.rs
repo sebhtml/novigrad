@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, collections::HashMap, mem::swap};
 
-use crate::{error, Error, ErrorEnum, TokenizerTrait};
+use crate::{error, tensor::Error, tensor::ErrorEnum, TokenizerTrait};
 
 #[cfg(test)]
 mod tests;

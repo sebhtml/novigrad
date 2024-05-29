@@ -1,8 +1,7 @@
 mod training;
 pub use training::*;
-mod tensor;
-pub use tensor::*;
 mod models;
+pub mod tensor;
 pub use models::*;
 mod devices;
 pub use devices::*;

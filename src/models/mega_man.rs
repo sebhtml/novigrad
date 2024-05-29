@@ -1,10 +1,10 @@
 use super::load_examples;
+use crate::{tensor::Error, ModelDetails};
 use crate::{
     BinaryOperator, Device, GradientDescent, Metrics, SoftmaxCrossEntropyLoss, Tokenizer,
     TokenizerTrait, UnaryModel, UnaryOperator,
 };
 use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, TensorWithGrad};
-use crate::{Error, ModelDetails};
 
 struct MegaManModel {
     input_shape: Vec<usize>,

@@ -78,6 +78,7 @@ impl BinaryOperator for MatMul {
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
+                &outputs[0].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
         ));
@@ -88,6 +89,7 @@ impl BinaryOperator for MatMul {
                 &[
                     &input_0.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
+                    &input_1.gradient().deref().borrow(),
                 ],
                 &[&input_1.gradient().deref().borrow()],
             ));
@@ -99,6 +101,7 @@ impl BinaryOperator for MatMul {
                 &[
                     &output.gradient().deref().borrow(),
                     &input_1.tensor().deref().borrow(),
+                    &input_0.gradient().deref().borrow(),
                 ],
                 &[&input_0.gradient().deref().borrow()],
             ));

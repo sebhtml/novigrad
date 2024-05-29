@@ -64,7 +64,7 @@ pub enum OpCode {
     ReduceSumSquare,
 
     /// https://onnx.ai/onnx/operators/onnx__Bernoulli.html
-    Bernoulli(f32),
+    Bernoulli,
 
     /// TODO
     /// https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
@@ -107,7 +107,7 @@ impl Into<String> for OpCode {
             OpCode::Unconcat => "Unconcat".into(),
             OpCode::SoftmaxCrossEntropyLoss => "CrossEntropyLoss".into(),
             OpCode::ReduceSumSquare => "ResidualSumOfSquares".into(),
-            OpCode::Bernoulli(_) => "Bernoulli".into(),
+            OpCode::Bernoulli => "Bernoulli".into(),
             OpCode::Div => "Div".into(),
             OpCode::Sqrt => "Sqrt".into(),
         }
@@ -136,7 +136,7 @@ impl OpCode {
             OpCode::Sigmoid => Sigmoid::execute(inputs, outputs),
             OpCode::SoftmaxCrossEntropyLoss => SoftmaxCrossEntropyLoss::execute(inputs, outputs),
             OpCode::ReduceSumSquare => ReduceSumSquare::execute(inputs, outputs),
-            OpCode::Bernoulli(probability) => Bernoulli::execute(*probability, inputs, outputs),
+            OpCode::Bernoulli => Bernoulli::execute(inputs, outputs),
             OpCode::Div => Div::execute(inputs, outputs),
             OpCode::Sqrt => Sqrt::execute(inputs, outputs),
             OpCode::ScalarAdd => ScalarAdd::execute(inputs, outputs),

@@ -8,7 +8,7 @@ use cudarc::{
         sys::{cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSgemm_v2},
         CudaBlas,
     },
-    driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
+    driver::{self, CudaDevice, CudaFunction, CudaSlice, LaunchAsync, LaunchConfig},
 };
 
 use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor, EPSILON};
@@ -19,6 +19,7 @@ use self::slice::CudaDevSlice;
 pub struct CudaDev {
     cuda_blas: CudaBlas,
     pub dev: Arc<CudaDevice>,
+    rng_state: CudaSlice<u64>,
 }
 
 impl CudaDev {
@@ -33,7 +34,14 @@ impl CudaDev {
     }
 
     pub fn try_new(cuda_blas: CudaBlas, dev: Arc<driver::CudaDevice>) -> Result<Self, Error> {
-        let device = CudaDev { cuda_blas, dev };
+        let rng_state = dev
+            .htod_copy(vec![1337])
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        let device = CudaDev {
+            cuda_blas,
+            dev,
+            rng_state,
+        };
 
         device.load_module(
             "sin_kernel_module",
@@ -87,6 +95,12 @@ impl CudaDev {
             "sigmoid_kernel_module",
             &["sigmoid_kernel"],
             "./src/devices/cuda/kernels/sigmoid_kernel.cu",
+        )?;
+
+        device.load_module(
+            "bernoulli_kernel_module",
+            &["bernoulli_kernel"],
+            "./src/devices/cuda/kernels/bernoulli_kernel.cu",
         )?;
 
         device.load_module(
@@ -533,5 +547,25 @@ impl DeviceInterface for CudaDev {
             row += 1;
         }
         output.set_values(other_values)
+    }
+
+    fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+        let kernel = self.get_func("bernoulli_kernel_module", "bernoulli_kernel")?;
+        let n = input.len();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        let input = &input.device_slice().deref().borrow().buffer;
+        let output = &output.device_slice().deref().borrow().buffer;
+        match (input, output) {
+            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+                let rng_state = &self.rng_state;
+                let result =
+                    unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n, rng_state)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
     }
 }

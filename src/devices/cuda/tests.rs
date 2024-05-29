@@ -1,4 +1,4 @@
-use more_asserts::{assert_ge, assert_le};
+use more_asserts::assert_ge;
 
 use crate::EPSILON;
 

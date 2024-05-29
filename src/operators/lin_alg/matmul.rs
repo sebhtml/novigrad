@@ -27,11 +27,6 @@ impl BinaryOperator for MatMul {
     ) -> Result<TensorWithGrad, Error> {
         let input_0_tensor: &Tensor = &input_0.tensor().deref().borrow();
         let input_1_tensor: &Tensor = &input_1.tensor().deref().borrow();
-        /*println!("a size {:?}, b size {:?} transb {}",
-            input_0_tensor.size().deref().borrow(),
-                    input_1_tensor.size().deref().borrow(),
-                self.transb);
-        */
         let compatible = match self.transb {
             false => input_0_tensor.cols() == input_1_tensor.rows(),
             true => input_0_tensor.cols() == input_1_tensor.cols(),

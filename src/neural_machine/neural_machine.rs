@@ -367,11 +367,23 @@ impl<T> NeuralMachine<T> {
 
     fn assign_streams(&self) {
         let machine_inputs = vec![self.example_input.tensor().deref().borrow().name()];
-        let instructions = self.instructions.iter().map(|instruction| {
-            let inputs = instruction.inputs().iter().map(|x| x.name()).collect::<Vec<_>>();
-            let outputs = instruction.outputs().iter().map(|x| x.name()).collect::<Vec<_>>();
-            (inputs, outputs)
-        }).collect::<Vec<_>>();
+        let instructions = self
+            .instructions
+            .iter()
+            .map(|instruction| {
+                let inputs = instruction
+                    .inputs()
+                    .iter()
+                    .map(|x| x.name())
+                    .collect::<Vec<_>>();
+                let outputs = instruction
+                    .outputs()
+                    .iter()
+                    .map(|x| x.name())
+                    .collect::<Vec<_>>();
+                (inputs, outputs)
+            })
+            .collect::<Vec<_>>();
         assign_streams(&machine_inputs, &instructions);
     }
 }

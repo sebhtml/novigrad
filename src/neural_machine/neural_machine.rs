@@ -5,11 +5,13 @@ use crate::{
     OptimizerTrait, Tensor, TensorWithGrad, UnaryModel,
 };
 
+use super::assign_streams::assign_streams;
+
 pub struct NeuralMachine<T> {
     device: Device,
     example_input: TensorWithGrad,
     example_output: TensorWithGrad,
-    program_output: TensorWithGrad,
+    machine_output: TensorWithGrad,
     loss: TensorWithGrad,
     instructions: Vec<Instruction>,
     phantom_data: PhantomData<T>,
@@ -46,9 +48,9 @@ impl<T> NeuralMachine<T> {
             false,
         )?;
 
-        let program_output = model.forward(&example_input)?;
+        let machine_output = model.forward(&example_input)?;
         let loss =
-            BinaryOperator::forward(loss_operator.deref(), &example_output, &program_output)?;
+            BinaryOperator::forward(loss_operator.deref(), &example_output, &machine_output)?;
         let tape = loss.get_tape();
         let mut instructions = vec![];
 
@@ -80,18 +82,21 @@ impl<T> NeuralMachine<T> {
         let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
         instructions.append(&mut optimizer_instructions);
 
-        let program = NeuralMachine::<T> {
+        let machine = NeuralMachine::<T> {
             device: device.clone(),
             example_input,
             example_output,
-            program_output,
+            machine_output,
             loss,
             instructions,
             phantom_data: Default::default(),
         };
 
-        program.print();
-        Ok(program)
+        machine.print();
+
+        machine.assign_streams();
+
+        Ok(machine)
     }
 
     pub fn loss(&self, expected_output: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
@@ -229,7 +234,7 @@ impl<T> NeuralMachine<T> {
 
         self.forward(Category::Inference)?;
 
-        Ok(self.program_output.clone())
+        Ok(self.machine_output.clone())
     }
 
     pub fn print(&self) {
@@ -358,5 +363,15 @@ impl<T> NeuralMachine<T> {
         for (j, output) in instruction.outputs().deref().iter().enumerate() {
             println!("output {}: {}", j, output);
         }
+    }
+
+    fn assign_streams(&self) {
+        let machine_inputs = vec![self.example_input.tensor().deref().borrow().name()];
+        let instructions = self.instructions.iter().map(|instruction| {
+            let inputs = instruction.inputs().iter().map(|x| x.name()).collect::<Vec<_>>();
+            let outputs = instruction.outputs().iter().map(|x| x.name()).collect::<Vec<_>>();
+            (inputs, outputs)
+        }).collect::<Vec<_>>();
+        assign_streams(&machine_inputs, &instructions);
     }
 }

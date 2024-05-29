@@ -104,8 +104,6 @@ pub trait DeviceInterface {
 
     fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
-    fn bernoulli_v2(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
-
     fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
@@ -385,9 +383,5 @@ impl DeviceInterface for Device {
 
     fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         self.device.bernoulli(input, output)
-    }
-
-    fn bernoulli_v2(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        self.device.bernoulli_v2(input, output)
     }
 }

@@ -79,11 +79,7 @@ impl BinaryOperator for MatMul {
             &[&outputs[0].gradient().deref().borrow()],
         ));
         output.push_instruction(inference_instruction!(
-            if transb {
-                OpCode::GemmNTN
-            } else {
-                OpCode::GemmNNN
-            },
+            OpCode::Gemm(false, transb, false),
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
@@ -93,11 +89,7 @@ impl BinaryOperator for MatMul {
 
         if input_1.gradient().deref().borrow().requires_grad() {
             output.push_instruction(gradient_instruction!(
-                if transb {
-                    OpCode::GemmTNT
-                } else {
-                    OpCode::GemmTNN
-                },
+                OpCode::Gemm(true, false, transb),
                 &[
                     &input_0.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
@@ -108,11 +100,7 @@ impl BinaryOperator for MatMul {
 
         if input_0.gradient().deref().borrow().requires_grad() {
             output.push_instruction(gradient_instruction!(
-                if transb {
-                    OpCode::GemmNNN
-                } else {
-                    OpCode::GemmNTN
-                },
+                OpCode::Gemm(false, !transb, false),
                 &[
                     &output.gradient().deref().borrow(),
                     &input_1.tensor().deref().borrow(),

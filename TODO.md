@@ -1,9 +1,4 @@
-- use Attributes for Gemm, see https://onnx.ai/onnx/intro/concepts.html
-- pass probability in Bernoulli as a Tensor
-- remove all calls to set_values
-- rewrite ResidualSumOfSquares using CUDA
-
----------------------
+- investigate performance issue with tons of call to pthread_rwlock_unlock
 
 == Transformer ==
 
@@ -19,7 +14,9 @@
 - add device stream support in devices to execute attention heads in parallel
 - don't break during training when loss reaches 0.0
 
-- investigate performance issue with tons of call to pthread_rwlock_unlock
+- use Attributes for Gemm, see https://onnx.ai/onnx/intro/concepts.html
+- remove all calls to set_values
+- rewrite ResidualSumOfSquares using CUDA
 
 - device interface use <T>
 - Implement code with f16
@@ -30,8 +27,6 @@
 - implement Conv2D
 
 == Performance ==
-
----------------------
 
 - simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
 

@@ -1,6 +1,16 @@
-use rand::{distributions::Uniform, thread_rng, Rng};
+use crate::{
+    error,
+    tensor::{Error, ErrorEnum},
+    Add, BinaryOperator, Device, MatMul, TensorWithGrad, UnaryOperator,
+};
+use rand::{thread_rng, Rng};
+use rand_distr::Normal;
 
-use crate::{tensor::Error, Add, BinaryOperator, Device, MatMul, TensorWithGrad, UnaryOperator};
+pub enum WeightsInitialization {
+    None,
+    Kaiming,
+    Xavier,
+}
 
 pub struct Linear {
     weights: TensorWithGrad,
@@ -9,27 +19,42 @@ pub struct Linear {
     add: Add,
 }
 
+fn kaiming_initialization(
+    weights_rows: usize,
+    _weights_cols: usize,
+    weights: &mut Vec<f32>,
+) -> Result<(), Error> {
+    let mut rng = thread_rng();
+    let mean = 0.0;
+    let fan_in = weights_rows as f32;
+    let stddev = (2.0 / fan_in).sqrt();
+    let distribution =
+        Normal::new(mean, stddev).map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+
+    for index in 0..weights.len() {
+        weights[index] = rng.sample(distribution);
+    }
+    Ok(())
+}
+
 impl Linear {
     pub fn new(
         device: &Device,
         weights_rows: usize,
         weights_cols: usize,
-        weights_random: bool,
+        weights_initialization: WeightsInitialization,
         bias_rows: usize,
     ) -> Result<Self, Error> {
-        // Xavier Initialization, or Glorot Initialization,
-        let mut rng = thread_rng();
-        let right = (6.0 as f32).sqrt() / (weights_cols as f32 + weights_rows as f32).sqrt();
-        let left = -right;
-        let uniform = Uniform::new(left, right);
-
         let mut weights = Vec::new();
         weights.resize(weights_rows * weights_cols, 0.0);
-        if weights_random {
-            for index in 0..weights.len() {
-                weights[index] = rng.sample(uniform);
+        match weights_initialization {
+            WeightsInitialization::None => {}
+            WeightsInitialization::Kaiming => {
+                kaiming_initialization(weights_rows, weights_cols, &mut weights)?;
             }
+            WeightsInitialization::Xavier => todo!(),
         }
+
         let weights =
             device.tensor_with_grad(weights_rows, weights_cols, weights, &[], true, true)?;
 

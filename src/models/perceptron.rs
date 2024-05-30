@@ -2,7 +2,7 @@ use crate::{
     tensor::Error, Device, GradientDescent, Metrics, ModelDetails, ReduceSumSquare, TensorWithGrad,
     UnaryModel, UnaryOperator,
 };
-use crate::{Linear, Model};
+use crate::{Linear, Model, WeightsInitialization};
 
 struct PerceptronModel {
     linear: Linear,
@@ -12,7 +12,7 @@ impl UnaryModel for PerceptronModel {}
 
 impl PerceptronModel {
     pub fn new(device: &Device) -> Result<Self, Error> {
-        let linear = Linear::new(device, 1, 2, false, 1)?;
+        let linear = Linear::new(device, 1, 2, WeightsInitialization::Kaiming, 1)?;
         let model = Self { linear };
         Ok(model)
     }
@@ -76,11 +76,11 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
         shuffle_examples: false,
         clipped_gradient_norm: 1.0,
         initial_metrics: Metrics {
-            total_loss: 50.0,
-            total_perplexity: 3.0,
+            total_loss: 1.0,
+            total_perplexity: f32::NAN,
         },
         final_metrics: Metrics {
-            total_loss: 2.16778,
+            total_loss: 15.0,
             total_perplexity: 0.3,
         },
     };

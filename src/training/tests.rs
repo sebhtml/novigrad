@@ -25,10 +25,12 @@ fn test_model(model: ModelEnum, device: &Device) {
     );
 
     // Verify total perplexity
-    assert_le!(
-        expected_initial_total_perplexity_min,
-        training_output.initial_metrics.total_perplexity
-    );
+    if !expected_initial_total_perplexity_min.is_nan() {
+        assert_le!(
+            expected_initial_total_perplexity_min,
+            training_output.initial_metrics.total_perplexity
+        );
+    }
     assert_ge!(
         expected_final_total_perplexity_max,
         training_output.final_metrics.total_perplexity

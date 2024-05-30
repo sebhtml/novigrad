@@ -1,6 +1,8 @@
 use crate::{
-    error, tensor::Error, tensor::ErrorEnum, AttentionHead, Concat, Device, Linear, NaryOperator,
-    TensorWithGrad, TernaryOperator, UnaryOperator,
+    error,
+    tensor::{Error, ErrorEnum},
+    AttentionHead, Concat, Device, Linear, NaryOperator, TensorWithGrad, TernaryOperator,
+    UnaryOperator, WeightsInitialization,
 };
 
 pub struct MultiHeadAttention {
@@ -35,7 +37,7 @@ impl MultiHeadAttention {
         }
 
         let concat = Concat::new(device);
-        let linear = Linear::new(device, cols, cols, true, rows)?;
+        let linear = Linear::new(device, cols, cols, WeightsInitialization::Kaiming, rows)?;
 
         let multi_head_attention = Self {
             attention_heads,

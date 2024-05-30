@@ -1,8 +1,9 @@
 use novigrad::{
-    error, get_row_argmax, into_one_hot_encoded_rows, tensor::Error, tensor::ErrorEnum,
-    tensor::Tensor, Adam, BinaryOperator, Device, Embedding, Linear, Model, MultiHeadAttention,
-    NeuralMachine, OptimizerTrait, Softmax, SoftmaxCrossEntropyLoss, TensorWithGrad,
-    TernaryOperator, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
+    error, get_row_argmax, into_one_hot_encoded_rows,
+    tensor::{Error, ErrorEnum, Tensor},
+    Adam, BinaryOperator, Device, Embedding, Linear, Model, MultiHeadAttention, NeuralMachine,
+    OptimizerTrait, Softmax, SoftmaxCrossEntropyLoss, TensorWithGrad, TernaryOperator, Tokenizer,
+    TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
 };
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
@@ -37,7 +38,13 @@ impl ChatbotModel {
             dropout_probability,
         )
         .unwrap();
-        let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length)?;
+        let linear = Linear::new(
+            device,
+            vocab_size,
+            n_embd,
+            WeightsInitialization::Kaiming,
+            sequence_length,
+        )?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
 
         let model = Self {

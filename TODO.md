@@ -1,6 +1,3 @@
-- add Tensor categories
-- use Category::Constant to determine constants
-- use Category::Parameter to determine parameters
 - assign a stream to each instruction
 
 - add device stream support in devices to execute attention heads in parallel
@@ -9,12 +6,20 @@
 
 == Transformer ==
 
+- implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
 - add Standardize
+
 - implement LayerNormalization which is Standardize + ScalarMul + Add
 - implement Gelu
 - implement LayerNorm
 - implement Transformer
 - increase examples in mega_man_attention from 10 to 100
+
+- improve Bernoulli CUDA kernel by using other shift values for halt the indices
+
+- add Tensor categories
+- use Category::Constant to determine constants
+- use Category::Parameter to determine parameters
 
 ---------------
 - TODO adam t should be in 0..num_iterations
@@ -41,12 +46,6 @@
 - Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
 
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
-
-== Initialization ==
-
-- use Kaiming uniform initialization
-- revisit initialization of weights and biases in Linear
-- revisit initialization of embedding_table in Embedding
 
 == Other things ==
 

@@ -1,6 +1,6 @@
 use crate::{
     tensor::Error, Device, Linear, ScaledDotProductAttention, TensorWithGrad, TernaryOperator,
-    UnaryOperator,
+    UnaryOperator, WeightsInitialization,
 };
 
 pub struct AttentionHead {
@@ -19,9 +19,27 @@ impl AttentionHead {
         mask: bool,
         dropout_probability: f32,
     ) -> Result<Self, Error> {
-        let q = Linear::new(device, head_cols, cols, true, rows)?;
-        let k = Linear::new(device, head_cols, cols, true, rows)?;
-        let v = Linear::new(device, head_cols, cols, true, rows)?;
+        let q = Linear::new(
+            device,
+            head_cols,
+            cols,
+            WeightsInitialization::Kaiming,
+            rows,
+        )?;
+        let k = Linear::new(
+            device,
+            head_cols,
+            cols,
+            WeightsInitialization::Kaiming,
+            rows,
+        )?;
+        let v = Linear::new(
+            device,
+            head_cols,
+            cols,
+            WeightsInitialization::Kaiming,
+            rows,
+        )?;
         let attention =
             ScaledDotProductAttention::try_new(device, rows, cols, mask, dropout_probability)
                 .unwrap();

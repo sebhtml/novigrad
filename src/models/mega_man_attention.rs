@@ -2,7 +2,7 @@ use super::load_examples;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
     Adam, Device, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss, TernaryOperator, Tokenizer,
-    TokenizerTrait, UnaryModel, UnaryOperator,
+    TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
@@ -37,7 +37,13 @@ impl MegaManAttentionModel {
             dropout_probability,
         )
         .unwrap();
-        let linear = Linear::new(device, vocab_size, n_embd, true, sequence_length)?;
+        let linear = Linear::new(
+            device,
+            vocab_size,
+            n_embd,
+            WeightsInitialization::Kaiming,
+            sequence_length,
+        )?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
 
         let model = Self {
@@ -106,18 +112,18 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         model: Box::new(model),
         loss_operator: Box::new(loss_operator),
         optimizer: Box::new(optimizer),
-        epochs: 100,
+        epochs: 200,
         progress: 10,
         learning_rate,
         shuffle_examples: true,
         clipped_gradient_norm: 1.0,
         initial_metrics: Metrics {
-            total_loss: 1500.0,
-            total_perplexity: 1500.0,
+            total_loss: 4000.0,
+            total_perplexity: 5.0,
         },
         final_metrics: Metrics {
-            total_loss: 100.0,
-            total_perplexity: 20.0,
+            total_loss: 200.0,
+            total_perplexity: 11.0,
         },
     };
     Ok(details)

@@ -3,7 +3,7 @@ use crate::{
     Metrics, ModelDetails, SoftmaxCrossEntropyLoss, TensorWithGrad, Tokenizer, TokenizerTrait,
     UnaryModel, UnaryOperator,
 };
-use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax};
+use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax, WeightsInitialization};
 
 struct SimpleModel {
     input_shape: Vec<usize>,
@@ -26,16 +26,34 @@ impl SimpleModel {
         let output_rows = 1;
 
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
-        let linear_0 = Linear::new(device, n_embd, n_embd, true, sequence_length)?;
+        let linear_0 = Linear::new(
+            device,
+            n_embd,
+            n_embd,
+            WeightsInitialization::Kaiming,
+            sequence_length,
+        )?;
         let sigmoid_0 = Sigmoid::new(device);
         let reshape = Reshape::new(
             device,
             vec![sequence_length, n_embd],
             vec![output_rows, sequence_length * n_embd],
         );
-        let linear_1 = Linear::new(device, n_embd, sequence_length * n_embd, true, output_rows)?;
+        let linear_1 = Linear::new(
+            device,
+            n_embd,
+            sequence_length * n_embd,
+            WeightsInitialization::Kaiming,
+            output_rows,
+        )?;
         let sigmoid_1 = Sigmoid::new(device);
-        let linear_2 = Linear::new(device, vocab_size, n_embd, true, output_rows)?;
+        let linear_2 = Linear::new(
+            device,
+            vocab_size,
+            n_embd,
+            WeightsInitialization::Kaiming,
+            output_rows,
+        )?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
 
         let model = Self {
@@ -132,12 +150,12 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
         shuffle_examples: true,
         clipped_gradient_norm: 1.0,
         initial_metrics: Metrics {
-            total_loss: 8.0,
-            total_perplexity: 400.0,
+            total_loss: 5.0,
+            total_perplexity: 200.0,
         },
         final_metrics: Metrics {
             total_loss: 0.0,
-            total_perplexity: 4.0,
+            total_perplexity: 2.0,
         },
     };
     Ok(details)

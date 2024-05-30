@@ -2,7 +2,7 @@ use super::load_examples;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
     BinaryOperator, Device, GradientDescent, Metrics, SoftmaxCrossEntropyLoss, Tokenizer,
-    TokenizerTrait, UnaryModel, UnaryOperator,
+    TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
 };
 use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, TensorWithGrad};
 
@@ -46,7 +46,7 @@ impl MegaManModel {
                 device,
                 vocab_size,
                 sequence_length * n_embd,
-                true,
+                WeightsInitialization::Kaiming,
                 output_rows,
             )?,
             softmax: Softmax::new_with_next_is_cross_entropy_loss(device),

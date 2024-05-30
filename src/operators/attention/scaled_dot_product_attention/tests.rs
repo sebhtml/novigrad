@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{Device, ScaledDotProductAttention, Tensor, TernaryOperator};
+use crate::{tensor::Tensor, Device, ScaledDotProductAttention, TernaryOperator};
 
 #[test]
 fn forward() {

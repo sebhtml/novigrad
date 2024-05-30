@@ -1,4 +1,4 @@
-use crate::{Category, Error, Instruction, Tensor};
+use crate::{tensor::Error, tensor::Tensor, Category, Instruction};
 use core::fmt::Debug;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};

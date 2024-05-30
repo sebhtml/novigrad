@@ -1,5 +1,5 @@
 use crate::{
-    Device, Error, GradientDescent, Metrics, ModelDetails, ReduceSumSquare, TensorWithGrad,
+    tensor::Error, Device, GradientDescent, Metrics, ModelDetails, ReduceSumSquare, TensorWithGrad,
     UnaryModel, UnaryOperator,
 };
 use crate::{Linear, Model};

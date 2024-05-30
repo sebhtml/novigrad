@@ -1,8 +1,9 @@
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, inference_instruction, Device, DeviceInterface, OpCode, Tensor,
-    TensorWithGrad, UnaryOperator,
+    gradient_instruction, inference_instruction,
+    tensor::{Error, Tensor},
+    Device, DeviceInterface, OpCode, TensorWithGrad, UnaryOperator,
 };
 
 pub struct ScalarMul {
@@ -18,7 +19,7 @@ impl ScalarMul {
         }
     }
 
-    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), crate::Error> {
+    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
         let alpha = inputs[0];
         let input = inputs[1];
         let output = outputs[0];
@@ -29,7 +30,7 @@ impl ScalarMul {
 }
 
 impl UnaryOperator for ScalarMul {
-    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, crate::Error> {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let input_t: &Tensor = &input.tensor().deref().borrow();
         let rows = input_t.rows();
         let cols = input_t.cols();

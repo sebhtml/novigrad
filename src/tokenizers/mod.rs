@@ -3,7 +3,7 @@ pub use ascii_tokenizer::*;
 mod byte_pair_encoding;
 pub use byte_pair_encoding::*;
 
-use crate::Error;
+use crate::tensor::Error;
 
 pub trait TokenizerTrait {
     fn vocab_size(&self) -> usize;

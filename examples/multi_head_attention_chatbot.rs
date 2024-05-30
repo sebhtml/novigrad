@@ -1,8 +1,8 @@
 use novigrad::{
-    error, get_row_argmax, into_one_hot_encoded_rows, Adam, BinaryOperator, Device, Embedding,
-    Error, ErrorEnum, Linear, Model, MultiHeadAttention, NeuralMachine, OptimizerTrait, Softmax,
-    SoftmaxCrossEntropyLoss, Tensor, TensorWithGrad, TernaryOperator, Tokenizer, TokenizerTrait,
-    UnaryModel, UnaryOperator,
+    error, get_row_argmax, into_one_hot_encoded_rows, tensor::Error, tensor::ErrorEnum,
+    tensor::Tensor, Adam, BinaryOperator, Device, Embedding, Linear, Model, MultiHeadAttention,
+    NeuralMachine, OptimizerTrait, Softmax, SoftmaxCrossEntropyLoss, TensorWithGrad,
+    TernaryOperator, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
 };
 use rand::prelude::SliceRandom;
 use rand::thread_rng;

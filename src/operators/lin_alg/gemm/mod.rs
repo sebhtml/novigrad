@@ -1,6 +1,8 @@
 use std::ops::Deref;
 
-use crate::{devices::Device, error, DeviceInterface, Error, ErrorEnum, Tensor};
+use crate::{
+    devices::Device, error, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceInterface,
+};
 
 #[cfg(test)]
 mod tests;
@@ -11,6 +13,7 @@ impl Gemm {
         Self {}
     }
 
+    /// C := alpha*op( A )*op( B ) + beta*C,
     pub fn execute(
         trans_a: bool,
         trans_b: bool,
@@ -18,11 +21,12 @@ impl Gemm {
         inputs: &[&Tensor],
         outputs: &[&Tensor],
     ) -> Result<(), Error> {
-        debug_assert_eq!(inputs.len(), 2);
+        debug_assert_eq!(inputs.len(), 3);
         debug_assert_eq!(outputs.len(), 1);
-        let input = inputs[0];
-        let weights = inputs[1];
-        let biases = outputs[0];
+        let input = inputs[0]; // A
+        let weights = inputs[1]; // B
+        let _ = inputs[2]; // C
+        let biases = outputs[0]; // C
         let a = input;
         let b = weights;
         let c = biases;

@@ -1,4 +1,4 @@
-use crate::{Error, Tensor};
+use crate::{tensor::Error, tensor::Tensor};
 
 /// https://en.wikipedia.org/wiki/Perplexity
 pub fn get_perplexity(tensor: &Tensor, row: usize) -> Result<f32, Error> {

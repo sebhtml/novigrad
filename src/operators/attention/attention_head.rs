@@ -1,5 +1,5 @@
 use crate::{
-    Device, Error, Linear, ScaledDotProductAttention, TensorWithGrad, TernaryOperator,
+    tensor::Error, Device, Linear, ScaledDotProductAttention, TensorWithGrad, TernaryOperator,
     UnaryOperator,
 };
 

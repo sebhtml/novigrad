@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    devices::Device, error, gradient_instruction, inference_instruction, BinaryOperator, Error,
-    ErrorEnum, OpCode, Tensor, TensorWithGrad,
+    devices::Device, error, gradient_instruction, inference_instruction, tensor::Error,
+    tensor::ErrorEnum, tensor::Tensor, BinaryOperator, OpCode, TensorWithGrad,
 };
 
 pub struct MatMul {
@@ -27,11 +27,6 @@ impl BinaryOperator for MatMul {
     ) -> Result<TensorWithGrad, Error> {
         let input_0_tensor: &Tensor = &input_0.tensor().deref().borrow();
         let input_1_tensor: &Tensor = &input_1.tensor().deref().borrow();
-        /*println!("a size {:?}, b size {:?} transb {}",
-            input_0_tensor.size().deref().borrow(),
-                    input_1_tensor.size().deref().borrow(),
-                self.transb);
-        */
         let compatible = match self.transb {
             false => input_0_tensor.cols() == input_1_tensor.rows(),
             true => input_0_tensor.cols() == input_1_tensor.cols(),
@@ -83,6 +78,7 @@ impl BinaryOperator for MatMul {
             &[
                 &inputs[0].tensor().deref().borrow(),
                 &inputs[1].tensor().deref().borrow(),
+                &outputs[0].tensor().deref().borrow(),
             ],
             &[&outputs[0].tensor().deref().borrow()],
         ));
@@ -93,6 +89,7 @@ impl BinaryOperator for MatMul {
                 &[
                     &input_0.tensor().deref().borrow(),
                     &output.gradient().deref().borrow(),
+                    &input_1.gradient().deref().borrow(),
                 ],
                 &[&input_1.gradient().deref().borrow()],
             ));
@@ -104,6 +101,7 @@ impl BinaryOperator for MatMul {
                 &[
                     &output.gradient().deref().borrow(),
                     &input_1.tensor().deref().borrow(),
+                    &input_0.gradient().deref().borrow(),
                 ],
                 &[&input_0.gradient().deref().borrow()],
             ));

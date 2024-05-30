@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    gradient_instruction, inference_instruction, BinaryOperator, Device, Error, OpCode, Tensor,
-    TensorWithGrad,
+    gradient_instruction, inference_instruction, tensor::Error, tensor::Tensor, BinaryOperator,
+    Device, OpCode, TensorWithGrad,
 };
 
 pub struct Mul {

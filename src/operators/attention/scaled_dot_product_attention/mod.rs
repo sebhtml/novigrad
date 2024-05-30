@@ -1,6 +1,6 @@
 use crate::{
-    BinaryOperator, Device, Dropout, Error, Mask, MatMul, ScalarMul, Softmax, TensorWithGrad,
-    TernaryOperator, UnaryOperator,
+    tensor::Error, BinaryOperator, Device, Dropout, Mask, MatMul, ScalarMul, Softmax,
+    TensorWithGrad, TernaryOperator, UnaryOperator,
 };
 
 #[cfg(test)]

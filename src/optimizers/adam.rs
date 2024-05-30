@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
-    optimization_instruction, Device, Error, Instruction, OpCode, OptimizerTrait, Tensor,
-    TensorWithGrad,
+    optimization_instruction, tensor::Error, tensor::Tensor, Device, Instruction, OpCode,
+    OptimizerTrait, TensorWithGrad,
 };
 
 /// Adam: A Method for Stochastic Optimization

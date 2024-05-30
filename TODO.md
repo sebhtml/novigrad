@@ -1,3 +1,10 @@
+- add Tensor categories
+- use Category::Constant to determine constants
+- use Category::Parameter to determine parameters
+- assign a stream to each instruction
+
+- add device stream support in devices to execute attention heads in parallel
+
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 
 == Transformer ==
@@ -11,7 +18,6 @@
 
 ---------------
 - TODO adam t should be in 0..num_iterations
-- add device stream support in devices to execute attention heads in parallel
 - don't break during training when loss reaches 0.0
 
 - use Attributes for Gemm, see https://onnx.ai/onnx/intro/concepts.html

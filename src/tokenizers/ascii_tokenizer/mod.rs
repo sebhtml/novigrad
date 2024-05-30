@@ -1,4 +1,4 @@
-use crate::{Error, TokenizerTrait};
+use crate::{tensor::Error, TokenizerTrait};
 
 #[derive(Default)]
 pub struct AsciiTokenizer {}

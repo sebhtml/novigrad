@@ -11,7 +11,10 @@ use cudarc::{
     driver::{self, CudaDevice, CudaFunction, CudaSlice, LaunchAsync, LaunchConfig},
 };
 
-use crate::{error, slice::DevSliceEnum, DeviceInterface, Error, ErrorEnum, Tensor, EPSILON};
+use crate::{
+    error, slice::DevSliceEnum, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceInterface,
+    EPSILON,
+};
 
 use self::slice::CudaDevSlice;
 

@@ -1,4 +1,4 @@
-use crate::{DeviceInterface, Error, Tensor};
+use crate::{tensor::Error, tensor::Tensor, DeviceInterface};
 
 pub struct ReduceSum {}
 

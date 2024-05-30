@@ -1,7 +1,7 @@
 use crate::{
-    clip::Clip, statistics::bernoulli::Bernoulli, Add, ClipNorm, Concat, Div, Error, Gemm, Mul,
-    ReduceSum, ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid, Softmax,
-    SoftmaxCrossEntropyLoss, Sqrt, Sub, Tensor, Unconcat,
+    clip::Clip, statistics::bernoulli::Bernoulli, tensor::Error, tensor::Tensor, Add, ClipNorm,
+    Concat, Div, Gemm, Mul, ReduceSum, ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid,
+    Softmax, SoftmaxCrossEntropyLoss, Sqrt, Sub, Unconcat,
 };
 
 #[derive(Clone, Debug)]

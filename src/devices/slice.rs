@@ -1,9 +1,9 @@
 use super::cpu::slice::CpuDevSlice;
 #[cfg(feature = "cuda")]
 use super::cuda::slice::CudaDevSlice;
+use crate::tensor::Error;
 use crate::Device;
 use crate::DeviceInterface;
-use crate::Error;
 use std::borrow::BorrowMut;
 
 #[derive(Debug)]

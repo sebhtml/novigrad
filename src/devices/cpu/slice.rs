@@ -1,4 +1,4 @@
-use crate::{slice::DevSliceTrait, Error};
+use crate::{slice::DevSliceTrait, tensor::Error};
 
 #[derive(Debug)]
 pub struct CpuDevSlice {

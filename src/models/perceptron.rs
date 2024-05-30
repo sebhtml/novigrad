@@ -81,7 +81,7 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
         },
         final_metrics: Metrics {
             total_loss: 15.0,
-            total_perplexity: 0.3,
+            total_perplexity: 1.0,
         },
     };
     Ok(details)

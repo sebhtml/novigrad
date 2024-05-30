@@ -1,4 +1,4 @@
-- assign a stream to each instruction
+- Compute stream dependencies
 
 - add device stream support in devices to execute attention heads in parallel
 

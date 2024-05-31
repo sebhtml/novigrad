@@ -2,6 +2,7 @@ use std::{collections::HashMap, fmt::Display};
 
 pub struct Stream {
     pub id: usize,
+    pub state: StreamState,
     pub dependencies: Vec<usize>,
     pub instructions: Vec<usize>,
 }
@@ -84,6 +85,7 @@ pub fn make_streams(
         let instructions = instruction_streams[i].clone();
         let stream = Stream {
             id: i,
+            state: Default::default(),
             dependencies: stream_dependency_streams[i].clone(),
             instructions,
         };
@@ -185,6 +187,8 @@ impl Display for Stream {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let _ = write!(f, "Stream id: {}", self.id,);
         let _ = write!(f, "\n");
+        let _ = write!(f, "state: {}", self.state,);
+        let _ = write!(f, "\n");
         let _ = write!(f, "dependencies_len: {}", self.dependencies.len(),);
         let _ = write!(f, "\n");
         let _ = write!(f, "dependencies: {:?}", self.dependencies,);
@@ -194,5 +198,60 @@ impl Display for Stream {
         let _ = write!(f, "instructions: {:?}", self.instructions,);
         let result = write!(f, "\n");
         result
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub enum StreamState {
+    Unreached,
+    Spawned,
+    Joined,
+}
+
+impl Into<String> for &StreamState {
+    fn into(self) -> String {
+        match self {
+            StreamState::Unreached => "Unreached",
+            StreamState::Spawned => "Spawned",
+            StreamState::Joined => "Joined",
+        }
+        .into()
+    }
+}
+
+impl Display for StreamState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let as_string: String = self.into();
+        let result = write!(f, "{}", as_string);
+        result
+    }
+}
+
+impl Default for StreamState {
+    fn default() -> Self {
+        StreamState::Unreached
+    }
+}
+
+pub fn simulate_execution(streams: &mut Vec<Stream>) {
+    let range = 0..streams.len();
+    for i in range {
+        if streams[i].state == StreamState::Unreached {
+            // Join each dependency
+            let n = streams[i].dependencies.len();
+            for j in 0..n {
+                let dependency = streams[i].dependencies[j];
+                if streams[dependency].state == StreamState::Spawned {
+                    println!("Transition stream {} {}", dependency, StreamState::Joined);
+                    streams[dependency].state = StreamState::Joined;
+                } else {
+                    panic!("Can not join unspawned stream {}", dependency);
+                }
+            }
+            println!("Transition stream {} {}", i, StreamState::Spawned);
+            streams[i].state = StreamState::Spawned;
+        } else {
+            panic!("Can not spawn stream {} because it is not unreached", i);
+        }
     }
 }

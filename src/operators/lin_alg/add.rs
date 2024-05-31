@@ -50,11 +50,6 @@ impl BinaryOperator for Add {
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
-        ));
-        output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul,
             &[&zero, &outputs[0].gradient().deref().borrow()],
             &[&outputs[0].gradient().deref().borrow()],
         ));

@@ -5,7 +5,7 @@ use crate::{
     Instruction, OpCode, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
 
-use super::streams::{make_streams, simulate_execution};
+use super::streams::{execute_streams, make_streams};
 
 pub struct NeuralMachine<T> {
     device: Device,
@@ -390,7 +390,8 @@ impl<T> NeuralMachine<T> {
             println!("stream: {}", stream);
         }
 
-        //simulate_execution(&mut streams);
+        let max_concurrent_streams = 32;
+        execute_streams(&mut streams, max_concurrent_streams);
 
         for stream in streams.iter() {
             println!("stream: {}", stream);

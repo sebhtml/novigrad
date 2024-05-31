@@ -95,7 +95,11 @@ pub fn make_streams(
     for i in 0..streams.len() {
         let i_instructions = &streams[i].instructions;
         let i_first_instruction = i_instructions[0];
+        let i_last_instruction = i_instructions[i_instructions.len() - 1];
         let i_inputs = &instruction_operands[i_first_instruction].0;
+        let i_outputs = &instruction_operands[i_last_instruction].1;
+
+        // Dependency analysis
         for i_input in i_inputs {
             if i > 0 {
                 // find the closest prior instruction that writes to his operand.
@@ -113,6 +117,25 @@ pub fn make_streams(
                 }
             }
         }
+
+        // Dependency analysis that check prior stream that writes to thet same output
+        for i_output in i_outputs {
+            if i > 0 {
+                // find the closest prior instruction that writes to his operand.
+                // Then add it to the dependencies.
+                let j_range = 0..(i - 1);
+                for j in j_range.rev() {
+                    let j_instructions = &streams[j].instructions;
+                    let j_last_instruction = j_instructions[j_instructions.len() - 1];
+                    let j_outputs = &instruction_operands[j_last_instruction].1;
+
+                    if j_outputs.contains(&i_output) {
+                        streams[i].dependencies.push(j);
+                        break;
+                    }
+                }
+            }
+        }
     }
     streams
 }
@@ -121,7 +144,7 @@ fn get_instruction_instruction_dependencies(
     instructions: &[(Vec<usize>, Vec<usize>)],
 ) -> Vec<Vec<usize>> {
     let mut dependencies = vec![];
-    for (i, (i_inputs, _i_outputs)) in instructions.iter().enumerate() {
+    for (i, (i_inputs, i_outputs)) in instructions.iter().enumerate() {
         let mut i_dependencies = vec![];
         for i_input in i_inputs.iter() {
             if i > 0 {
@@ -138,6 +161,25 @@ fn get_instruction_instruction_dependencies(
                 }
             }
         }
+
+        // If previous instruction j writes to the same output as instruction i,
+        // the order of the writes must be preserved.
+        for i_output in i_outputs.iter() {
+            if i > 0 {
+                // find the closest prior instruction that writes to his operand.
+                // Then add it to the dependencies.
+                let j_range = 0..(i - 1);
+                for j in j_range.rev() {
+                    let j_outputs = &instructions[j].1;
+
+                    if j_outputs.contains(&i_output) {
+                        i_dependencies.push(j);
+                        break;
+                    }
+                }
+            }
+        }
+
         dependencies.push(i_dependencies);
     }
     dependencies
@@ -233,25 +275,60 @@ impl Default for StreamState {
     }
 }
 
-pub fn simulate_execution(streams: &mut Vec<Stream>) {
+pub fn execute_streams(streams: &mut Vec<Stream>, _max_concurrent_streams: usize) {
     let range = 0..streams.len();
-    for i in range {
+    let mut active_streams = 0;
+    for i in range.clone().into_iter() {
         if streams[i].state == StreamState::Unreached {
             // Join each dependency
             let n = streams[i].dependencies.len();
             for j in 0..n {
                 let dependency = streams[i].dependencies[j];
                 if streams[dependency].state == StreamState::Spawned {
-                    println!("Transition stream {} {}", dependency, StreamState::Joined);
+                    println!(
+                        "Transition stream {}  {} -> {}",
+                        dependency,
+                        StreamState::Spawned,
+                        StreamState::Joined
+                    );
                     streams[dependency].state = StreamState::Joined;
+                    active_streams -= 1;
+                    println!("active_streams {}", active_streams);
+                } else if streams[dependency].state == StreamState::Joined {
+                    println!(
+                        "note stream {} is already {}",
+                        dependency,
+                        StreamState::Joined
+                    );
                 } else {
                     panic!("Can not join unspawned stream {}", dependency);
                 }
             }
-            println!("Transition stream {} {}", i, StreamState::Spawned);
+            println!(
+                "Transition stream {}  {} -> {}",
+                i,
+                StreamState::Unreached,
+                StreamState::Spawned
+            );
+            active_streams += 1;
+            println!("active_streams {}", active_streams);
             streams[i].state = StreamState::Spawned;
         } else {
             panic!("Can not spawn stream {} because it is not unreached", i);
         }
     }
+    for i in range {
+        if streams[i].state == StreamState::Spawned {
+            println!(
+                "Transition stream with no dependent {}  {} -> {}",
+                i,
+                StreamState::Spawned,
+                StreamState::Joined
+            );
+            streams[i].state = StreamState::Joined;
+            active_streams -= 1;
+            println!("active_streams {}", active_streams);
+        }
+    }
+    assert_eq!(0, active_streams);
 }

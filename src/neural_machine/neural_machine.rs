@@ -5,7 +5,7 @@ use crate::{
     Instruction, OpCode, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
 
-use super::assign_streams::assign_streams;
+use super::streams::{execute_streams, make_streams};
 
 pub struct NeuralMachine<T> {
     device: Device,
@@ -384,6 +384,17 @@ impl<T> NeuralMachine<T> {
                 (inputs, outputs)
             })
             .collect::<Vec<_>>();
-        assign_streams(&machine_inputs, &instructions);
+        let mut streams = make_streams(&machine_inputs, &instructions);
+
+        for stream in streams.iter() {
+            println!("stream: {}", stream);
+        }
+
+        let max_concurrent_streams = 32;
+        execute_streams(&mut streams, max_concurrent_streams);
+
+        for stream in streams.iter() {
+            println!("stream: {}", stream);
+        }
     }
 }

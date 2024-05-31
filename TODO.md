@@ -1,4 +1,5 @@
-- Compute stream dependencies
+- in execution simulator, add max_concurrent_streams and join oldest spawned streams to honor it.
+- fix duplicate dependencies
 
 - add device stream support in devices to execute attention heads in parallel
 

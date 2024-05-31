@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::fmt::Display;
 
 pub struct Stream {
     pub id: usize,
@@ -52,31 +52,6 @@ pub fn make_streams(
     }
 
     let instruction_streams = make_instruction_streams(&dependencies);
-
-    for (stream, instructions) in instruction_streams.iter().enumerate() {
-        println!(
-            "[assign_streams] STREAM  stream: {},  instructions: {}",
-            stream,
-            instructions
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-    }
-
-    let mut len_distribution = HashMap::new();
-    for instructions in instruction_streams.iter() {
-        let len = instructions.len();
-        let value = len_distribution.entry(len).or_insert(0);
-        *value += 1;
-    }
-    for (len, streams) in len_distribution {
-        println!(
-            "[assign_streams] DISTRIBUTION  length: {}  streams: {}",
-            len, streams
-        );
-    }
 
     let stream_dependency_streams = vec![vec![]; instruction_streams.len()];
 
@@ -136,6 +111,9 @@ pub fn make_streams(
                 }
             }
         }
+
+        streams[i].dependencies.sort();
+        streams[i].dependencies.dedup();
     }
     streams
 }
@@ -143,9 +121,8 @@ pub fn make_streams(
 fn get_instruction_instruction_dependencies(
     instructions: &[(Vec<usize>, Vec<usize>)],
 ) -> Vec<Vec<usize>> {
-    let mut dependencies = vec![];
+    let mut dependencies = vec![vec![]; instructions.len()];
     for (i, (i_inputs, i_outputs)) in instructions.iter().enumerate() {
-        let mut i_dependencies = vec![];
         for i_input in i_inputs.iter() {
             if i > 0 {
                 // find the closest prior instruction that writes to his operand.
@@ -155,7 +132,7 @@ fn get_instruction_instruction_dependencies(
                     let j_outputs = &instructions[j].1;
 
                     if j_outputs.contains(&i_input) {
-                        i_dependencies.push(j);
+                        dependencies[i].push(j);
                         break;
                     }
                 }
@@ -173,14 +150,15 @@ fn get_instruction_instruction_dependencies(
                     let j_outputs = &instructions[j].1;
 
                     if j_outputs.contains(&i_output) {
-                        i_dependencies.push(j);
+                        dependencies[i].push(j);
                         break;
                     }
                 }
             }
         }
 
-        dependencies.push(i_dependencies);
+        dependencies[i].sort();
+        dependencies[i].dedup();
     }
     dependencies
 }
@@ -206,11 +184,6 @@ fn make_instruction_streams(instruction_dependencies: &[Vec<usize>]) -> Vec<Vec<
         }
     }
 
-    println!(
-        "[assign_streams] REDUCTION  instructions: {},  streams: {}",
-        instruction_dependencies.len(),
-        next_stream
-    );
     for (i_inst, i_stream) in instruction_streams.iter().enumerate() {
         println!(
             "[assign_streams] INSTRUCTION_STREAM  instruction: {},  stream: {}",

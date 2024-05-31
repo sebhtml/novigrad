@@ -19,7 +19,7 @@ debug = true
 default = ["cuda"]
 #default = []
 cuda = ["cudarc"]
-default_is_cuda = []
+verbose_streams = []
 
 [dependencies]
 # CPU Blas

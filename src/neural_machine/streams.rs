@@ -12,7 +12,7 @@ fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usize>, 
     for machine_input in machine_inputs {
         for (i, (_, outputs)) in instructions.iter().enumerate() {
             if outputs.contains(machine_input) {
-                println!(
+                panic!(
                     "[assign_streams] PROBLEM-0001 instruction {} writes ot machine input {} !",
                     i, machine_input
                 );
@@ -39,6 +39,7 @@ pub fn make_streams(
         }
     }
 
+    #[cfg(feature = "verbose_streams")]
     for (i, i_dependencies) in dependencies.iter().enumerate() {
         println!(
             "[assign_streams] INSTRUCTION_DEPENDENCIES  instruction: {},  instructions: {}",
@@ -184,6 +185,7 @@ fn make_instruction_streams(instruction_dependencies: &[Vec<usize>]) -> Vec<Vec<
         }
     }
 
+    #[cfg(feature = "verbose_streams")]
     for (i_inst, i_stream) in instruction_streams.iter().enumerate() {
         println!(
             "[assign_streams] INSTRUCTION_STREAM  instruction: {},  stream: {}",
@@ -251,24 +253,28 @@ impl Default for StreamState {
 fn join_stream(stream: usize, streams: &mut Vec<Stream>, active_streams: &mut BTreeSet<usize>) {
     debug_assert_eq!(StreamState::Spawned, streams[stream].state);
     let new_state = StreamState::Joined;
+    #[cfg(feature = "verbose_streams")]
     println!(
         "Transition stream {}  {} -> {}",
         stream, streams[stream].state, new_state
     );
     streams[stream].state = new_state;
     active_streams.remove(&stream);
+    #[cfg(feature = "verbose_streams")]
     println!("active_streams {}", active_streams.len());
 }
 
 fn spawn_stream(stream: usize, streams: &mut Vec<Stream>, active_streams: &mut BTreeSet<usize>) {
     debug_assert_eq!(StreamState::Unreached, streams[stream].state);
     let new_state = StreamState::Spawned;
+    #[cfg(feature = "verbose_streams")]
     println!(
         "Transition stream {}  {} -> {}",
         stream, streams[stream].state, new_state
     );
     streams[stream].state = new_state;
     active_streams.insert(stream);
+    #[cfg(feature = "verbose_streams")]
     println!("active_streams {}", active_streams.len());
 }
 
@@ -284,6 +290,7 @@ pub fn execute_streams(streams: &mut Vec<Stream>, max_concurrent_streams: usize)
                 if streams[dependency].state == StreamState::Spawned {
                     join_stream(dependency, streams, &mut active_streams);
                 } else if streams[dependency].state == StreamState::Joined {
+                    #[cfg(feature = "verbose_streams")]
                     println!(
                         "note stream {} is already {}",
                         dependency,
@@ -312,4 +319,10 @@ pub fn execute_streams(streams: &mut Vec<Stream>, max_concurrent_streams: usize)
         }
     }
     debug_assert_eq!(0, active_streams.len());
+}
+
+pub fn reset_streams(streams: &mut Vec<Stream>) {
+    for i in 0..streams.len() {
+        streams[i].state = StreamState::Unreached;
+    }
 }

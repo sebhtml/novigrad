@@ -1,4 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
+
+pub struct Stream {
+    pub id: usize,
+    pub dependencies: Vec<usize>,
+    pub instructions: Vec<usize>,
+}
 
 /// Maker sure that no instruction writes to machine inputs.
 fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usize>, Vec<usize>)]) {
@@ -15,15 +21,15 @@ fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usize>, 
 }
 
 /// Group <N> instructions in <M> streams using a dependency analysis.
-pub fn assign_streams(
+pub fn make_streams(
     machine_inputs: &[usize],
-    instructions: &[(Vec<usize>, Vec<usize>)],
-) -> Vec<Vec<usize>> {
-    verify_machine_inputs(machine_inputs, instructions);
+    instruction_operands: &[(Vec<usize>, Vec<usize>)],
+) -> Vec<Stream> {
+    verify_machine_inputs(machine_inputs, instruction_operands);
     // A list of dependencies (instructions) for each instruction.
-    let dependencies = get_instruction_instruction_dependencies(instructions);
+    let dependencies = get_instruction_instruction_dependencies(instruction_operands);
 
-    for (_i, (i_inputs, _i_outputs)) in instructions.iter().enumerate() {
+    for (_i, (i_inputs, _i_outputs)) in instruction_operands.iter().enumerate() {
         for i_input in i_inputs.iter() {
             if machine_inputs.contains(i_input) {
                 // Nothing to do since the input is ready.
@@ -44,9 +50,9 @@ pub fn assign_streams(
         );
     }
 
-    let streams = make_instruction_streams(&dependencies);
+    let instruction_streams = make_instruction_streams(&dependencies);
 
-    for (stream, instructions) in streams.iter().enumerate() {
+    for (stream, instructions) in instruction_streams.iter().enumerate() {
         println!(
             "[assign_streams] STREAM  stream: {},  instructions: {}",
             stream,
@@ -59,15 +65,53 @@ pub fn assign_streams(
     }
 
     let mut len_distribution = HashMap::new();
-    for instructions in streams.iter() {
+    for instructions in instruction_streams.iter() {
         let len = instructions.len();
         let value = len_distribution.entry(len).or_insert(0);
-        *value  += 1;
+        *value += 1;
     }
     for (len, streams) in len_distribution {
-        println!("[assign_streams] DISTRIBUTION  length: {}  streams: {}", len, streams);
+        println!(
+            "[assign_streams] DISTRIBUTION  length: {}  streams: {}",
+            len, streams
+        );
     }
 
+    let stream_dependency_streams = vec![vec![]; instruction_streams.len()];
+
+    let mut streams: Vec<Stream> = vec![];
+    for i in 0..instruction_streams.len() {
+        let instructions = instruction_streams[i].clone();
+        let stream = Stream {
+            id: i,
+            dependencies: stream_dependency_streams[i].clone(),
+            instructions,
+        };
+        streams.push(stream);
+    }
+
+    for i in 0..streams.len() {
+        let i_instructions = &streams[i].instructions;
+        let i_first_instruction = i_instructions[0];
+        let i_inputs = &instruction_operands[i_first_instruction].0;
+        for i_input in i_inputs {
+            if i > 0 {
+                // find the closest prior instruction that writes to his operand.
+                // Then add it to the dependencies.
+                let j_range = 0..(i - 1);
+                for j in j_range.rev() {
+                    let j_instructions = &streams[j].instructions;
+                    let j_last_instruction = j_instructions[j_instructions.len() - 1];
+                    let j_outputs = &instruction_operands[j_last_instruction].1;
+
+                    if j_outputs.contains(&i_input) {
+                        streams[i].dependencies.push(j);
+                        break;
+                    }
+                }
+            }
+        }
+    }
     streams
 }
 
@@ -118,17 +162,37 @@ fn make_instruction_streams(instruction_dependencies: &[Vec<usize>]) -> Vec<Vec<
         }
     }
 
-    println!("[assign_streams] REDUCTION  instructions: {},  streams: {}", instruction_dependencies.len(), next_stream);
+    println!(
+        "[assign_streams] REDUCTION  instructions: {},  streams: {}",
+        instruction_dependencies.len(),
+        next_stream
+    );
     for (i_inst, i_stream) in instruction_streams.iter().enumerate() {
         println!(
             "[assign_streams] INSTRUCTION_STREAM  instruction: {},  stream: {}",
-    i_inst,
-    i_stream,
+            i_inst, i_stream,
         );
     }
     let mut streams = vec![vec![]; next_stream];
     for (i_inst, i_stream) in instruction_streams.iter().enumerate() {
         streams[*i_stream].push(i_inst);
     }
+
     streams
+}
+
+impl Display for Stream {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let _ = write!(f, "Stream id: {}", self.id,);
+        let _ = write!(f, "\n");
+        let _ = write!(f, "dependencies_len: {}", self.dependencies.len(),);
+        let _ = write!(f, "\n");
+        let _ = write!(f, "dependencies: {:?}", self.dependencies,);
+        let _ = write!(f, "\n");
+        let _ = write!(f, "instructions_len: {:?}", self.instructions.len(),);
+        let _ = write!(f, "\n");
+        let _ = write!(f, "instructions: {:?}", self.instructions,);
+        let result = write!(f, "\n");
+        result
+    }
 }

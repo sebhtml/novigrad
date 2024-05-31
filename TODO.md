@@ -1,4 +1,5 @@
 - Compute stream dependencies
+- compute max concurrent streams
 
 - add device stream support in devices to execute attention heads in parallel
 

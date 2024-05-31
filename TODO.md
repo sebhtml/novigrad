@@ -1,4 +1,3 @@
-- in execution simulator, add max_concurrent_streams and join oldest spawned streams to honor it.
 
 - add device stream support in devices to execute attention heads in parallel
 

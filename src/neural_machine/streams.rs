@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::BTreeSet, fmt::Display};
 
 pub struct Stream {
     pub id: usize,
@@ -216,7 +216,7 @@ impl Display for Stream {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum StreamState {
     Unreached,
     Spawned,
@@ -248,9 +248,33 @@ impl Default for StreamState {
     }
 }
 
-pub fn execute_streams(streams: &mut Vec<Stream>, _max_concurrent_streams: usize) {
+fn join_stream(stream: usize, streams: &mut Vec<Stream>, active_streams: &mut BTreeSet<usize>) {
+    debug_assert_eq!(StreamState::Spawned, streams[stream].state);
+    let new_state = StreamState::Joined;
+    println!(
+        "Transition stream {}  {} -> {}",
+        stream, streams[stream].state, new_state
+    );
+    streams[stream].state = new_state;
+    active_streams.remove(&stream);
+    println!("active_streams {}", active_streams.len());
+}
+
+fn spawn_stream(stream: usize, streams: &mut Vec<Stream>, active_streams: &mut BTreeSet<usize>) {
+    debug_assert_eq!(StreamState::Unreached, streams[stream].state);
+    let new_state = StreamState::Spawned;
+    println!(
+        "Transition stream {}  {} -> {}",
+        stream, streams[stream].state, new_state
+    );
+    streams[stream].state = new_state;
+    active_streams.insert(stream);
+    println!("active_streams {}", active_streams.len());
+}
+
+pub fn execute_streams(streams: &mut Vec<Stream>, max_concurrent_streams: usize) {
     let range = 0..streams.len();
-    let mut active_streams = 0;
+    let mut active_streams = BTreeSet::new();
     for i in range.clone().into_iter() {
         if streams[i].state == StreamState::Unreached {
             // Join each dependency
@@ -258,15 +282,7 @@ pub fn execute_streams(streams: &mut Vec<Stream>, _max_concurrent_streams: usize
             for j in 0..n {
                 let dependency = streams[i].dependencies[j];
                 if streams[dependency].state == StreamState::Spawned {
-                    println!(
-                        "Transition stream {}  {} -> {}",
-                        dependency,
-                        StreamState::Spawned,
-                        StreamState::Joined
-                    );
-                    streams[dependency].state = StreamState::Joined;
-                    active_streams -= 1;
-                    println!("active_streams {}", active_streams);
+                    join_stream(dependency, streams, &mut active_streams);
                 } else if streams[dependency].state == StreamState::Joined {
                     println!(
                         "note stream {} is already {}",
@@ -277,31 +293,23 @@ pub fn execute_streams(streams: &mut Vec<Stream>, _max_concurrent_streams: usize
                     panic!("Can not join unspawned stream {}", dependency);
                 }
             }
-            println!(
-                "Transition stream {}  {} -> {}",
-                i,
-                StreamState::Unreached,
-                StreamState::Spawned
-            );
-            active_streams += 1;
-            println!("active_streams {}", active_streams);
-            streams[i].state = StreamState::Spawned;
+
+            if active_streams.len() == max_concurrent_streams {
+                // Join the oldest active stream before spawning this one.
+                let oldest = active_streams.iter().min().map(|x| *x);
+                if let Some(oldest) = oldest {
+                    join_stream(oldest, streams, &mut active_streams);
+                }
+            }
+            spawn_stream(i, streams, &mut active_streams);
         } else {
             panic!("Can not spawn stream {} because it is not unreached", i);
         }
     }
     for i in range {
         if streams[i].state == StreamState::Spawned {
-            println!(
-                "Transition stream with no dependent {}  {} -> {}",
-                i,
-                StreamState::Spawned,
-                StreamState::Joined
-            );
-            streams[i].state = StreamState::Joined;
-            active_streams -= 1;
-            println!("active_streams {}", active_streams);
+            join_stream(i, streams, &mut active_streams);
         }
     }
-    assert_eq!(0, active_streams);
+    debug_assert_eq!(0, active_streams.len());
 }

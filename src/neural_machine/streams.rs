@@ -116,6 +116,12 @@ pub fn make_streams(
         streams[i].dependencies.sort();
         streams[i].dependencies.dedup();
     }
+
+    #[cfg(feature = "verbose_streams")]
+    for stream in streams.iter() {
+        println!("STREAM {}", stream);
+    }
+
     streams
 }
 

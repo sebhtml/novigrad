@@ -16,8 +16,7 @@ inherits = "release"
 debug = true
 
 [features]
-default = ["cuda"]
-#default = []
+default = []
 cuda = ["cudarc"]
 verbose_streams = []
 

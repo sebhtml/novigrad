@@ -2,7 +2,7 @@ mod model;
 pub use model::*;
 use more_asserts::debug_assert_lt;
 mod mega_man;
-mod mega_man_attention;
+pub mod mega_man_attention;
 mod perceptron;
 mod simple;
 use crate::{error, BinaryOperator, Metrics, OptimizerTrait};

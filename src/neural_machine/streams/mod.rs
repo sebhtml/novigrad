@@ -1,5 +1,9 @@
 use std::{collections::BTreeSet, fmt::Display};
 
+use crate::Instruction;
+#[cfg(test)]
+mod tests;
+
 pub struct Stream {
     pub id: usize,
     pub state: StreamState,
@@ -8,7 +12,7 @@ pub struct Stream {
 }
 
 /// Maker sure that no instruction writes to machine inputs.
-fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usize>, Vec<usize>)]) {
+pub fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usize>, Vec<usize>)]) {
     for machine_input in machine_inputs {
         for (i, (_, outputs)) in instructions.iter().enumerate() {
             if outputs.contains(machine_input) {
@@ -22,22 +26,9 @@ fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usize>, 
 }
 
 /// Group <N> instructions in <M> streams using a dependency analysis.
-pub fn make_streams(
-    machine_inputs: &[usize],
-    instruction_operands: &[(Vec<usize>, Vec<usize>)],
-) -> Vec<Stream> {
-    verify_machine_inputs(machine_inputs, instruction_operands);
+pub fn make_streams(instruction_operands: &[(Vec<usize>, Vec<usize>)]) -> Vec<Stream> {
     // A list of dependencies (instructions) for each instruction.
     let dependencies = get_instruction_instruction_dependencies(instruction_operands);
-
-    for (_i, (i_inputs, _i_outputs)) in instruction_operands.iter().enumerate() {
-        for i_input in i_inputs.iter() {
-            if machine_inputs.contains(i_input) {
-                // Nothing to do since the input is ready.
-                continue;
-            }
-        }
-    }
 
     #[cfg(feature = "verbose_streams")]
     for (i, i_dependencies) in dependencies.iter().enumerate() {
@@ -331,4 +322,24 @@ pub fn reset_streams(streams: &mut Vec<Stream>) {
     for i in 0..streams.len() {
         streams[i].state = StreamState::Unreached;
     }
+}
+
+pub fn make_simple_instructions(instructions: &Vec<Instruction>) -> Vec<(Vec<usize>, Vec<usize>)> {
+    let instructions = instructions
+        .iter()
+        .map(|instruction| {
+            let inputs = instruction
+                .inputs()
+                .iter()
+                .map(|x| x.name())
+                .collect::<Vec<_>>();
+            let outputs = instruction
+                .outputs()
+                .iter()
+                .map(|x| x.name())
+                .collect::<Vec<_>>();
+            (inputs, outputs)
+        })
+        .collect::<Vec<_>>();
+    instructions
 }

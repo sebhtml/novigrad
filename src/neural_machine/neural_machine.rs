@@ -5,7 +5,10 @@ use crate::{
     Instruction, OpCode, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
 
-use super::streams::{execute_streams, make_streams, reset_streams, Stream};
+use super::streams::{
+    execute_streams, make_simple_instructions, make_streams, reset_streams, verify_machine_inputs,
+    Stream,
+};
 
 pub struct NeuralMachine<T> {
     device: Device,
@@ -136,6 +139,15 @@ impl<T> NeuralMachine<T> {
         machine.print();
 
         Ok(machine)
+    }
+
+    pub fn instructions(&self, category: &Category) -> Vec<Instruction> {
+        match category {
+            Category::Inference => self.inference_instructions.clone(),
+            Category::Loss => self.loss_instructions.clone(),
+            Category::Gradient => self.gradient_instructions.clone(),
+            Category::Optimization => self.optimization_instructions.clone(),
+        }
     }
 
     pub fn loss(&mut self, expected_output: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
@@ -409,23 +421,9 @@ impl<T> NeuralMachine<T> {
         instructions: &Vec<Instruction>,
     ) -> Vec<Stream> {
         let machine_inputs = vec![example_input.tensor().deref().borrow().name()];
-        let instructions = instructions
-            .iter()
-            .map(|instruction| {
-                let inputs = instruction
-                    .inputs()
-                    .iter()
-                    .map(|x| x.name())
-                    .collect::<Vec<_>>();
-                let outputs = instruction
-                    .outputs()
-                    .iter()
-                    .map(|x| x.name())
-                    .collect::<Vec<_>>();
-                (inputs, outputs)
-            })
-            .collect::<Vec<_>>();
-        let streams = make_streams(&machine_inputs, &instructions);
+        let simple_instructions = make_simple_instructions(instructions);
+        verify_machine_inputs(&machine_inputs, &simple_instructions);
+        let streams = make_streams(&simple_instructions);
         streams
     }
 }

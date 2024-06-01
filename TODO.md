@@ -1,4 +1,7 @@
-- in neural streams, the instruction indices must be the global instructioon indices
+- write test order_of_reads_and_writes
+
+-----------------------
+
 - add device stream support in devices to execute attention heads in parallel
 
 - investigate performance issue with tons of call to pthread_rwlock_unlock

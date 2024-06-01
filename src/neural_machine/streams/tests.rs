@@ -4,7 +4,7 @@ use crate::{
     UnaryModel,
 };
 
-use super::make_simple_instructions;
+use super::{make_simple_instructions, make_streams};
 
 fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
     let device = Device::default();
@@ -38,9 +38,13 @@ fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
 }
 
 #[test]
-fn order_of_reads_and_writes() {
-    let _instructions = get_test_instructions();
-    // TODO check that the order of reads and writes is stricly the same with:
-    // 1. Sequential execution of instructions as is.
-    // 2. Execution of streams
+fn each_instruction_is_executed_exactly_once() {
+    let instructions = get_test_instructions().unwrap();
+    let streams = make_streams(&instructions);
+}
+
+#[test]
+fn each_operand_has_identical_read_and_write_access() {
+    let instructions = get_test_instructions().unwrap();
+    let streams = make_streams(&instructions);
 }

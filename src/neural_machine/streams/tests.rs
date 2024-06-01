@@ -40,7 +40,15 @@ fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
 #[test]
 fn each_instruction_is_executed_exactly_once() {
     let instructions = get_test_instructions().unwrap();
+    let expected_instructions = (0..instructions.len()).collect::<Vec<_>>();
     let streams = make_streams(&instructions);
+    let mut actual_instructions = streams
+        .iter()
+        .map(|x| x.instructions.clone())
+        .collect::<Vec<_>>()
+        .concat();
+    actual_instructions.sort();
+    assert_eq!(expected_instructions, actual_instructions);
 }
 
 #[test]

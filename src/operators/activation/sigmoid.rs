@@ -4,7 +4,6 @@ use crate::{
     DeviceInterface, TensorWithGrad,
 };
 use crate::{tensor::Tensor, OpCode, UnaryOperator};
-use std::ops::Deref;
 
 pub struct Sigmoid {
     device: Device,
@@ -27,7 +26,7 @@ impl Sigmoid {
 
 impl UnaryOperator for Sigmoid {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
-        let input_t: &Tensor = &input.tensor().deref().borrow();
+        let input_t: &Tensor = &input.tensor().read().unwrap();
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
@@ -40,18 +39,18 @@ impl UnaryOperator for Sigmoid {
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&zero, &outputs[0].tensor().read().unwrap()],
+            &[&outputs[0].tensor().read().unwrap()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
+            &[&zero, &outputs[0].gradient().read().unwrap()],
+            &[&outputs[0].gradient().read().unwrap()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Sigmoid,
-            &[&inputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&inputs[0].tensor().read().unwrap()],
+            &[&outputs[0].tensor().read().unwrap()],
         ));
 
         emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output)?;

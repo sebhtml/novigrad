@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     devices::Device, error, gradient_instruction, inference_instruction, tensor::Error,
     tensor::ErrorEnum, tensor::Tensor, BinaryOperator, OpCode, TensorWithGrad,
@@ -25,8 +23,8 @@ impl BinaryOperator for MatMul {
         input_0: &TensorWithGrad,
         input_1: &TensorWithGrad,
     ) -> Result<TensorWithGrad, Error> {
-        let input_0_tensor: &Tensor = &input_0.tensor().deref().borrow();
-        let input_1_tensor: &Tensor = &input_1.tensor().deref().borrow();
+        let input_0_tensor: &Tensor = &input_0.tensor().read().unwrap();
+        let input_1_tensor: &Tensor = &input_1.tensor().read().unwrap();
         let compatible = match self.transb {
             false => input_0_tensor.cols() == input_1_tensor.rows(),
             true => input_0_tensor.cols() == input_1_tensor.cols(),
@@ -65,45 +63,45 @@ impl BinaryOperator for MatMul {
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&zero, &outputs[0].tensor().read().unwrap()],
+            &[&outputs[0].tensor().read().unwrap()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
+            &[&zero, &outputs[0].gradient().read().unwrap()],
+            &[&outputs[0].gradient().read().unwrap()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Gemm(false, transb, false),
             &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-                &outputs[0].tensor().deref().borrow(),
+                &inputs[0].tensor().read().unwrap(),
+                &inputs[1].tensor().read().unwrap(),
+                &outputs[0].tensor().read().unwrap(),
             ],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&outputs[0].tensor().read().unwrap()],
         ));
 
-        if input_1.gradient().deref().borrow().requires_grad() {
+        if input_1.gradient().read().unwrap().requires_grad() {
             output.push_instruction(gradient_instruction!(
                 OpCode::Gemm(true, false, transb),
                 &[
-                    &input_0.tensor().deref().borrow(),
-                    &output.gradient().deref().borrow(),
-                    &input_1.gradient().deref().borrow(),
+                    &input_0.tensor().read().unwrap(),
+                    &output.gradient().read().unwrap(),
+                    &input_1.gradient().read().unwrap(),
                 ],
-                &[&input_1.gradient().deref().borrow()],
+                &[&input_1.gradient().read().unwrap()],
             ));
         }
 
-        if input_0.gradient().deref().borrow().requires_grad() {
+        if input_0.gradient().read().unwrap().requires_grad() {
             output.push_instruction(gradient_instruction!(
                 OpCode::Gemm(false, !transb, false),
                 &[
-                    &output.gradient().deref().borrow(),
-                    &input_1.tensor().deref().borrow(),
-                    &input_0.gradient().deref().borrow(),
+                    &output.gradient().read().unwrap(),
+                    &input_1.tensor().read().unwrap(),
+                    &input_0.gradient().read().unwrap(),
                 ],
-                &[&input_0.gradient().deref().borrow()],
+                &[&input_0.gradient().read().unwrap()],
             ));
         }
 

@@ -1,54 +1,57 @@
 use crate::{tensor::Error, tensor::Tensor, Category, Instruction};
 use core::fmt::Debug;
 use std::fmt::Display;
-use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc};
+use std::sync::{Arc, RwLock};
+use std::{collections::LinkedList, ops::Deref};
 
 #[derive(Clone, Debug)]
 pub struct TensorWithGrad {
-    inputs: Rc<Vec<TensorWithGrad>>,
-    instructions: Rc<RefCell<Vec<Instruction>>>,
-    tensor: Rc<RefCell<Tensor>>,
-    gradient: Rc<RefCell<Tensor>>,
+    inputs: Arc<Vec<TensorWithGrad>>,
+    instructions: Arc<RwLock<Vec<Instruction>>>,
+    tensor: Arc<RwLock<Tensor>>,
+    gradient: Arc<RwLock<Tensor>>,
 }
 
 impl TensorWithGrad {
     pub fn new(tensor: Tensor, gradient: Tensor, inputs: &[&TensorWithGrad]) -> Self {
         let inputs: Vec<TensorWithGrad> = inputs.iter().map(|x| (*x).to_owned()).collect();
         Self {
-            inputs: Rc::new(inputs),
+            inputs: Arc::new(inputs),
             instructions: Default::default(),
-            tensor: Rc::new(RefCell::new(tensor)),
-            gradient: Rc::new(RefCell::new(gradient)),
+            tensor: Arc::new(RwLock::new(tensor)),
+            gradient: Arc::new(RwLock::new(gradient)),
         }
     }
 
     pub fn push_instruction(&self, instruction: Instruction) {
-        self.instructions.deref().borrow_mut().push(instruction)
-    }
-
-    pub fn instructions(&self) -> Vec<Instruction> {
-        self.instructions.deref().borrow().clone()
+        self.instructions.write().unwrap().push(instruction)
     }
 
     pub fn forward_instructions(&self) -> Vec<Instruction> {
-        self.instructions()
+        self.instructions
+            .read()
+            .unwrap()
+            .clone()
             .into_iter()
             .filter(|i| i.category() == Category::Inference || i.category() == Category::Loss)
             .collect()
     }
 
     pub fn gradient_instructions(&self) -> Vec<Instruction> {
-        self.instructions()
+        self.instructions
+            .read()
+            .unwrap()
+            .clone()
             .into_iter()
             .filter(|i| i.category() == Category::Gradient)
             .collect()
     }
 
-    pub fn tensor(&self) -> &Rc<RefCell<Tensor>> {
+    pub fn tensor(&self) -> &Arc<RwLock<Tensor>> {
         &self.tensor
     }
 
-    pub fn gradient(&self) -> &Rc<RefCell<Tensor>> {
+    pub fn gradient(&self) -> &Arc<RwLock<Tensor>> {
         &self.gradient
     }
 
@@ -90,15 +93,15 @@ impl TensorWithGrad {
 
 impl PartialEq for TensorWithGrad {
     fn eq(&self, other: &Self) -> bool {
-        let t1: &Tensor = &self.tensor().deref().borrow();
-        let t2: &Tensor = &other.tensor().deref().borrow();
+        let t1: &Tensor = &self.tensor().read().unwrap();
+        let t2: &Tensor = &other.tensor().read().unwrap();
         t1 == t2
     }
 }
 
 impl Display for TensorWithGrad {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let tensor: &Tensor = &self.tensor().deref().borrow();
+        let tensor: &Tensor = &self.tensor().read().unwrap();
         std::fmt::Display::fmt(&tensor, f)
     }
 }

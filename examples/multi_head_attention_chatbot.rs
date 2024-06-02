@@ -7,7 +7,7 @@ use novigrad::{
 };
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
-use std::{fs::read_to_string, io, ops::Deref};
+use std::{fs::read_to_string, io};
 
 struct ChatbotModel {
     input_shape: Vec<usize>,
@@ -147,7 +147,7 @@ fn main() -> Result<(), Error> {
 
             let _actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
             let loss = neural_machine.loss(&expected_output_one_hot)?;
-            let loss: &Tensor = &loss.tensor().deref().borrow();
+            let loss: &Tensor = &loss.tensor().read().unwrap();
             let loss: f32 = loss.try_into()?;
             total_loss += loss;
             neural_machine.compute_gradient()?;
@@ -204,9 +204,9 @@ fn auto_regressive_inference(
         let input_one_hot = into_one_hot_encoded_rows(&device, input_tokens, vocab_size)?;
 
         let actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
-        let last_row = &actual_output_one_hot.tensor().deref().borrow().rows() - 1;
+        let last_row = &actual_output_one_hot.tensor().read().unwrap().rows() - 1;
         let predicted_next_token =
-            get_row_argmax(&actual_output_one_hot.tensor().deref().borrow(), last_row)?;
+            get_row_argmax(&actual_output_one_hot.tensor().read().unwrap(), last_row)?;
         auto_regressive_tokens.push(predicted_next_token);
     }
     Ok(auto_regressive_tokens)

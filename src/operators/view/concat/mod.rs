@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     gradient_instruction, inference_instruction, tensor::Error, tensor::Tensor, Device,
     NaryOperator, OpCode, TensorWithGrad,
@@ -38,11 +36,11 @@ impl Concat {
 
 impl NaryOperator for Concat {
     fn forward(&self, inputs_n: &[&TensorWithGrad]) -> Result<TensorWithGrad, Error> {
-        let rows = inputs_n[0].tensor().deref().borrow().rows();
-        let cols = inputs_n[0].tensor().deref().borrow().cols();
+        let rows = inputs_n[0].tensor().read().unwrap().rows();
+        let cols = inputs_n[0].tensor().read().unwrap().cols();
         for input in inputs_n.iter() {
-            debug_assert_eq!(input.tensor().deref().borrow().rows(), rows);
-            debug_assert_eq!(input.tensor().deref().borrow().cols(), cols);
+            debug_assert_eq!(input.tensor().read().unwrap().rows(), rows);
+            debug_assert_eq!(input.tensor().read().unwrap().cols(), cols);
         }
         let cols = inputs_n.len() * cols;
         let len = rows * cols;
@@ -54,33 +52,33 @@ impl NaryOperator for Concat {
         let outputs = [&output];
         let inputs: Vec<Tensor> = inputs
             .iter()
-            .map(|t| t.tensor().deref().borrow().clone())
+            .map(|t| t.tensor().read().unwrap().clone())
             .collect();
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&zero, &outputs[0].tensor().read().unwrap()],
+            &[&outputs[0].tensor().read().unwrap()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
+            &[&zero, &outputs[0].gradient().read().unwrap()],
+            &[&outputs[0].gradient().read().unwrap()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Concat,
             &inputs.iter().collect::<Vec<_>>(),
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&outputs[0].tensor().read().unwrap()],
         ));
         let inputs = [&output];
         let outputs = inputs_n;
         let outputs: Vec<Tensor> = outputs
             .iter()
-            .map(|t| t.gradient().deref().borrow().clone())
+            .map(|t| t.gradient().read().unwrap().clone())
             .collect();
         output.push_instruction(gradient_instruction!(
             OpCode::Unconcat,
-            &[&inputs[0].gradient().deref().borrow_mut()],
+            &[&inputs[0].gradient().read().unwrap()],
             &outputs.iter().collect::<Vec<_>>(),
         ));
         Ok(output)

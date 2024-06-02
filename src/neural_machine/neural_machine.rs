@@ -153,9 +153,8 @@ impl<T> NeuralMachine<T> {
     pub fn loss(&mut self, expected_output: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         // Copy expected output
         {
-            let example_output: &mut Tensor =
-                &mut self.example_output.tensor().deref().borrow_mut();
-            let expected_output: &Tensor = &expected_output.tensor().deref().borrow_mut();
+            let example_output = &self.example_output.tensor().read().unwrap();
+            let expected_output = &expected_output.tensor().read().unwrap();
             Tensor::copy(expected_output, example_output)?;
         }
 
@@ -198,8 +197,8 @@ impl<T> NeuralMachine<T> {
     pub fn infer(&mut self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         // Copy input
         {
-            let example_input: &mut Tensor = &mut self.example_input.tensor().deref().borrow_mut();
-            let input: &Tensor = &input.tensor().deref().borrow_mut();
+            let example_input = &self.example_input.tensor().read().unwrap();
+            let input = &input.tensor().read().unwrap();
             Tensor::copy(input, example_input)?;
         }
 
@@ -216,7 +215,7 @@ impl<T> NeuralMachine<T> {
         println!("Tensors: {}", self.device.tensor_count());
         println!("Parameters: {}", self.device.parameter_count());
 
-        let input_size: Vec<usize> = self.example_input.tensor().deref().borrow().size().clone();
+        let input_size: Vec<usize> = self.example_input.tensor().read().unwrap().size().clone();
         println!(
             "Input size: [{}]",
             input_size
@@ -226,7 +225,7 @@ impl<T> NeuralMachine<T> {
                 .join(", ")
         );
 
-        let output_size: Vec<usize> = self.example_output.tensor().deref().borrow().size().clone();
+        let output_size: Vec<usize> = self.example_output.tensor().read().unwrap().size().clone();
         println!(
             "Output size: [{}]",
             output_size
@@ -325,7 +324,7 @@ impl<T> NeuralMachine<T> {
         example_input: &TensorWithGrad,
         instructions: &Vec<Instruction>,
     ) -> Vec<Stream> {
-        let machine_inputs = vec![example_input.tensor().deref().borrow().name()];
+        let machine_inputs = vec![example_input.tensor().read().unwrap().name()];
         let simple_instructions = make_simple_instructions(instructions);
         verify_machine_inputs(&machine_inputs, &simple_instructions);
         let streams = make_streams(&simple_instructions);

@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     optimization_instruction, tensor::Error, tensor::Tensor, Device, Instruction, OpCode,
     OptimizerTrait, TensorWithGrad,
@@ -48,8 +46,8 @@ impl OptimizerTrait for Adam {
         let mut instructions = vec![];
 
         for optimizable_tensor in tensors {
-            let theta: &Tensor = &optimizable_tensor.tensor().deref().borrow();
-            let g: &Tensor = &optimizable_tensor.gradient().deref().borrow();
+            let theta: &Tensor = &optimizable_tensor.tensor().read().unwrap();
+            let g: &Tensor = &optimizable_tensor.gradient().read().unwrap();
             debug_assert_eq!(*g.size(), *theta.size());
 
             let m = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;

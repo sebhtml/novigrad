@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     gradient_instruction, inference_instruction, tensor::Error, tensor::Tensor, BinaryOperator,
     Device, OpCode, TensorWithGrad,
@@ -31,8 +29,8 @@ impl BinaryOperator for Add {
         input_1: &TensorWithGrad,
         input_2: &TensorWithGrad,
     ) -> Result<TensorWithGrad, Error> {
-        let input_0_t: &Tensor = &input_1.tensor().deref().borrow();
-        let input_1_t: &Tensor = &input_1.tensor().deref().borrow();
+        let input_0_t: &Tensor = &input_1.tensor().read().unwrap();
+        let input_1_t: &Tensor = &input_1.tensor().read().unwrap();
         debug_assert_eq!(*input_0_t.size(), *input_1_t.size());
         let rows = input_0_t.rows();
         let cols = input_0_t.cols();
@@ -50,31 +48,31 @@ impl BinaryOperator for Add {
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&zero, &outputs[0].tensor().read().unwrap()],
+            &[&outputs[0].tensor().read().unwrap()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
+            &[&zero, &outputs[0].gradient().read().unwrap()],
+            &[&outputs[0].gradient().read().unwrap()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Add,
             &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
+                &inputs[0].tensor().read().unwrap(),
+                &inputs[1].tensor().read().unwrap(),
             ],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&outputs[0].tensor().read().unwrap()],
         ));
 
         {
             let inputs = [&output];
             let outputs = [input_1, input_2];
 
-            let inputs = &[&inputs[0].gradient().deref().borrow()];
+            let inputs = &[&inputs[0].gradient().read().unwrap()];
             let outputs = &[
-                &outputs[0].gradient().deref().borrow(),
-                &outputs[1].gradient().deref().borrow(),
+                &outputs[0].gradient().read().unwrap(),
+                &outputs[1].gradient().read().unwrap(),
             ];
 
             let input_gradient = inputs[0];

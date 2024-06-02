@@ -17,13 +17,13 @@ pub struct NeuralMachine<T> {
     machine_output: TensorWithGrad,
     loss: TensorWithGrad,
     inference_instructions: Vec<Instruction>,
-    inference_streams: Vec<Stream>,
+    //inference_streams: Vec<Stream>,
     loss_instructions: Vec<Instruction>,
-    loss_streams: Vec<Stream>,
+    //loss_streams: Vec<Stream>,
     gradient_instructions: Vec<Instruction>,
-    gradient_streams: Vec<Stream>,
+    //gradient_streams: Vec<Stream>,
     optimization_instructions: Vec<Instruction>,
-    optimization_streams: Vec<Stream>,
+    //optimization_streams: Vec<Stream>,
     phantom_data: PhantomData<T>,
     max_concurrent_streams: usize,
 }
@@ -98,25 +98,25 @@ impl<T> NeuralMachine<T> {
             .into_iter()
             .filter(|i| i.category() == Category::Inference)
             .collect();
-        let inference_streams = Self::assign_streams(&example_input, &inference_instructions);
+        //let inference_streams = Self::assign_streams(&example_input, &inference_instructions);
         let loss_instructions = all_instructions
             .clone()
             .into_iter()
             .filter(|i| i.category() == Category::Loss)
             .collect();
-        let loss_streams = Self::assign_streams(&example_input, &loss_instructions);
+        //let loss_streams = Self::assign_streams(&example_input, &loss_instructions);
         let gradient_instructions = all_instructions
             .clone()
             .into_iter()
             .filter(|i| i.category() == Category::Gradient)
             .collect();
-        let gradient_streams = Self::assign_streams(&example_input, &gradient_instructions);
+        //let gradient_streams = Self::assign_streams(&example_input, &gradient_instructions);
         let optimization_instructions = all_instructions
             .clone()
             .into_iter()
             .filter(|i| i.category() == Category::Optimization)
             .collect();
-        let optimization_streams = Self::assign_streams(&example_input, &optimization_instructions);
+        //let optimization_streams = Self::assign_streams(&example_input, &optimization_instructions);
 
         let machine = NeuralMachine::<T> {
             device: device.clone(),
@@ -125,13 +125,13 @@ impl<T> NeuralMachine<T> {
             machine_output,
             loss,
             inference_instructions,
-            inference_streams,
+            //inference_streams,
             loss_instructions,
-            loss_streams,
+            //loss_streams,
             gradient_instructions,
-            gradient_streams,
+            //gradient_streams,
             optimization_instructions,
-            optimization_streams,
+            //optimization_streams,
             max_concurrent_streams: 16,
             phantom_data: Default::default(),
         };
@@ -172,20 +172,22 @@ impl<T> NeuralMachine<T> {
         self.forward(&Category::Optimization)
     }
 
-    fn forward_with_streams(&mut self, category: &Category) -> Result<(), Error> {
-        let streams = match category {
-            Category::Inference => &mut self.inference_streams,
-            Category::Loss => &mut self.loss_streams,
-            Category::Gradient => &mut self.gradient_streams,
-            Category::Optimization => &mut self.optimization_streams,
-        };
-        execute_streams(streams, self.max_concurrent_streams);
-        reset_streams(streams);
-        Ok(())
-    }
+    /*
+       fn forward_with_streams(&mut self, category: &Category) -> Result<(), Error> {
+           let streams = match category {
+               Category::Inference => &mut self.inference_streams,
+               Category::Loss => &mut self.loss_streams,
+               Category::Gradient => &mut self.gradient_streams,
+               Category::Optimization => &mut self.optimization_streams,
+           };
+           execute_streams(streams, self.max_concurrent_streams);
+           reset_streams(streams);
+           Ok(())
+       }
+    */
 
     fn forward(&mut self, category: &Category) -> Result<(), Error> {
-        self.forward_with_streams(category)?;
+        //self.forward_with_streams(category)?;
         let instructions = match category {
             Category::Inference => &self.inference_instructions,
             Category::Loss => &self.loss_instructions,

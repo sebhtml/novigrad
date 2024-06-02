@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, fmt::Display};
+use std::{cmp::max, collections::BTreeSet, fmt::Display};
 
 use crate::Instruction;
 #[cfg(test)]
@@ -27,8 +27,8 @@ pub fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usiz
 
 /// Group <N> instructions in <M> streams using a dependency analysis.
 pub fn make_streams(instruction_operands: &[(Vec<usize>, Vec<usize>)]) -> Vec<Stream> {
-    // A list of dependencies (instructions) for each instruction.
-    let dependencies = get_instruction_instruction_dependencies(instruction_operands);
+    // A list of dependencies for each instruction.
+    let instruction_dependencies = get_instruction_dependencies(instruction_operands);
 
     #[cfg(feature = "verbose_streams")]
     for (i, i_dependencies) in dependencies.iter().enumerate() {
@@ -43,69 +43,48 @@ pub fn make_streams(instruction_operands: &[(Vec<usize>, Vec<usize>)]) -> Vec<St
         );
     }
 
-    let instruction_streams = make_instruction_streams(&dependencies);
+    let instruction_streams = assign_instructions_to_streams(&instruction_dependencies);
 
-    let stream_dependency_streams = vec![vec![]; instruction_streams.len()];
+    #[cfg(feature = "verbose_streams")]
+    {
+        println!("Instruction streams");
+        for (i, stream) in instruction_streams.iter().enumerate() {
+            println!("Instruction {}  stream {}", i, stream);
+        }
+    }
+
+    let max_stream = instruction_streams.iter().max();
+    let stream_count = match max_stream {
+        Some(max_stream) => max_stream + 1,
+        None => 0,
+    };
+    let mut stream_instructions = vec![vec![]; stream_count];
+    for (i_inst, i_stream) in instruction_streams.iter().enumerate() {
+        stream_instructions[*i_stream].push(i_inst);
+    }
 
     let mut streams: Vec<Stream> = vec![];
-    for i in 0..instruction_streams.len() {
-        let instructions = instruction_streams[i].clone();
+    for i in 0..stream_instructions.len() {
+        let instructions = stream_instructions[i].clone();
         let stream = Stream {
             id: i,
             state: Default::default(),
-            dependencies: stream_dependency_streams[i].clone(),
+            dependencies: Default::default(),
             instructions,
         };
         streams.push(stream);
     }
 
+    // Assign stream dependencies
     for i in 0..streams.len() {
-        let i_instructions = &streams[i].instructions;
-        let i_first_instruction = i_instructions[0];
-        let i_last_instruction = i_instructions[i_instructions.len() - 1];
-        let i_inputs = &instruction_operands[i_first_instruction].0;
-        let i_outputs = &instruction_operands[i_last_instruction].1;
-
-        // Dependency analysis
-        for i_input in i_inputs {
-            if i > 0 {
-                // find the closest prior instruction that writes to his operand.
-                // Then add it to the dependencies.
-                let j_range = 0..(i - 1);
-                for j in j_range.rev() {
-                    let j_instructions = &streams[j].instructions;
-                    let j_last_instruction = j_instructions[j_instructions.len() - 1];
-                    let j_outputs = &instruction_operands[j_last_instruction].1;
-
-                    if j_outputs.contains(&i_input) {
-                        streams[i].dependencies.push(j);
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Dependency analysis that check prior stream that writes to thet same output
-        for i_output in i_outputs {
-            if i > 0 {
-                // find the closest prior instruction that writes to his operand.
-                // Then add it to the dependencies.
-                let j_range = 0..(i - 1);
-                for j in j_range.rev() {
-                    let j_instructions = &streams[j].instructions;
-                    let j_last_instruction = j_instructions[j_instructions.len() - 1];
-                    let j_outputs = &instruction_operands[j_last_instruction].1;
-
-                    if j_outputs.contains(&i_output) {
-                        streams[i].dependencies.push(j);
-                        break;
-                    }
-                }
-            }
-        }
-
-        streams[i].dependencies.sort();
-        streams[i].dependencies.dedup();
+        let stream_instructions = &streams[i].instructions;
+        let first_instruction = stream_instructions[0];
+        let dependency_instructions = &instruction_dependencies[first_instruction];
+        let dependency_streams = dependency_instructions
+            .iter()
+            .map(|i| instruction_streams[*i])
+            .collect::<Vec<_>>();
+        streams[i].dependencies = dependency_streams;
     }
 
     #[cfg(feature = "verbose_streams")]
@@ -116,41 +95,67 @@ pub fn make_streams(instruction_operands: &[(Vec<usize>, Vec<usize>)]) -> Vec<St
     streams
 }
 
-fn get_instruction_instruction_dependencies(
-    instructions: &[(Vec<usize>, Vec<usize>)],
-) -> Vec<Vec<usize>> {
+fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Vec<usize>> {
     let mut dependencies = vec![vec![]; instructions.len()];
     for (i, (i_inputs, i_outputs)) in instructions.iter().enumerate() {
-        for i_input in i_inputs.iter() {
-            if i > 0 {
-                // find the closest prior instruction that writes to his operand.
-                // Then add it to the dependencies.
-                let j_range = 0..(i - 1);
-                for j in j_range.rev() {
-                    let j_outputs = &instructions[j].1;
+        //----------------------------
+        // Write(operandX) and Read(operandX) must not be not re-ordered.
+        //----------------------------
 
-                    if j_outputs.contains(&i_input) {
-                        dependencies[i].push(j);
-                        break;
-                    }
+        // Read of input depends on previous write.
+        for i_input in i_inputs.iter() {
+            // find the closest prior instruction that writes to his operand.
+            // Then add it to the dependencies.
+            let j_range = 0..i;
+            for j in j_range.rev() {
+                let j_outputs = &instructions[j].1;
+
+                if j_outputs.contains(&i_input) {
+                    dependencies[i].push(j);
+                    break;
                 }
             }
         }
 
+        //----------------------------
+        // Write(operandX) and Write(operandX) must not be not re-ordered.
+        //----------------------------
+
+        // Write of output depends on previous write.
         // If previous instruction j writes to the same output as instruction i,
         // the order of the writes must be preserved.
         for i_output in i_outputs.iter() {
-            if i > 0 {
-                // find the closest prior instruction that writes to his operand.
-                // Then add it to the dependencies.
-                let j_range = 0..(i - 1);
-                for j in j_range.rev() {
-                    let j_outputs = &instructions[j].1;
+            // find the closest prior instruction that writes to his operand.
+            // Then add it to the dependencies.
+            let j_range = 0..i;
+            for j in j_range.rev() {
+                let j_outputs = &instructions[j].1;
 
-                    if j_outputs.contains(&i_output) {
-                        dependencies[i].push(j);
-                        break;
-                    }
+                if j_outputs.contains(&i_output) {
+                    dependencies[i].push(j);
+                    break;
+                }
+            }
+        }
+
+        //----------------------------
+        // Read(operandX) and Write(operandX) must not be not re-ordered.
+        //----------------------------
+        // Write of output depends on previous read.
+        // If we write to the operand before the previous read,
+        // then the previous read will read a bad value from the future.
+        // If previous instruction j reads to the same output as instruction i,
+        // the order of the read-then-write must be preserved.
+        for i_output in i_outputs.iter() {
+            // find the closest prior instruction that writes to his operand.
+            // Then add it to the dependencies.
+            let j_range = 0..i;
+            for j in j_range.rev() {
+                let j_inputs = &instructions[j].0;
+
+                if j_inputs.contains(&i_output) {
+                    dependencies[i].push(j);
+                    break;
                 }
             }
         }
@@ -161,7 +166,7 @@ fn get_instruction_instruction_dependencies(
     dependencies
 }
 
-fn make_instruction_streams(instruction_dependencies: &[Vec<usize>]) -> Vec<Vec<usize>> {
+fn assign_instructions_to_streams(instruction_dependencies: &[Vec<usize>]) -> Vec<usize> {
     let no_stream = usize::MAX;
     let n = instruction_dependencies.len();
     let mut instruction_streams: Vec<usize> = vec![no_stream; n];
@@ -189,12 +194,8 @@ fn make_instruction_streams(instruction_dependencies: &[Vec<usize>]) -> Vec<Vec<
             i_inst, i_stream,
         );
     }
-    let mut streams = vec![vec![]; next_stream];
-    for (i_inst, i_stream) in instruction_streams.iter().enumerate() {
-        streams[*i_stream].push(i_inst);
-    }
 
-    streams
+    instruction_streams
 }
 
 impl Display for Stream {

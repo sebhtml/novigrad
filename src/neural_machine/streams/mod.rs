@@ -1,6 +1,6 @@
-use std::{cmp::max, collections::BTreeSet, fmt::Display};
+use std::{collections::BTreeSet, fmt::Display};
 
-use crate::Instruction;
+use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
 #[cfg(test)]
 mod tests;
 
@@ -31,7 +31,7 @@ pub fn make_streams(instruction_operands: &[(Vec<usize>, Vec<usize>)]) -> Vec<St
     let instruction_dependencies = get_instruction_dependencies(instruction_operands);
 
     #[cfg(feature = "verbose_streams")]
-    for (i, i_dependencies) in dependencies.iter().enumerate() {
+    for (i, i_dependencies) in instruction_dependencies.iter().enumerate() {
         println!(
             "[assign_streams] INSTRUCTION_DEPENDENCIES  instruction: {},  instructions: {}",
             i,
@@ -262,7 +262,12 @@ fn join_stream(stream: usize, streams: &mut Vec<Stream>, active_streams: &mut BT
     println!("active_streams {}", active_streams.len());
 }
 
-fn spawn_stream(stream: usize, streams: &mut Vec<Stream>, active_streams: &mut BTreeSet<usize>) {
+fn spawn_stream(
+    stream: usize,
+    streams: &mut Vec<Stream>,
+    instructions: &[Instruction],
+    active_streams: &mut BTreeSet<usize>,
+) -> Result<(), Error> {
     debug_assert_eq!(StreamState::Unreached, streams[stream].state);
     let new_state = StreamState::Spawned;
     #[cfg(feature = "verbose_streams")]
@@ -274,9 +279,16 @@ fn spawn_stream(stream: usize, streams: &mut Vec<Stream>, active_streams: &mut B
     active_streams.insert(stream);
     #[cfg(feature = "verbose_streams")]
     println!("active_streams {}", active_streams.len());
+
+    let stream_instructions = &streams[stream].instructions;
+    ExecutionUnit::execute(stream_instructions, instructions)
 }
 
-pub fn execute_streams(streams: &mut Vec<Stream>, max_concurrent_streams: usize) {
+pub fn execute_streams(
+    streams: &mut Vec<Stream>,
+    instructions: &[Instruction],
+    max_concurrent_streams: usize,
+) -> Result<(), Error> {
     let range = 0..streams.len();
     let mut active_streams = BTreeSet::new();
     for i in range.clone().into_iter() {
@@ -306,7 +318,7 @@ pub fn execute_streams(streams: &mut Vec<Stream>, max_concurrent_streams: usize)
                     join_stream(oldest, streams, &mut active_streams);
                 }
             }
-            spawn_stream(i, streams, &mut active_streams);
+            spawn_stream(i, streams, instructions, &mut active_streams)?;
         } else {
             panic!("Can not spawn stream {} because it is not unreached", i);
         }
@@ -317,6 +329,8 @@ pub fn execute_streams(streams: &mut Vec<Stream>, max_concurrent_streams: usize)
         }
     }
     debug_assert_eq!(0, active_streams.len());
+
+    Ok(())
 }
 
 pub fn reset_streams(streams: &mut Vec<Stream>) {

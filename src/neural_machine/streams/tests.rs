@@ -100,6 +100,7 @@ fn get_all_instruction_transactions(instructions: &[(Vec<usize>, Vec<usize>)]) -
     transactions
 }
 
+/// Simulate an execution of streams and emit operand transactions.
 fn spawn_and_join_streams(
     streams: &[Stream],
     instructions: &[(Vec<usize>, Vec<usize>)],
@@ -113,6 +114,7 @@ fn spawn_and_join_streams(
     let mut joined_streams = BTreeSet::<usize>::new();
     while joined_streams.len() != streams.len() {
         let mut stream_to_spawn: Option<usize> = None;
+        // Find a stream that can be spawned.
         for unreached_stream in unreached_streams.iter() {
             let mut can_spawn = true;
             let dependencies = &streams[*unreached_stream].dependencies;
@@ -140,13 +142,26 @@ fn spawn_and_join_streams(
                     get_instruction_transactions(instruction, inputs, outputs);
                 actual_transactions.extend_from_slice(&mut instruction_transactions);
             }
+            // Immediately join the thread.
             joined_streams.insert(stream_to_spawn);
         }
     }
     actual_transactions
 }
 
-// For each read, find the prior write.
+// Example: for each read, find the prior write.
+// Basically there are read accesses and write accesses.
+// Here are the 4 pillars of the memory model:
+// - a read has a prior write and it must remain the same. Changing the prior write makes the result incorrect.
+// - a write has a prior write and it must remain the same. Changing the prior write makes the result incorrect.
+// - a write has a prior read and it must remain the same. Changing the prior read makes the result incorrect.
+// - a read has a prior read and it can change. Changing the prior read is allowed.
+//        Example, if instructions 1, 2, 3 read operand 44, all those orderings are valid ones:
+//           - 1, 2, 3
+//           - 3, 2, 1
+//           - 2, 1, 3
+//           - ...
+//       If we have 12 attention heads, that means that we can have 12 concurrent streams.
 fn get_operand_transaction_pairs(
     access: &Access,
     prior_access: &Access,
@@ -180,6 +195,7 @@ fn get_operand_transaction_pairs(
         }
     }
     for (_, pairs) in operand_pairs.iter_mut() {
+        // The tests use == so sorting makes the tests pass.
         pairs.sort();
     }
     operand_pairs

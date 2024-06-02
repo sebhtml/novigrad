@@ -99,7 +99,7 @@ fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Ve
     let mut dependencies = vec![vec![]; instructions.len()];
     for (i, (i_inputs, i_outputs)) in instructions.iter().enumerate() {
         //----------------------------
-        // Write(operandX) and Read(operandX) must not be not re-ordered.
+        // Write(operandX) and Read(operandX) must not be re-ordered.
         //----------------------------
 
         // Read of input depends on previous write.
@@ -118,7 +118,7 @@ fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Ve
         }
 
         //----------------------------
-        // Write(operandX) and Write(operandX) must not be not re-ordered.
+        // Write(operandX) and Write(operandX) must not be re-ordered.
         //----------------------------
 
         // Write of output depends on previous write.
@@ -139,7 +139,7 @@ fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Ve
         }
 
         //----------------------------
-        // Read(operandX) and Write(operandX) must not be not re-ordered.
+        // Read(operandX) and Write(operandX) must not be re-ordered.
         //----------------------------
         // Write of output depends on previous read.
         // If we write to the operand before the previous read,

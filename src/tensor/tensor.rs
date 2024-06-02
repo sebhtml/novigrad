@@ -7,14 +7,15 @@ use crate::{
     tensor::Error,
 };
 
-use std::{cell::RefCell, fmt::Display, ops::Deref, rc::Rc, vec};
+use std::sync::{Arc, RwLock, RwLockReadGuard};
+use std::{fmt::Display, ops::Deref, vec};
 
 #[derive(Clone, Debug)]
 pub struct Tensor {
     name: usize,
     device: Device,
-    size: Rc<RefCell<Vec<usize>>>,
-    device_slice: Rc<RefCell<DevSlice>>,
+    size: Arc<RwLock<Vec<usize>>>,
+    device_slice: Arc<RwLock<DevSlice>>,
 }
 
 impl PartialEq for Tensor {
@@ -39,8 +40,8 @@ impl Tensor {
         let tensor = Self {
             name,
             device: device.clone(),
-            size: Rc::new(RefCell::new(vec![rows, cols])),
-            device_slice: Rc::new(RefCell::new(buffer)),
+            size: Arc::new(RwLock::new(vec![rows, cols])),
+            device_slice: Arc::new(RwLock::new(buffer)),
         };
         Ok(tensor)
     }
@@ -58,16 +59,16 @@ impl Tensor {
     }
 
     pub fn rows(&self) -> usize {
-        if self.size.deref().borrow().len() == 2 {
-            self.size.deref().borrow()[0]
+        if self.size.deref().read().unwrap().len() == 2 {
+            self.size.deref().read().unwrap()[0]
         } else {
             panic!()
         }
     }
 
     pub fn cols(&self) -> usize {
-        if self.size.deref().borrow().len() == 2 {
-            self.size.deref().borrow()[1]
+        if self.size.deref().read().unwrap().len() == 2 {
+            self.size.deref().read().unwrap()[1]
         } else {
             panic!()
         }
@@ -76,17 +77,18 @@ impl Tensor {
     pub fn len(&self) -> usize {
         self.size
             .deref()
-            .borrow()
+            .read()
+            .unwrap()
             .iter()
             .fold(1, |acc, item| acc * item)
     }
 
-    pub fn size(&self) -> &Rc<RefCell<Vec<usize>>> {
-        &self.size
+    pub fn size(&self) -> RwLockReadGuard<Vec<usize>> {
+        self.size.read().unwrap()
     }
 
     pub fn index(&self, row: usize, col: usize) -> usize {
-        Self::get_index(&self.size.deref().borrow(), row, col)
+        Self::get_index(&self.size.deref().read().unwrap(), row, col)
     }
 
     pub fn get_index(size: &[usize], row: usize, col: usize) -> usize {
@@ -98,39 +100,40 @@ impl Tensor {
         }
     }
 
-    pub fn device_slice(&self) -> &Rc<RefCell<DevSlice>> {
-        &self.device_slice
+    pub fn device_slice(&self) -> RwLockReadGuard<DevSlice> {
+        self.device_slice.read().unwrap()
     }
 
     pub fn as_ptr(&self) -> *const f32 {
-        self.device_slice.deref().borrow().as_ptr()
+        self.device_slice.deref().read().unwrap().as_ptr()
     }
 
     pub fn as_mut_ptr(&self) -> *mut f32 {
-        self.device_slice.deref().borrow_mut().as_mut_ptr()
+        self.device_slice.deref().write().unwrap().as_mut_ptr()
     }
 
     pub fn get_values(&self) -> Result<Vec<f32>, Error> {
-        self.device_slice.deref().borrow().get_values()
+        self.device_slice.deref().read().unwrap().get_values()
     }
 
     /// Avoid using set_values unless necessary. It's bad for performance.
     pub fn set_values(&self, new_values: Vec<f32>) -> Result<(), Error> {
         debug_assert_eq!(new_values.len(), self.len());
-        if self.device_slice.deref().borrow().len() != self.len() {
+        if self.device_slice.deref().read().unwrap().len() != self.len() {
             return Err(error!(ErrorEnum::UnsupportedOperation));
         }
         self.device_slice
             .deref()
-            .borrow_mut()
+            .write()
+            .unwrap()
             .set_values(new_values)
     }
 
     pub fn mul(left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
-        if left.size() != right.size() {
+        if *left.size() != *right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        if left.size() != result.size() {
+        if *left.size() != *result.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         let device = left.device.clone();
@@ -253,7 +256,7 @@ impl Tensor {
             return Err(error!(ErrorEnum::UnsupportedOperation));
         }
 
-        *self.size.deref().borrow_mut() = new_size.to_owned();
+        *self.size.deref().write().unwrap() = new_size.to_owned();
 
         Ok(())
     }
@@ -266,7 +269,7 @@ impl Display for Tensor {
             f,
             "Tensor name: {}, size: {:?}",
             self.name(),
-            self.size.deref().borrow()
+            self.size.deref().read().unwrap()
         );
         _ = write!(f, "\n");
         for row in 0..self.rows() {
@@ -288,7 +291,7 @@ impl TryInto<f32> for &Tensor {
     type Error = Error;
 
     fn try_into(self) -> Result<f32, Self::Error> {
-        let size: &[usize] = &self.size().deref().borrow();
+        let size: &[usize] = &self.size();
         match size {
             &[1, 1] => {
                 let self_values = self.get_values()?;

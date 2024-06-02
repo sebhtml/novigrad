@@ -122,7 +122,7 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
             total_perplexity: 5.0,
         },
         final_metrics: Metrics {
-            total_loss: 200.0,
+            total_loss: 350.0,
             total_perplexity: 11.0,
         },
     };

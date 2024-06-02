@@ -4,7 +4,6 @@ use crate::{
     UnaryOperator,
 };
 use crate::{tensor::Error, TensorWithGrad};
-use std::ops::Deref;
 
 pub struct Softmax {
     device: Device,
@@ -36,7 +35,7 @@ impl Softmax {
 
 impl UnaryOperator for Softmax {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
-        let input_t: &Tensor = &input.tensor().deref().borrow();
+        let input_t: &Tensor = &input.tensor();
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
@@ -48,28 +47,25 @@ impl UnaryOperator for Softmax {
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&zero, &outputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
+            &[&zero, &outputs[0].gradient()],
+            &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Softmax,
-            &[&inputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&inputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
 
         if self.next_is_cross_entropy_loss {
             output.push_instruction(gradient_instruction!(
                 OpCode::Add,
-                &[
-                    &output.gradient().deref().borrow(),
-                    &input.gradient().deref().borrow(),
-                ],
-                &[&input.gradient().deref().borrow()],
+                &[&output.gradient(), &input.gradient(),],
+                &[&input.gradient()],
             ));
         } else {
             emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output)?;
@@ -87,11 +83,11 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
     let inputs = [&output];
     let outputs = [input];
     let inputs: &[&Tensor] = &[
-        &inputs[0].tensor().deref().borrow(),
-        &inputs[0].gradient().deref().borrow(),
-        &outputs[0].tensor().deref().borrow(),
+        &inputs[0].tensor(),
+        &inputs[0].gradient(),
+        &outputs[0].tensor(),
     ];
-    let outputs: &[&Tensor] = &[&outputs[0].gradient().deref().borrow()];
+    let outputs: &[&Tensor] = &[&outputs[0].gradient()];
 
     if outputs[0].requires_grad() {
         let output_gradient = outputs[0];

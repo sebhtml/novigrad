@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{tensor::Tensor, BinaryOperator, Device, DeviceInterface};
 
 use super::ReduceSumSquare;
@@ -34,7 +32,7 @@ fn derive() {
     let loss = operator.forward(&expected_tensor, &actual_tensor).unwrap();
     loss.forward().unwrap();
     loss.compute_gradient().unwrap();
-    let actual_derived_loss: &Tensor = &actual_tensor.gradient().deref().borrow();
+    let actual_derived_loss: &Tensor = &actual_tensor.gradient();
     assert_eq!(actual_derived_loss, &expected_derived_loss);
 }
 

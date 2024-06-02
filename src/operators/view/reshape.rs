@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     devices::Device, gradient_instruction, inference_instruction, tensor::Error, tensor::Tensor,
     OpCode, TensorWithGrad, UnaryOperator,
@@ -34,8 +32,8 @@ impl Reshape {
 
 impl UnaryOperator for Reshape {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
-        let input_tensor: &Tensor = &input.tensor().deref().borrow();
-        debug_assert_eq!(*input_tensor.size().deref().borrow_mut(), self.input_size);
+        let input_tensor: &Tensor = &input.tensor();
+        debug_assert_eq!(*input_tensor.size(), self.input_size);
         let rows = self.output_size[0];
         let cols = self.output_size[1];
         let len = rows * cols;
@@ -48,27 +46,27 @@ impl UnaryOperator for Reshape {
         let zero = self.device.tensor(1, 1, vec![0.0]).unwrap();
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&zero, &outputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
+            &[&zero, &outputs[0].gradient()],
+            &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Reshape(self.output_size.clone()),
-            &[&inputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&inputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
         let inputs = [&output];
         let outputs = [input];
 
-        if outputs[0].gradient().deref().borrow().requires_grad() {
+        if outputs[0].gradient().requires_grad() {
             output.push_instruction(gradient_instruction!(
                 OpCode::Reshape(self.input_size.clone()),
-                &[&inputs[0].gradient().deref().borrow()],
-                &[&outputs[0].gradient().deref().borrow()],
+                &[&inputs[0].gradient()],
+                &[&outputs[0].gradient()],
             ));
         }
 

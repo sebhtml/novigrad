@@ -146,12 +146,12 @@ impl DeviceInterface for CpuDevice {
     }
 
     fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
-        if left.size() != right.size() {
+        if *left.size() != *right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
 
         let len = left.len();
-        debug_assert_eq!(result.size(), left.size());
+        debug_assert_eq!(*result.size(), *left.size());
 
         let result_ptr = result.as_mut_ptr();
         let left_ptr = left.as_ptr();
@@ -234,12 +234,12 @@ impl DeviceInterface for CpuDevice {
     }
 
     fn div(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
-        if left.size() != right.size() {
+        if *left.size() != *right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
 
         let len = left.len();
-        debug_assert_eq!(result.size(), left.size());
+        debug_assert_eq!(*result.size(), *left.size());
 
         let result_ptr = result.as_mut_ptr();
         let left_ptr = left.as_ptr();
@@ -268,10 +268,10 @@ impl DeviceInterface for CpuDevice {
         actual: &Tensor,
         loss: &Tensor,
     ) -> Result<(), Error> {
-        debug_assert_eq!(actual.size(), expected.size());
+        debug_assert_eq!(*actual.size(), *expected.size());
         let p = expected;
         let q = actual;
-        if p.size() != q.size() {
+        if *p.size() != *q.size() {
             println!("Incompatible sizes");
             println!("p {}", p);
             println!("q {}", q);
@@ -306,7 +306,7 @@ impl DeviceInterface for CpuDevice {
         actual: &Tensor,
         loss: &Tensor,
     ) -> Result<(), Error> {
-        if expected.size() != actual.size() {
+        if *expected.size() != *actual.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         let len = expected.len();

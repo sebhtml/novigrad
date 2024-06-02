@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     devices::Device, gradient_instruction, loss_instruction, tensor::Error, tensor::Tensor,
     BinaryOperator, DeviceInterface, OpCode, TensorWithGrad,
@@ -42,29 +40,23 @@ impl BinaryOperator for ReduceSumSquare {
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().deref().borrow()],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&zero, &outputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().deref().borrow()],
-            &[&outputs[0].gradient().deref().borrow()],
+            &[&zero, &outputs[0].gradient()],
+            &[&outputs[0].gradient()],
         ));
         output.push_instruction(loss_instruction!(
             OpCode::ReduceSumSquare,
-            &[
-                &inputs[0].tensor().deref().borrow(),
-                &inputs[1].tensor().deref().borrow(),
-            ],
-            &[&outputs[0].tensor().deref().borrow()],
+            &[&inputs[0].tensor(), &inputs[1].tensor(),],
+            &[&outputs[0].tensor()],
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
-        let inputs: &[&Tensor] = &[
-            &inputs[0].tensor().deref().borrow(),
-            &inputs[1].tensor().deref().borrow(),
-        ];
-        let outputs: &[&Tensor] = &[&outputs[0].gradient().deref().borrow()];
+        let inputs: &[&Tensor] = &[&inputs[0].tensor(), &inputs[1].tensor()];
+        let outputs: &[&Tensor] = &[&outputs[0].gradient()];
 
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);

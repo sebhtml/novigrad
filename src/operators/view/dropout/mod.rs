@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     inference_instruction, tensor::Error, tensor::Tensor, BinaryOperator, Device, Mul, OpCode,
     ScalarMul, TensorWithGrad, UnaryOperator,
@@ -48,7 +46,7 @@ impl UnaryOperator for Dropout {
         mask.push_instruction(inference_instruction!(
             OpCode::Bernoulli,
             &[probabilities],
-            &[&mask.tensor().deref().borrow()],
+            &[&mask.tensor()],
         ));
         let mul_output = self.mul.forward(input, &self.mask)?;
         let scalar_mul_output = self.scalar_mul.forward(&mul_output)?;

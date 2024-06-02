@@ -1,6 +1,6 @@
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use std::{ops::Deref, time::SystemTime};
+use std::time::SystemTime;
 
 use crate::{
     perplexity::get_perplexity, tensor::Error, tensor::Tensor, Device, ModelDetails, NeuralMachine,
@@ -218,7 +218,7 @@ fn print_results<T>(
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {
     let mut expected_argmax_values = Vec::new();
     let mut actual_argmax_values = Vec::new();
-    let last_row = outputs[0].tensor().deref().borrow().rows() - 1;
+    let last_row = outputs[0].tensor().rows() - 1;
 
     for i in 0..inputs.len() {
         let input = &inputs[i];
@@ -226,13 +226,13 @@ fn print_results<T>(
         let actual_output = neural_machine.infer(input)?;
 
         let loss = neural_machine.loss(expected_output)?;
-        let loss: &Tensor = &loss.tensor().deref().borrow();
+        let loss: &Tensor = &loss.tensor();
         let loss: f32 = loss.try_into()?;
 
-        let actual_output: &Tensor = &actual_output.tensor().deref().borrow();
+        let actual_output = &actual_output.tensor();
         let perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
 
-        let expected_output: &Tensor = &outputs[i].tensor().deref().borrow();
+        let expected_output = &outputs[i].tensor();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
         let expected_argmax = expected_output_argmaxes[last_row].to_owned();
         expected_argmax_values.push(expected_argmax);
@@ -245,7 +245,7 @@ fn print_results<T>(
             epoch,
             tokenizer,
             i,
-            &input.tensor().deref().borrow(),
+            &input.tensor(),
             expected_output,
             actual_output,
             expected_argmax,
@@ -319,12 +319,12 @@ pub fn total_metrics<T>(
 
         // Loss
         let example_loss = neural_machine.loss(expected_output)?;
-        let example_loss: &Tensor = &example_loss.tensor().deref().borrow();
+        let example_loss: &Tensor = &example_loss.tensor();
         let example_loss: f32 = example_loss.try_into()?;
         total_loss += example_loss;
 
         // Perplexity
-        let actual_output: &Tensor = &actual_output.tensor().deref().borrow();
+        let actual_output = &actual_output.tensor();
         let perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
         total_perplexity += perplexity;
     }

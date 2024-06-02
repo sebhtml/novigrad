@@ -1,5 +1,5 @@
 use crate::{tensor::Error, tensor::Tensor, OpCode};
-use std::rc::Rc;
+use std::{ops::Deref, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Category {
@@ -24,8 +24,8 @@ impl Into<String> for Category {
 #[derive(Clone, Debug)]
 pub struct Instruction {
     opcode: OpCode,
-    inputs: Rc<Vec<Tensor>>,
-    outputs: Rc<Vec<Tensor>>,
+    inputs: Arc<Vec<Tensor>>,
+    outputs: Arc<Vec<Tensor>>,
     category: Category,
     #[cfg(debug_assertions)]
     file: String,
@@ -144,11 +144,11 @@ impl Instruction {
     pub fn opcode(&self) -> &OpCode {
         &self.opcode
     }
-    pub fn inputs(&self) -> &Rc<Vec<Tensor>> {
-        &self.inputs
+    pub fn inputs(&self) -> impl Deref<Target = Vec<Tensor>> + '_ {
+        self.inputs.deref()
     }
-    pub fn outputs(&self) -> &Rc<Vec<Tensor>> {
-        &self.outputs
+    pub fn outputs(&self) -> impl Deref<Target = Vec<Tensor>> + '_ {
+        self.outputs.deref()
     }
     pub fn execute(&self) -> Result<(), Error> {
         let inputs: Vec<&Tensor> = self.inputs.iter().collect();

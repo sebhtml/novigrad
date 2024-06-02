@@ -1,6 +1,6 @@
 use crate::{
-    optimization_instruction, tensor::Error, tensor::Tensor, Device, Instruction, OpCode,
-    OptimizerTrait, TensorWithGrad,
+    optimization_instruction, tensor::Error, Device, Instruction, OpCode, OptimizerTrait,
+    TensorWithGrad,
 };
 
 /// Adam: A Method for Stochastic Optimization
@@ -46,8 +46,8 @@ impl OptimizerTrait for Adam {
         let mut instructions = vec![];
 
         for optimizable_tensor in tensors {
-            let theta: &Tensor = &optimizable_tensor.tensor().read().unwrap();
-            let g: &Tensor = &optimizable_tensor.gradient().read().unwrap();
+            let theta = &optimizable_tensor.tensor();
+            let g = &optimizable_tensor.gradient();
             debug_assert_eq!(*g.size(), *theta.size());
 
             let m = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;

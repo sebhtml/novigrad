@@ -100,8 +100,8 @@ impl Tensor {
         }
     }
 
-    pub fn device_slice(&self) -> &Arc<RwLock<DevSlice>> {
-        &self.device_slice
+    pub fn device_slice(&self) -> RwLockReadGuard<DevSlice> {
+        self.device_slice.read().unwrap()
     }
 
     pub fn as_ptr(&self) -> *const f32 {

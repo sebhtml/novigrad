@@ -36,11 +36,11 @@ impl Concat {
 
 impl NaryOperator for Concat {
     fn forward(&self, inputs_n: &[&TensorWithGrad]) -> Result<TensorWithGrad, Error> {
-        let rows = inputs_n[0].tensor().read().unwrap().rows();
-        let cols = inputs_n[0].tensor().read().unwrap().cols();
+        let rows = inputs_n[0].tensor().rows();
+        let cols = inputs_n[0].tensor().cols();
         for input in inputs_n.iter() {
-            debug_assert_eq!(input.tensor().read().unwrap().rows(), rows);
-            debug_assert_eq!(input.tensor().read().unwrap().cols(), cols);
+            debug_assert_eq!(input.tensor().rows(), rows);
+            debug_assert_eq!(input.tensor().cols(), cols);
         }
         let cols = inputs_n.len() * cols;
         let len = rows * cols;
@@ -50,35 +50,29 @@ impl NaryOperator for Concat {
             .tensor_with_grad(rows, cols, values, inputs_n, true, false)?;
         let inputs = inputs_n;
         let outputs = [&output];
-        let inputs: Vec<Tensor> = inputs
-            .iter()
-            .map(|t| t.tensor().read().unwrap().clone())
-            .collect();
+        let inputs: Vec<Tensor> = inputs.iter().map(|t| t.tensor().clone()).collect();
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().read().unwrap()],
-            &[&outputs[0].tensor().read().unwrap()],
+            &[&zero, &outputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().read().unwrap()],
-            &[&outputs[0].gradient().read().unwrap()],
+            &[&zero, &outputs[0].gradient()],
+            &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Concat,
             &inputs.iter().collect::<Vec<_>>(),
-            &[&outputs[0].tensor().read().unwrap()],
+            &[&outputs[0].tensor()],
         ));
         let inputs = [&output];
         let outputs = inputs_n;
-        let outputs: Vec<Tensor> = outputs
-            .iter()
-            .map(|t| t.gradient().read().unwrap().clone())
-            .collect();
+        let outputs: Vec<Tensor> = outputs.iter().map(|t| t.gradient().clone()).collect();
         output.push_instruction(gradient_instruction!(
             OpCode::Unconcat,
-            &[&inputs[0].gradient().read().unwrap()],
+            &[&inputs[0].gradient()],
             &outputs.iter().collect::<Vec<_>>(),
         ));
         Ok(output)

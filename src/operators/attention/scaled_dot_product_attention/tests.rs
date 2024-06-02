@@ -16,7 +16,7 @@ fn forward() {
     let output = attention.forward(&input, &input, &input).unwrap();
     output.forward().unwrap();
 
-    let actual: &Tensor = &output.tensor().read().unwrap();
+    let actual: &Tensor = &output.tensor();
 
     let actual_values = actual.get_values().unwrap();
     for actual_value in actual_values {

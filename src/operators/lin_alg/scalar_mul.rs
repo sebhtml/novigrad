@@ -29,7 +29,7 @@ impl ScalarMul {
 
 impl UnaryOperator for ScalarMul {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
-        let input_t: &Tensor = &input.tensor().read().unwrap();
+        let input_t: &Tensor = &input.tensor();
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
@@ -41,26 +41,26 @@ impl UnaryOperator for ScalarMul {
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().read().unwrap()],
-            &[&outputs[0].tensor().read().unwrap()],
+            &[&zero, &outputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().read().unwrap()],
-            &[&outputs[0].gradient().read().unwrap()],
+            &[&zero, &outputs[0].gradient()],
+            &[&outputs[0].gradient()],
         ));
         let alpha = self.device.tensor(1, 1, vec![self.alpha])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&alpha, &inputs[0].tensor().read().unwrap()],
-            &[&outputs[0].tensor().read().unwrap()],
+            &[&alpha, &inputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
         let inputs = [&output];
         let outputs = [input];
 
         {
-            let inputs: &[&Tensor] = &[&inputs[0].gradient().read().unwrap()];
-            let outputs: &[&Tensor] = &[&outputs[0].gradient().read().unwrap()];
+            let inputs: &[&Tensor] = &[&inputs[0].gradient()];
+            let outputs: &[&Tensor] = &[&outputs[0].gradient()];
 
             let input = inputs[0];
             let output_ = outputs[0];

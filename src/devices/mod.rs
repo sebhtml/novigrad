@@ -232,7 +232,7 @@ impl Device {
     pub fn parameter_count(&self) -> usize {
         let mut count = 0;
         for t in self.tensors_to_optimize.deref().borrow().iter() {
-            count += t.tensor().read().unwrap().len();
+            count += t.tensor().len();
         }
         count
     }

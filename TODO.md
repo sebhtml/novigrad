@@ -1,10 +1,6 @@
 
 - add device stream support in devices to execute attention heads in parallel
 
-- return RwLockReadGuard in tensor(&self)
-- return RwLockReadGuard in gradient(&self)
-- return RwLockReadGuard in device_slice(&self)
-
 - move conversion of model-into-instructions outside of neural machine
 - add code that discard useless instructions, for example when a operand write is never read betfore the next write
 

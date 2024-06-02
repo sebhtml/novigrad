@@ -28,8 +28,8 @@ impl BinaryOperator for Mul {
         input_0: &TensorWithGrad,
         input_1: &TensorWithGrad,
     ) -> Result<TensorWithGrad, Error> {
-        let input_0_t: &Tensor = &input_0.tensor().read().unwrap();
-        let input_1_t: &Tensor = &input_1.tensor().read().unwrap();
+        let input_0_t: &Tensor = &input_0.tensor();
+        let input_1_t: &Tensor = &input_1.tensor();
         debug_assert_eq!(*input_0_t.size(), *input_1_t.size());
         let rows = input_0_t.rows();
         let cols = input_0_t.cols();
@@ -47,21 +47,18 @@ impl BinaryOperator for Mul {
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().read().unwrap()],
-            &[&outputs[0].tensor().read().unwrap()],
+            &[&zero, &outputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().read().unwrap()],
-            &[&outputs[0].gradient().read().unwrap()],
+            &[&zero, &outputs[0].gradient()],
+            &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Mul,
-            &[
-                &inputs[0].tensor().read().unwrap(),
-                &inputs[1].tensor().read().unwrap(),
-            ],
-            &[&outputs[0].tensor().read().unwrap()],
+            &[&inputs[0].tensor(), &inputs[1].tensor(),],
+            &[&outputs[0].tensor()],
         ));
 
         {
@@ -69,15 +66,12 @@ impl BinaryOperator for Mul {
             let outputs = [input_0, input_1];
 
             let inputs = &[
-                &inputs[0].tensor().read().unwrap(),
-                &inputs[1].tensor().read().unwrap(),
-                &inputs[2].gradient().read().unwrap(),
+                &inputs[0].tensor(),
+                &inputs[1].tensor(),
+                &inputs[2].gradient(),
             ];
 
-            let outputs = &[
-                &outputs[0].gradient().read().unwrap(),
-                &outputs[1].gradient().read().unwrap(),
-            ];
+            let outputs = &[&outputs[0].gradient(), &outputs[1].gradient()];
 
             debug_assert_eq!(outputs.len(), 2);
             let input_gradient = inputs[2];

@@ -40,29 +40,23 @@ impl BinaryOperator for ReduceSumSquare {
         let zero = self.device.tensor(1, 1, vec![0.0])?;
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].tensor().read().unwrap()],
-            &[&outputs[0].tensor().read().unwrap()],
+            &[&zero, &outputs[0].tensor()],
+            &[&outputs[0].tensor()],
         ));
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
-            &[&zero, &outputs[0].gradient().read().unwrap()],
-            &[&outputs[0].gradient().read().unwrap()],
+            &[&zero, &outputs[0].gradient()],
+            &[&outputs[0].gradient()],
         ));
         output.push_instruction(loss_instruction!(
             OpCode::ReduceSumSquare,
-            &[
-                &inputs[0].tensor().read().unwrap(),
-                &inputs[1].tensor().read().unwrap(),
-            ],
-            &[&outputs[0].tensor().read().unwrap()],
+            &[&inputs[0].tensor(), &inputs[1].tensor(),],
+            &[&outputs[0].tensor()],
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
-        let inputs: &[&Tensor] = &[
-            &inputs[0].tensor().read().unwrap(),
-            &inputs[1].tensor().read().unwrap(),
-        ];
-        let outputs: &[&Tensor] = &[&outputs[0].gradient().read().unwrap()];
+        let inputs: &[&Tensor] = &[&inputs[0].tensor(), &inputs[1].tensor()];
+        let outputs: &[&Tensor] = &[&outputs[0].gradient()];
 
         debug_assert_eq!(inputs.len(), 2);
         debug_assert_eq!(outputs.len(), 1);

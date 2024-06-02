@@ -13,7 +13,7 @@ fn forward() {
     let output = mask.forward(&input).unwrap();
     output.forward().unwrap();
 
-    let actual: &Tensor = &output.tensor().read().unwrap();
+    let actual: &Tensor = &output.tensor();
 
     // A position i is allowed to attend to a position j if and only if i > j.
     // This means that a position can attend to previous positions, but not itself or future positions.++

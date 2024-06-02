@@ -1,7 +1,7 @@
 use crate::{tensor::Error, tensor::Tensor, Category, Instruction};
 use core::fmt::Debug;
 use std::fmt::Display;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, RwLockReadGuard};
 use std::{collections::LinkedList, ops::Deref};
 
 #[derive(Clone, Debug)]
@@ -47,12 +47,12 @@ impl TensorWithGrad {
             .collect()
     }
 
-    pub fn tensor(&self) -> &Arc<RwLock<Tensor>> {
-        &self.tensor
+    pub fn tensor(&self) -> RwLockReadGuard<Tensor> {
+        self.tensor.read().unwrap()
     }
 
-    pub fn gradient(&self) -> &Arc<RwLock<Tensor>> {
-        &self.gradient
+    pub fn gradient(&self) -> RwLockReadGuard<Tensor> {
+        self.gradient.read().unwrap()
     }
 
     pub fn get_tape(&self) -> Vec<TensorWithGrad> {
@@ -93,15 +93,15 @@ impl TensorWithGrad {
 
 impl PartialEq for TensorWithGrad {
     fn eq(&self, other: &Self) -> bool {
-        let t1: &Tensor = &self.tensor().read().unwrap();
-        let t2: &Tensor = &other.tensor().read().unwrap();
+        let t1: &Tensor = &self.tensor();
+        let t2: &Tensor = &other.tensor();
         t1 == t2
     }
 }
 
 impl Display for TensorWithGrad {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let tensor: &Tensor = &self.tensor().read().unwrap();
+        let tensor: &Tensor = &self.tensor();
         std::fmt::Display::fmt(&tensor, f)
     }
 }

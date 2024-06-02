@@ -46,7 +46,7 @@ impl UnaryOperator for Dropout {
         mask.push_instruction(inference_instruction!(
             OpCode::Bernoulli,
             &[probabilities],
-            &[&mask.tensor().read().unwrap()],
+            &[&mask.tensor()],
         ));
         let mul_output = self.mul.forward(input, &self.mask)?;
         let scalar_mul_output = self.scalar_mul.forward(&mul_output)?;

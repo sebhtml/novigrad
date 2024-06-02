@@ -93,7 +93,7 @@ fn main() -> Result<(), Error> {
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
-    let chatbot = NeuralMachine::<f32>::try_new(
+    let mut neural_machine = NeuralMachine::<f32>::try_new(
         &device,
         &model,
         &loss_operator,
@@ -145,13 +145,13 @@ fn main() -> Result<(), Error> {
             let expected_output_one_hot =
                 into_one_hot_encoded_rows(&device, &expected_output_tokens, vocab_size)?;
 
-            let _actual_output_one_hot = chatbot.infer(&input_one_hot)?;
-            let loss = chatbot.loss(&expected_output_one_hot)?;
+            let _actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
+            let loss = neural_machine.loss(&expected_output_one_hot)?;
             let loss: &Tensor = &loss.tensor().deref().borrow();
             let loss: f32 = loss.try_into()?;
             total_loss += loss;
-            chatbot.compute_gradient()?;
-            chatbot.optimize()?;
+            neural_machine.compute_gradient()?;
+            neural_machine.optimize()?;
         }
         println!("Loss: {}", total_loss);
 
@@ -160,8 +160,13 @@ fn main() -> Result<(), Error> {
         println!("Prompt: {}", prompt);
         let prompt_tokens = tokenizer.encode(&prompt);
         let max_len = corpus.len();
-        let auto_regressive_tokens =
-            auto_regressive_inference(&model, &chatbot, &device, &prompt_tokens, max_len)?;
+        let auto_regressive_tokens = auto_regressive_inference(
+            &model,
+            &mut neural_machine,
+            &device,
+            &prompt_tokens,
+            max_len,
+        )?;
         let actual_output = tokenizer.decode(&auto_regressive_tokens)?;
 
         println!("Chatbot: {}", actual_output);
@@ -181,7 +186,7 @@ fn _read_prompt() -> Result<String, Error> {
 
 fn auto_regressive_inference(
     model: &Box<dyn UnaryModel>,
-    chatbot: &NeuralMachine<f32>,
+    neural_machine: &mut NeuralMachine<f32>,
     device: &Device,
     prompt_tokens: &[usize],
     max_len: usize,
@@ -198,7 +203,7 @@ fn auto_regressive_inference(
             &auto_regressive_tokens[(auto_regressive_tokens.len() - sequence_length)..];
         let input_one_hot = into_one_hot_encoded_rows(&device, input_tokens, vocab_size)?;
 
-        let actual_output_one_hot = chatbot.infer(&input_one_hot)?;
+        let actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
         let last_row = &actual_output_one_hot.tensor().deref().borrow().rows() - 1;
         let predicted_next_token =
             get_row_argmax(&actual_output_one_hot.tensor().deref().borrow(), last_row)?;

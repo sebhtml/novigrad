@@ -6,7 +6,7 @@ use crate::{
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
-struct MegaManAttentionModel {
+pub struct MegaManAttentionModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,

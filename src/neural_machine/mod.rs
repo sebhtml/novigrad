@@ -5,3 +5,4 @@ pub use neural_machine::*;
 mod opcode;
 mod streams;
 pub use opcode::*;
+pub mod execution_unit;

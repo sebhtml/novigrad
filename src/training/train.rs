@@ -156,7 +156,7 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NeuralMachineTestOutput, 
     let device = details.device;
     let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
-    let program = NeuralMachine::<T>::try_new(
+    let mut neural_machine = NeuralMachine::<T>::try_new(
         &device,
         &model,
         &loss_operator,
@@ -170,11 +170,11 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NeuralMachineTestOutput, 
     let epochs = details.epochs;
     let progress = details.progress;
 
-    let (_, _) = print_results(0, &program, &mut tokenizer, &inputs, &outputs)?;
+    let (_, _) = print_results(0, &mut neural_machine, &mut tokenizer, &inputs, &outputs)?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
-            let metrics = total_metrics(&program, &inputs, &outputs)?;
+            let metrics = total_metrics(&mut neural_machine, &inputs, &outputs)?;
             print_metrics(epoch, &metrics, &previous_metrics)?;
             print_device_mem_info(&device)?;
             if epoch == 0 {
@@ -186,14 +186,19 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NeuralMachineTestOutput, 
                 break;
             }
         }
-        train(&program, shuffle_examples, &inputs, &outputs)?;
+        train(&mut neural_machine, shuffle_examples, &inputs, &outputs)?;
     }
-    let final_metrics = total_metrics(&program, &inputs, &outputs)?;
+    let final_metrics = total_metrics(&mut neural_machine, &inputs, &outputs)?;
     print_metrics(epochs, &final_metrics, &previous_metrics)?;
     print_device_mem_info(&device)?;
 
-    let (expected_argmax_values, actual_argmax_values) =
-        print_results(epochs, &program, &mut tokenizer, &inputs, &outputs)?;
+    let (expected_argmax_values, actual_argmax_values) = print_results(
+        epochs,
+        &mut neural_machine,
+        &mut tokenizer,
+        &inputs,
+        &outputs,
+    )?;
 
     let output = NeuralMachineTestOutput {
         initial_metrics,
@@ -206,7 +211,7 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NeuralMachineTestOutput, 
 
 fn print_results<T>(
     epoch: usize,
-    program: &NeuralMachine<T>,
+    neural_machine: &mut NeuralMachine<T>,
     tokenizer: &mut Option<Tokenizer>,
     inputs: &[TensorWithGrad],
     outputs: &[TensorWithGrad],
@@ -218,9 +223,9 @@ fn print_results<T>(
     for i in 0..inputs.len() {
         let input = &inputs[i];
         let expected_output = &outputs[i];
-        let actual_output = program.infer(input)?;
+        let actual_output = neural_machine.infer(input)?;
 
-        let loss = program.loss(expected_output)?;
+        let loss = neural_machine.loss(expected_output)?;
         let loss: &Tensor = &loss.tensor().deref().borrow();
         let loss: f32 = loss.try_into()?;
 
@@ -286,7 +291,7 @@ pub fn get_row_argmax(tensor: &Tensor, row: usize) -> Result<usize, Error> {
 }
 
 pub fn train<T>(
-    program: &NeuralMachine<T>,
+    neural_machine: &mut NeuralMachine<T>,
     shuffle_examples: bool,
     inputs: &Vec<TensorWithGrad>,
     outputs: &Vec<TensorWithGrad>,
@@ -296,13 +301,13 @@ pub fn train<T>(
         indices.shuffle(&mut thread_rng());
     }
     for i in indices.into_iter() {
-        train_with_one_example(program, &inputs[i], &outputs[i])?;
+        train_with_one_example(neural_machine, &inputs[i], &outputs[i])?;
     }
     Ok(())
 }
 
 pub fn total_metrics<T>(
-    program: &NeuralMachine<T>,
+    neural_machine: &mut NeuralMachine<T>,
     inputs: &[TensorWithGrad],
     outputs: &[TensorWithGrad],
 ) -> Result<Metrics, Error> {
@@ -310,10 +315,10 @@ pub fn total_metrics<T>(
     let mut total_perplexity = 0.0;
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
-        let actual_output = program.infer(&inputs[i])?;
+        let actual_output = neural_machine.infer(&inputs[i])?;
 
         // Loss
-        let example_loss = program.loss(expected_output)?;
+        let example_loss = neural_machine.loss(expected_output)?;
         let example_loss: &Tensor = &example_loss.tensor().deref().borrow();
         let example_loss: f32 = example_loss.try_into()?;
         total_loss += example_loss;
@@ -332,14 +337,14 @@ pub fn total_metrics<T>(
 }
 
 fn train_with_one_example<T>(
-    program: &NeuralMachine<T>,
+    neural_machine: &mut NeuralMachine<T>,
     input: &TensorWithGrad,
     output: &TensorWithGrad,
 ) -> Result<(), Error> {
-    let _output = program.infer(input)?;
-    let _loss = program.loss(output)?;
-    program.compute_gradient()?;
-    program.optimize()?;
+    let _output = neural_machine.infer(input)?;
+    let _loss = neural_machine.loss(output)?;
+    neural_machine.compute_gradient()?;
+    neural_machine.optimize()?;
 
     Ok(())
 }

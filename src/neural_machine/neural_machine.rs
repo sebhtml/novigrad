@@ -5,7 +5,10 @@ use crate::{
     Instruction, OpCode, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
 
-use super::streams::{execute_streams, make_streams};
+use super::streams::{
+    execute_streams, make_simple_instructions, make_streams, reset_streams, verify_machine_inputs,
+    Stream,
+};
 
 pub struct NeuralMachine<T> {
     device: Device,
@@ -13,8 +16,16 @@ pub struct NeuralMachine<T> {
     example_output: TensorWithGrad,
     machine_output: TensorWithGrad,
     loss: TensorWithGrad,
-    instructions: Vec<Instruction>,
+    inference_instructions: Vec<Instruction>,
+    inference_streams: Vec<Stream>,
+    loss_instructions: Vec<Instruction>,
+    loss_streams: Vec<Stream>,
+    gradient_instructions: Vec<Instruction>,
+    gradient_streams: Vec<Stream>,
+    optimization_instructions: Vec<Instruction>,
+    optimization_streams: Vec<Stream>,
     phantom_data: PhantomData<T>,
+    max_concurrent_streams: usize,
 }
 
 impl<T> NeuralMachine<T> {
@@ -52,11 +63,11 @@ impl<T> NeuralMachine<T> {
         let loss =
             BinaryOperator::forward(loss_operator.deref(), &example_output, &machine_output)?;
         let tape = loss.get_tape();
-        let mut instructions = vec![];
+        let mut all_instructions = vec![];
 
         for tensor in tape.iter() {
             for instruction in tensor.forward_instructions().into_iter() {
-                instructions.push(instruction);
+                all_instructions.push(instruction);
             }
         }
 
@@ -66,10 +77,10 @@ impl<T> NeuralMachine<T> {
                     instruction.outputs().deref().clone().into_iter().collect();
                 let outputs: Vec<&Tensor> = outputs.iter().collect();
 
-                instructions.push(instruction);
+                all_instructions.push(instruction);
 
                 for output in outputs {
-                    instructions.push(gradient_instruction!(
+                    all_instructions.push(gradient_instruction!(
                         OpCode::ClipNorm,
                         &[output],
                         &[output],
@@ -80,7 +91,32 @@ impl<T> NeuralMachine<T> {
 
         let tensors = device.tensors_to_optimize().deref().borrow();
         let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
-        instructions.append(&mut optimizer_instructions);
+        all_instructions.append(&mut optimizer_instructions);
+
+        let inference_instructions = all_instructions
+            .clone()
+            .into_iter()
+            .filter(|i| i.category() == Category::Inference)
+            .collect();
+        let inference_streams = Self::assign_streams(&example_input, &inference_instructions);
+        let loss_instructions = all_instructions
+            .clone()
+            .into_iter()
+            .filter(|i| i.category() == Category::Loss)
+            .collect();
+        let loss_streams = Self::assign_streams(&example_input, &loss_instructions);
+        let gradient_instructions = all_instructions
+            .clone()
+            .into_iter()
+            .filter(|i| i.category() == Category::Gradient)
+            .collect();
+        let gradient_streams = Self::assign_streams(&example_input, &gradient_instructions);
+        let optimization_instructions = all_instructions
+            .clone()
+            .into_iter()
+            .filter(|i| i.category() == Category::Optimization)
+            .collect();
+        let optimization_streams = Self::assign_streams(&example_input, &optimization_instructions);
 
         let machine = NeuralMachine::<T> {
             device: device.clone(),
@@ -88,18 +124,33 @@ impl<T> NeuralMachine<T> {
             example_output,
             machine_output,
             loss,
-            instructions,
+            inference_instructions,
+            inference_streams,
+            loss_instructions,
+            loss_streams,
+            gradient_instructions,
+            gradient_streams,
+            optimization_instructions,
+            optimization_streams,
+            max_concurrent_streams: 1,
             phantom_data: Default::default(),
         };
 
         machine.print();
 
-        machine.assign_streams();
-
         Ok(machine)
     }
 
-    pub fn loss(&self, expected_output: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
+    pub fn instructions(&self, category: &Category) -> Vec<Instruction> {
+        match category {
+            Category::Inference => self.inference_instructions.clone(),
+            Category::Loss => self.loss_instructions.clone(),
+            Category::Gradient => self.gradient_instructions.clone(),
+            Category::Optimization => self.optimization_instructions.clone(),
+        }
+    }
+
+    pub fn loss(&mut self, expected_output: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         // Copy expected output
         {
             let example_output: &mut Tensor =
@@ -108,123 +159,43 @@ impl<T> NeuralMachine<T> {
             Tensor::copy(expected_output, example_output)?;
         }
 
-        self.forward(Category::Loss)?;
+        self.forward(&Category::Loss)?;
 
         Ok(self.loss.clone())
     }
 
-    pub fn compute_gradient(&self) -> Result<(), Error> {
-        self.forward(Category::Gradient)?;
+    pub fn compute_gradient(&mut self) -> Result<(), Error> {
+        self.forward(&Category::Gradient)
+    }
 
+    pub fn optimize(&mut self) -> Result<(), Error> {
+        self.forward(&Category::Optimization)
+    }
+
+    fn forward_with_streams(&mut self, category: &Category) -> Result<(), Error> {
+        let streams = match category {
+            Category::Inference => &mut self.inference_streams,
+            Category::Loss => &mut self.loss_streams,
+            Category::Gradient => &mut self.gradient_streams,
+            Category::Optimization => &mut self.optimization_streams,
+        };
+        let instructions = match category {
+            Category::Inference => &self.inference_instructions,
+            Category::Loss => &self.loss_instructions,
+            Category::Gradient => &self.gradient_instructions,
+            Category::Optimization => &self.optimization_instructions,
+        };
+        execute_streams(streams, &instructions, self.max_concurrent_streams)?;
+        reset_streams(streams);
         Ok(())
     }
 
-    pub fn optimize(&self) -> Result<(), Error> {
-        self.forward(Category::Optimization)?;
-
+    fn forward(&mut self, category: &Category) -> Result<(), Error> {
+        self.forward_with_streams(category)?;
         Ok(())
     }
 
-    fn forward(&self, category: Category) -> Result<(), Error> {
-        let debug = false;
-        if debug {
-            println!("Debugger for NeuralMachine forward pass");
-        }
-
-        // Forward tensors
-        #[allow(unused_variables)]
-        for (i, instruction) in self
-            .instructions
-            .iter()
-            .enumerate()
-            .filter(|(_, i)| i.category() == category)
-        {
-            if debug {
-                let opcode: String = instruction.opcode().clone().into();
-                println!("----------------------------------");
-                println!(
-                    "Debugging instruction {} {} with {} inputs and {} outputs",
-                    i,
-                    opcode,
-                    instruction.inputs().len(),
-                    instruction.outputs().len(),
-                );
-            }
-
-            #[cfg(debug_assertions)]
-            for input in instruction.inputs().deref() {
-                let opcode: String = instruction.opcode().clone().into();
-                assert_eq!(
-                    input.is_nan()?,
-                    false,
-                    "instruction {} {} read nan input {} {}",
-                    i,
-                    opcode,
-                    input.name(),
-                    input,
-                );
-                assert_eq!(
-                    input.is_infinite()?,
-                    false,
-                    "instruction {} {} read inf input {} {}",
-                    i,
-                    opcode,
-                    input.name(),
-                    input,
-                );
-            }
-
-            if debug {
-                println!("BEFORE FORWARD");
-                self.print_instruction(i, instruction);
-                self.print_instruction_inputs_outputs(instruction);
-            }
-
-            instruction.execute()?;
-
-            #[cfg(debug_assertions)]
-            for output in instruction.outputs().deref() {
-                let opcode: String = instruction.opcode().clone().into();
-                assert_eq!(
-                    output.is_nan()?,
-                    false,
-                    "instruction {} {} wrote nan output {} {}",
-                    i,
-                    opcode,
-                    output.name(),
-                    output,
-                );
-                assert_eq!(
-                    output.is_infinite()?,
-                    false,
-                    "instruction {} {} wrote inf output {} {}",
-                    i,
-                    opcode,
-                    output.name(),
-                    output,
-                );
-            }
-
-            if debug {
-                println!("AFTER FORWARD");
-                let maybe_corrupted_instruction = 81;
-                println!(
-                    "After forward for instruction {} : instruction {}, inputs: {}",
-                    i,
-                    maybe_corrupted_instruction,
-                    self.instructions[maybe_corrupted_instruction]
-                        .inputs()
-                        .len()
-                );
-                self.print_instruction(i, instruction);
-                self.print_instruction_inputs_outputs(instruction);
-            }
-        }
-
-        Ok(())
-    }
-
-    pub fn infer(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
+    pub fn infer(&mut self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         // Copy input
         {
             let example_input: &mut Tensor = &mut self.example_input.tensor().deref().borrow_mut();
@@ -232,7 +203,7 @@ impl<T> NeuralMachine<T> {
             Tensor::copy(input, example_input)?;
         }
 
-        self.forward(Category::Inference)?;
+        self.forward(&Category::Inference)?;
 
         Ok(self.machine_output.clone())
     }
@@ -281,37 +252,38 @@ impl<T> NeuralMachine<T> {
                 .join(", ")
         );
 
-        println!("Instructions: {}", self.instructions.len());
+        let total_instructions = self.inference_instructions.len()
+            + self.loss_instructions.len()
+            + self.gradient_instructions.len()
+            + self.optimization_instructions.len();
+        println!("Instructions: {}", total_instructions);
         println!(
             "Inference Instructions: {}",
-            self.instructions
-                .iter()
-                .filter(|i| i.category() == Category::Inference)
-                .count()
+            self.inference_instructions.len()
         );
-        println!(
-            "Loss Instructions: {}",
-            self.instructions
-                .iter()
-                .filter(|i| i.category() == Category::Loss)
-                .count()
-        );
+        println!("Loss Instructions: {}", self.loss_instructions.len());
         println!(
             "Gradient Instructions: {}",
-            self.instructions
-                .iter()
-                .filter(|i| i.category() == Category::Gradient)
-                .count()
+            self.gradient_instructions.len()
         );
         println!(
             "Optimization Instructions: {}",
-            self.instructions
-                .iter()
-                .filter(|i| i.category() == Category::Optimization)
-                .count()
+            self.optimization_instructions.len()
         );
         println!("------------------------------");
-        for (i, instruction) in self.instructions.iter().enumerate() {
+        for (i, instruction) in self.inference_instructions.iter().enumerate() {
+            self.print_instruction(i, instruction);
+        }
+        println!("------------------------------");
+        for (i, instruction) in self.loss_instructions.iter().enumerate() {
+            self.print_instruction(i, instruction);
+        }
+        println!("------------------------------");
+        for (i, instruction) in self.gradient_instructions.iter().enumerate() {
+            self.print_instruction(i, instruction);
+        }
+        println!("------------------------------");
+        for (i, instruction) in self.optimization_instructions.iter().enumerate() {
             self.print_instruction(i, instruction);
         }
         println!("------------------------------");
@@ -351,7 +323,7 @@ impl<T> NeuralMachine<T> {
         );
     }
 
-    fn print_instruction_inputs_outputs(&self, instruction: &Instruction) {
+    fn _print_instruction_inputs_outputs(&self, instruction: &Instruction) {
         println!("inputs: {}", instruction.inputs().deref().len());
 
         for (j, input) in instruction.inputs().deref().iter().enumerate() {
@@ -365,36 +337,14 @@ impl<T> NeuralMachine<T> {
         }
     }
 
-    fn assign_streams(&self) {
-        let machine_inputs = vec![self.example_input.tensor().deref().borrow().name()];
-        let instructions = self
-            .instructions
-            .iter()
-            .map(|instruction| {
-                let inputs = instruction
-                    .inputs()
-                    .iter()
-                    .map(|x| x.name())
-                    .collect::<Vec<_>>();
-                let outputs = instruction
-                    .outputs()
-                    .iter()
-                    .map(|x| x.name())
-                    .collect::<Vec<_>>();
-                (inputs, outputs)
-            })
-            .collect::<Vec<_>>();
-        let mut streams = make_streams(&machine_inputs, &instructions);
-
-        for stream in streams.iter() {
-            println!("stream: {}", stream);
-        }
-
-        let max_concurrent_streams = 32;
-        execute_streams(&mut streams, max_concurrent_streams);
-
-        for stream in streams.iter() {
-            println!("stream: {}", stream);
-        }
+    fn assign_streams(
+        example_input: &TensorWithGrad,
+        instructions: &Vec<Instruction>,
+    ) -> Vec<Stream> {
+        let machine_inputs = vec![example_input.tensor().deref().borrow().name()];
+        let simple_instructions = make_simple_instructions(instructions);
+        verify_machine_inputs(&machine_inputs, &simple_instructions);
+        let streams = make_streams(&simple_instructions);
+        streams
     }
 }

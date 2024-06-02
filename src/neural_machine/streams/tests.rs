@@ -1,4 +1,7 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    ops::Deref,
+};
 
 use crate::{
     mega_man_attention::MegaManAttentionModel, tensor::Error, Adam, BinaryOperator, Category,
@@ -29,10 +32,10 @@ fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
         &optimizer,
     )?;
     let instructions = vec![
-        neural_machine.instructions(&Category::Inference),
-        neural_machine.instructions(&Category::Loss),
-        neural_machine.instructions(&Category::Gradient),
-        neural_machine.instructions(&Category::Optimization),
+        neural_machine.instructions(&Category::Inference).clone(),
+        neural_machine.instructions(&Category::Loss).clone(),
+        neural_machine.instructions(&Category::Gradient).clone(),
+        neural_machine.instructions(&Category::Optimization).clone(),
     ]
     .concat();
     let simple_instructions = make_simple_instructions(&instructions);
@@ -46,7 +49,7 @@ fn each_instruction_is_executed_exactly_once() {
     let streams = make_streams(&instructions);
     let mut actual_instructions = streams
         .iter()
-        .map(|x| x.instructions.clone())
+        .map(|x| x.instructions.deref().clone())
         .collect::<Vec<_>>()
         .concat();
     actual_instructions.sort();

@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, ops::Deref};
+use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
 use crate::{
     gradient_instruction, tensor::Error, tensor::Tensor, BinaryOperator, Category, Device,
@@ -16,13 +16,13 @@ pub struct NeuralMachine<T> {
     example_output: TensorWithGrad,
     machine_output: TensorWithGrad,
     loss: TensorWithGrad,
-    inference_instructions: Vec<Instruction>,
+    inference_instructions: Arc<Vec<Instruction>>,
     inference_streams: Vec<Stream>,
-    loss_instructions: Vec<Instruction>,
+    loss_instructions: Arc<Vec<Instruction>>,
     loss_streams: Vec<Stream>,
-    gradient_instructions: Vec<Instruction>,
+    gradient_instructions: Arc<Vec<Instruction>>,
     gradient_streams: Vec<Stream>,
-    optimization_instructions: Vec<Instruction>,
+    optimization_instructions: Arc<Vec<Instruction>>,
     optimization_streams: Vec<Stream>,
     phantom_data: PhantomData<T>,
     max_concurrent_streams: usize,
@@ -118,21 +118,26 @@ impl<T> NeuralMachine<T> {
             .collect();
         let optimization_streams = Self::assign_streams(&example_input, &optimization_instructions);
 
+        #[cfg(feature = "cuda")]
+        let max_concurrent_streams = 1;
+        #[cfg(not(feature = "cuda"))]
+        let max_concurrent_streams = 32;
+
         let machine = NeuralMachine::<T> {
             device: device.clone(),
             example_input,
             example_output,
             machine_output,
             loss,
-            inference_instructions,
+            inference_instructions: inference_instructions.into(),
             inference_streams,
-            loss_instructions,
+            loss_instructions: loss_instructions.into(),
             loss_streams,
-            gradient_instructions,
+            gradient_instructions: gradient_instructions.into(),
             gradient_streams,
-            optimization_instructions,
+            optimization_instructions: optimization_instructions.into(),
             optimization_streams,
-            max_concurrent_streams: 1,
+            max_concurrent_streams,
             phantom_data: Default::default(),
         };
 
@@ -141,7 +146,7 @@ impl<T> NeuralMachine<T> {
         Ok(machine)
     }
 
-    pub fn instructions(&self, category: &Category) -> Vec<Instruction> {
+    pub fn instructions(&self, category: &Category) -> impl Deref<Target = Vec<Instruction>> {
         match category {
             Category::Inference => self.inference_instructions.clone(),
             Category::Loss => self.loss_instructions.clone(),

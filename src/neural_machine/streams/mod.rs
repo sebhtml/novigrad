@@ -1,6 +1,16 @@
-use std::{collections::BTreeSet, fmt::Display};
+use std::{
+    collections::BTreeSet,
+    fmt::Display,
+    sync::Arc,
+    thread::{self, JoinHandle},
+};
 
-use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
+use crate::{
+    error,
+    execution_unit::ExecutionUnit,
+    tensor::{Error, ErrorEnum},
+    Instruction,
+};
 #[cfg(test)]
 mod tests;
 
@@ -8,7 +18,7 @@ pub struct Stream {
     pub id: usize,
     pub state: StreamState,
     pub dependencies: Vec<usize>,
-    pub instructions: Vec<usize>,
+    pub instructions: Arc<Vec<usize>>,
 }
 
 /// Maker sure that no instruction writes to machine inputs.
@@ -70,7 +80,7 @@ pub fn make_streams(instruction_operands: &[(Vec<usize>, Vec<usize>)]) -> Vec<St
             id: i,
             state: Default::default(),
             dependencies: Default::default(),
-            instructions,
+            instructions: instructions.into(),
         };
         streams.push(stream);
     }
@@ -248,8 +258,25 @@ impl Default for StreamState {
     }
 }
 
-fn join_stream(stream: usize, streams: &mut Vec<Stream>, active_streams: &mut BTreeSet<usize>) {
+fn join_stream(
+    stream: usize,
+    streams: &mut Vec<Stream>,
+    threads: &mut Vec<Option<JoinHandle<Result<(), Error>>>>,
+    active_streams: &mut BTreeSet<usize>,
+) -> Result<(), Error> {
     debug_assert_eq!(StreamState::Spawned, streams[stream].state);
+    /*
+    let thread = threads[stream].take();
+    if let Some(thread) = thread {
+        match thread.join() {
+            Ok(result) => match result {
+                Ok(_) => (),
+                Err(err) => return Err(err),
+            },
+            Err(_) => return Err(error!(ErrorEnum::UnsupportedOperation)),
+        }
+    }
+     */
     let new_state = StreamState::Joined;
     #[cfg(feature = "verbose_streams")]
     println!(
@@ -260,12 +287,14 @@ fn join_stream(stream: usize, streams: &mut Vec<Stream>, active_streams: &mut BT
     active_streams.remove(&stream);
     #[cfg(feature = "verbose_streams")]
     println!("active_streams {}", active_streams.len());
+    Ok(())
 }
 
 fn spawn_stream(
     stream: usize,
     streams: &mut Vec<Stream>,
-    instructions: &[Instruction],
+    threads: &mut Vec<Option<JoinHandle<Result<(), Error>>>>,
+    instructions: &Arc<Vec<Instruction>>,
     active_streams: &mut BTreeSet<usize>,
 ) -> Result<(), Error> {
     debug_assert_eq!(StreamState::Unreached, streams[stream].state);
@@ -280,25 +309,38 @@ fn spawn_stream(
     #[cfg(feature = "verbose_streams")]
     println!("active_streams {}", active_streams.len());
 
-    let stream_instructions = &streams[stream].instructions;
-    ExecutionUnit::execute(stream_instructions, instructions)
+    let stream_instructions = streams[stream].instructions.clone();
+    let instructions = instructions.clone();
+
+    ExecutionUnit::execute(stream_instructions, instructions)?;
+    /*
+    let spawned_thread =
+        thread::spawn(|| ExecutionUnit::execute(stream_instructions, instructions));
+    threads[stream] = Some(spawned_thread);
+    */
+    Ok(())
 }
 
 pub fn execute_streams(
     streams: &mut Vec<Stream>,
-    instructions: &[Instruction],
+    instructions: &Arc<Vec<Instruction>>,
     max_concurrent_streams: usize,
 ) -> Result<(), Error> {
+    let mut threads: Vec<Option<JoinHandle<Result<(), Error>>>> = vec![];
+    for _ in 0..streams.len() {
+        threads.push(None);
+    }
     let range = 0..streams.len();
     let mut active_streams = BTreeSet::new();
     for i in range.clone().into_iter() {
-        if streams[i].state == StreamState::Unreached {
+        let is_unreached = streams[i].state == StreamState::Unreached;
+        if is_unreached {
             // Join each dependency
             let n = streams[i].dependencies.len();
             for j in 0..n {
                 let dependency = streams[i].dependencies[j];
                 if streams[dependency].state == StreamState::Spawned {
-                    join_stream(dependency, streams, &mut active_streams);
+                    join_stream(dependency, streams, &mut threads, &mut active_streams)?;
                 } else if streams[dependency].state == StreamState::Joined {
                     #[cfg(feature = "verbose_streams")]
                     println!(
@@ -315,17 +357,17 @@ pub fn execute_streams(
                 // Join the oldest active stream before spawning this one.
                 let oldest = active_streams.iter().min().map(|x| *x);
                 if let Some(oldest) = oldest {
-                    join_stream(oldest, streams, &mut active_streams);
+                    join_stream(oldest, streams, &mut threads, &mut active_streams)?;
                 }
             }
-            spawn_stream(i, streams, instructions, &mut active_streams)?;
+            spawn_stream(i, streams, &mut threads, instructions, &mut active_streams)?;
         } else {
             panic!("Can not spawn stream {} because it is not unreached", i);
         }
     }
     for i in range {
         if streams[i].state == StreamState::Spawned {
-            join_stream(i, streams, &mut active_streams);
+            join_stream(i, streams, &mut threads, &mut active_streams)?;
         }
     }
     debug_assert_eq!(0, active_streams.len());

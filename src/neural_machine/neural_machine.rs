@@ -216,15 +216,7 @@ impl<T> NeuralMachine<T> {
         println!("Tensors: {}", self.device.tensor_count());
         println!("Parameters: {}", self.device.parameter_count());
 
-        let input_size: Vec<usize> = self
-            .example_input
-            .tensor()
-            .deref()
-            .borrow()
-            .size()
-            .deref()
-            .borrow()
-            .clone();
+        let input_size: Vec<usize> = self.example_input.tensor().deref().borrow().size().clone();
         println!(
             "Input size: [{}]",
             input_size
@@ -234,15 +226,7 @@ impl<T> NeuralMachine<T> {
                 .join(", ")
         );
 
-        let output_size: Vec<usize> = self
-            .example_output
-            .tensor()
-            .deref()
-            .borrow()
-            .size()
-            .deref()
-            .borrow()
-            .clone();
+        let output_size: Vec<usize> = self.example_output.tensor().deref().borrow().size().clone();
         println!(
             "Output size: [{}]",
             output_size

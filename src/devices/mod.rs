@@ -285,10 +285,10 @@ impl DeviceInterface for Device {
     }
 
     fn dot(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
-        if left.size() != right.size() {
+        if *left.size() != *right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        if &result.size().deref().borrow() as &[usize] != &[1, 1] {
+        if &result.size() as &[usize] != &[1, 1] {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         self.device.dot(left, right, result)
@@ -327,7 +327,7 @@ impl DeviceInterface for Device {
     }
 
     fn sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
-        if &y.size().deref().borrow() as &[usize] != &[1, 1] {
+        if &y.size() as &[usize] != &[1, 1] {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         self.device.sum(x, y)

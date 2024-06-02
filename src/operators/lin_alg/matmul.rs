@@ -36,8 +36,8 @@ impl BinaryOperator for MatMul {
             println!("transa: {}, transb: {}", false, self.transb);
             println!(
                 "Between A {:?} and B {:?}",
-                input_0_tensor.size().deref().borrow(),
-                input_1_tensor.size().deref().borrow(),
+                *input_0_tensor.size(),
+                *input_1_tensor.size(),
             );
             debug_assert!(false);
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));

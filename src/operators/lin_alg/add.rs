@@ -33,7 +33,7 @@ impl BinaryOperator for Add {
     ) -> Result<TensorWithGrad, Error> {
         let input_0_t: &Tensor = &input_1.tensor().deref().borrow();
         let input_1_t: &Tensor = &input_1.tensor().deref().borrow();
-        debug_assert_eq!(input_0_t.size(), input_1_t.size());
+        debug_assert_eq!(*input_0_t.size(), *input_1_t.size());
         let rows = input_0_t.rows();
         let cols = input_0_t.cols();
         let len = rows * cols;

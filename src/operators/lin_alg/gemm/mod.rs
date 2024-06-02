@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{
     devices::Device, error, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceInterface,
 };
@@ -59,9 +57,9 @@ impl Gemm {
                 );
                 println!(
                     "A size: {:?}  B size:  {:?}  C size:  {:?}",
-                    a.size().deref().borrow(),
-                    b.size().deref().borrow(),
-                    c.size().deref().borrow(),
+                    *a.size(),
+                    *b.size(),
+                    *c.size(),
                 );
                 debug_assert!(false);
                 Err(error)

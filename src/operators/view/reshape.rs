@@ -35,7 +35,7 @@ impl Reshape {
 impl UnaryOperator for Reshape {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let input_tensor: &Tensor = &input.tensor().deref().borrow();
-        debug_assert_eq!(*input_tensor.size().deref().borrow_mut(), self.input_size);
+        debug_assert_eq!(*input_tensor.size(), self.input_size);
         let rows = self.output_size[0];
         let cols = self.output_size[1];
         let len = rows * cols;

@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, ops::Deref, sync::Arc};
+use std::{fs::File, io::Read, sync::Arc};
 pub mod slice;
 #[cfg(test)]
 mod tests;
@@ -238,9 +238,9 @@ impl DeviceInterface for CudaDev {
         let kernel = self.get_func("dot_kernel_module", "dot_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
 
-        let left: &_ = &left.device_slice().deref().borrow().buffer;
-        let right = &right.device_slice().deref().borrow().buffer;
-        let result: &_ = &result.device_slice().deref().borrow().buffer;
+        let left = &left.device_slice().read().unwrap().buffer;
+        let right = &right.device_slice().read().unwrap().buffer;
+        let result = &result.device_slice().read().unwrap().buffer;
 
         match (left, right, result) {
             (
@@ -269,8 +269,8 @@ impl DeviceInterface for CudaDev {
 
     fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         let n = x.len();
-        let alpha = &alpha.device_slice().deref().borrow().buffer;
-        let x = &x.device_slice().deref().borrow().buffer;
+        let alpha = &alpha.device_slice().read().unwrap().buffer;
+        let x = &x.device_slice().read().unwrap().buffer;
         let kernel = self.get_func("scalar_mul_kernel_module", "scalar_mul_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
@@ -287,8 +287,8 @@ impl DeviceInterface for CudaDev {
 
     fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         let n = x.len();
-        let alpha = &alpha.device_slice().deref().borrow().buffer;
-        let x = &x.device_slice().deref().borrow().buffer;
+        let alpha = &alpha.device_slice().read().unwrap().buffer;
+        let x = &x.device_slice().read().unwrap().buffer;
         let kernel = self.get_func("scalar_add_kernel_module", "scalar_add_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
@@ -316,8 +316,8 @@ impl DeviceInterface for CudaDev {
         let cols = input.cols();
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
-        let input = &input.device_slice().deref().borrow().buffer;
-        let output = &output.device_slice().deref().borrow().buffer;
+        let input = &input.device_slice().read().unwrap().buffer;
+        let output = &output.device_slice().read().unwrap().buffer;
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
                 let result =
@@ -335,8 +335,8 @@ impl DeviceInterface for CudaDev {
         let sum_kernel = self.get_func("sum_kernel_module", "sum_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
-        let input = &input.device_slice().deref().borrow().buffer;
-        let output = &output.device_slice().deref().borrow().buffer;
+        let input = &input.device_slice().read().unwrap().buffer;
+        let output = &output.device_slice().read().unwrap().buffer;
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
                 let result = unsafe { sum_kernel.launch(cfg, (input.slice(), n, output.slice())) };
@@ -354,9 +354,9 @@ impl DeviceInterface for CudaDev {
         let kernel = self.get_func("mul_kernel_module", "mul_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
 
-        let left: &_ = &left.device_slice().deref().borrow().buffer;
-        let right = &right.device_slice().deref().borrow().buffer;
-        let result: &_ = &result.device_slice().deref().borrow().buffer;
+        let left = &left.device_slice().read().unwrap().buffer;
+        let right = &right.device_slice().read().unwrap().buffer;
+        let result = &result.device_slice().read().unwrap().buffer;
 
         match (left, right, result) {
             (
@@ -379,8 +379,8 @@ impl DeviceInterface for CudaDev {
         let kernel = self.get_func("sigmoid_kernel_module", "sigmoid_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
-        let input = &input.device_slice().deref().borrow().buffer;
-        let output = &output.device_slice().deref().borrow().buffer;
+        let input = &input.device_slice().read().unwrap().buffer;
+        let output = &output.device_slice().read().unwrap().buffer;
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
                 let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
@@ -398,9 +398,9 @@ impl DeviceInterface for CudaDev {
         let kernel = self.get_func("div_kernel_module", "div_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
 
-        let left: &_ = &left.device_slice().deref().borrow().buffer;
-        let right = &right.device_slice().deref().borrow().buffer;
-        let result: &_ = &result.device_slice().deref().borrow().buffer;
+        let left = &left.device_slice().read().unwrap().buffer;
+        let right = &right.device_slice().read().unwrap().buffer;
+        let result = &result.device_slice().read().unwrap().buffer;
 
         match (left, right, result) {
             (
@@ -423,8 +423,8 @@ impl DeviceInterface for CudaDev {
         let kernel = self.get_func("sqrt_kernel_module", "sqrt_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
-        let input = &input.device_slice().deref().borrow().buffer;
-        let output = &output.device_slice().deref().borrow().buffer;
+        let input = &input.device_slice().read().unwrap().buffer;
+        let output = &output.device_slice().read().unwrap().buffer;
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
                 let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
@@ -447,10 +447,10 @@ impl DeviceInterface for CudaDev {
         let kernel = self.get_func("clip_kernel_module", "clip_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
-        let min = &min.device_slice().deref().borrow().buffer;
-        let max = &max.device_slice().deref().borrow().buffer;
-        let input = &input.device_slice().deref().borrow().buffer;
-        let output = &output.device_slice().deref().borrow().buffer;
+        let min = &min.device_slice().read().unwrap().buffer;
+        let max = &max.device_slice().read().unwrap().buffer;
+        let input = &input.device_slice().read().unwrap().buffer;
+        let output = &output.device_slice().read().unwrap().buffer;
         match (min, max, input, output) {
             (
                 DevSliceEnum::CudaDevSlice(min),
@@ -486,9 +486,9 @@ impl DeviceInterface for CudaDev {
         )?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
 
-        let expected = &expected.device_slice().deref().borrow().buffer;
-        let actual = &actual.device_slice().deref().borrow().buffer;
-        let loss = &loss.device_slice().deref().borrow().buffer;
+        let expected = &expected.device_slice().read().unwrap().buffer;
+        let actual = &actual.device_slice().read().unwrap().buffer;
+        let loss = &loss.device_slice().read().unwrap().buffer;
 
         match (expected, actual, loss) {
             (
@@ -517,7 +517,7 @@ impl DeviceInterface for CudaDev {
         actual: &Tensor,
         loss: &Tensor,
     ) -> Result<(), Error> {
-        if expected.size() != actual.size() {
+        if *expected.size() != *actual.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         let expected_values = expected.get_values()?;
@@ -556,8 +556,8 @@ impl DeviceInterface for CudaDev {
         let kernel = self.get_func("bernoulli_kernel_module", "bernoulli_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
-        let input = &input.device_slice().deref().borrow().buffer;
-        let output = &output.device_slice().deref().borrow().buffer;
+        let input = &input.device_slice().read().unwrap().buffer;
+        let output = &output.device_slice().read().unwrap().buffer;
         match (input, output) {
             (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
                 let rng_state = &self.rng_state;

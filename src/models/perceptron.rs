@@ -76,7 +76,7 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
         shuffle_examples: false,
         clipped_gradient_norm: 1.0,
         initial_metrics: Metrics {
-            total_loss: 1.0,
+            total_loss: 0.1,
             total_perplexity: f32::NAN,
         },
         final_metrics: Metrics {

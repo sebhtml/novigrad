@@ -50,7 +50,7 @@ impl OptimizerTrait for Adam {
         for optimizable_tensor in tensors {
             let theta: &Tensor = &optimizable_tensor.tensor().deref().borrow();
             let g: &Tensor = &optimizable_tensor.gradient().deref().borrow();
-            debug_assert_eq!(g.size(), theta.size(),);
+            debug_assert_eq!(*g.size(), *theta.size());
 
             let m = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
             let v = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;

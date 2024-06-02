@@ -26,7 +26,7 @@ impl OptimizerTrait for GradientDescent {
         for optimizable_tensor in tensors {
             let tensor: &Tensor = &optimizable_tensor.tensor().deref().borrow();
             let gradient: &Tensor = &optimizable_tensor.gradient().deref().borrow();
-            debug_assert_eq!(gradient.size(), tensor.size(),);
+            debug_assert_eq!(*gradient.size(), *tensor.size(),);
 
             let scaled_gradient =
                 device.tensor(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()])?;

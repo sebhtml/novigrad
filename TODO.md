@@ -1,10 +1,5 @@
-
+- return Deref<> instead of RwLockReadGuard
 - add device stream support in devices to execute attention heads in parallel
-
-- move conversion of model-into-instructions outside of neural machine
-- add code that discard useless instructions, for example when a operand write is never read betfore the next write
-
-- investigate performance issue with tons of call to pthread_rwlock_unlock
 
 == Transformer ==
 
@@ -16,6 +11,12 @@
 - implement LayerNorm
 - implement Transformer
 - increase examples in mega_man_attention from 10 to 100
+
+---------------
+
+- move conversion of model-into-instructions outside of neural machine
+- add code that discard useless instructions, for example when a operand write is never read betfore the next write
+- investigate performance issue with tons of call to pthread_rwlock_unlock
 
 - improve Bernoulli CUDA kernel by using other shift values for halt the indices
 

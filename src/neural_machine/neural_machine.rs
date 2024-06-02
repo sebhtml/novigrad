@@ -89,7 +89,7 @@ impl<T> NeuralMachine<T> {
             }
         }
 
-        let tensors = device.tensors_to_optimize().deref().borrow();
+        let tensors = device.tensors_to_optimize();
         let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
         all_instructions.append(&mut optimizer_instructions);
 

@@ -1,11 +1,9 @@
 mod cpu;
 use crate::{error, tensor::Error, tensor::ErrorEnum};
 use std::{
-    cell::RefCell,
     collections::{HashMap, LinkedList},
     mem::swap,
-    ops::Deref,
-    rc::Rc,
+    sync::{Arc, RwLock, RwLockReadGuard},
 };
 #[cfg(test)]
 mod tests;
@@ -128,7 +126,7 @@ pub trait DeviceInterface {
     fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 }
 
-impl Debug for dyn DeviceInterface {
+impl Debug for dyn DeviceInterface + Send + Sync {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }
@@ -136,11 +134,11 @@ impl Debug for dyn DeviceInterface {
 
 #[derive(Clone, Debug)]
 pub struct Device {
-    next_name: Rc<RefCell<usize>>,
-    used: Rc<RefCell<usize>>,
-    tensors_to_optimize: Rc<RefCell<Vec<TensorWithGrad>>>,
-    device: Rc<dyn DeviceInterface>,
-    available_buffers: Rc<RefCell<HashMap<usize, LinkedList<DevSlice>>>>,
+    next_name: Arc<RwLock<usize>>,
+    used: Arc<RwLock<usize>>,
+    tensors_to_optimize: Arc<RwLock<Vec<TensorWithGrad>>>,
+    device: Arc<dyn DeviceInterface + Send + Sync>,
+    available_buffers: Arc<RwLock<HashMap<usize, LinkedList<DevSlice>>>>,
 }
 
 impl Default for Device {
@@ -153,33 +151,32 @@ impl Default for Device {
 }
 
 impl Device {
-    pub fn new(device: Rc<dyn DeviceInterface>) -> Self {
+    pub fn new(device: Arc<dyn DeviceInterface + Send + Sync>) -> Self {
         Self {
             next_name: Default::default(),
             used: Default::default(),
-            tensors_to_optimize: Rc::new(RefCell::new(vec![])),
+            tensors_to_optimize: Arc::new(RwLock::new(vec![])),
             device,
             available_buffers: Default::default(),
         }
     }
 
     pub fn cpu() -> Self {
-        Self::new(Rc::new(CpuDevice::default()))
+        Self::new(Arc::new(CpuDevice::default()))
     }
 
     pub fn recycle(&self, len: usize, buffer: &mut DevSlice) {
         let mut recycled_buffer = DevSlice::new(self, 0);
         swap(&mut recycled_buffer, buffer);
 
-        let available_buffers: &mut HashMap<_, _> =
-            &mut self.available_buffers.deref().borrow_mut();
+        let available_buffers: &mut HashMap<_, _> = &mut self.available_buffers.write().unwrap();
         let entry = available_buffers.entry(len);
         entry.or_default().push_back(recycled_buffer)
     }
 
     pub fn get_memory_info(&self) -> Result<MemoryInfo, Error> {
         Ok(MemoryInfo {
-            used: *self.used.deref().borrow(),
+            used: *self.used.read().unwrap(),
             free: 0,
             total: 0,
         })
@@ -188,14 +185,14 @@ impl Device {
     #[cfg(feature = "cuda")]
     pub fn cuda() -> Result<Self, Error> {
         match CudaDev::try_default() {
-            Ok(cuda) => Ok(Self::new(Rc::new(cuda))),
+            Ok(cuda) => Ok(Self::new(Arc::new(cuda))),
             Err(error) => Err(error),
         }
     }
 
     pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Result<Tensor, Error> {
-        let name = *self.next_name.deref().borrow();
-        *self.next_name.deref().borrow_mut() += 1;
+        let name = *self.next_name.read().unwrap();
+        *self.next_name.write().unwrap() += 1;
         Tensor::new(name, rows, cols, values, self)
     }
 
@@ -218,34 +215,34 @@ impl Device {
         let tensor = TensorWithGrad::new(tensor, gradient, inputs);
         if optimize {
             self.tensors_to_optimize
-                .deref()
-                .borrow_mut()
+                .write()
+                .unwrap()
                 .push(tensor.clone())
         }
         Ok(tensor)
     }
 
     pub fn tensor_count(&self) -> usize {
-        *self.next_name.deref().borrow()
+        *self.next_name.read().unwrap()
     }
 
     pub fn parameter_count(&self) -> usize {
         let mut count = 0;
-        for t in self.tensors_to_optimize.deref().borrow().iter() {
+        for t in self.tensors_to_optimize.read().unwrap().iter() {
             count += t.tensor().len();
         }
         count
     }
 
-    pub fn tensors_to_optimize(&self) -> &Rc<RefCell<Vec<TensorWithGrad>>> {
-        &self.tensors_to_optimize
+    pub fn tensors_to_optimize(&self) -> RwLockReadGuard<Vec<TensorWithGrad>> {
+        self.tensors_to_optimize.read().unwrap()
     }
 
     pub fn buffer(&self, len: usize) -> DevSlice {
         let recycled = self
             .available_buffers
-            .deref()
-            .borrow_mut()
+            .write()
+            .unwrap()
             .get_mut(&len)
             .map(|x| x.pop_back())
             .flatten();
@@ -255,7 +252,7 @@ impl Device {
                 buffer
             }
             None => {
-                let used: &mut usize = &mut self.used.deref().borrow_mut();
+                let used: &mut usize = &mut self.used.write().unwrap();
                 *used += len;
                 DevSlice::new(self, len)
             }

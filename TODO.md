@@ -1,9 +1,7 @@
-- write test order_of_reads_and_writes
-
------------------------
-
-- add code that discard useless instructions, for example when a operand write is never read betfore the next write
 - add device stream support in devices to execute attention heads in parallel
+
+- move conversion of model-into-instructions outside of neural machine
+- add code that discard useless instructions, for example when a operand write is never read betfore the next write
 
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 

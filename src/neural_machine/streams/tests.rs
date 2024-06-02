@@ -147,7 +147,9 @@ fn spawn_and_join_streams(
 }
 
 // For each read, find the prior write.
-fn get_all_read_write_pairs(
+fn get_operand_transaction_pairs(
+    access: &Access,
+    prior_access: &Access,
     transactions: &[Transaction],
 ) -> BTreeMap<usize, Vec<(Transaction, Transaction)>> {
     // Group transactions per operand.
@@ -164,11 +166,11 @@ fn get_all_read_write_pairs(
     for (operand, transactions) in operand_transactions.iter() {
         for i in 0..transactions.len() {
             let transaction_i = &transactions[i];
-            if transaction_i.access == Access::Read {
+            if &transaction_i.access == access {
                 // Find the most recent write to this operand that happened in the past.
                 for j in (0..i).rev() {
                     let transaction_j = &transactions[j];
-                    if transaction_j.access == Access::Write {
+                    if &transaction_j.access == prior_access {
                         let pair = (transaction_i.to_owned(), transaction_j.to_owned());
                         operand_pairs.entry(*operand).or_default().push(pair);
                         break;
@@ -188,18 +190,62 @@ fn the_instructions_length_and_streams_length_are_correct() {
     let instructions = get_test_instructions().unwrap();
     assert_eq!(2810, instructions.len());
     let streams = make_streams(&instructions);
-    assert_eq!(1854, streams.len());
+    assert_eq!(1749, streams.len());
 }
 
 #[test]
 fn reads_and_writes_of_same_operand_are_not_reordered() {
+    let access = Access::Read;
+    let prior_access = Access::Write;
     let instructions = get_test_instructions().unwrap();
     let expected_transactions = get_all_instruction_transactions(&instructions);
-    let expected_read_write_pairs = get_all_read_write_pairs(&expected_transactions);
+    let expected_read_write_pairs =
+        get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let actual_streams = make_streams(&instructions);
     let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
-    let actual_read_write_pairs = get_all_read_write_pairs(&actual_transactions);
+    let actual_read_write_pairs =
+        get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
+
+    for (operand, expected_pairs) in expected_read_write_pairs.iter() {
+        let actual_pairs = actual_read_write_pairs.get(operand).unwrap();
+        assert_eq!(expected_pairs, actual_pairs);
+    }
+}
+
+#[test]
+fn writes_and_writes_of_same_operand_are_not_reordered() {
+    let access = Access::Write;
+    let prior_access = Access::Write;
+    let instructions = get_test_instructions().unwrap();
+    let expected_transactions = get_all_instruction_transactions(&instructions);
+    let expected_read_write_pairs =
+        get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
+
+    let actual_streams = make_streams(&instructions);
+    let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
+    let actual_read_write_pairs =
+        get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
+
+    for (operand, expected_pairs) in expected_read_write_pairs.iter() {
+        let actual_pairs = actual_read_write_pairs.get(operand).unwrap();
+        assert_eq!(expected_pairs, actual_pairs);
+    }
+}
+
+#[test]
+fn writes_and_reads_of_same_operand_are_not_reordered() {
+    let access = Access::Write;
+    let prior_access = Access::Read;
+    let instructions = get_test_instructions().unwrap();
+    let expected_transactions = get_all_instruction_transactions(&instructions);
+    let expected_read_write_pairs =
+        get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
+
+    let actual_streams = make_streams(&instructions);
+    let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
+    let actual_read_write_pairs =
+        get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
 
     for (operand, expected_pairs) in expected_read_write_pairs.iter() {
         let actual_pairs = actual_read_write_pairs.get(operand).unwrap();

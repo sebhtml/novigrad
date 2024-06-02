@@ -1,4 +1,3 @@
-- return Deref<> instead of RwLockReadGuard
 - add device stream support in devices to execute attention heads in parallel
 
 == Transformer ==

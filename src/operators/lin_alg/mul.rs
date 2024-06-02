@@ -65,7 +65,7 @@ impl BinaryOperator for Mul {
             let inputs = [input_0, input_1, &output];
             let outputs = [input_0, input_1];
 
-            let inputs = &[
+            let inputs: &[&Tensor] = &[
                 &inputs[0].tensor(),
                 &inputs[1].tensor(),
                 &inputs[2].gradient(),

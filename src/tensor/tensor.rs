@@ -7,7 +7,7 @@ use crate::{
     tensor::Error,
 };
 
-use std::sync::{Arc, RwLock, RwLockReadGuard};
+use std::sync::{Arc, RwLock};
 use std::{fmt::Display, ops::Deref, vec};
 
 #[derive(Clone, Debug)]
@@ -83,7 +83,7 @@ impl Tensor {
             .fold(1, |acc, item| acc * item)
     }
 
-    pub fn size(&self) -> RwLockReadGuard<Vec<usize>> {
+    pub fn size(&self) -> impl Deref<Target = Vec<usize>> + '_ {
         self.size.read().unwrap()
     }
 
@@ -100,7 +100,7 @@ impl Tensor {
         }
     }
 
-    pub fn device_slice(&self) -> RwLockReadGuard<DevSlice> {
+    pub fn device_slice(&self) -> impl Deref<Target = DevSlice> + '_ {
         self.device_slice.read().unwrap()
     }
 

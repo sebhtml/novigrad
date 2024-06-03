@@ -7,7 +7,6 @@ use std::{
 
 use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
 
-use super::instruction;
 #[cfg(test)]
 mod tests;
 

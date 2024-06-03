@@ -1,9 +1,9 @@
 use std::{collections::BTreeSet, ops::Deref};
 
 use crate::{
-    mega_man_attention::MegaManAttentionModel, model_into_instructions, tensor::Error, Adam,
-    BinaryOperator, Category, Device, OptimizerTrait, SoftmaxCrossEntropyLoss, Tokenizer,
-    TokenizerTrait, UnaryModel,
+    mega_man_attention::MegaManAttentionModel, neural_program::NeuralProgram, tensor::Error, Adam,
+    BinaryOperator, Device, OptimizerTrait, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
+    UnaryModel,
 };
 
 use super::{
@@ -20,11 +20,10 @@ fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
     let model: Box<dyn UnaryModel> = Box::new(model);
     let loss_operator = SoftmaxCrossEntropyLoss::new(&device);
     let loss_operator: Box<dyn BinaryOperator> = Box::new(loss_operator);
-    let clipped_gradient_norm = 1.0;
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
-    let program = model_into_instructions(&device, &model, &loss_operator, &optimizer)?;
+    let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
     let instructions = program.instructions;
     let simple_instructions = make_simple_instructions(&instructions);
     Ok(simple_instructions)

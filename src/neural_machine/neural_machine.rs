@@ -1,8 +1,9 @@
 use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
 use crate::{
-    gradient_instruction, tensor::Error, tensor::Tensor, BinaryOperator, Category, Device,
-    Instruction, OpCode, OptimizerTrait, TensorWithGrad, UnaryModel,
+    neural_program::NeuralProgram,
+    tensor::{Error, Tensor},
+    Category, Device, Instruction, TensorWithGrad,
 };
 
 use super::streams::{
@@ -28,95 +29,8 @@ pub struct NeuralMachine<T> {
     max_concurrent_streams: usize,
 }
 
-pub struct NeuralProgram {
-    pub example_input: TensorWithGrad,
-    pub example_output: TensorWithGrad,
-    pub machine_output: TensorWithGrad,
-    pub loss: TensorWithGrad,
-    pub instructions: Vec<Instruction>,
-}
-
-pub fn model_into_instructions(
-    device: &Device,
-    model: &Box<dyn UnaryModel>,
-    loss_operator: &Box<dyn BinaryOperator>,
-    optimizer: &Box<dyn OptimizerTrait>,
-) -> Result<NeuralProgram, Error> {
-    // input
-    let input_shape = model.input_size();
-    let input_len = input_shape[0] * input_shape[1];
-    let example_input = device.tensor_with_grad(
-        input_shape[0],
-        input_shape[1],
-        vec![0.7; input_len],
-        &[],
-        false,
-        false,
-    )?;
-    // output
-    let output_shape = model.output_size();
-    let output_len = output_shape[0] * output_shape[1];
-    let example_output = device.tensor_with_grad(
-        output_shape[0],
-        output_shape[1],
-        vec![0.7; output_len],
-        &[],
-        false,
-        false,
-    )?;
-
-    let machine_output = model.forward(&example_input)?;
-    let loss = BinaryOperator::forward(loss_operator.deref(), &example_output, &machine_output)?;
-    let tape = loss.get_tape();
-    let mut instructions = vec![];
-
-    for tensor in tape.iter() {
-        for instruction in tensor.forward_instructions().into_iter() {
-            instructions.push(instruction);
-        }
-    }
-
-    for tensor in tape.iter().rev() {
-        for instruction in tensor.gradient_instructions().into_iter() {
-            let outputs: Vec<Tensor> = instruction.outputs().deref().clone().into_iter().collect();
-            let outputs: Vec<&Tensor> = outputs.iter().collect();
-
-            instructions.push(instruction);
-
-            for output in outputs {
-                instructions.push(gradient_instruction!(
-                    OpCode::ClipNorm,
-                    &[output],
-                    &[output],
-                ));
-            }
-        }
-    }
-
-    let tensors = device.tensors_to_optimize();
-    let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
-    instructions.append(&mut optimizer_instructions);
-
-    let program = NeuralProgram {
-        example_input,
-        example_output,
-        machine_output,
-        loss,
-        instructions,
-    };
-    Ok(program)
-}
-
 impl<T> NeuralMachine<T> {
-    pub fn try_new(
-        device: &Device,
-        model: &Box<dyn UnaryModel>,
-        loss_operator: &Box<dyn BinaryOperator>,
-        _clipped_gradient_norm: f32, // Usually 1.0, so it is not used.
-        optimizer: &Box<dyn OptimizerTrait>,
-    ) -> Result<Self, Error> {
-        let program = model_into_instructions(device, model, loss_operator, optimizer)?;
-
+    pub fn try_new(device: &Device, program: NeuralProgram) -> Result<Self, Error> {
         let all_instructions = program.instructions;
         let inference_instructions = all_instructions
             .clone()

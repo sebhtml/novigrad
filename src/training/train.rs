@@ -3,8 +3,10 @@ use rand::thread_rng;
 use std::time::SystemTime;
 
 use crate::{
-    perplexity::get_perplexity, tensor::Error, tensor::Tensor, Device, ModelDetails, NeuralMachine,
-    TensorWithGrad, Tokenizer, TokenizerTrait,
+    neural_program::NeuralProgram,
+    perplexity::get_perplexity,
+    tensor::{Error, Tensor},
+    Device, ModelDetails, NeuralMachine, TensorWithGrad, Tokenizer, TokenizerTrait,
 };
 
 trait IsPrintable {
@@ -151,18 +153,12 @@ pub fn train_model<T>(details: ModelDetails) -> Result<NeuralMachineTestOutput, 
     let examples = &details.examples;
     let model = details.model;
     let loss_operator = details.loss_operator;
-    let clipped_gradient_norm = details.clipped_gradient_norm;
     let mut tokenizer = details.tokenizer;
     let device = details.device;
     let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
-    let mut neural_machine = NeuralMachine::<T>::try_new(
-        &device,
-        &model,
-        &loss_operator,
-        clipped_gradient_norm,
-        &optimizer,
-    )?;
+    let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
+    let mut neural_machine = NeuralMachine::<T>::try_new(&device, program)?;
 
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();

@@ -1,11 +1,13 @@
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, LinkedList},
     fmt::Display,
     sync::Arc,
     thread::JoinHandle,
 };
 
 use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
+
+use super::instruction;
 #[cfg(test)]
 mod tests;
 
@@ -44,21 +46,11 @@ pub fn make_streams(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Stream> {
             i_dependencies.read_before_write,
             i_dependencies.write_before_write,
         );
-
-        let write_before_read = i_dependencies.write_before_read.len();
-        let minimum_write_before_read = 4;
-        if write_before_read >= minimum_write_before_read {
-            println!(
-                "instruction {} is perhaps a GOLD NUGGET of parallelism with write_before_read = {}",
-                i,
-                write_before_read
-            );
-        }
     }
 
     let instruction_streams = assign_instructions_to_streams(&instruction_dependencies);
 
-    #[cfg(feature = "verbose_streams")]
+    //#[cfg(feature = "verbose_streams")]
     {
         println!("Instruction streams");
         for (i, stream) in instruction_streams.iter().enumerate() {
@@ -68,6 +60,7 @@ pub fn make_streams(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Stream> {
 
     let max_stream = instruction_streams.iter().max();
     let stream_count = match max_stream {
+        Some(&usize::MAX) => panic!(),
         Some(max_stream) => max_stream + 1,
         None => 0,
     };
@@ -92,15 +85,7 @@ pub fn make_streams(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Stream> {
     for i in 0..streams.len() {
         let stream_instructions = &streams[i].instructions;
         let first_instruction = stream_instructions[0];
-        let dependency_instructions = &instruction_dependencies[first_instruction];
-        let mut dependency_instructions = vec![
-            dependency_instructions.read_before_write.clone(),
-            dependency_instructions.write_before_read.clone(),
-            dependency_instructions.write_before_write.clone(),
-        ]
-        .concat();
-        dependency_instructions.sort();
-        dependency_instructions.dedup();
+        let dependency_instructions = &instruction_dependencies[first_instruction].all();
         let dependency_streams = dependency_instructions
             .iter()
             .map(|i| instruction_streams[*i])
@@ -184,31 +169,69 @@ fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Ve
     dependencies
 }
 
+fn assign_stream_to_dependencies(
+    instruction: usize,
+    stream: usize,
+    instruction_dependencies: &[Dependencies],
+    instruction_streams: &mut Vec<usize>,
+    instructions_with_no_stream: &mut BTreeSet<usize>,
+) {
+    if !instructions_with_no_stream.contains(&instruction) {
+        return;
+    }
+    let mut stack = LinkedList::new();
+    stack.push_back(instruction);
+    while let Some(instruction) = stack.pop_back() {
+        instruction_streams[instruction] = stream;
+        instructions_with_no_stream.remove(&instruction);
+        for dependency in instruction_dependencies[instruction].all().iter() {
+            if instructions_with_no_stream.contains(dependency) {
+                stack.push_back(*dependency);
+            }
+        }
+    }
+}
+
 fn assign_instructions_to_streams(instruction_dependencies: &[Dependencies]) -> Vec<usize> {
     let no_stream = usize::MAX;
     let n = instruction_dependencies.len();
+    let mut instructions_with_no_stream = (0..n).collect::<BTreeSet<_>>();
     let mut instruction_streams: Vec<usize> = vec![no_stream; n];
     let mut next_stream = 0;
-    for (i_inst, i_deps) in instruction_dependencies.iter().enumerate() {
-        let mut i_deps = vec![
-            i_deps.write_before_read.clone(),
-            i_deps.read_before_write.clone(),
-            i_deps.write_before_write.clone(),
-        ]
-        .concat();
-        i_deps.sort();
-        i_deps.dedup();
-        if i_deps.len() == 1 {
-            let dependency_instruction = i_deps[0];
-            let stream = instruction_streams[dependency_instruction];
-            if stream == no_stream {
-                panic!("Prior instruction has no assigned stream");
+
+    // Assign streams when an instruction has more than N inputs.
+    // Gemm has 3 inputs.
+    // Concat has N inputs.
+    // So we compute the inputs of Concat in parallel basically.
+    for (i, deps) in instruction_dependencies.iter().enumerate() {
+        let write_before_read = deps.write_before_read.len();
+        let minimum_write_before_read = 4;
+        if write_before_read >= minimum_write_before_read {
+            for j in deps.write_before_read.iter() {
+                if instructions_with_no_stream.contains(j) {
+                    let stream = next_stream;
+                    assign_stream_to_dependencies(
+                        *j,
+                        stream,
+                        instruction_dependencies,
+                        &mut instruction_streams,
+                        &mut instructions_with_no_stream,
+                    );
+                    next_stream += 1;
+                }
             }
-            instruction_streams[i_inst] = stream;
-        } else {
-            // Instructions with 2 or more dependencies can wait for their dependencies,
-            // and then run.
-            instruction_streams[i_inst] = next_stream;
+            if instructions_with_no_stream.contains(&i) {
+                instruction_streams[i] = next_stream;
+                instructions_with_no_stream.remove(&i);
+                next_stream += 1;
+            }
+        }
+    }
+
+    // TODO remove this loop.
+    for assigned_stream in instruction_streams.iter_mut() {
+        if *assigned_stream == no_stream {
+            *assigned_stream = next_stream;
             next_stream += 1;
         }
     }
@@ -348,37 +371,50 @@ pub fn execute_streams(
     }
     let range = 0..streams.len();
     let mut active_streams = BTreeSet::new();
-    for i in range.clone().into_iter() {
-        let is_unreached = streams[i].state == StreamState::Unreached;
-        if is_unreached {
-            // Join each dependency
-            let n = streams[i].dependencies.len();
-            for j in 0..n {
-                let dependency = streams[i].dependencies[j];
-                if streams[dependency].state == StreamState::Spawned {
-                    join_stream(dependency, streams, &mut threads, &mut active_streams)?;
-                } else if streams[dependency].state == StreamState::Joined {
-                    #[cfg(feature = "verbose_streams")]
-                    println!(
-                        "note stream {} is already {}",
-                        dependency,
-                        StreamState::Joined
-                    );
-                } else {
-                    panic!("Can not join unspawned stream {}", dependency);
-                }
-            }
 
-            if active_streams.len() == max_concurrent_streams {
-                // Join the oldest active stream before spawning this one.
-                let oldest = active_streams.iter().min().map(|x| *x);
-                if let Some(oldest) = oldest {
-                    join_stream(oldest, streams, &mut threads, &mut active_streams)?;
+    let mut unreached_streams = (0..streams.len()).collect::<BTreeSet<_>>();
+    while unreached_streams.len() != 0 {
+        let mut spawned_streams = vec![];
+        for i in unreached_streams.iter() {
+            let is_unreached = streams[*i].state == StreamState::Unreached;
+            if is_unreached {
+                // Join each dependency
+                let n = streams[*i].dependencies.len();
+                let mut all_dependencies_are_joined = true;
+                for j in 0..n {
+                    let dependency = streams[*i].dependencies[j];
+                    if streams[dependency].state == StreamState::Spawned {
+                        join_stream(dependency, streams, &mut threads, &mut active_streams)?;
+                    } else if streams[dependency].state == StreamState::Joined {
+                        #[cfg(feature = "verbose_streams")]
+                        println!(
+                            "note stream {} is already {}",
+                            dependency,
+                            StreamState::Joined
+                        );
+                    } else {
+                        all_dependencies_are_joined = false;
+                    }
                 }
+
+                if !all_dependencies_are_joined {
+                    continue;
+                }
+                if active_streams.len() == max_concurrent_streams {
+                    // Join the oldest active stream before spawning this one.
+                    let oldest = active_streams.iter().min().map(|x| *x);
+                    if let Some(oldest) = oldest {
+                        join_stream(oldest, streams, &mut threads, &mut active_streams)?;
+                    }
+                }
+                spawn_stream(*i, streams, &mut threads, instructions, &mut active_streams)?;
+                spawned_streams.push(*i);
+            } else {
+                panic!("Can not spawn stream {} because it is not unreached", i);
             }
-            spawn_stream(i, streams, &mut threads, instructions, &mut active_streams)?;
-        } else {
-            panic!("Can not spawn stream {} because it is not unreached", i);
+        }
+        for spawned in spawned_streams.iter() {
+            unreached_streams.remove(spawned);
         }
     }
     for i in range {
@@ -422,6 +458,20 @@ pub struct Dependencies {
     pub write_before_read: Vec<usize>,
     pub write_before_write: Vec<usize>,
     pub read_before_write: Vec<usize>,
+}
+
+impl Dependencies {
+    pub fn all(&self) -> Vec<usize> {
+        let mut deps = vec![
+            self.write_before_read.clone(),
+            self.write_before_write.clone(),
+            self.read_before_write.clone(),
+        ]
+        .concat();
+        deps.sort();
+        deps.dedup();
+        deps
+    }
 }
 
 impl Default for Dependencies {

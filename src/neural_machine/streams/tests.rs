@@ -1,12 +1,9 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    ops::Deref,
-};
+use std::{collections::BTreeSet, ops::Deref};
 
 use crate::{
-    mega_man_attention::MegaManAttentionModel, tensor::Error, Adam, BinaryOperator, Category,
-    Device, NeuralMachine, OptimizerTrait, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
-    UnaryModel,
+    mega_man_attention::MegaManAttentionModel, model_into_instructions, tensor::Error, Adam,
+    BinaryOperator, Category, Device, OptimizerTrait, SoftmaxCrossEntropyLoss, Tokenizer,
+    TokenizerTrait, UnaryModel,
 };
 
 use super::{
@@ -27,20 +24,8 @@ fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
-    let neural_machine = NeuralMachine::<f32>::try_new(
-        &device,
-        &model,
-        &loss_operator,
-        clipped_gradient_norm,
-        &optimizer,
-    )?;
-    let instructions = vec![
-        neural_machine.instructions(&Category::Inference).clone(),
-        neural_machine.instructions(&Category::Loss).clone(),
-        neural_machine.instructions(&Category::Gradient).clone(),
-        neural_machine.instructions(&Category::Optimization).clone(),
-    ]
-    .concat();
+    let program = model_into_instructions(&device, &model, &loss_operator, &optimizer)?;
+    let instructions = program.instructions;
     let simple_instructions = make_simple_instructions(&instructions);
     Ok(simple_instructions)
 }

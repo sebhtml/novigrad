@@ -1,4 +1,3 @@
-- move conversion of model-into-instructions outside of neural machine
 - add device stream support in devices to execute attention heads in parallel
 
 == Transformer ==

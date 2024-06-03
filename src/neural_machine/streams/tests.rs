@@ -9,7 +9,10 @@ use crate::{
     UnaryModel,
 };
 
-use super::{make_simple_instructions, make_streams, Stream};
+use super::{
+    get_all_instruction_transactions, get_instruction_transactions, make_simple_instructions,
+    make_streams, Access, Stream, Transaction,
+};
 
 fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
     let device = Device::default();
@@ -54,53 +57,6 @@ fn each_instruction_is_executed_exactly_once() {
         .concat();
     actual_instructions.sort();
     assert_eq!(expected_instructions, actual_instructions);
-}
-
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
-enum Access {
-    Read,
-    Write,
-}
-
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
-struct Transaction {
-    pub instruction: usize,
-    pub operand: usize,
-    pub access: Access,
-}
-
-fn get_instruction_transactions(
-    instruction: usize,
-    inputs: &[usize],
-    outputs: &[usize],
-) -> Vec<Transaction> {
-    let mut transactions = vec![];
-    for operand in inputs {
-        let transaction = Transaction {
-            instruction,
-            operand: *operand,
-            access: Access::Read,
-        };
-        transactions.push(transaction);
-    }
-    for operand in outputs {
-        let transaction = Transaction {
-            instruction,
-            operand: *operand,
-            access: Access::Write,
-        };
-        transactions.push(transaction);
-    }
-    transactions
-}
-
-fn get_all_instruction_transactions(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Transaction> {
-    let mut transactions = vec![];
-    for (instruction, (inputs, outputs)) in instructions.iter().enumerate() {
-        let mut operand_transactions = get_instruction_transactions(instruction, inputs, outputs);
-        transactions.extend_from_slice(&mut operand_transactions);
-    }
-    transactions
 }
 
 /// Simulate an execution of streams and emit operand transactions.

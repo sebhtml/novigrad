@@ -400,3 +400,50 @@ pub fn make_simple_instructions(instructions: &Vec<Instruction>) -> Vec<(Vec<usi
         .collect::<Vec<_>>();
     instructions
 }
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
+pub enum Access {
+    Read,
+    Write,
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
+pub struct Transaction {
+    pub instruction: usize,
+    pub operand: usize,
+    pub access: Access,
+}
+
+pub fn get_instruction_transactions(
+    instruction: usize,
+    inputs: &[usize],
+    outputs: &[usize],
+) -> Vec<Transaction> {
+    let mut transactions = vec![];
+    for operand in inputs {
+        let transaction = Transaction {
+            instruction,
+            operand: *operand,
+            access: Access::Read,
+        };
+        transactions.push(transaction);
+    }
+    for operand in outputs {
+        let transaction = Transaction {
+            instruction,
+            operand: *operand,
+            access: Access::Write,
+        };
+        transactions.push(transaction);
+    }
+    transactions
+}
+
+fn get_all_instruction_transactions(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Transaction> {
+    let mut transactions = vec![];
+    for (instruction, (inputs, outputs)) in instructions.iter().enumerate() {
+        let mut operand_transactions = get_instruction_transactions(instruction, inputs, outputs);
+        transactions.extend_from_slice(&mut operand_transactions);
+    }
+    transactions
+}

@@ -10,8 +10,8 @@ use crate::{
 };
 
 use super::{
-    get_all_instruction_transactions, get_instruction_transactions, make_simple_instructions,
-    make_streams, Access, Stream, Transaction,
+    get_all_instruction_transactions, get_instruction_transactions, get_operand_transaction_pairs,
+    make_simple_instructions, make_streams, Access, Stream, Transaction,
 };
 
 fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
@@ -108,64 +108,13 @@ fn spawn_and_join_streams(
     actual_transactions
 }
 
-// Example: for each read, find the prior write.
-// Basically there are read accesses and write accesses.
-// Here are the 4 pillars of the memory model:
-// - a read has a prior write and it must remain the same. Changing the prior write makes the result incorrect.
-// - a write has a prior write and it must remain the same. Changing the prior write makes the result incorrect.
-// - a write has a prior read and it must remain the same. Changing the prior read makes the result incorrect.
-// - a read has a prior read and it can change. Changing the prior read is allowed.
-//        Example, if instructions 1, 2, 3 read operand 44, all those orderings are valid ones:
-//           - 1, 2, 3
-//           - 3, 2, 1
-//           - 2, 1, 3
-//           - ...
-//       If we have 12 attention heads, that means that we can have 12 concurrent streams.
-fn get_operand_transaction_pairs(
-    access: &Access,
-    prior_access: &Access,
-    transactions: &[Transaction],
-) -> BTreeMap<usize, Vec<(Transaction, Transaction)>> {
-    // Group transactions per operand.
-    let mut operand_transactions = BTreeMap::<usize, Vec<Transaction>>::new();
-    for transaction in transactions.iter() {
-        let operand = transaction.operand;
-        operand_transactions
-            .entry(operand)
-            .or_default()
-            .push(transaction.to_owned());
-    }
-    // For each read of an operand, find the most recent write before it­.
-    let mut operand_pairs = BTreeMap::<usize, Vec<(Transaction, Transaction)>>::new();
-    for (operand, transactions) in operand_transactions.iter() {
-        for i in 0..transactions.len() {
-            let transaction_i = &transactions[i];
-            if &transaction_i.access == access {
-                // Find the most recent write to this operand that happened in the past.
-                for j in (0..i).rev() {
-                    let transaction_j = &transactions[j];
-                    if &transaction_j.access == prior_access {
-                        let pair = (transaction_i.to_owned(), transaction_j.to_owned());
-                        operand_pairs.entry(*operand).or_default().push(pair);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    for (_, pairs) in operand_pairs.iter_mut() {
-        // The tests use == so sorting makes the tests pass.
-        pairs.sort();
-    }
-    operand_pairs
-}
-
 #[test]
 fn the_instructions_length_and_streams_length_are_correct() {
     let instructions = get_test_instructions().unwrap();
     assert_eq!(2810, instructions.len());
     let streams = make_streams(&instructions);
     assert_eq!(1749, streams.len());
+    //panic!();
 }
 
 #[test]

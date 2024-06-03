@@ -98,7 +98,7 @@ fn the_instructions_length_and_streams_length_are_correct() {
     assert_eq!(2810, instructions.len());
     let streams = make_streams(&instructions);
     assert_eq!(2426, streams.len());
-    //panic!();
+    panic!();
 }
 
 #[test]

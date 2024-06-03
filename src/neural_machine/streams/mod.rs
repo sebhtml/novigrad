@@ -33,6 +33,12 @@ pub fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usiz
 
 /// Group <N> instructions in <M> streams using a dependency analysis.
 pub fn make_streams(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Stream> {
+    for (i, (inputs, outputs)) in instructions.iter().enumerate() {
+        println!(
+            "INSTRUCTION {}  inputs {:?}  outputs {:?}",
+            i, inputs, outputs
+        );
+    }
     // A list of dependencies for each instruction.
     let instruction_dependencies = get_instruction_dependencies(instructions);
 
@@ -51,7 +57,6 @@ pub fn make_streams(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Stream> {
 
     //#[cfg(feature = "verbose_streams")]
     {
-        println!("Instruction streams");
         for (i, stream) in instruction_streams.iter().enumerate() {
             println!("Instruction {}  stream {}", i, stream);
         }
@@ -85,10 +90,12 @@ pub fn make_streams(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Stream> {
         let stream_instructions = &streams[i].instructions;
         let first_instruction = stream_instructions[0];
         let dependency_instructions = &instruction_dependencies[first_instruction].all();
-        let dependency_streams = dependency_instructions
+        let mut dependency_streams = dependency_instructions
             .iter()
             .map(|i| instruction_streams[*i])
             .collect::<Vec<_>>();
+        dependency_streams.sort();
+        dependency_streams.dedup();
         streams[i].dependencies = dependency_streams;
     }
 
@@ -219,18 +226,14 @@ fn assign_instructions_to_streams(instruction_dependencies: &[Dependencies]) -> 
                     next_stream += 1;
                 }
             }
-            if instructions_with_no_stream.contains(&i) {
-                instruction_streams[i] = next_stream;
-                instructions_with_no_stream.remove(&i);
-                next_stream += 1;
-            }
         }
     }
 
-    // TODO remove this loop.
+    let other_stream = next_stream;
+    next_stream += 1;
     for assigned_stream in instruction_streams.iter_mut() {
         if *assigned_stream == no_stream {
-            *assigned_stream = next_stream;
+            *assigned_stream = other_stream;
             next_stream += 1;
         }
     }

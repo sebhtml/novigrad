@@ -1,7 +1,7 @@
 use crate::{tensor::Error, tensor::Tensor, Category, Instruction};
 use core::fmt::Debug;
 use std::fmt::Display;
-use std::sync::{Arc, RwLock, RwLockReadGuard};
+use std::sync::{Arc, RwLock};
 use std::{collections::LinkedList, ops::Deref};
 
 #[derive(Clone, Debug)]
@@ -47,11 +47,11 @@ impl TensorWithGrad {
             .collect()
     }
 
-    pub fn tensor(&self) -> RwLockReadGuard<Tensor> {
+    pub fn tensor(&self) -> impl Deref<Target = Tensor> + '_ {
         self.tensor.read().unwrap()
     }
 
-    pub fn gradient(&self) -> RwLockReadGuard<Tensor> {
+    pub fn gradient(&self) -> impl Deref<Target = Tensor> + '_ {
         self.gradient.read().unwrap()
     }
 

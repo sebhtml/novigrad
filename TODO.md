@@ -1,4 +1,4 @@
-- return Deref<> instead of RwLockReadGuard
+- spawn threads with CPU device
 - add device stream support in devices to execute attention heads in parallel
 
 == Transformer ==
@@ -14,7 +14,6 @@
 
 ---------------
 
-- move conversion of model-into-instructions outside of neural machine
 - add code that discard useless instructions, for example when a operand write is never read betfore the next write
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 

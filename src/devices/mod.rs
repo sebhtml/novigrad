@@ -3,7 +3,8 @@ use crate::{error, tensor::Error, tensor::ErrorEnum};
 use std::{
     collections::{HashMap, LinkedList},
     mem::swap,
-    sync::{Arc, RwLock, RwLockReadGuard},
+    ops::Deref,
+    sync::{Arc, RwLock},
 };
 #[cfg(test)]
 mod tests;
@@ -234,7 +235,7 @@ impl Device {
         count
     }
 
-    pub fn tensors_to_optimize(&self) -> RwLockReadGuard<Vec<TensorWithGrad>> {
+    pub fn tensors_to_optimize(&self) -> impl Deref<Target = Vec<TensorWithGrad>> + '_ {
         self.tensors_to_optimize.read().unwrap()
     }
 

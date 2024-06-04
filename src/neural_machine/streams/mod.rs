@@ -11,7 +11,6 @@ use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
 mod tests;
 
 const STREAM_NONE: usize = usize::MAX;
-const STREAM_HAS_MANY_DEPENDANT_STREAMS: usize = usize::MAX - 1;
 
 pub struct Stream {
     pub id: usize,
@@ -262,31 +261,23 @@ fn assign_instructions_to_streams(
                 next_stream += 1;
                 instructions_with_no_stream.remove(j);
             }
-            instruction_streams[i] = next_stream;
-            next_stream += 1;
-            instructions_with_no_stream.remove(&i);
-        }
-    }
-
-    for stream in instruction_streams.iter_mut() {
-        if *stream == STREAM_HAS_MANY_DEPENDANT_STREAMS {
-            *stream = STREAM_NONE;
         }
     }
 
     while let Some(instruction) = instructions_with_no_stream.pop_first() {
-        let mut adjacent_streams = instruction_dependencies[instruction]
+        let mut streams = instruction_dependencies[instruction]
             .dependencies
             .iter()
-            .chain(instruction_dependencies[instruction].dependents.iter())
-            .map(|i| instruction_streams[*i])
+            .map(|i| instruction_streams[*i].clone())
             .collect::<Vec<_>>();
-        adjacent_streams.sort();
-        adjacent_streams.dedup();
+        streams.sort();
+        streams.dedup();
 
-        if adjacent_streams.len() == 1 && adjacent_streams[0] != STREAM_NONE {
-            instruction_streams[instruction] = adjacent_streams[0];
-        } else {
+        if streams.len() == 1 && streams[0] != STREAM_NONE {
+            instruction_streams[instruction] = streams[0];
+        }
+
+        if instruction_streams[instruction] == STREAM_NONE {
             instruction_streams[instruction] = next_stream;
             next_stream += 1;
         }

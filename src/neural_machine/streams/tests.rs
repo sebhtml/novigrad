@@ -99,7 +99,13 @@ fn the_instructions_length_and_streams_length_are_correct() {
     assert_eq!(2810, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
     let streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
-    assert_eq!(2797, streams.len());
+    assert_eq!(1737, streams.len());
+    let actual_instructions = streams
+        .iter()
+        .map(|i| i.instructions.deref().clone())
+        .collect::<Vec<Vec<usize>>>()
+        .concat();
+    assert_eq!(2810, actual_instructions.len());
 }
 
 #[test]
@@ -115,7 +121,20 @@ fn simple_problem_for_streams() {
     let minimum_write_before_read_for_new_stream = 4;
     let streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
 
+    for (i, stream) in streams.iter().enumerate() {
+        println!(
+            "stream {},  dependencies {:?}  instructions {:?}",
+            i, stream.dependencies, stream.instructions
+        )
+    }
+
     assert_eq!(5, streams.len());
+
+    assert_eq!(vec![] as Vec<usize>, *streams[0].dependencies);
+    assert_eq!(vec![] as Vec<usize>, *streams[1].dependencies);
+    assert_eq!(vec![] as Vec<usize>, *streams[2].dependencies);
+    assert_eq!(vec![] as Vec<usize>, *streams[3].dependencies);
+    assert_eq!(vec![0, 1, 2, 3], *streams[4].dependencies);
 
     assert_eq!(vec![0], *streams[0].instructions);
     assert_eq!(vec![1], *streams[1].instructions);
@@ -147,19 +166,19 @@ fn problem_2_for_streams() {
 
     assert_eq!(6, streams.len());
 
-    assert_eq!(vec![5], *streams[0].dependencies);
-    assert_eq!(vec![5], *streams[1].dependencies);
-    assert_eq!(vec![5], *streams[2].dependencies);
-    assert_eq!(vec![5], *streams[3].dependencies);
-    assert_eq!(vec![0, 1, 2, 3], *streams[4].dependencies);
-    assert_eq!(vec![] as Vec<usize>, *streams[5].dependencies);
+    assert_eq!(vec![4], *streams[0].dependencies);
+    assert_eq!(vec![4], *streams[1].dependencies);
+    assert_eq!(vec![4], *streams[2].dependencies);
+    assert_eq!(vec![4], *streams[3].dependencies);
+    assert_eq!(vec![] as Vec<usize>, *streams[4].dependencies);
+    assert_eq!(vec![0, 1, 2, 3], *streams[5].dependencies);
 
     assert_eq!(vec![1], *streams[0].instructions);
     assert_eq!(vec![2], *streams[1].instructions);
     assert_eq!(vec![3], *streams[2].instructions);
     assert_eq!(vec![4], *streams[3].instructions);
-    assert_eq!(vec![5], *streams[4].instructions);
-    assert_eq!(vec![0], *streams[5].instructions);
+    assert_eq!(vec![0], *streams[4].instructions);
+    assert_eq!(vec![5], *streams[5].instructions);
 }
 
 #[test]
@@ -185,19 +204,19 @@ fn problem_3_for_streams() {
 
     assert_eq!(6, streams.len());
 
-    assert_eq!(vec![5], *streams[0].dependencies);
-    assert_eq!(vec![5], *streams[1].dependencies);
-    assert_eq!(vec![5], *streams[2].dependencies);
-    assert_eq!(vec![5], *streams[3].dependencies);
-    assert_eq!(vec![0, 1, 2, 3], *streams[4].dependencies);
-    assert_eq!(vec![] as Vec::<usize>, *streams[5].dependencies);
+    assert_eq!(vec![4], *streams[0].dependencies);
+    assert_eq!(vec![4], *streams[1].dependencies);
+    assert_eq!(vec![4], *streams[2].dependencies);
+    assert_eq!(vec![4], *streams[3].dependencies);
+    assert_eq!(vec![] as Vec::<usize>, *streams[4].dependencies);
+    assert_eq!(vec![0, 1, 2, 3], *streams[5].dependencies);
 
     assert_eq!(vec![1], *streams[0].instructions);
     assert_eq!(vec![2], *streams[1].instructions);
     assert_eq!(vec![3], *streams[2].instructions);
     assert_eq!(vec![4], *streams[3].instructions);
-    assert_eq!(vec![5, 6], *streams[4].instructions);
-    assert_eq!(vec![0], *streams[5].instructions);
+    assert_eq!(vec![0], *streams[4].instructions);
+    assert_eq!(vec![5, 6], *streams[5].instructions);
 }
 
 #[test]
@@ -226,35 +245,36 @@ fn problem_4_for_streams() {
         )
     }
 
-    assert_eq!(12, streams.len());
+    assert_eq!(11, streams.len());
 
-    assert_eq!(vec![10], *streams[0].dependencies);
-    assert_eq!(vec![10], *streams[1].dependencies);
-    assert_eq!(vec![10], *streams[2].dependencies);
-    assert_eq!(vec![10], *streams[3].dependencies);
-    assert_eq!(vec![0, 1, 2, 3], *streams[4].dependencies);
+    assert_eq!(vec![8], *streams[0].dependencies);
+    assert_eq!(vec![8], *streams[1].dependencies);
+    assert_eq!(vec![8], *streams[2].dependencies);
+    assert_eq!(vec![8], *streams[3].dependencies);
 
-    assert_eq!(vec![11], *streams[5].dependencies);
-    assert_eq!(vec![11], *streams[6].dependencies);
-    assert_eq!(vec![11], *streams[7].dependencies);
-    assert_eq!(vec![11], *streams[8].dependencies);
-    assert_eq!(vec![5, 6, 7, 8], *streams[9].dependencies);
+    assert_eq!(vec![9], *streams[4].dependencies);
+    assert_eq!(vec![9], *streams[5].dependencies);
+    assert_eq!(vec![9], *streams[6].dependencies);
+    assert_eq!(vec![9], *streams[7].dependencies);
 
-    assert_eq!(vec![] as Vec::<usize>, *streams[10].dependencies);
-    assert_eq!(vec![4], *streams[11].dependencies);
+    assert_eq!(vec![] as Vec::<usize>, *streams[8].dependencies);
+
+    assert_eq!(vec![0, 1, 2, 3], *streams[9].dependencies);
+    assert_eq!(vec![4, 5, 6, 7], *streams[10].dependencies);
 
     assert_eq!(vec![1], *streams[0].instructions);
     assert_eq!(vec![2], *streams[1].instructions);
     assert_eq!(vec![3], *streams[2].instructions);
     assert_eq!(vec![4], *streams[3].instructions);
-    assert_eq!(vec![5], *streams[4].instructions);
-    assert_eq!(vec![7], *streams[5].instructions);
-    assert_eq!(vec![8], *streams[6].instructions);
-    assert_eq!(vec![9], *streams[7].instructions);
-    assert_eq!(vec![10], *streams[8].instructions);
-    assert_eq!(vec![11], *streams[9].instructions);
-    assert_eq!(vec![0], *streams[10].instructions);
-    assert_eq!(vec![6], *streams[11].instructions);
+
+    assert_eq!(vec![7], *streams[4].instructions);
+    assert_eq!(vec![8], *streams[5].instructions);
+    assert_eq!(vec![9], *streams[6].instructions);
+    assert_eq!(vec![10], *streams[7].instructions);
+
+    assert_eq!(vec![0], *streams[8].instructions);
+    assert_eq!(vec![5, 6], *streams[9].instructions);
+    assert_eq!(vec![11], *streams[10].instructions);
 }
 
 #[test]
@@ -266,7 +286,7 @@ fn reads_and_writes_of_same_operand_are_not_reordered() {
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
-    let minimum_write_before_read_for_new_stream = 99;
+    let minimum_write_before_read_for_new_stream = 4;
     let actual_streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
     let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
     let actual_read_write_pairs =

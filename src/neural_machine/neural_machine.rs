@@ -7,8 +7,8 @@ use crate::{
 };
 
 use super::streams::{
-    execute_streams, make_simple_instructions, make_streams, reset_streams, verify_machine_inputs,
-    Stream,
+    execute_streams, make_simple_instructions, make_streams, print_streams, reset_streams,
+    verify_machine_inputs, Stream,
 };
 
 pub struct NeuralMachine<T> {
@@ -223,6 +223,11 @@ impl<T> NeuralMachine<T> {
             self.print_instruction(i, instruction);
         }
         println!("------------------------------");
+
+        print_streams("inference", &self.inference_streams);
+        print_streams("loss", &self.loss_streams);
+        print_streams("gradient", &self.gradient_streams);
+        print_streams("optimization", &self.optimization_streams);
     }
 
     fn tensor_name(name: usize) -> String {
@@ -280,8 +285,7 @@ impl<T> NeuralMachine<T> {
         let machine_inputs = vec![example_input.tensor().name()];
         let simple_instructions = make_simple_instructions(instructions);
         verify_machine_inputs(&machine_inputs, &simple_instructions);
-        // TODO Set to 4 to enable this feature.
-        let minimum_write_before_read_for_new_stream = 99;
+        let minimum_write_before_read_for_new_stream = 4;
         let streams = make_streams(
             &simple_instructions,
             minimum_write_before_read_for_new_stream,

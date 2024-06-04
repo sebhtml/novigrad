@@ -1,10 +1,4 @@
-use std::{
-    collections::{BTreeSet, HashSet},
-    fmt::Display,
-    ops::Deref,
-    sync::Arc,
-    thread::JoinHandle,
-};
+use std::{collections::BTreeSet, fmt::Display, sync::Arc, thread::JoinHandle};
 
 use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
 
@@ -34,42 +28,12 @@ pub fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usiz
     }
 }
 
-fn get_constants(instructions: &[(Vec<usize>, Vec<usize>)]) -> HashSet<usize> {
-    let outputs = instructions
-        .iter()
-        .map(|(_, outputs)| outputs.clone())
-        .collect::<Vec<Vec<usize>>>();
-    let outputs = outputs.concat().into_iter().collect::<HashSet<_>>();
-    let mut inputs = instructions
-        .iter()
-        .map(|(inputs, _)| inputs.clone())
-        .collect::<Vec<_>>()
-        .concat();
-    inputs.sort();
-    inputs.dedup();
-    let constants = inputs
-        .into_iter()
-        .filter(|x| !outputs.contains(x))
-        .collect::<HashSet<_>>();
-    constants
-}
-
 /// Group <N> instructions in <M> streams using a dependency analysis.
 pub fn make_streams(
     instructions: &[(Vec<usize>, Vec<usize>)],
     minimum_write_before_read_for_new_stream: usize,
-    minimum_stream_instructions: usize,
+    _minimum_stream_instructions: usize,
 ) -> Vec<Stream> {
-    let constants = get_constants(instructions);
-    for constant in constants.iter() {
-        println!("CONSTANT: {}", constant);
-    }
-    for (i, (inputs, outputs)) in instructions.iter().enumerate() {
-        println!(
-            "INSTRUCTION {}  inputs {:?}  outputs {:?}",
-            i, inputs, outputs
-        );
-    }
     // A list of dependencies for each instruction.
     let instruction_dependencies = get_instruction_dependencies(instructions);
 
@@ -123,7 +87,7 @@ pub fn make_streams(
     for i in 0..streams.len() {
         let stream_instructions = &streams[i].instructions;
         let first_instruction = stream_instructions[0];
-        let dependency_instructions = &instruction_dependencies[first_instruction].dependencies;
+        let dependency_instructions = &instruction_dependencies[first_instruction].all_dependencies;
         let mut dependency_streams = dependency_instructions
             .iter()
             .map(|i| instruction_streams[*i])
@@ -132,8 +96,6 @@ pub fn make_streams(
         dependency_streams.dedup();
         streams[i].dependencies = dependency_streams;
     }
-
-    fuse_streams(&mut streams, minimum_stream_instructions);
 
     #[cfg(feature = "verbose_streams")]
     for stream in streams.iter() {
@@ -159,7 +121,7 @@ fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Ve
                 let j_outputs = &instructions[j].1;
 
                 if j_outputs.contains(&i_input) {
-                    dependencies[i].write_before_read.push(j);
+                    dependencies[i].write_before_read_dependencies.push(j);
                     break;
                 }
             }
@@ -180,7 +142,7 @@ fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Ve
                 let j_outputs = &instructions[j].1;
 
                 if j_outputs.contains(&i_output) {
-                    dependencies[i].write_before_write.push(j);
+                    dependencies[i].write_before_write_dependencies.push(j);
                     break;
                 }
             }
@@ -202,7 +164,7 @@ fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Ve
                 let j_inputs = &instructions[j].0;
 
                 if j_inputs.contains(&i_output) {
-                    dependencies[i].read_before_write.push(j);
+                    dependencies[i].read_before_write_dependencies.push(j);
                     break;
                 }
             }
@@ -211,19 +173,52 @@ fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Ve
 
     for entry in dependencies.iter_mut() {
         let mut deps = vec![
-            entry.write_before_read.clone(),
-            entry.write_before_write.clone(),
-            entry.read_before_write.clone(),
+            entry.write_before_read_dependencies.clone(),
+            entry.write_before_write_dependencies.clone(),
+            entry.read_before_write_dependencies.clone(),
         ]
         .concat();
         deps.sort();
         deps.dedup();
-        entry.dependencies = deps;
+        entry.all_dependencies = deps;
     }
 
     for dependent in 0..dependencies.len() {
-        for dependency in dependencies[dependent].dependencies.clone().iter() {
-            dependencies[*dependency].dependents.push(dependent);
+        for dependency in dependencies[dependent]
+            .write_before_read_dependencies
+            .clone()
+            .iter()
+        {
+            dependencies[*dependency]
+                .write_before_read_dependents
+                .push(dependent);
+        }
+    }
+    for dependent in 0..dependencies.len() {
+        for dependency in dependencies[dependent]
+            .write_before_write_dependencies
+            .clone()
+            .iter()
+        {
+            dependencies[*dependency]
+                .write_before_write_dependents
+                .push(dependent);
+        }
+    }
+    for dependent in 0..dependencies.len() {
+        for dependency in dependencies[dependent]
+            .read_before_write_dependencies
+            .clone()
+            .iter()
+        {
+            dependencies[*dependency]
+                .read_before_write_dependents
+                .push(dependent);
+        }
+    }
+    for dependent in 0..dependencies.len() {
+        for dependency in dependencies[dependent].all_dependencies.clone().iter() {
+            dependencies[*dependency].all_dependents.push(dependent);
         }
     }
 
@@ -247,10 +242,10 @@ fn assign_instructions_to_streams(
         if !instructions_with_no_stream.contains(&i) {
             continue;
         }
-        let write_before_read = deps.write_before_read.len();
+        let write_before_read = deps.write_before_read_dependencies.len();
         if write_before_read >= minimum_write_before_read_for_new_stream {
             let mut all_dependencies_have_no_stream = true;
-            for j in deps.write_before_read.iter() {
+            for j in deps.write_before_read_dependencies.iter() {
                 if !instructions_with_no_stream.contains(j) {
                     all_dependencies_have_no_stream = false;
                     break;
@@ -260,7 +255,7 @@ fn assign_instructions_to_streams(
             if !all_dependencies_have_no_stream {
                 continue;
             }
-            for j in deps.write_before_read.iter() {
+            for j in deps.write_before_read_dependencies.iter() {
                 instruction_streams[*j] = next_stream;
                 next_stream += 1;
                 instructions_with_no_stream.remove(j);
@@ -270,7 +265,7 @@ fn assign_instructions_to_streams(
 
     while let Some(instruction) = instructions_with_no_stream.pop_first() {
         let mut streams = instruction_dependencies[instruction]
-            .dependencies
+            .all_dependencies
             .iter()
             .map(|i| instruction_streams[*i].clone())
             .collect::<Vec<_>>();
@@ -510,21 +505,27 @@ pub fn make_simple_instructions(instructions: &Vec<Instruction>) -> Vec<(Vec<usi
 
 #[derive(Clone, Debug)]
 pub struct Dependencies {
-    pub write_before_read: Vec<usize>,
-    pub write_before_write: Vec<usize>,
-    pub read_before_write: Vec<usize>,
-    pub dependencies: Vec<usize>,
-    pub dependents: Vec<usize>,
+    pub write_before_read_dependencies: Vec<usize>,
+    pub write_before_write_dependencies: Vec<usize>,
+    pub read_before_write_dependencies: Vec<usize>,
+    pub all_dependencies: Vec<usize>,
+    pub write_before_read_dependents: Vec<usize>,
+    pub write_before_write_dependents: Vec<usize>,
+    pub read_before_write_dependents: Vec<usize>,
+    pub all_dependents: Vec<usize>,
 }
 
 impl Default for Dependencies {
     fn default() -> Self {
         Self {
-            write_before_read: Default::default(),
-            write_before_write: Default::default(),
-            read_before_write: Default::default(),
-            dependencies: Default::default(),
-            dependents: Default::default(),
+            write_before_read_dependencies: Default::default(),
+            write_before_write_dependencies: Default::default(),
+            read_before_write_dependencies: Default::default(),
+            all_dependencies: Default::default(),
+            write_before_read_dependents: Default::default(),
+            write_before_write_dependents: Default::default(),
+            read_before_write_dependents: Default::default(),
+            all_dependents: Default::default(),
         }
     }
 }
@@ -539,37 +540,12 @@ pub fn print_streams(name: &str, streams: &[Stream]) {
     }
 }
 
-fn fuse_streams(streams: &mut Vec<Stream>, minimum_stream_instructions: usize) {
-    let mut keep_going = true;
-    while keep_going {
-        keep_going = false;
-        // Fuse streams
-        for i in 0..streams.len() - 1 {
-            let j = i + 1;
-            if streams[i].instructions.len() == 0 || streams[j].instructions.len() == 0 {
-                continue;
-            }
-            if streams[i].instructions.len() >= minimum_stream_instructions
-                && streams[j].instructions.len() >= minimum_stream_instructions
-            {
-                continue;
-            }
-            if streams[i].dependencies.contains(&j) {
-                continue;
-            }
-            if streams[j].dependencies.contains(&i) {
-                continue;
-            }
-            let instructions = vec![
-                streams[i].instructions.deref().clone(),
-                streams[j].instructions.deref().clone(),
-            ]
-            .concat();
-            // TODO
-            continue;
-            streams[i].instructions = instructions.into();
-            streams[j].instructions = vec![].into();
-            keep_going = true;
-        }
+#[allow(unused)]
+pub fn print_instructions(instructions: &[(Vec<usize>, Vec<usize>)]) {
+    for (i, (inputs, outputs)) in instructions.iter().enumerate() {
+        println!(
+            "INSTRUCTION {}  inputs {:?}  outputs {:?}",
+            i, inputs, outputs
+        );
     }
 }

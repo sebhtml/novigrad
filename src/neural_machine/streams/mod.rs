@@ -1,6 +1,7 @@
 use std::{
     collections::{BTreeSet, HashSet},
     fmt::Display,
+    ops::Deref,
     sync::Arc,
     thread::JoinHandle,
 };
@@ -57,6 +58,7 @@ fn get_constants(instructions: &[(Vec<usize>, Vec<usize>)]) -> HashSet<usize> {
 pub fn make_streams(
     instructions: &[(Vec<usize>, Vec<usize>)],
     minimum_write_before_read_for_new_stream: usize,
+    minimum_stream_instructions: usize,
 ) -> Vec<Stream> {
     let constants = get_constants(instructions);
     for constant in constants.iter() {
@@ -130,6 +132,8 @@ pub fn make_streams(
         dependency_streams.dedup();
         streams[i].dependencies = dependency_streams;
     }
+
+    fuse_streams(&mut streams, minimum_stream_instructions);
 
     #[cfg(feature = "verbose_streams")]
     for stream in streams.iter() {
@@ -395,6 +399,10 @@ fn spawn_stream(
     #[cfg(feature = "verbose_streams")]
     println!("active_streams {}", active_streams.len());
 
+    if instructions.len() == 0 {
+        return Ok(());
+    }
+
     let stream_instructions = streams[stream].instructions.clone();
     let instructions = instructions.clone();
 
@@ -525,8 +533,43 @@ pub fn print_streams(name: &str, streams: &[Stream]) {
     println!("Streams  Description: {}  Count: {}", name, streams.len());
     for (i, stream) in streams.iter().enumerate() {
         println!(
-            "stream {},  dependencies {:?}  instructions {:?}",
-            i, stream.dependencies, stream.instructions
+            "stream: {}  dependencies_len: {}  instructions_len: {}  dependencies: {:?}   instructions: {:?}",
+            i, stream.dependencies.len(),stream.instructions.len(), stream.dependencies,  stream.instructions
         )
+    }
+}
+
+fn fuse_streams(streams: &mut Vec<Stream>, minimum_stream_instructions: usize) {
+    let mut keep_going = true;
+    while keep_going {
+        keep_going = false;
+        // Fuse streams
+        for i in 0..streams.len() - 1 {
+            let j = i + 1;
+            if streams[i].instructions.len() == 0 || streams[j].instructions.len() == 0 {
+                continue;
+            }
+            if streams[i].instructions.len() >= minimum_stream_instructions
+                && streams[j].instructions.len() >= minimum_stream_instructions
+            {
+                continue;
+            }
+            if streams[i].dependencies.contains(&j) {
+                continue;
+            }
+            if streams[j].dependencies.contains(&i) {
+                continue;
+            }
+            let instructions = vec![
+                streams[i].instructions.deref().clone(),
+                streams[j].instructions.deref().clone(),
+            ]
+            .concat();
+            // TODO
+            continue;
+            streams[i].instructions = instructions.into();
+            streams[j].instructions = vec![].into();
+            keep_going = true;
+        }
     }
 }

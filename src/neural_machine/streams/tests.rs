@@ -47,7 +47,12 @@ fn each_instruction_is_executed_exactly_once() {
     let instructions = get_test_instructions().unwrap();
     let expected_instructions = (0..instructions.len()).collect::<Vec<_>>();
     let minimum_write_before_read_for_new_stream = 4;
-    let streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
+    let minimum_stream_instructions = 32;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
     let mut actual_instructions = streams
         .iter()
         .map(|x| x.instructions.deref().clone())
@@ -107,18 +112,40 @@ fn spawn_and_join_streams(
 }
 
 #[test]
-fn the_instructions_length_and_streams_length_are_correct() {
+fn the_instructions_length_is_correct() {
     let instructions = get_test_instructions().unwrap();
     assert_eq!(2810, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
-    let streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
-    assert_eq!(1737, streams.len());
+    let minimum_stream_instructions = 32;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
     let actual_instructions = streams
         .iter()
         .map(|i| i.instructions.deref().clone())
         .collect::<Vec<Vec<usize>>>()
         .concat();
     assert_eq!(2810, actual_instructions.len());
+}
+
+#[test]
+fn the_streams_length_are_correct() {
+    let instructions = get_test_instructions().unwrap();
+    let minimum_write_before_read_for_new_stream = 4;
+    let minimum_stream_instructions = 32;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
+    print_streams("test", &streams);
+    assert_eq!(
+        //1176,
+        1737,
+        streams.iter().filter(|x| x.instructions.len() > 0).count()
+    );
 }
 
 #[test]
@@ -132,7 +159,12 @@ fn simple_problem_for_streams() {
         (vec![12, 13], vec![14]),
     ];
     let minimum_write_before_read_for_new_stream = 4;
-    let streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
+    let minimum_stream_instructions = 32;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
 
     print_streams("test", &streams);
 
@@ -163,7 +195,12 @@ fn problem_2_for_streams() {
     ];
 
     let minimum_write_before_read_for_new_stream = 4;
-    let streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
+    let minimum_stream_instructions = 32;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
 
     print_streams("test", &streams);
 
@@ -196,7 +233,12 @@ fn problem_3_for_streams() {
         (vec![6], vec![7]),
     ];
     let minimum_write_before_read_for_new_stream = 4;
-    let streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
+    let minimum_stream_instructions = 32;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
 
     print_streams("test", &streams);
 
@@ -234,7 +276,12 @@ fn problem_4_for_streams() {
         (vec![8, 9, 10, 11], vec![12]),
     ];
     let minimum_write_before_read_for_new_stream = 4;
-    let streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
+    let minimum_stream_instructions = 32;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
 
     print_streams("test", &streams);
 
@@ -280,7 +327,12 @@ fn reads_and_writes_of_same_operand_are_not_reordered() {
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
-    let actual_streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
+    let minimum_stream_instructions = 32;
+    let actual_streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
     let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
@@ -301,7 +353,12 @@ fn writes_and_writes_of_same_operand_are_not_reordered() {
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
-    let actual_streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
+    let minimum_stream_instructions = 32;
+    let actual_streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
     let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
@@ -322,7 +379,12 @@ fn writes_and_reads_of_same_operand_are_not_reordered() {
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
-    let actual_streams = make_streams(&instructions, minimum_write_before_read_for_new_stream);
+    let minimum_stream_instructions = 32;
+    let actual_streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
     let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);

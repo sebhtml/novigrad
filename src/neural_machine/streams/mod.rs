@@ -1,14 +1,6 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    fmt::Display,
-    sync::Arc,
-    thread::JoinHandle,
-};
+use std::{collections::BTreeSet, fmt::Display, ops::Deref, sync::Arc, thread::JoinHandle};
 
-use crate::{
-    execution_unit::ExecutionUnit, graph_theory::partition_branching_graph, tensor::Error,
-    Instruction,
-};
+use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
 
 #[cfg(test)]
 mod tests;
@@ -40,28 +32,10 @@ pub fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usiz
 pub fn make_streams(
     instructions: &[(Vec<usize>, Vec<usize>)],
     minimum_write_before_read_for_new_stream: usize,
-    _minimum_stream_instructions: usize,
+    minimum_stream_instructions: usize,
 ) -> Vec<Stream> {
     // A list of dependencies for each instruction.
     let instruction_dependencies = get_instruction_dependencies(instructions);
-
-    let mut edges = vec![];
-    for (inputs, outputs) in instructions.iter() {
-        for u in inputs.iter() {
-            for v in outputs.iter() {
-                edges.push((*u, *v));
-            }
-        }
-    }
-    let vertices = edges
-        .iter()
-        .map(|(a, _)| *a)
-        .chain(edges.iter().map(|(_, b)| *b))
-        .collect::<BTreeSet<_>>()
-        .into_iter()
-        .collect::<Vec<_>>();
-    //let partitions = partition_branching_graph(&vertices, &edges);
-    //println!("PARTITIONS: {}", partitions.len());
 
     #[cfg(feature = "verbose_streams")]
     for (i, i_dependencies) in instruction_dependencies.iter().enumerate() {
@@ -123,12 +97,71 @@ pub fn make_streams(
         streams[i].dependencies = dependency_streams;
     }
 
+    // Fuse streams
+    fuse_streams(&mut streams, minimum_stream_instructions);
+
+    // TODO discard empty streams.
     #[cfg(feature = "verbose_streams")]
     for stream in streams.iter() {
         println!("STREAM {}", stream);
     }
 
     streams
+}
+
+fn fuse_streams(streams: &mut Vec<Stream>, minimum_stream_instructions: usize) {
+    let mut keep_going = true;
+    while keep_going {
+        keep_going = false;
+        // Fuse streams
+        for i in 0..streams.len() - 1 {
+            let j = i + 1;
+            // We have stream i and stream j.
+
+            if streams[i].instructions.len() == 0 || streams[j].instructions.len() == 0 {
+                continue;
+            }
+            if streams[i].instructions.len() >= minimum_stream_instructions
+                && streams[j].instructions.len() >= minimum_stream_instructions
+            {
+                continue;
+            }
+            if streams[i].dependencies.contains(&j) {
+                continue;
+            }
+            if streams[j].dependencies.contains(&i) {
+                continue;
+            }
+            // Verify that no dependency k of j depends on i to avoid bad things.
+            // TODO do that recursively
+            if streams[j]
+                .dependencies
+                .iter()
+                .any(|k| streams[*k].dependencies.contains(&i))
+            {
+                continue;
+            }
+            // Verify that no dependency k of i depends on j to avoid bad things.
+            // TODO do that recursively
+            if streams[i]
+                .dependencies
+                .iter()
+                .any(|k| streams[*k].dependencies.contains(&j))
+            {
+                continue;
+            }
+
+            let instructions = vec![
+                streams[i].instructions.deref().clone(),
+                streams[j].instructions.deref().clone(),
+            ]
+            .concat();
+
+            streams[i].instructions = instructions.into();
+            streams[j].instructions = vec![].into();
+            keep_going = true;
+        }
+    }
 }
 
 fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Dependencies> {

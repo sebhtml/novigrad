@@ -4,9 +4,12 @@ use std::{
 };
 
 use crate::{
-    mega_man_attention::MegaManAttentionModel, neural_machine::streams::print_streams,
-    neural_program::NeuralProgram, tensor::Error, Adam, BinaryOperator, Device, OptimizerTrait,
-    SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait, UnaryModel,
+    mega_man_attention::MegaManAttentionModel,
+    neural_machine::streams::{print_instructions, print_streams},
+    neural_program::NeuralProgram,
+    tensor::Error,
+    Adam, BinaryOperator, Device, OptimizerTrait, SoftmaxCrossEntropyLoss, Tokenizer,
+    TokenizerTrait, UnaryModel,
 };
 
 use super::{make_simple_instructions, make_streams, Stream};
@@ -142,8 +145,7 @@ fn the_streams_length_are_correct() {
     );
     print_streams("test", &streams);
     assert_eq!(
-        //1176,
-        1737,
+        1176,
         streams.iter().filter(|x| x.instructions.len() > 0).count()
     );
 }
@@ -159,13 +161,14 @@ fn simple_problem_for_streams() {
         (vec![12, 13], vec![14]),
     ];
     let minimum_write_before_read_for_new_stream = 4;
-    let minimum_stream_instructions = 32;
+    let minimum_stream_instructions = 1;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
 
+    print_instructions(&instructions);
     print_streams("test", &streams);
 
     assert_eq!(5, streams.len());
@@ -196,13 +199,54 @@ fn problem_2_for_streams() {
     ];
 
     let minimum_write_before_read_for_new_stream = 4;
-    let minimum_stream_instructions = 32;
+    let minimum_stream_instructions = 2;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
 
+    print_instructions(&instructions);
+    print_streams("streams", &streams);
+
+    assert_eq!(6, streams.len());
+
+    assert_eq!(vec![4], *streams[0].dependencies);
+    assert_eq!(vec![4], *streams[1].dependencies);
+    assert_eq!(vec![4], *streams[2].dependencies);
+    assert_eq!(vec![4], *streams[3].dependencies);
+    assert_eq!(vec![] as Vec<usize>, *streams[4].dependencies);
+    assert_eq!(vec![0, 1, 2, 3], *streams[5].dependencies);
+
+    assert_eq!(vec![1, 2], *streams[0].instructions);
+    assert_eq!(vec![0; 0], *streams[1].instructions);
+    assert_eq!(vec![3, 4], *streams[2].instructions);
+    assert_eq!(vec![0; 0], *streams[3].instructions);
+    assert_eq!(vec![0], *streams[4].instructions);
+    assert_eq!(vec![5, 6], *streams[5].instructions);
+}
+
+#[test]
+fn problem_2_for_streams_no_fuse() {
+    let instructions = vec![
+        (vec![0], vec![1]),
+        (vec![1], vec![2]),
+        (vec![1], vec![3]),
+        (vec![1], vec![4]),
+        (vec![1], vec![5]),
+        (vec![2, 3, 4, 5], vec![6]),
+        (vec![6], vec![7]),
+    ];
+
+    let minimum_write_before_read_for_new_stream = 4;
+    let minimum_stream_instructions = 1;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
+
+    print_instructions(&instructions);
     print_streams("streams", &streams);
 
     assert_eq!(6, streams.len());
@@ -234,7 +278,7 @@ fn problem_3_for_streams() {
         (vec![6], vec![7]),
     ];
     let minimum_write_before_read_for_new_stream = 4;
-    let minimum_stream_instructions = 32;
+    let minimum_stream_instructions = 1;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
@@ -277,7 +321,7 @@ fn problem_4_for_streams() {
         (vec![8, 9, 10, 11], vec![12]),
     ];
     let minimum_write_before_read_for_new_stream = 4;
-    let minimum_stream_instructions = 32;
+    let minimum_stream_instructions = 1;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
@@ -319,6 +363,50 @@ fn problem_4_for_streams() {
 }
 
 #[test]
+fn many_independent_instructions_in_two_streams() {
+    let instructions = vec![(vec![0, 1], vec![2]), (vec![3, 4], vec![5])];
+    let minimum_write_before_read_for_new_stream = 4;
+    let minimum_stream_instructions = 1;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
+
+    print_streams("test", &streams);
+
+    assert_eq!(2, streams.len());
+
+    assert_eq!(vec![0; 0], *streams[0].dependencies);
+    assert_eq!(vec![0; 0], *streams[0].dependencies);
+
+    assert_eq!(vec![0], *streams[0].instructions);
+    assert_eq!(vec![1], *streams[1].instructions);
+}
+
+#[test]
+fn many_independent_instructions_in_one_stream() {
+    let instructions = vec![(vec![0, 1], vec![2]), (vec![3, 4], vec![5])];
+    let minimum_write_before_read_for_new_stream = 4;
+    let minimum_stream_instructions = 2;
+    let streams = make_streams(
+        &instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
+    );
+
+    print_streams("test", &streams);
+
+    assert_eq!(2, streams.len());
+
+    assert_eq!(vec![0; 0], *streams[0].dependencies);
+
+    // TODO discard empty streams
+    assert_eq!(vec![0, 1], *streams[0].instructions);
+    assert_eq!(vec![0; 0], *streams[1].instructions);
+}
+
+#[test]
 fn reads_and_writes_of_same_operand_are_not_reordered() {
     let access = Access::Read;
     let prior_access = Access::Write;
@@ -328,7 +416,8 @@ fn reads_and_writes_of_same_operand_are_not_reordered() {
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
-    let minimum_stream_instructions = 32;
+    // TODO set minimum_stream_instructions to 32
+    let minimum_stream_instructions = 1;
     let actual_streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
@@ -354,7 +443,8 @@ fn writes_and_writes_of_same_operand_are_not_reordered() {
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
-    let minimum_stream_instructions = 32;
+    // TODO set minimum_stream_instructions to 32
+    let minimum_stream_instructions = 1;
     let actual_streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,

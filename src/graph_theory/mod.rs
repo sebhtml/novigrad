@@ -2,7 +2,10 @@
 mod tests;
 
 #[allow(unused)]
-pub fn partition_branching_graph(vertices: &[usize], edges: &[(usize, usize)]) -> Vec<Vec<(usize, usize)>> {
+pub fn partition_branching_graph(
+    vertices: &[usize],
+    edges: &[(usize, usize)],
+) -> Vec<Vec<(usize, usize)>> {
     let mut dependencies = vec![Vec::<usize>::default(); vertices.len()];
     let mut dependents = vec![Vec::<usize>::default(); vertices.len()];
     for (dependency, dependent) in edges.iter() {
@@ -38,11 +41,19 @@ pub fn partition_branching_graph(vertices: &[usize], edges: &[(usize, usize)]) -
         //   With z as the dependency of v that is a descendent of w
         //   Get { w } ∪ ( { all descendents of w } ∩ { all ascendents of z } ) ∪ { z }
         // Get { v } ∪ ( { all descendents of v } ∩ { all ascendents of u2 } )
-        
-        let edge_u = edges.iter().enumerate()
-            .find(|(i, (a, b))| b == u).map(|(i, _)| i).unwrap();
-        let edge_v = edges.iter().enumerate()
-            .find(|(i, (a, b))| a == v).map(|(i, _)| i).unwrap();
+
+        let edge_u = edges
+            .iter()
+            .enumerate()
+            .find(|(i, (a, b))| b == u)
+            .map(|(i, _)| i)
+            .unwrap();
+        let edge_v = edges
+            .iter()
+            .enumerate()
+            .find(|(i, (a, b))| a == v)
+            .map(|(i, _)| i)
+            .unwrap();
 
         println!("(u, v) is ({}, {})", u, v);
         println!("edge_u {}", edge_u);

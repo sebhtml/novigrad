@@ -1,6 +1,14 @@
-use std::{collections::BTreeSet, fmt::Display, sync::Arc, thread::JoinHandle};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fmt::Display,
+    sync::Arc,
+    thread::JoinHandle,
+};
 
-use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
+use crate::{
+    execution_unit::ExecutionUnit, graph_theory::partition_branching_graph, tensor::Error,
+    Instruction,
+};
 
 #[cfg(test)]
 mod tests;
@@ -36,6 +44,24 @@ pub fn make_streams(
 ) -> Vec<Stream> {
     // A list of dependencies for each instruction.
     let instruction_dependencies = get_instruction_dependencies(instructions);
+
+    let mut edges = vec![];
+    for (inputs, outputs) in instructions.iter() {
+        for u in inputs.iter() {
+            for v in outputs.iter() {
+                edges.push((*u, *v));
+            }
+        }
+    }
+    let vertices = edges
+        .iter()
+        .map(|(a, _)| *a)
+        .chain(edges.iter().map(|(_, b)| *b))
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
+    //let partitions = partition_branching_graph(&vertices, &edges);
+    //println!("PARTITIONS: {}", partitions.len());
 
     #[cfg(feature = "verbose_streams")]
     for (i, i_dependencies) in instruction_dependencies.iter().enumerate() {

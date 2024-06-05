@@ -6,6 +6,10 @@ pub fn partition_branching_graph(
     vertices: &[usize],
     edges: &[(usize, usize)],
 ) -> Vec<Vec<(usize, usize)>> {
+    println!("partition_branching_graph");
+    println!("vertices {:?}", vertices);
+    println!("edges {:?}", edges);
+
     let mut dependencies = vec![Vec::<usize>::default(); vertices.len()];
     let mut dependents = vec![Vec::<usize>::default(); vertices.len()];
     for (dependency, dependent) in edges.iter() {
@@ -30,6 +34,8 @@ pub fn partition_branching_graph(
             }
         }
     }
+
+    println!("uv_pairs {:?}", uv_pairs);
 
     let mut partitions = vec![];
 
@@ -75,5 +81,6 @@ pub fn partition_branching_graph(
         partitions.push(part_v);
     }
 
+    println!("partitions {:?}", partitions);
     partitions
 }

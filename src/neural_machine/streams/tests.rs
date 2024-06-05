@@ -192,6 +192,7 @@ fn problem_2_for_streams() {
         (vec![1], vec![4]),
         (vec![1], vec![5]),
         (vec![2, 3, 4, 5], vec![6]),
+        (vec![6], vec![7]),
     ];
 
     let minimum_write_before_read_for_new_stream = 4;
@@ -202,7 +203,7 @@ fn problem_2_for_streams() {
         minimum_stream_instructions,
     );
 
-    print_streams("test", &streams);
+    print_streams("streams", &streams);
 
     assert_eq!(6, streams.len());
 
@@ -218,7 +219,7 @@ fn problem_2_for_streams() {
     assert_eq!(vec![3], *streams[2].instructions);
     assert_eq!(vec![4], *streams[3].instructions);
     assert_eq!(vec![0], *streams[4].instructions);
-    assert_eq!(vec![5], *streams[5].instructions);
+    assert_eq!(vec![5, 6], *streams[5].instructions);
 }
 
 #[test]

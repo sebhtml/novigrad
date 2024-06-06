@@ -15,13 +15,13 @@ pub struct Stream {
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
-enum Access {
+pub enum Access {
     Read,
     Write,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
-struct Transaction {
+pub struct Transaction {
     pub instruction: usize,
     pub operand: usize,
     pub access: Access,
@@ -467,6 +467,7 @@ fn spawn_stream(
 pub fn spawn_and_join_streams(
     streams: &[Stream],
     instructions: &[(Vec<usize>, Vec<usize>)],
+    max_concurrent_streams: usize,
 ) -> Vec<Transaction> {
     let mut actual_transactions = vec![];
     let mut unreached_streams = BTreeSet::<usize>::new();
@@ -475,6 +476,7 @@ pub fn spawn_and_join_streams(
     }
     let mut spawned_streams = BTreeSet::<usize>::new();
     let mut joined_streams = BTreeSet::<usize>::new();
+
     while joined_streams.len() != streams.len() {
         let mut stream_to_spawn: Option<usize> = None;
         // Find a stream that can be spawned.
@@ -493,6 +495,14 @@ pub fn spawn_and_join_streams(
             }
         }
         if let Some(stream_to_spawn) = stream_to_spawn {
+            let concurrent_streams = spawned_streams.len() - joined_streams.len();
+            if concurrent_streams == max_concurrent_streams {
+                // Join the oldest active stream before spawning this one.
+                let oldest = spawned_streams.iter().min().map(|x| *x);
+                if let Some(oldest) = oldest {
+                    joined_streams.insert(oldest);
+                }
+            }
             // Spawn it.
             unreached_streams.remove(&stream_to_spawn);
             spawned_streams.insert(stream_to_spawn);

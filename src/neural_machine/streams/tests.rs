@@ -378,7 +378,9 @@ fn reads_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) 
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
-    let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
+    let max_concurrent_streams = 32;
+    let actual_transactions =
+        spawn_and_join_streams(&actual_streams, &instructions, max_concurrent_streams);
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
 
@@ -408,7 +410,9 @@ fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>)
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
-    let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
+    let max_concurrent_streams = 32;
+    let actual_transactions =
+        spawn_and_join_streams(&actual_streams, &instructions, max_concurrent_streams);
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
 
@@ -438,7 +442,9 @@ fn writes_and_reads_of_same_operand_are_not_reordered(filter: Option<Category>) 
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
-    let actual_transactions = spawn_and_join_streams(&actual_streams, &instructions);
+    let max_concurrent_streams = 32;
+    let actual_transactions =
+        spawn_and_join_streams(&actual_streams, &instructions, max_concurrent_streams);
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
 

@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, fmt::Display, ops::Deref, sync::Arc, thread::JoinHandle};
+use std::{collections::BTreeSet, fmt::Display, sync::Arc, thread::JoinHandle};
 
 use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
 
@@ -50,6 +50,7 @@ pub fn make_streams(
 
     let instruction_streams = assign_instructions_to_streams(
         minimum_write_before_read_for_new_stream,
+        minimum_stream_instructions,
         &instruction_dependencies,
     );
 
@@ -62,7 +63,13 @@ pub fn make_streams(
 
     let max_stream = instruction_streams.iter().max();
     let stream_count = match max_stream {
-        Some(&usize::MAX) => panic!(),
+        Some(&usize::MAX) => {
+            println!("Instruction streams:");
+            for (i, stream) in instruction_streams.iter().enumerate() {
+                println!("Instruction {}  stream {}", i, stream);
+            }
+            panic!();
+        }
         Some(max_stream) => max_stream + 1,
         None => 0,
     };
@@ -97,67 +104,7 @@ pub fn make_streams(
         streams[i].dependencies = dependency_streams;
     }
 
-    // Fuse streams
-    fuse_streams(&mut streams, minimum_stream_instructions);
-
-    // TODO discard empty streams.
-    #[cfg(feature = "verbose_streams")]
-    for stream in streams.iter() {
-        println!("STREAM {}", stream);
-    }
-
     streams
-}
-
-fn fuse_streams(streams: &mut Vec<Stream>, minimum_stream_instructions: usize) {
-    let mut keep_going = true;
-    let n = streams.len();
-    while keep_going {
-        keep_going = false;
-        // Fuse streams
-        for i in 0..(n - 1) {
-            let j = i + 1;
-            // We have stream i and stream j.
-
-            if streams[i].instructions.len() == 0 || streams[j].instructions.len() == 0 {
-                continue;
-            }
-            if streams[i].instructions.len() >= minimum_stream_instructions
-                && streams[j].instructions.len() >= minimum_stream_instructions
-            {
-                continue;
-            }
-            if streams[i].dependencies.contains(&j) {
-                continue;
-            }
-            if streams[j].dependencies.contains(&i) {
-                continue;
-            }
-
-            let instructions = vec![
-                streams[i].instructions.deref().clone(),
-                streams[j].instructions.deref().clone(),
-            ]
-            .concat();
-
-            streams[i].instructions = instructions.into();
-            streams[j].instructions = vec![].into();
-
-            // Any stream that depended on j now must depend on i.
-            for k in 0..n {
-                for l in streams[k].dependencies.iter_mut() {
-                    if *l == j {
-                        *l = i
-                    }
-                }
-            }
-            keep_going = true;
-        }
-    }
-    for k in 0..n {
-        streams[k].dependencies.sort();
-        streams[k].dependencies.dedup();
-    }
 }
 
 fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Vec<Dependencies> {
@@ -280,8 +227,18 @@ fn get_instruction_dependencies(instructions: &[(Vec<usize>, Vec<usize>)]) -> Ve
     dependencies
 }
 
+/// Assign a stream to each instruction.
+/// - `minimum_write_before_read_for_new_stream` dictates how instructions with many inputs are dealt with.
+/// - `minimum_stream_instructions` dictates how many instructions should streams have at the end.
+/// - `instruction_dependencies` dependencies between streams based on:
+///   - write-before-read strict ordering
+///   - read-before-write strict ordering
+///   - write-before-write strict ordering
+///
+/// Returns assigned streams, in the same order as the input instructions.
 fn assign_instructions_to_streams(
     minimum_write_before_read_for_new_stream: usize,
+    minimum_stream_instructions: usize,
     instruction_dependencies: &[Dependencies],
 ) -> Vec<usize> {
     let n = instruction_dependencies.len();
@@ -319,6 +276,8 @@ fn assign_instructions_to_streams(
     }
 
     while let Some(instruction) = instructions_with_no_stream.pop_first() {
+        // Take the instruction with no assigned stream and assign a stream based on the streams
+        // of its dependency instructions
         let mut streams = instruction_dependencies[instruction]
             .all_dependencies
             .iter()
@@ -330,10 +289,36 @@ fn assign_instructions_to_streams(
         if streams.len() == 1 && streams[0] != STREAM_NONE {
             instruction_streams[instruction] = streams[0];
         }
+    }
 
-        if instruction_streams[instruction] == STREAM_NONE {
-            instruction_streams[instruction] = next_stream;
+    for (instruction, _) in instruction_streams
+        .iter()
+        .enumerate()
+        .filter(|(_, stream)| **stream == STREAM_NONE)
+    {
+        instructions_with_no_stream.insert(instruction);
+    }
+
+    let mut next_stream_instruction_count = 0;
+    let mut last_added_instruction: Option<usize> = None;
+    while let Some(instruction) = instructions_with_no_stream.pop_first() {
+        // Reset next_stream if the last added instruction is not the previous one.
+        if last_added_instruction != None && Some(instruction - 1) != last_added_instruction {
             next_stream += 1;
+            next_stream_instruction_count = 0;
+            last_added_instruction = None;
+        }
+        if instruction_streams[instruction] == STREAM_NONE
+            && (last_added_instruction == None || Some(instruction - 1) == last_added_instruction)
+        {
+            instruction_streams[instruction] = next_stream;
+            last_added_instruction = Some(instruction);
+            next_stream_instruction_count += 1;
+            if next_stream_instruction_count >= minimum_stream_instructions {
+                next_stream += 1;
+                next_stream_instruction_count = 0;
+                last_added_instruction = None;
+            }
         }
     }
 

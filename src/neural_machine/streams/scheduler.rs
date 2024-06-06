@@ -7,14 +7,75 @@ use super::{
     transaction::{get_instruction_transactions, Transaction},
 };
 
+#[derive(PartialEq)]
+pub enum Event {
+    Spawn,
+    Join,
+}
+
+pub trait StreamEventHandler {
+    fn on_event(
+        &mut self,
+        event: &Event,
+        streams: &[Stream],
+        instructions: &[(Vec<usize>, Vec<usize>)],
+        stream: usize,
+    );
+}
+
+pub struct TransactionEmitter {
+    pub actual_transactions: Vec<Transaction>,
+}
+
+impl Default for TransactionEmitter {
+    fn default() -> Self {
+        Self {
+            actual_transactions: Default::default(),
+        }
+    }
+}
+
+impl StreamEventHandler for TransactionEmitter {
+    fn on_event(
+        &mut self,
+        event: &Event,
+        streams: &[Stream],
+        instructions: &[(Vec<usize>, Vec<usize>)],
+        stream: usize,
+    ) {
+        if event == &Event::Join {
+            let stream_instructions = &streams[stream].instructions;
+
+            for instruction in stream_instructions.iter() {
+                let instruction = *instruction;
+                let (inputs, outputs) = &instructions[instruction];
+                let mut instruction_transactions =
+                    get_instruction_transactions(instruction, inputs, outputs);
+                self.actual_transactions
+                    .extend_from_slice(&mut instruction_transactions);
+            }
+        }
+    }
+}
+
 /// Simulate an execution of streams and emit operand transactions.
 #[allow(unused)]
-pub fn spawn_and_join_streams(
+pub fn simulate_execution_and_collect_transactions(
     streams: &[Stream],
     instructions: &[(Vec<usize>, Vec<usize>)],
     max_concurrent_streams: usize,
 ) -> Vec<Transaction> {
-    let mut actual_transactions = vec![];
+    let mut handler = TransactionEmitter::default();
+    execute_streams_v2(streams, instructions, max_concurrent_streams, &mut handler);
+    handler.actual_transactions
+}
+
+pub fn execute_streams_v2(
+    streams: &[Stream],
+    instructions: &[(Vec<usize>, Vec<usize>)],
+    max_concurrent_streams: usize,
+    handler: &mut impl StreamEventHandler,
+) {
     let mut unreached_streams = BTreeSet::<usize>::new();
     for i in 0..streams.len() {
         unreached_streams.insert(i);
@@ -52,19 +113,12 @@ pub fn spawn_and_join_streams(
             unreached_streams.remove(&stream_to_spawn);
             spawned_streams.insert(stream_to_spawn);
             // Emit transactions on the execution unit pipeline.
-            let stream_instructions = &streams[stream_to_spawn].instructions;
-            for instruction in stream_instructions.iter() {
-                let instruction = *instruction;
-                let (inputs, outputs) = &instructions[instruction];
-                let mut instruction_transactions =
-                    get_instruction_transactions(instruction, inputs, outputs);
-                actual_transactions.extend_from_slice(&mut instruction_transactions);
-            }
+            handler.on_event(&Event::Spawn, streams, instructions, stream_to_spawn);
             // Immediately join the thread.
             joined_streams.insert(stream_to_spawn);
+            handler.on_event(&Event::Join, streams, instructions, stream_to_spawn);
         }
     }
-    actual_transactions
 }
 
 fn join_stream(

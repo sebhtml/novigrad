@@ -15,7 +15,7 @@ use test_case::test_case;
 
 use super::{
     instruction::make_simple_instructions,
-    scheduler::spawn_and_join_streams,
+    scheduler::simulate_execution_and_collect_transactions,
     transaction::{get_all_instruction_transactions, get_operand_transaction_pairs, Access},
 };
 
@@ -384,8 +384,11 @@ fn reads_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) 
         minimum_stream_instructions,
     );
     let max_concurrent_streams = 32;
-    let actual_transactions =
-        spawn_and_join_streams(&actual_streams, &instructions, max_concurrent_streams);
+    let actual_transactions = simulate_execution_and_collect_transactions(
+        &actual_streams,
+        &instructions,
+        max_concurrent_streams,
+    );
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
 
@@ -416,8 +419,11 @@ fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>)
         minimum_stream_instructions,
     );
     let max_concurrent_streams = 32;
-    let actual_transactions =
-        spawn_and_join_streams(&actual_streams, &instructions, max_concurrent_streams);
+    let actual_transactions = simulate_execution_and_collect_transactions(
+        &actual_streams,
+        &instructions,
+        max_concurrent_streams,
+    );
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
 
@@ -448,8 +454,11 @@ fn writes_and_reads_of_same_operand_are_not_reordered(filter: Option<Category>) 
         minimum_stream_instructions,
     );
     let max_concurrent_streams = 32;
-    let actual_transactions =
-        spawn_and_join_streams(&actual_streams, &instructions, max_concurrent_streams);
+    let actual_transactions = simulate_execution_and_collect_transactions(
+        &actual_streams,
+        &instructions,
+        max_concurrent_streams,
+    );
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
 

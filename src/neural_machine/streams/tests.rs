@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, sync::Arc};
 
 use crate::{
     mega_man_attention::MegaManAttentionModel,
@@ -374,6 +374,7 @@ fn reads_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) 
     let access = Access::Read;
     let prior_access = Access::Write;
     let instructions = get_test_instructions(filter).unwrap();
+    let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
     let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
@@ -411,6 +412,7 @@ fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>)
     let access = Access::Write;
     let prior_access = Access::Write;
     let instructions = get_test_instructions(filter).unwrap();
+    let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
     let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
@@ -448,6 +450,7 @@ fn writes_and_reads_of_same_operand_are_not_reordered(filter: Option<Category>) 
     let access = Access::Write;
     let prior_access = Access::Read;
     let instructions = get_test_instructions(filter).unwrap();
+    let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
     let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =

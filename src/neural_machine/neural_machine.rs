@@ -60,8 +60,10 @@ impl<T> NeuralMachine<T> {
             .collect();
 
         #[cfg(feature = "cuda")]
+        // TODO we need CUDA streams exposed by DeviceTrait to bump this to 32.
         let max_concurrent_streams = 1;
         #[cfg(not(feature = "cuda"))]
+        // TODO bump this to 32.
         let max_concurrent_streams = 1;
 
         let example_input = program.example_input;

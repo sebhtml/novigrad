@@ -1,14 +1,17 @@
 use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
 use crate::{
+    neural_machine::streams::stream::print_streams,
     neural_program::NeuralProgram,
     tensor::{Error, Tensor},
     Category, Device, Instruction, TensorWithGrad,
 };
 
 use super::streams::{
-    execute_streams, make_simple_instructions, make_streams, print_streams, reset_streams,
-    verify_machine_inputs, Stream,
+    instruction::make_simple_instructions,
+    scheduler::{execute_streams, reset_streams},
+    stream::{make_streams, Stream},
+    verify_machine_inputs,
 };
 
 pub struct NeuralMachine<T> {

@@ -1,14 +1,17 @@
 use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
 use crate::{
+    neural_machine::streams::stream::print_streams,
     neural_program::NeuralProgram,
     tensor::{Error, Tensor},
     Category, Device, Instruction, TensorWithGrad,
 };
 
 use super::streams::{
-    execute_streams, make_simple_instructions, make_streams, print_streams, reset_streams,
-    verify_machine_inputs, Stream,
+    instruction::make_simple_instructions,
+    scheduler::execute_streams,
+    stream::{make_streams, Stream},
+    verify_machine_inputs,
 };
 
 pub struct NeuralMachine<T> {
@@ -57,9 +60,11 @@ impl<T> NeuralMachine<T> {
             .collect();
 
         #[cfg(feature = "cuda")]
+        // TODO we need CUDA streams exposed by DeviceTrait to bump this to 32.
         let max_concurrent_streams = 1;
         #[cfg(not(feature = "cuda"))]
-        let max_concurrent_streams = 32;
+        // TODO bump this to 32.
+        let max_concurrent_streams = 1;
 
         let example_input = program.example_input;
         let example_output = program.example_output;
@@ -137,8 +142,7 @@ impl<T> NeuralMachine<T> {
             Category::Gradient => &self.gradient_instructions,
             Category::Optimization => &self.optimization_instructions,
         };
-        execute_streams(streams, &instructions, self.max_concurrent_streams)?;
-        reset_streams(streams);
+        execute_streams(streams, &instructions, &[], self.max_concurrent_streams);
         Ok(())
     }
 
@@ -286,9 +290,12 @@ impl<T> NeuralMachine<T> {
         let simple_instructions = make_simple_instructions(instructions);
         verify_machine_inputs(&machine_inputs, &simple_instructions);
         let minimum_write_before_read_for_new_stream = 4;
+        // TODO set minimum_stream_instructions to 32
+        let minimum_stream_instructions = 1;
         let streams = make_streams(
             &simple_instructions,
             minimum_write_before_read_for_new_stream,
+            minimum_stream_instructions,
         );
         streams
     }

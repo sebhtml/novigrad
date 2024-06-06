@@ -1,16 +1,16 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    ops::Deref,
-};
-
 use crate::{
     mega_man_attention::MegaManAttentionModel,
     neural_machine::streams::{print_instructions, print_streams},
     neural_program::NeuralProgram,
     tensor::Error,
-    Adam, BinaryOperator, Device, OptimizerTrait, SoftmaxCrossEntropyLoss, Tokenizer,
+    Adam, BinaryOperator, Category, Device, OptimizerTrait, SoftmaxCrossEntropyLoss, Tokenizer,
     TokenizerTrait, UnaryModel,
 };
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    ops::Deref,
+};
+use test_case::test_case;
 
 use super::{make_simple_instructions, make_streams, Stream};
 
@@ -27,7 +27,9 @@ struct Transaction {
     pub access: Access,
 }
 
-fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
+fn get_test_instructions(
+    filter: Option<Category>,
+) -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
     let device = Device::default();
     let tokenizer = Tokenizer::ascii_tokenizer();
     let vocab_size = tokenizer.vocab_size();
@@ -41,13 +43,24 @@ fn get_test_instructions() -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
     let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
     let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
     let instructions = program.instructions;
+    let instructions = match filter {
+        Some(category) => instructions
+            .into_iter()
+            .filter(|x| x.category() == category)
+            .collect(),
+        None => instructions,
+    };
     let simple_instructions = make_simple_instructions(&instructions);
     Ok(simple_instructions)
 }
 
-#[test]
-fn each_instruction_is_executed_exactly_once() {
-    let instructions = get_test_instructions().unwrap();
+#[test_case(None ; "no category filter")]
+#[test_case(Some(Category::Inference) ; "inference filter")]
+#[test_case(Some(Category::Loss) ; "loss filter")]
+#[test_case(Some(Category::Gradient) ; "gradient filter")]
+#[test_case(Some(Category::Optimization) ; "optimization filter")]
+fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
+    let instructions = get_test_instructions(filter).unwrap();
     let expected_instructions = (0..instructions.len()).collect::<Vec<_>>();
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
@@ -114,9 +127,10 @@ fn spawn_and_join_streams(
     actual_transactions
 }
 
+
 #[test]
 fn the_instructions_length_is_correct() {
-    let instructions = get_test_instructions().unwrap();
+    let instructions = get_test_instructions(None).unwrap();
     assert_eq!(2810, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
@@ -133,9 +147,10 @@ fn the_instructions_length_is_correct() {
     assert_eq!(2810, actual_instructions.len());
 }
 
+
 #[test]
 fn the_streams_length_are_correct() {
-    let instructions = get_test_instructions().unwrap();
+    let instructions = get_test_instructions(None).unwrap();
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
@@ -409,11 +424,16 @@ fn many_independent_instructions_in_one_stream() {
     assert_eq!(vec![0, 1], *streams[0].instructions);
 }
 
-#[test]
-fn reads_and_writes_of_same_operand_are_not_reordered() {
+
+#[test_case(None ; "no category filter")]
+#[test_case(Some(Category::Inference) ; "inference filter")]
+#[test_case(Some(Category::Loss) ; "loss filter")]
+#[test_case(Some(Category::Gradient) ; "gradient filter")]
+#[test_case(Some(Category::Optimization) ; "optimization filter")]
+fn reads_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) {
     let access = Access::Read;
     let prior_access = Access::Write;
-    let instructions = get_test_instructions().unwrap();
+    let instructions = get_test_instructions(filter).unwrap();
     let expected_transactions = get_all_instruction_transactions(&instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
@@ -435,11 +455,15 @@ fn reads_and_writes_of_same_operand_are_not_reordered() {
     }
 }
 
-#[test]
-fn writes_and_writes_of_same_operand_are_not_reordered() {
+#[test_case(None ; "no category filter")]
+#[test_case(Some(Category::Inference) ; "inference filter")]
+#[test_case(Some(Category::Loss) ; "loss filter")]
+#[test_case(Some(Category::Gradient) ; "gradient filter")]
+#[test_case(Some(Category::Optimization) ; "optimization filter")]
+fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) {
     let access = Access::Write;
     let prior_access = Access::Write;
-    let instructions = get_test_instructions().unwrap();
+    let instructions = get_test_instructions(filter).unwrap();
     let expected_transactions = get_all_instruction_transactions(&instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
@@ -461,11 +485,15 @@ fn writes_and_writes_of_same_operand_are_not_reordered() {
     }
 }
 
-#[test]
-fn writes_and_reads_of_same_operand_are_not_reordered() {
+#[test_case(None ; "no category filter")]
+#[test_case(Some(Category::Inference) ; "inference filter")]
+#[test_case(Some(Category::Loss) ; "loss filter")]
+#[test_case(Some(Category::Gradient) ; "gradient filter")]
+#[test_case(Some(Category::Optimization) ; "optimization filter")]
+fn writes_and_reads_of_same_operand_are_not_reordered(filter: Option<Category>) {
     let access = Access::Write;
     let prior_access = Access::Read;
-    let instructions = get_test_instructions().unwrap();
+    let instructions = get_test_instructions(filter).unwrap();
     let expected_transactions = get_all_instruction_transactions(&instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);

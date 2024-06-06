@@ -111,10 +111,11 @@ pub fn make_streams(
 
 fn fuse_streams(streams: &mut Vec<Stream>, minimum_stream_instructions: usize) {
     let mut keep_going = true;
+    let n = streams.len();
     while keep_going {
         keep_going = false;
         // Fuse streams
-        for i in 0..streams.len() - 1 {
+        for i in 0..(n - 1) {
             let j = i + 1;
             // We have stream i and stream j.
 
@@ -132,24 +133,6 @@ fn fuse_streams(streams: &mut Vec<Stream>, minimum_stream_instructions: usize) {
             if streams[j].dependencies.contains(&i) {
                 continue;
             }
-            // Verify that no dependency k of j depends on i to avoid bad things.
-            // TODO do that recursively
-            if streams[j]
-                .dependencies
-                .iter()
-                .any(|k| streams[*k].dependencies.contains(&i))
-            {
-                continue;
-            }
-            // Verify that no dependency k of i depends on j to avoid bad things.
-            // TODO do that recursively
-            if streams[i]
-                .dependencies
-                .iter()
-                .any(|k| streams[*k].dependencies.contains(&j))
-            {
-                continue;
-            }
 
             let instructions = vec![
                 streams[i].instructions.deref().clone(),
@@ -159,8 +142,21 @@ fn fuse_streams(streams: &mut Vec<Stream>, minimum_stream_instructions: usize) {
 
             streams[i].instructions = instructions.into();
             streams[j].instructions = vec![].into();
+
+            // Any stream that depended on j now must depend on i.
+            for k in 0..n {
+                for l in streams[k].dependencies.iter_mut() {
+                    if *l == j {
+                        *l = i
+                    }
+                }
+            }
             keep_going = true;
         }
+    }
+    for k in 0..n {
+        streams[k].dependencies.sort();
+        streams[k].dependencies.dedup();
     }
 }
 

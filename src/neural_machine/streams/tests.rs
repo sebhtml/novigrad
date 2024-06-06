@@ -216,14 +216,14 @@ fn problem_2_for_streams() {
     assert_eq!(vec![4], *streams[2].dependencies);
     assert_eq!(vec![4], *streams[3].dependencies);
     assert_eq!(vec![] as Vec<usize>, *streams[4].dependencies);
-    assert_eq!(vec![0, 1, 2, 3], *streams[5].dependencies);
+    assert_eq!(vec![0, 2,], *streams[5].dependencies);
 
     assert_eq!(vec![1, 2], *streams[0].instructions);
     assert_eq!(vec![0; 0], *streams[1].instructions);
     assert_eq!(vec![3, 4], *streams[2].instructions);
-    assert_eq!(vec![0; 0], *streams[3].instructions);
-    assert_eq!(vec![0], *streams[4].instructions);
-    assert_eq!(vec![5, 6], *streams[5].instructions);
+    assert_eq!(vec![] as Vec<usize>, *streams[3].instructions);
+    assert_eq!(vec![0, 5, 6], *streams[4].instructions);
+    assert_eq!(vec![] as Vec<usize>, *streams[5].instructions);
 }
 
 #[test]

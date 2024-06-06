@@ -1,5 +1,7 @@
 - remove simple_instructions from StreamEventHandler
 - rename DeviceInterface DeviceTrait
+- remove write_before_read_dependents and folks
+
 - reuse threads in streams scheduler
 - spawn threads with CPU device
 - add device stream support in devices to execute attention heads in parallel

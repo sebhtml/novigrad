@@ -419,7 +419,6 @@ fn reads_and_writes_of_same_operand_are_not_reordered() {
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
-    // TODO set minimum_stream_instructions to 32
     let minimum_stream_instructions = 32;
     let actual_streams = make_streams(
         &instructions,
@@ -446,8 +445,7 @@ fn writes_and_writes_of_same_operand_are_not_reordered() {
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
-    // TODO set minimum_stream_instructions to 32
-    let minimum_stream_instructions = 1;
+    let minimum_stream_instructions = 32;
     let actual_streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,

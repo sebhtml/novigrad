@@ -59,7 +59,7 @@ impl<T> NeuralMachine<T> {
         #[cfg(feature = "cuda")]
         let max_concurrent_streams = 1;
         #[cfg(not(feature = "cuda"))]
-        let max_concurrent_streams = 32;
+        let max_concurrent_streams = 1;
 
         let example_input = program.example_input;
         let example_output = program.example_output;

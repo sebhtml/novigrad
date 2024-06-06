@@ -149,7 +149,7 @@ pub fn get_instruction_dependencies(
     dependencies
 }
 
-pub fn make_simple_instructions(instructions: &Vec<Instruction>) -> Vec<(Vec<usize>, Vec<usize>)> {
+pub fn make_simple_instructions(instructions: &[Instruction]) -> Vec<(Vec<usize>, Vec<usize>)> {
     let instructions = instructions
         .iter()
         .map(|instruction| {

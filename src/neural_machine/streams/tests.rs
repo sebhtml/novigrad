@@ -8,8 +8,8 @@ use crate::{
     },
     neural_program::NeuralProgram,
     tensor::Error,
-    Adam, BinaryOperator, Category, Device, OptimizerTrait, SoftmaxCrossEntropyLoss, Tokenizer,
-    TokenizerTrait, UnaryModel,
+    Adam, BinaryOperator, Category, Device, Instruction, OptimizerTrait, SoftmaxCrossEntropyLoss,
+    Tokenizer, TokenizerTrait, UnaryModel,
 };
 use test_case::test_case;
 
@@ -19,7 +19,7 @@ use super::{
     transaction::{get_all_instruction_transactions, get_operand_transaction_pairs, Access},
 };
 
-fn get_test_instructions(filter: Option<Category>) -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
+fn get_test_instructions(filter: Option<Category>) -> Result<Vec<Instruction>, Error> {
     let device = Device::default();
     let tokenizer = Tokenizer::ascii_tokenizer();
     let vocab_size = tokenizer.vocab_size();
@@ -40,8 +40,7 @@ fn get_test_instructions(filter: Option<Category>) -> Result<Vec<(Vec<usize>, Ve
             .collect(),
         None => instructions,
     };
-    let simple_instructions = make_simple_instructions(&instructions);
-    Ok(simple_instructions)
+    Ok(instructions)
 }
 
 #[test_case(None ; "no category filter")]
@@ -51,11 +50,12 @@ fn get_test_instructions(filter: Option<Category>) -> Result<Vec<(Vec<usize>, Ve
 #[test_case(Some(Category::Optimization) ; "optimization filter")]
 fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
     let instructions = get_test_instructions(filter).unwrap();
+    let simple_instructions = make_simple_instructions(&instructions);
     let expected_instructions = (0..instructions.len()).collect::<Vec<_>>();
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
-        &instructions,
+        &simple_instructions,
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
@@ -71,11 +71,12 @@ fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
 #[test]
 fn the_instructions_length_is_correct() {
     let instructions = get_test_instructions(None).unwrap();
+    let simple_instructions = make_simple_instructions(&instructions);
     assert_eq!(2810, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
-        &instructions,
+        &simple_instructions,
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
@@ -90,10 +91,11 @@ fn the_instructions_length_is_correct() {
 #[test]
 fn the_streams_length_are_correct() {
     let instructions = get_test_instructions(None).unwrap();
+    let simple_instructions = make_simple_instructions(&instructions);
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
-        &instructions,
+        &simple_instructions,
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
@@ -372,14 +374,15 @@ fn reads_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) 
     let access = Access::Read;
     let prior_access = Access::Write;
     let instructions = get_test_instructions(filter).unwrap();
-    let expected_transactions = get_all_instruction_transactions(&instructions);
+    let simple_instructions = make_simple_instructions(&instructions);
+    let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
     let actual_streams = make_streams(
-        &instructions,
+        &simple_instructions,
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
@@ -387,6 +390,7 @@ fn reads_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) 
     let actual_transactions = simulate_execution_and_collect_transactions(
         &actual_streams,
         &instructions,
+        &simple_instructions,
         max_concurrent_streams,
     );
     let actual_read_write_pairs =
@@ -407,14 +411,15 @@ fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>)
     let access = Access::Write;
     let prior_access = Access::Write;
     let instructions = get_test_instructions(filter).unwrap();
-    let expected_transactions = get_all_instruction_transactions(&instructions);
+    let simple_instructions = make_simple_instructions(&instructions);
+    let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
     let actual_streams = make_streams(
-        &instructions,
+        &simple_instructions,
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
@@ -422,6 +427,7 @@ fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>)
     let actual_transactions = simulate_execution_and_collect_transactions(
         &actual_streams,
         &instructions,
+        &simple_instructions,
         max_concurrent_streams,
     );
     let actual_read_write_pairs =
@@ -442,14 +448,15 @@ fn writes_and_reads_of_same_operand_are_not_reordered(filter: Option<Category>) 
     let access = Access::Write;
     let prior_access = Access::Read;
     let instructions = get_test_instructions(filter).unwrap();
-    let expected_transactions = get_all_instruction_transactions(&instructions);
+    let simple_instructions = make_simple_instructions(&instructions);
+    let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
     let actual_streams = make_streams(
-        &instructions,
+        &simple_instructions,
         minimum_write_before_read_for_new_stream,
         minimum_stream_instructions,
     );
@@ -457,6 +464,7 @@ fn writes_and_reads_of_same_operand_are_not_reordered(filter: Option<Category>) 
     let actual_transactions = simulate_execution_and_collect_transactions(
         &actual_streams,
         &instructions,
+        &simple_instructions,
         max_concurrent_streams,
     );
     let actual_read_write_pairs =

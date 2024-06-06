@@ -1,9 +1,9 @@
-use std::{collections::BTreeSet, sync::Arc, thread::JoinHandle};
+use std::{collections::BTreeSet, ops::Deref, thread::JoinHandle};
 
 use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
 
 use super::{
-    stream::{Stream, StreamState},
+    stream::Stream,
     transaction::{get_instruction_transactions, Transaction},
 };
 
@@ -12,13 +12,15 @@ pub trait StreamEventHandler {
     fn on_spawn(
         &mut self,
         streams: &[Stream],
-        instructions: &[(Vec<usize>, Vec<usize>)],
+        instructions: &[Instruction],
+        simple_instructions: &[(Vec<usize>, Vec<usize>)],
         stream: usize,
     );
     fn on_join(
         &mut self,
         streams: &[Stream],
-        instructions: &[(Vec<usize>, Vec<usize>)],
+        instructions: &[Instruction],
+        simple_instructions: &[(Vec<usize>, Vec<usize>)],
         stream: usize,
     );
 }
@@ -27,36 +29,32 @@ pub struct TransactionEmitter {
     pub actual_transactions: Vec<Transaction>,
 }
 
-impl Default for TransactionEmitter {
-    fn default() -> Self {
+impl StreamEventHandler for TransactionEmitter {
+    fn new(_streams: &[Stream]) -> Self {
         Self {
             actual_transactions: Default::default(),
         }
     }
-}
-
-impl StreamEventHandler for TransactionEmitter {
-    fn new(_streams: &[Stream]) -> Self {
-        Default::default()
-    }
     fn on_spawn(
         &mut self,
         _streams: &[Stream],
-        _instructions: &[(Vec<usize>, Vec<usize>)],
+        _instructions: &[Instruction],
+        _simple_instructions: &[(Vec<usize>, Vec<usize>)],
         _stream: usize,
     ) {
     }
     fn on_join(
         &mut self,
         streams: &[Stream],
-        instructions: &[(Vec<usize>, Vec<usize>)],
+        _instructions: &[Instruction],
+        simple_instructions: &[(Vec<usize>, Vec<usize>)],
         stream: usize,
     ) {
         let stream_instructions = &streams[stream].instructions;
 
         for instruction in stream_instructions.iter() {
             let instruction = *instruction;
-            let (inputs, outputs) = &instructions[instruction];
+            let (inputs, outputs) = &simple_instructions[instruction];
             let mut instruction_transactions =
                 get_instruction_transactions(instruction, inputs, outputs);
             self.actual_transactions
@@ -66,7 +64,7 @@ impl StreamEventHandler for TransactionEmitter {
 }
 
 pub struct StreamExecutor {
-    _threads: Vec<Option<JoinHandle<Result<(), Error>>>>,
+    threads: Vec<Option<JoinHandle<Result<(), Error>>>>,
 }
 
 impl StreamEventHandler for StreamExecutor {
@@ -75,42 +73,69 @@ impl StreamEventHandler for StreamExecutor {
         for _ in 0..streams.len() {
             threads.push(None);
         }
-        Self { _threads: threads }
+        Self { threads }
     }
     fn on_spawn(
         &mut self,
-        _streams: &[Stream],
-        _instructions: &[(Vec<usize>, Vec<usize>)],
-        _stream: usize,
+        streams: &[Stream],
+        instructions: &[Instruction],
+        _simple_instructions: &[(Vec<usize>, Vec<usize>)],
+        stream: usize,
     ) {
-        //spawn_stream(stream, streams, &mut self.threads, instructions).unwrap();
+        spawn_stream(stream, streams, &mut self.threads, instructions).unwrap();
     }
 
     fn on_join(
         &mut self,
-        _streams: &[Stream],
-        _instructions: &[(Vec<usize>, Vec<usize>)],
-        _stream: usize,
+        streams: &[Stream],
+        _instructions: &[Instruction],
+        _simple_instructions: &[(Vec<usize>, Vec<usize>)],
+        stream: usize,
     ) {
-        // join_stream(dependency, streams, &mut threads, &mut active_streams)?;
+        join_stream(stream, streams, &mut self.threads).unwrap();
     }
+}
+
+#[allow(unused)]
+pub fn execute_streams(
+    streams: &[Stream],
+    instructions: &[Instruction],
+    simple_instructions: &[(Vec<usize>, Vec<usize>)],
+    max_concurrent_streams: usize,
+) {
+    let mut handler = StreamExecutor::new(streams);
+    execute_streams_v2(
+        streams,
+        instructions,
+        simple_instructions,
+        max_concurrent_streams,
+        &mut handler,
+    );
 }
 
 /// Simulate an execution of streams and emit operand transactions.
 #[allow(unused)]
 pub fn simulate_execution_and_collect_transactions(
     streams: &[Stream],
-    instructions: &[(Vec<usize>, Vec<usize>)],
+    instructions: &[Instruction],
+    simple_instructions: &[(Vec<usize>, Vec<usize>)],
     max_concurrent_streams: usize,
 ) -> Vec<Transaction> {
-    let mut handler = TransactionEmitter::default();
-    execute_streams_v2(streams, instructions, max_concurrent_streams, &mut handler);
+    let mut handler = TransactionEmitter::new(streams);
+    execute_streams_v2(
+        streams,
+        instructions,
+        simple_instructions,
+        max_concurrent_streams,
+        &mut handler,
+    );
     handler.actual_transactions
 }
 
 pub fn execute_streams_v2(
     streams: &[Stream],
-    instructions: &[(Vec<usize>, Vec<usize>)],
+    instructions: &[Instruction],
+    simple_instructions: &[(Vec<usize>, Vec<usize>)],
     max_concurrent_streams: usize,
     handler: &mut impl StreamEventHandler,
 ) {
@@ -151,20 +176,19 @@ pub fn execute_streams_v2(
             unreached_streams.remove(&stream_to_spawn);
             spawned_streams.insert(stream_to_spawn);
             // Emit transactions on the execution unit pipeline.
-            handler.on_spawn(streams, instructions, stream_to_spawn);
+            handler.on_spawn(streams, instructions, simple_instructions, stream_to_spawn);
             // Immediately join the thread.
             joined_streams.insert(stream_to_spawn);
-            handler.on_join(streams, instructions, stream_to_spawn);
+            handler.on_join(streams, instructions, simple_instructions, stream_to_spawn);
         }
     }
 }
 
 fn join_stream(
-    stream: usize,
-    streams: &mut Vec<Stream>,
+    _stream: usize,
+    _streams: &[Stream],
     _threads: &mut Vec<Option<JoinHandle<Result<(), Error>>>>,
 ) -> Result<(), Error> {
-    debug_assert_eq!(StreamState::Spawned, streams[stream].state);
     /*
     let thread = threads[stream].take();
     if let Some(thread) = thread {
@@ -177,13 +201,11 @@ fn join_stream(
         }
     }
      */
-    let new_state = StreamState::Joined;
     #[cfg(feature = "verbose_streams")]
     println!(
         "Transition stream {}  {} -> {}",
         stream, streams[stream].state, new_state
     );
-    streams[stream].state = new_state;
     #[cfg(feature = "verbose_streams")]
     println!("active_streams {}", active_streams.len());
     Ok(())
@@ -191,110 +213,17 @@ fn join_stream(
 
 fn spawn_stream(
     stream: usize,
-    streams: &mut Vec<Stream>,
+    streams: &[Stream],
     _threads: &mut Vec<Option<JoinHandle<Result<(), Error>>>>,
-    instructions: &Arc<Vec<Instruction>>,
+    instructions: &[Instruction],
 ) -> Result<(), Error> {
-    debug_assert_eq!(StreamState::Unreached, streams[stream].state);
-    let new_state = StreamState::Spawned;
-    #[cfg(feature = "verbose_streams")]
-    println!(
-        "Transition stream {}  {} -> {}",
-        stream, streams[stream].state, new_state
-    );
-    streams[stream].state = new_state;
-    #[cfg(feature = "verbose_streams")]
-    println!("active_streams {}", active_streams.len());
-
-    if instructions.len() == 0 {
-        return Ok(());
-    }
-
-    let stream_instructions = streams[stream].instructions.clone();
-    let instructions = instructions.clone();
-
+    let stream_instructions: &[usize] = streams[stream].instructions.deref().deref();
     ExecutionUnit::execute(stream_instructions, instructions)?;
+
     /*
     let spawned_thread =
         thread::spawn(|| ExecutionUnit::execute(stream_instructions, instructions));
     threads[stream] = Some(spawned_thread);
     */
     Ok(())
-}
-
-pub fn execute_streams(
-    streams: &mut Vec<Stream>,
-    instructions: &Arc<Vec<Instruction>>,
-    max_concurrent_streams: usize,
-) -> Result<(), Error> {
-    let mut threads: Vec<Option<JoinHandle<Result<(), Error>>>> = vec![];
-    for _ in 0..streams.len() {
-        threads.push(None);
-    }
-    let range = 0..streams.len();
-    let mut active_streams = BTreeSet::new();
-
-    let mut unreached_streams = (0..streams.len()).collect::<BTreeSet<_>>();
-    while unreached_streams.len() != 0 {
-        let mut spawned_streams = vec![];
-        for i in unreached_streams.iter() {
-            let is_unreached = streams[*i].state == StreamState::Unreached;
-            if is_unreached {
-                // Join each dependency
-                let n = streams[*i].dependencies.len();
-                let mut all_dependencies_are_joined = true;
-                for j in 0..n {
-                    let dependency = streams[*i].dependencies[j];
-                    if streams[dependency].state == StreamState::Spawned {
-                        join_stream(dependency, streams, &mut threads)?;
-                        active_streams.remove(&dependency);
-                    } else if streams[dependency].state == StreamState::Joined {
-                        #[cfg(feature = "verbose_streams")]
-                        println!(
-                            "note stream {} is already {}",
-                            dependency,
-                            StreamState::Joined
-                        );
-                    } else {
-                        all_dependencies_are_joined = false;
-                    }
-                }
-
-                if !all_dependencies_are_joined {
-                    continue;
-                }
-                if active_streams.len() == max_concurrent_streams {
-                    // Join the oldest active stream before spawning this one.
-                    let oldest = active_streams.iter().min().map(|x| *x);
-                    if let Some(oldest) = oldest {
-                        join_stream(oldest, streams, &mut threads)?;
-                        active_streams.remove(&oldest);
-                    }
-                }
-                spawn_stream(*i, streams, &mut threads, instructions)?;
-                active_streams.insert(*i);
-                spawned_streams.push(*i);
-            } else {
-                panic!("Can not spawn stream {} because it is not unreached", i);
-            }
-        }
-        for spawned in spawned_streams.iter() {
-            unreached_streams.remove(spawned);
-        }
-    }
-    for i in range {
-        if streams[i].state == StreamState::Spawned {
-            join_stream(i, streams, &mut threads)?;
-            active_streams.remove(&i);
-        }
-    }
-    debug_assert_eq!(0, active_streams.len());
-
-    Ok(())
-}
-
-pub fn reset_streams(streams: &mut Vec<Stream>) {
-    for i in 0..streams.len() {
-        streams[i].state = StreamState::Unreached;
-    }
 }

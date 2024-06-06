@@ -6,48 +6,13 @@ pub const STREAM_NONE: usize = usize::MAX;
 
 pub struct Stream {
     pub id: usize,
-    pub state: StreamState,
     pub dependencies: Vec<usize>,
     pub instructions: Arc<Vec<usize>>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum StreamState {
-    Unreached,
-    Spawned,
-    Joined,
-}
-
-impl Into<String> for &StreamState {
-    fn into(self) -> String {
-        match self {
-            StreamState::Unreached => "Unreached",
-            StreamState::Spawned => "Spawned",
-            StreamState::Joined => "Joined",
-        }
-        .into()
-    }
-}
-
-impl Display for StreamState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let as_string: String = self.into();
-        let result = write!(f, "{}", as_string);
-        result
-    }
-}
-
-impl Default for StreamState {
-    fn default() -> Self {
-        StreamState::Unreached
-    }
 }
 
 impl Display for Stream {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let _ = write!(f, "Stream id: {}", self.id,);
-        let _ = write!(f, "\n");
-        let _ = write!(f, "state: {}", self.state,);
         let _ = write!(f, "\n");
         let _ = write!(f, "dependencies_len: {}", self.dependencies.len(),);
         let _ = write!(f, "\n");
@@ -126,7 +91,6 @@ pub fn make_streams(
         let instructions = stream_instructions[i].clone();
         let stream = Stream {
             id: i,
-            state: Default::default(),
             dependencies: Default::default(),
             instructions: instructions.into(),
         };

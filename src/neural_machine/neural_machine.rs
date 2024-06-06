@@ -9,7 +9,7 @@ use crate::{
 
 use super::streams::{
     instruction::make_simple_instructions,
-    scheduler::{execute_streams, reset_streams},
+    scheduler::execute_streams,
     stream::{make_streams, Stream},
     verify_machine_inputs,
 };
@@ -140,8 +140,7 @@ impl<T> NeuralMachine<T> {
             Category::Gradient => &self.gradient_instructions,
             Category::Optimization => &self.optimization_instructions,
         };
-        execute_streams(streams, &instructions, self.max_concurrent_streams)?;
-        reset_streams(streams);
+        execute_streams(streams, &instructions, &[], self.max_concurrent_streams);
         Ok(())
     }
 

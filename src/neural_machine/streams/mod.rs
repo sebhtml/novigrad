@@ -14,6 +14,19 @@ pub struct Stream {
     pub instructions: Arc<Vec<usize>>,
 }
 
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
+enum Access {
+    Read,
+    Write,
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
+struct Transaction {
+    pub instruction: usize,
+    pub operand: usize,
+    pub access: Access,
+}
+
 /// Maker sure that no instruction writes to machine inputs.
 pub fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usize>, Vec<usize>)]) {
     for machine_input in machine_inputs {
@@ -448,6 +461,80 @@ fn spawn_stream(
     threads[stream] = Some(spawned_thread);
     */
     Ok(())
+}
+
+/// Simulate an execution of streams and emit operand transactions.
+pub fn spawn_and_join_streams(
+    streams: &[Stream],
+    instructions: &[(Vec<usize>, Vec<usize>)],
+) -> Vec<Transaction> {
+    let mut actual_transactions = vec![];
+    let mut unreached_streams = BTreeSet::<usize>::new();
+    for i in 0..streams.len() {
+        unreached_streams.insert(i);
+    }
+    let mut spawned_streams = BTreeSet::<usize>::new();
+    let mut joined_streams = BTreeSet::<usize>::new();
+    while joined_streams.len() != streams.len() {
+        let mut stream_to_spawn: Option<usize> = None;
+        // Find a stream that can be spawned.
+        for unreached_stream in unreached_streams.iter() {
+            let mut can_spawn = true;
+            let dependencies = &streams[*unreached_stream].dependencies;
+            for dependency in dependencies {
+                if !joined_streams.contains(dependency) {
+                    can_spawn = false;
+                    break;
+                }
+            }
+            if can_spawn {
+                stream_to_spawn = Some(*unreached_stream);
+                break;
+            }
+        }
+        if let Some(stream_to_spawn) = stream_to_spawn {
+            // Spawn it.
+            unreached_streams.remove(&stream_to_spawn);
+            spawned_streams.insert(stream_to_spawn);
+            // Emit transactions on the execution unit pipeline.
+            let stream_instructions = &streams[stream_to_spawn].instructions;
+            for instruction in stream_instructions.iter() {
+                let instruction = *instruction;
+                let (inputs, outputs) = &instructions[instruction];
+                let mut instruction_transactions =
+                    get_instruction_transactions(instruction, inputs, outputs);
+                actual_transactions.extend_from_slice(&mut instruction_transactions);
+            }
+            // Immediately join the thread.
+            joined_streams.insert(stream_to_spawn);
+        }
+    }
+    actual_transactions
+}
+
+fn get_instruction_transactions(
+    instruction: usize,
+    inputs: &[usize],
+    outputs: &[usize],
+) -> Vec<Transaction> {
+    let mut transactions = vec![];
+    for operand in inputs {
+        let transaction = Transaction {
+            instruction,
+            operand: *operand,
+            access: Access::Read,
+        };
+        transactions.push(transaction);
+    }
+    for operand in outputs {
+        let transaction = Transaction {
+            instruction,
+            operand: *operand,
+            access: Access::Write,
+        };
+        transactions.push(transaction);
+    }
+    transactions
 }
 
 pub fn execute_streams(

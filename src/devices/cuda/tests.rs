@@ -5,7 +5,7 @@ use crate::EPSILON;
 
 #[test]
 fn cublas_sgemm_column_major() {
-    use crate::devices::DeviceInterface;
+    use crate::devices::DeviceTrait;
     use crate::Device;
 
     let device = Device::cuda().unwrap();
@@ -234,7 +234,7 @@ fn cuda_softmax_kernel() {
 #[test]
 fn cuda_dot_kernel() {
     use crate::CudaDev;
-    use crate::{Device, DeviceInterface};
+    use crate::{Device, DeviceTrait};
     use cudarc::driver::LaunchConfig;
 
     let cuda_device = CudaDev::try_default().unwrap();
@@ -287,7 +287,7 @@ fn cuda_dot_kernel() {
 #[test]
 fn cuda_dot_kernel_big_vectors() {
     use crate::CudaDev;
-    use crate::{Device, DeviceInterface};
+    use crate::{Device, DeviceTrait};
     use cudarc::driver::LaunchConfig;
     use rand::Rng;
 
@@ -336,7 +336,7 @@ fn cuda_dot_kernel_big_vectors() {
 #[test]
 fn cuda_cross_entropy_loss() {
     use crate::CudaDev;
-    use crate::{Device, DeviceInterface};
+    use crate::{Device, DeviceTrait};
     use cudarc::driver::LaunchConfig;
 
     let cuda_device = CudaDev::try_default().unwrap();

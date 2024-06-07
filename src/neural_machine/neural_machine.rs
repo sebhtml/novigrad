@@ -142,7 +142,7 @@ impl<T> NeuralMachine<T> {
             Category::Gradient => &self.gradient_instructions,
             Category::Optimization => &self.optimization_instructions,
         };
-        execute_streams(streams, &instructions, &[], self.max_concurrent_streams);
+        execute_streams(streams, &instructions, self.max_concurrent_streams);
         Ok(())
     }
 

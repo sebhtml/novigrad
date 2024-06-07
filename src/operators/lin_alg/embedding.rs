@@ -1,5 +1,5 @@
 use crate::{
-    devices::Device, tensor::Error, tensor::Tensor, BinaryOperator, DeviceInterface, MatMul,
+    devices::Device, tensor::Error, tensor::Tensor, BinaryOperator, DeviceTrait, MatMul,
     TensorWithGrad, UnaryOperator,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};

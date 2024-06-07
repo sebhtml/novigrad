@@ -2,7 +2,7 @@ use more_asserts::{assert_ge, assert_le};
 
 #[test]
 fn clip_min() {
-    use crate::devices::DeviceInterface;
+    use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
     let input = device
@@ -42,7 +42,7 @@ fn clip_min() {
 
 #[test]
 fn clip_max() {
-    use crate::devices::DeviceInterface;
+    use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
     let input = device
@@ -82,7 +82,7 @@ fn clip_max() {
 
 #[test]
 fn bernoulli() {
-    use crate::devices::DeviceInterface;
+    use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
     let input = device.tensor(1, 100, vec![0.3; 100]).unwrap();

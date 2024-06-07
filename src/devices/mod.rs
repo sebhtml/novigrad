@@ -27,7 +27,7 @@ pub struct MemoryInfo {
     pub total: usize,
 }
 
-pub trait DeviceInterface {
+pub trait DeviceTrait {
     ///  SGEMM  performs one of the matrix-matrix operations
     /// https://netlib.org/lapack/explore-html-3.6.1/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html
     ///
@@ -127,7 +127,7 @@ pub trait DeviceInterface {
     fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 }
 
-impl Debug for dyn DeviceInterface + Send + Sync {
+impl Debug for dyn DeviceTrait + Send + Sync {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }
@@ -138,7 +138,7 @@ pub struct Device {
     next_name: Arc<RwLock<usize>>,
     used: Arc<RwLock<usize>>,
     tensors_to_optimize: Arc<RwLock<Vec<TensorWithGrad>>>,
-    device: Arc<dyn DeviceInterface + Send + Sync>,
+    device: Arc<dyn DeviceTrait + Send + Sync>,
     available_buffers: Arc<RwLock<HashMap<usize, LinkedList<DevSlice>>>>,
 }
 
@@ -152,7 +152,7 @@ impl Default for Device {
 }
 
 impl Device {
-    pub fn new(device: Arc<dyn DeviceInterface + Send + Sync>) -> Self {
+    pub fn new(device: Arc<dyn DeviceTrait + Send + Sync>) -> Self {
         Self {
             next_name: Default::default(),
             used: Default::default(),
@@ -261,7 +261,7 @@ impl Device {
     }
 }
 
-impl DeviceInterface for Device {
+impl DeviceTrait for Device {
     fn gemm(
         &self,
         transa: bool,

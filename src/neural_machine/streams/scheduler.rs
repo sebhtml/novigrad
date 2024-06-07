@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, sync::Arc, thread::JoinHandle};
+use std::{collections::BTreeSet, rc::Rc, sync::Arc, thread::JoinHandle};
 
 use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
 
@@ -8,38 +8,42 @@ use super::{
 };
 
 pub trait StreamEventHandler {
-    fn new(streams: &[Stream]) -> Self;
     fn on_spawn(
         &mut self,
         streams: &[Stream],
         instructions: &Arc<Vec<Instruction>>,
-        simple_instructions: &[(Vec<usize>, Vec<usize>)],
         stream: usize,
     ) -> Result<(), Error>;
     fn on_join(
         &mut self,
         streams: &[Stream],
         instructions: &[Instruction],
-        simple_instructions: &[(Vec<usize>, Vec<usize>)],
         stream: usize,
     ) -> Result<(), Error>;
 }
 
 pub struct TransactionEmitter {
+    simple_instructions: Rc<Vec<(Vec<usize>, Vec<usize>)>>,
     pub actual_transactions: Vec<Transaction>,
 }
 
-impl StreamEventHandler for TransactionEmitter {
-    fn new(_streams: &[Stream]) -> Self {
+impl TransactionEmitter {
+    pub fn new(
+        _streams: &[Stream],
+        simple_instructions: &Rc<Vec<(Vec<usize>, Vec<usize>)>>,
+    ) -> Self {
         Self {
+            simple_instructions: simple_instructions.clone(),
             actual_transactions: Default::default(),
         }
     }
+}
+
+impl StreamEventHandler for TransactionEmitter {
     fn on_spawn(
         &mut self,
         _streams: &[Stream],
         _instructions: &Arc<Vec<Instruction>>,
-        _simple_instructions: &[(Vec<usize>, Vec<usize>)],
         _stream: usize,
     ) -> Result<(), Error> {
         Ok(())
@@ -48,14 +52,13 @@ impl StreamEventHandler for TransactionEmitter {
         &mut self,
         streams: &[Stream],
         _instructions: &[Instruction],
-        simple_instructions: &[(Vec<usize>, Vec<usize>)],
         stream: usize,
     ) -> Result<(), Error> {
         let stream_instructions = &streams[stream].instructions;
 
         for instruction in stream_instructions.iter() {
             let instruction = *instruction;
-            let (inputs, outputs) = &simple_instructions[instruction];
+            let (inputs, outputs) = &self.simple_instructions[instruction];
             let mut instruction_transactions =
                 get_instruction_transactions(instruction, inputs, outputs);
             self.actual_transactions
@@ -70,6 +73,13 @@ pub struct StreamExecutor {
 }
 
 impl StreamExecutor {
+    pub fn new(streams: &[Stream]) -> Self {
+        let mut threads: Vec<Option<JoinHandle<Result<(), Error>>>> = vec![];
+        for _ in 0..streams.len() {
+            threads.push(None);
+        }
+        Self { _threads: threads }
+    }
     fn join_stream(&mut self, _stream: usize, _streams: &[Stream]) -> Result<(), Error> {
         /*
         let thread = self.threads[stream].take();
@@ -109,18 +119,10 @@ impl StreamExecutor {
 }
 
 impl StreamEventHandler for StreamExecutor {
-    fn new(streams: &[Stream]) -> Self {
-        let mut threads: Vec<Option<JoinHandle<Result<(), Error>>>> = vec![];
-        for _ in 0..streams.len() {
-            threads.push(None);
-        }
-        Self { _threads: threads }
-    }
     fn on_spawn(
         &mut self,
         streams: &[Stream],
         instructions: &Arc<Vec<Instruction>>,
-        _simple_instructions: &[(Vec<usize>, Vec<usize>)],
         stream: usize,
     ) -> Result<(), Error> {
         self.spawn_stream(stream, streams, instructions)
@@ -130,7 +132,6 @@ impl StreamEventHandler for StreamExecutor {
         &mut self,
         streams: &[Stream],
         _instructions: &[Instruction],
-        _simple_instructions: &[(Vec<usize>, Vec<usize>)],
         stream: usize,
     ) -> Result<(), Error> {
         self.join_stream(stream, streams)
@@ -141,17 +142,10 @@ impl StreamEventHandler for StreamExecutor {
 pub fn execute_streams(
     streams: &[Stream],
     instructions: &Arc<Vec<Instruction>>,
-    simple_instructions: &[(Vec<usize>, Vec<usize>)],
     max_concurrent_streams: usize,
 ) {
     let mut handler = StreamExecutor::new(streams);
-    schedule_spawn_and_join_events(
-        streams,
-        instructions,
-        simple_instructions,
-        max_concurrent_streams,
-        &mut handler,
-    );
+    schedule_spawn_and_join_events(streams, instructions, max_concurrent_streams, &mut handler);
 }
 
 /// Simulate an execution of streams and emit operand transactions.
@@ -159,24 +153,17 @@ pub fn execute_streams(
 pub fn simulate_execution_and_collect_transactions(
     streams: &[Stream],
     instructions: &Arc<Vec<Instruction>>,
-    simple_instructions: &[(Vec<usize>, Vec<usize>)],
+    simple_instructions: &Rc<Vec<(Vec<usize>, Vec<usize>)>>,
     max_concurrent_streams: usize,
 ) -> Vec<Transaction> {
-    let mut handler = TransactionEmitter::new(streams);
-    schedule_spawn_and_join_events(
-        streams,
-        instructions,
-        simple_instructions,
-        max_concurrent_streams,
-        &mut handler,
-    );
+    let mut handler = TransactionEmitter::new(streams, simple_instructions);
+    schedule_spawn_and_join_events(streams, instructions, max_concurrent_streams, &mut handler);
     handler.actual_transactions
 }
 
 pub fn schedule_spawn_and_join_events(
     streams: &[Stream],
     instructions: &Arc<Vec<Instruction>>,
-    simple_instructions: &[(Vec<usize>, Vec<usize>)],
     max_concurrent_streams: usize,
     handler: &mut impl StreamEventHandler,
 ) -> Result<(), Error> {
@@ -217,10 +204,10 @@ pub fn schedule_spawn_and_join_events(
             unreached_streams.remove(&stream_to_spawn);
             spawned_streams.insert(stream_to_spawn);
             // Emit transactions on the execution unit pipeline.
-            handler.on_spawn(streams, instructions, simple_instructions, stream_to_spawn)?;
+            handler.on_spawn(streams, instructions, stream_to_spawn)?;
             // Immediately join the thread.
             joined_streams.insert(stream_to_spawn);
-            handler.on_join(streams, instructions, simple_instructions, stream_to_spawn)?;
+            handler.on_join(streams, instructions, stream_to_spawn)?;
         }
     }
     Ok(())

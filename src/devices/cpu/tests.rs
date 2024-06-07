@@ -1,7 +1,7 @@
 /// This is the example from https://docs.rs/cblas/latest/cblas/.
 #[test]
 fn cblas_sgemm_column_major() {
-    use crate::devices::DeviceInterface;
+    use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::cpu();
     let (m, n, k) = (2, 4, 3);
@@ -80,7 +80,7 @@ fn cblas_sgemm_column_major() {
 #[test]
 fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
     // From https://stackoverflow.com/questions/56043539/cublassgemm-row-major-multiplication
-    use crate::devices::DeviceInterface;
+    use crate::devices::DeviceTrait;
     use crate::Device;
 
     let device = Device::cpu();

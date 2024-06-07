@@ -1,20 +1,23 @@
-- remove simple_instructions from StreamEventHandler
-- rename DeviceInterface DeviceTrait
-- remove write_before_read_dependents and folks
-
 - reuse threads in streams scheduler
 - spawn threads with CPU device
 - add device stream support in devices to execute attention heads in parallel
 
 == Transformer ==
 
-- implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
 - add Standardize
 
 - implement LayerNormalization which is Standardize + ScalarMul + Add
 - implement Gelu
 - implement LayerNorm
 - implement Transformer
+
+---------------
+
+- implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
+- rename RowMax to ArgMax (https://onnx.ai/onnx/operators/onnx__ArgMax.html)
+
+---------------
+
 - increase examples in mega_man_attention from 10 to 100
 
 ---------------

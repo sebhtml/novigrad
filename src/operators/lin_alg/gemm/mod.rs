@@ -1,5 +1,5 @@
 use crate::{
-    devices::Device, error, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceInterface,
+    devices::Device, error, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceTrait,
 };
 
 #[cfg(test)]

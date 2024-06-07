@@ -1,5 +1,4 @@
 - remove simple_instructions from StreamEventHandler
-- rename DeviceInterface DeviceTrait
 
 - reuse threads in streams scheduler
 - spawn threads with CPU device
@@ -7,13 +6,20 @@
 
 == Transformer ==
 
-- implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
 - add Standardize
 
 - implement LayerNormalization which is Standardize + ScalarMul + Add
 - implement Gelu
 - implement LayerNorm
 - implement Transformer
+
+---------------
+
+- implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
+- rename RowMax to ArgMax (https://onnx.ai/onnx/operators/onnx__ArgMax.html)
+
+---------------
+
 - increase examples in mega_man_attention from 10 to 100
 
 ---------------

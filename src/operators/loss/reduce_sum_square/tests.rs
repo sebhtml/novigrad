@@ -1,4 +1,4 @@
-use crate::{tensor::Tensor, BinaryOperator, Device, DeviceInterface};
+use crate::{tensor::Tensor, BinaryOperator, Device, DeviceTrait};
 
 use super::ReduceSumSquare;
 

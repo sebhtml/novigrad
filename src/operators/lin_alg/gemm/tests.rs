@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{Device, DeviceInterface, Gemm};
+use crate::{Device, DeviceTrait, Gemm};
 
 #[test]
 fn big_matrix_multiplication() {

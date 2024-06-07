@@ -1,7 +1,7 @@
 use crate::devices::slice::DevSliceTrait;
 use crate::tensor::ErrorEnum;
 use crate::{
-    devices::{Device, DeviceInterface},
+    devices::{Device, DeviceTrait},
     error,
     slice::DevSlice,
     tensor::Error,

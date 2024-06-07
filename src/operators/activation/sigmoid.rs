@@ -1,7 +1,7 @@
 use crate::devices::Device;
 use crate::{
     emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, tensor::Error,
-    DeviceInterface, TensorWithGrad,
+    DeviceTrait, TensorWithGrad,
 };
 use crate::{tensor::Tensor, OpCode, UnaryOperator};
 

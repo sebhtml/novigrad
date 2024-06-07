@@ -1,7 +1,6 @@
 use crate::devices::Device;
 use crate::{
-    gradient_instruction, inference_instruction, tensor::Tensor, DeviceInterface, OpCode,
-    UnaryOperator,
+    gradient_instruction, inference_instruction, tensor::Tensor, DeviceTrait, OpCode, UnaryOperator,
 };
 use crate::{tensor::Error, TensorWithGrad};
 

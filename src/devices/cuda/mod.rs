@@ -12,7 +12,7 @@ use cudarc::{
 };
 
 use crate::{
-    error, slice::DevSliceEnum, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceInterface,
+    error, slice::DevSliceEnum, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceTrait,
     EPSILON,
 };
 
@@ -156,7 +156,7 @@ impl CudaDev {
     }
 }
 
-impl DeviceInterface for CudaDev {
+impl DeviceTrait for CudaDev {
     /// On the web page
     /// https://docs.nvidia.com/cuda/cublas/#cublas-level-3-function-reference
     ///

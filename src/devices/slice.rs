@@ -3,7 +3,7 @@ use super::cpu::slice::CpuDevSlice;
 use super::cuda::slice::CudaDevSlice;
 use crate::tensor::Error;
 use crate::Device;
-use crate::DeviceInterface;
+use crate::DeviceTrait;
 use std::borrow::BorrowMut;
 
 #[derive(Debug)]

@@ -1,7 +1,7 @@
 use crate::{
     gradient_instruction, inference_instruction,
     tensor::{Error, Tensor},
-    Device, DeviceInterface, OpCode, TensorWithGrad, UnaryOperator,
+    Device, DeviceTrait, OpCode, TensorWithGrad, UnaryOperator,
 };
 
 pub struct ScalarMul {

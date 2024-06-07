@@ -9,7 +9,7 @@ use crate::{
 
 use self::slice::CpuDevSlice;
 
-use super::DeviceInterface;
+use super::DeviceTrait;
 extern crate blas_src;
 
 #[cfg(test)]
@@ -24,7 +24,7 @@ impl Default for CpuDevice {
     }
 }
 
-impl DeviceInterface for CpuDevice {
+impl DeviceTrait for CpuDevice {
     fn gemm(
         &self,
         transa: bool,

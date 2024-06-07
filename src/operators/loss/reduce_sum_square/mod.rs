@@ -1,6 +1,6 @@
 use crate::{
     devices::Device, gradient_instruction, loss_instruction, tensor::Error, tensor::Tensor,
-    BinaryOperator, DeviceInterface, OpCode, TensorWithGrad,
+    BinaryOperator, DeviceTrait, OpCode, TensorWithGrad,
 };
 
 #[cfg(test)]

@@ -62,7 +62,7 @@ pub fn make_streams(
         &instruction_dependencies,
     );
 
-    //#[cfg(feature = "verbose_streams")]
+    #[cfg(feature = "verbose_streams")]
     {
         for (i, stream) in instruction_streams.iter().enumerate() {
             println!("STREAM-ASSIGNMENT Instruction {}  stream {}", i, stream);

@@ -1,27 +1,23 @@
-use std::{collections::BTreeSet, rc::Rc, sync::Arc, thread::JoinHandle};
+use std::{cell::RefCell, collections::LinkedList, ops::Deref, rc::Rc, sync::Arc};
 
-use crate::{execution_unit::ExecutionUnit, tensor::Error, Instruction};
+use crate::{tensor::Error, Instruction};
 
 use super::{
+    pipelines::{Controller, ExecutionUnit},
     stream::Stream,
     transaction::{get_instruction_transactions, Transaction},
 };
 
 pub trait StreamEventHandler {
-    fn on_spawn(
+    fn on_execute(
         &mut self,
-        streams: &[Stream],
+        streams: &Arc<Vec<Stream>>,
         instructions: &Arc<Vec<Instruction>>,
-        stream: usize,
-    ) -> Result<(), Error>;
-    fn on_join(
-        &mut self,
-        streams: &[Stream],
-        instructions: &[Instruction],
         stream: usize,
     ) -> Result<(), Error>;
 }
 
+#[derive(Clone)]
 pub struct TransactionEmitter {
     simple_instructions: Rc<Vec<(Vec<usize>, Vec<usize>)>>,
     pub actual_transactions: Vec<Transaction>,
@@ -40,22 +36,13 @@ impl TransactionEmitter {
 }
 
 impl StreamEventHandler for TransactionEmitter {
-    fn on_spawn(
+    fn on_execute(
         &mut self,
-        _streams: &[Stream],
+        streams: &Arc<Vec<Stream>>,
         _instructions: &Arc<Vec<Instruction>>,
-        _stream: usize,
-    ) -> Result<(), Error> {
-        Ok(())
-    }
-    fn on_join(
-        &mut self,
-        streams: &[Stream],
-        _instructions: &[Instruction],
         stream: usize,
     ) -> Result<(), Error> {
         let stream_instructions = &streams[stream].instructions;
-
         for instruction in stream_instructions.iter() {
             let instruction = *instruction;
             let (inputs, outputs) = &self.simple_instructions[instruction];
@@ -68,32 +55,12 @@ impl StreamEventHandler for TransactionEmitter {
     }
 }
 
-pub struct StreamExecutor {
-    _threads: Vec<Option<JoinHandle<Result<(), Error>>>>,
-}
+#[derive(Clone)]
+pub struct StreamExecutor {}
 
 impl StreamExecutor {
-    pub fn new(streams: &[Stream]) -> Self {
-        let mut threads: Vec<Option<JoinHandle<Result<(), Error>>>> = vec![];
-        for _ in 0..streams.len() {
-            threads.push(None);
-        }
-        Self { _threads: threads }
-    }
-    fn join_stream(&mut self, _stream: usize, _streams: &[Stream]) -> Result<(), Error> {
-        /*
-        let thread = self.threads[stream].take();
-        if let Some(thread) = thread {
-            match thread.join() {
-                Ok(result) => match result {
-                    Ok(_) => (),
-                    Err(err) => return Err(err),
-                },
-                Err(_) => return Err(error!(ErrorEnum::UnsupportedOperation)),
-            }
-        }
-         */
-        Ok(())
+    pub fn new() -> Self {
+        Self {}
     }
 
     fn spawn_stream(
@@ -104,111 +71,65 @@ impl StreamExecutor {
     ) -> Result<(), Error> {
         let stream_instructions = streams[stream].instructions.clone();
         let instructions = instructions.clone();
-        ExecutionUnit::execute(stream_instructions, instructions)?;
-
-        /*
-        TODO
-        let stream_instructions = streams[stream].instructions.clone();
-        let instructions = instructions.clone();
-        let spawned_thread =
-            thread::spawn(|| ExecutionUnit::execute(stream_instructions, instructions));
-        self.threads[stream] = Some(spawned_thread);
-         */
+        crate::execution_unit::ExecutionUnit::execute(stream_instructions, instructions)?;
         Ok(())
     }
 }
 
 impl StreamEventHandler for StreamExecutor {
-    fn on_spawn(
+    fn on_execute(
         &mut self,
-        streams: &[Stream],
+        streams: &Arc<Vec<Stream>>,
         instructions: &Arc<Vec<Instruction>>,
         stream: usize,
     ) -> Result<(), Error> {
         self.spawn_stream(stream, streams, instructions)
     }
-
-    fn on_join(
-        &mut self,
-        streams: &[Stream],
-        _instructions: &[Instruction],
-        stream: usize,
-    ) -> Result<(), Error> {
-        self.join_stream(stream, streams)
-    }
 }
 
 #[allow(unused)]
 pub fn execute_streams(
-    streams: &[Stream],
+    streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     max_concurrent_streams: usize,
 ) {
-    let mut handler = StreamExecutor::new(streams);
-    schedule_spawn_and_join_events(streams, instructions, max_concurrent_streams, &mut handler);
+    let mut handler = StreamExecutor::new();
+    let handler = Rc::new(RefCell::new(handler));
+    let mut emit_pipeline = Rc::new(RefCell::new(LinkedList::<usize>::new()));
+    let mut retire_pipeline = Rc::new(RefCell::new(LinkedList::<usize>::new()));
+    let mut controller = Controller::new(streams, &emit_pipeline, &retire_pipeline);
+    let mut execution_unit = ExecutionUnit::new(
+        &emit_pipeline,
+        &retire_pipeline,
+        &handler,
+        streams,
+        instructions,
+    );
+    controller.start();
+    while execution_unit.step() || controller.step() {}
 }
 
 /// Simulate an execution of streams and emit operand transactions.
 #[allow(unused)]
 pub fn simulate_execution_and_collect_transactions(
-    streams: &[Stream],
+    streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     simple_instructions: &Rc<Vec<(Vec<usize>, Vec<usize>)>>,
     max_concurrent_streams: usize,
 ) -> Vec<Transaction> {
-    let mut handler = TransactionEmitter::new(streams, simple_instructions);
-    schedule_spawn_and_join_events(streams, instructions, max_concurrent_streams, &mut handler);
-    handler.actual_transactions
-}
-
-pub fn schedule_spawn_and_join_events(
-    streams: &[Stream],
-    instructions: &Arc<Vec<Instruction>>,
-    max_concurrent_streams: usize,
-    handler: &mut impl StreamEventHandler,
-) -> Result<(), Error> {
-    let mut unreached_streams = BTreeSet::<usize>::new();
-    for i in 0..streams.len() {
-        unreached_streams.insert(i);
-    }
-    let mut spawned_streams = BTreeSet::<usize>::new();
-    let mut joined_streams = BTreeSet::<usize>::new();
-
-    while joined_streams.len() != streams.len() {
-        let mut stream_to_spawn: Option<usize> = None;
-        // Find a stream that can be spawned.
-        for unreached_stream in unreached_streams.iter() {
-            let mut can_spawn = true;
-            let dependencies = &streams[*unreached_stream].dependencies;
-            for dependency in dependencies {
-                if !joined_streams.contains(dependency) {
-                    can_spawn = false;
-                    break;
-                }
-            }
-            if can_spawn {
-                stream_to_spawn = Some(*unreached_stream);
-                break;
-            }
-        }
-        if let Some(stream_to_spawn) = stream_to_spawn {
-            let concurrent_streams = spawned_streams.len() - joined_streams.len();
-            if concurrent_streams == max_concurrent_streams {
-                // Join the oldest active stream before spawning this one.
-                let oldest = spawned_streams.iter().min().map(|x| *x);
-                if let Some(oldest) = oldest {
-                    joined_streams.insert(oldest);
-                }
-            }
-            // Spawn it.
-            unreached_streams.remove(&stream_to_spawn);
-            spawned_streams.insert(stream_to_spawn);
-            // Emit transactions on the execution unit pipeline.
-            handler.on_spawn(streams, instructions, stream_to_spawn)?;
-            // Immediately join the thread.
-            joined_streams.insert(stream_to_spawn);
-            handler.on_join(streams, instructions, stream_to_spawn)?;
-        }
-    }
-    Ok(())
+    let handler = TransactionEmitter::new(streams, simple_instructions);
+    let handler = Rc::new(RefCell::new(handler));
+    let mut emit_pipeline = Rc::new(RefCell::new(LinkedList::<usize>::new()));
+    let mut retire_pipeline = Rc::new(RefCell::new(LinkedList::<usize>::new()));
+    let mut controller = Controller::new(streams, &emit_pipeline, &retire_pipeline);
+    let mut execution_unit = ExecutionUnit::new(
+        &emit_pipeline,
+        &retire_pipeline,
+        &handler,
+        streams,
+        instructions,
+    );
+    controller.start();
+    while execution_unit.step() || controller.step() {}
+    handler.clone().deref().borrow().actual_transactions.clone()
 }

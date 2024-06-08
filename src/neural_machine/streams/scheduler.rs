@@ -1,5 +1,4 @@
 use std::{
-    collections::VecDeque,
     sync::{Arc, Mutex},
     thread::{self, JoinHandle},
 };
@@ -116,7 +115,7 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
     handler: &Arc<Mutex<Handler>>,
 ) {
     let dispatch_queue = Arc::new(Queue::default());
-    let completion_queue = Arc::new(Mutex::new(VecDeque::<usize>::new()));
+    let completion_queue = Arc::new(Queue::default());
     let scheduler = Scheduler::new(
         streams,
         &dispatch_queue,
@@ -147,7 +146,7 @@ pub struct Scheduler {
     dependents: Vec<Vec<usize>>,
     pending_dependencies: Vec<usize>,
     dispatch_queue: Arc<Queue<usize>>,
-    completion_queue: Arc<Mutex<VecDeque<usize>>>,
+    completion_queue: Arc<Queue<usize>>,
     completed_streams: usize,
     max_concurrent_streams: usize,
 }
@@ -156,7 +155,7 @@ impl Scheduler {
     pub fn new(
         streams: &[Stream],
         dispatch_queue: &Arc<Queue<usize>>,
-        completion_queue: &Arc<Mutex<VecDeque<usize>>>,
+        completion_queue: &Arc<Queue<usize>>,
         max_concurrent_streams: usize,
     ) -> Self {
         let pending_dependencies = streams.iter().map(|x| x.dependencies.len()).collect();
@@ -197,7 +196,7 @@ impl Scheduler {
     }
 
     pub fn step(&mut self) -> bool {
-        let stream = self.completion_queue.lock().unwrap().pop_front();
+        let stream = self.completion_queue.pop_front();
         if let Some(stream) = stream {
             self.completed_streams += 1;
             let dependents = &self.dependents[stream];
@@ -224,13 +223,13 @@ pub struct ExecutionUnit<Handler: StreamEventHandler> {
     streams: Arc<Vec<Stream>>,
     instructions: Arc<Vec<Instruction>>,
     dispatch_queue: Arc<Queue<usize>>,
-    completion_queue: Arc<Mutex<VecDeque<usize>>>,
+    completion_queue: Arc<Queue<usize>>,
 }
 
 impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<Handler> {
     pub fn new(
         dispatch_queue: &Arc<Queue<usize>>,
-        completion_queue: &Arc<Mutex<VecDeque<usize>>>,
+        completion_queue: &Arc<Queue<usize>>,
         handler: &Arc<Mutex<Handler>>,
         streams: &Arc<Vec<Stream>>,
         instructions: &Arc<Vec<Instruction>>,
@@ -266,7 +265,7 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<
                 .on_execute(&self.streams, &self.instructions, stream)
                 .unwrap();
             // Writeback
-            self.completion_queue.lock().unwrap().push_back(stream);
+            self.completion_queue.push_back(stream);
         }
         true
     }

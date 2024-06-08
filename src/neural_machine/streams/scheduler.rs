@@ -94,18 +94,18 @@ pub fn execute_streams(
 ) {
     let mut handler = StreamExecutor::new();
     let handler = Rc::new(RefCell::new(handler));
-    let mut fetch_queue = Rc::new(RefCell::new(LinkedList::<usize>::new()));
-    let mut writeback_queue = Rc::new(RefCell::new(LinkedList::<usize>::new()));
-    let mut controller = Scheduler::new(streams, &fetch_queue, &writeback_queue);
+    let mut dispatch_queue = Rc::new(RefCell::new(LinkedList::<usize>::new()));
+    let mut completion_queue = Rc::new(RefCell::new(LinkedList::<usize>::new()));
+    let mut scheduler = Scheduler::new(streams, &dispatch_queue, &completion_queue);
     let mut execution_unit = ExecutionUnit::new(
-        &fetch_queue,
-        &writeback_queue,
+        &dispatch_queue,
+        &completion_queue,
         &handler,
         streams,
         instructions,
     );
-    controller.start();
-    while execution_unit.step() || controller.step() {}
+    scheduler.start();
+    while execution_unit.step() || scheduler.step() {}
 }
 
 /// Simulate an execution of streams and emit operand transactions.
@@ -118,12 +118,12 @@ pub fn simulate_execution_and_collect_transactions(
 ) -> Vec<Transaction> {
     let handler = TransactionEmitter::new(streams, simple_instructions);
     let handler = Rc::new(RefCell::new(handler));
-    let mut fetch_queue = Rc::new(RefCell::new(LinkedList::<usize>::new()));
-    let mut writeback_queue = Rc::new(RefCell::new(LinkedList::<usize>::new()));
-    let mut controller = Scheduler::new(streams, &fetch_queue, &writeback_queue);
+    let mut dispatch_queue = Rc::new(RefCell::new(LinkedList::<usize>::new()));
+    let mut completion_queue = Rc::new(RefCell::new(LinkedList::<usize>::new()));
+    let mut controller = Scheduler::new(streams, &dispatch_queue, &completion_queue);
     let mut execution_unit = ExecutionUnit::new(
-        &fetch_queue,
-        &writeback_queue,
+        &dispatch_queue,
+        &completion_queue,
         &handler,
         streams,
         instructions,
@@ -136,8 +136,8 @@ pub fn simulate_execution_and_collect_transactions(
 pub struct Scheduler {
     dependents: Vec<Vec<usize>>,
     pending_dependencies: Vec<usize>,
-    fetch_queue: Rc<RefCell<LinkedList<usize>>>,
-    writeback_queue: Rc<RefCell<LinkedList<usize>>>,
+    dispatch_queue: Rc<RefCell<LinkedList<usize>>>,
+    completion_queue: Rc<RefCell<LinkedList<usize>>>,
 }
 
 impl Scheduler {
@@ -156,31 +156,31 @@ impl Scheduler {
         Self {
             dependents,
             pending_dependencies,
-            fetch_queue: emit_queue.clone(),
-            writeback_queue: retire_queue.clone(),
+            dispatch_queue: emit_queue.clone(),
+            completion_queue: retire_queue.clone(),
         }
     }
 
     pub fn start(&self) {
-        // Emit immediately all streams with no dependencies.
+        // Dispatch immediately all streams with no dependencies.
         for (stream, _) in self.pending_dependencies.iter().enumerate() {
-            self.maybe_emit(stream);
+            self.maybe_dispatch(stream);
         }
     }
 
-    fn maybe_emit(&self, stream: usize) {
+    fn maybe_dispatch(&self, stream: usize) {
         let pending_dependencies = self.pending_dependencies[stream];
         if pending_dependencies == 0 {
-            self.fetch_queue.deref().borrow_mut().push_back(stream);
+            self.dispatch_queue.deref().borrow_mut().push_back(stream);
         }
     }
 
     pub fn step(&mut self) -> bool {
-        if let Some(stream) = self.writeback_queue.deref().borrow_mut().pop_front() {
+        if let Some(stream) = self.completion_queue.deref().borrow_mut().pop_front() {
             let dependents = &self.dependents[stream];
             for dependent in dependents.iter() {
                 self.pending_dependencies[*dependent] -= 1;
-                self.maybe_emit(*dependent);
+                self.maybe_dispatch(*dependent);
             }
             true
         } else {
@@ -194,14 +194,14 @@ pub struct ExecutionUnit<Handler: StreamEventHandler> {
     handler: Rc<RefCell<Handler>>,
     streams: Arc<Vec<Stream>>,
     instructions: Arc<Vec<Instruction>>,
-    fetch_queue: Rc<RefCell<LinkedList<usize>>>,
-    writeback_queue: Rc<RefCell<LinkedList<usize>>>,
+    dispatch_queue: Rc<RefCell<LinkedList<usize>>>,
+    completion_queue: Rc<RefCell<LinkedList<usize>>>,
 }
 
 impl<Handler: StreamEventHandler + Clone> ExecutionUnit<Handler> {
     pub fn new(
-        fetch_queue: &Rc<RefCell<LinkedList<usize>>>,
-        writeback_queue: &Rc<RefCell<LinkedList<usize>>>,
+        dispatch_queue: &Rc<RefCell<LinkedList<usize>>>,
+        completion_queue: &Rc<RefCell<LinkedList<usize>>>,
         handler: &Rc<RefCell<Handler>>,
         streams: &Arc<Vec<Stream>>,
         instructions: &Arc<Vec<Instruction>>,
@@ -210,14 +210,14 @@ impl<Handler: StreamEventHandler + Clone> ExecutionUnit<Handler> {
             handler: handler.clone(),
             streams: streams.clone(),
             instructions: instructions.clone(),
-            fetch_queue: fetch_queue.clone(),
-            writeback_queue: writeback_queue.clone(),
+            dispatch_queue: dispatch_queue.clone(),
+            completion_queue: completion_queue.clone(),
         }
     }
 
     pub fn step(&mut self) -> bool {
         // Fetch
-        if let Some(stream) = self.fetch_queue.deref().borrow_mut().pop_front() {
+        if let Some(stream) = self.dispatch_queue.deref().borrow_mut().pop_front() {
             // Call handler to execute the instructions for that stream.
             self.handler
                 .deref()
@@ -225,7 +225,7 @@ impl<Handler: StreamEventHandler + Clone> ExecutionUnit<Handler> {
                 .on_execute(&self.streams, &self.instructions, stream)
                 .unwrap();
             // Writeback
-            self.writeback_queue.deref().borrow_mut().push_back(stream);
+            self.completion_queue.deref().borrow_mut().push_back(stream);
             true
         } else {
             false

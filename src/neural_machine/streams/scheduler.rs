@@ -91,21 +91,7 @@ pub fn execute_streams(
 ) {
     let mut handler = StreamExecutor::new();
     let handler = Arc::new(Mutex::new(handler));
-    let mut dispatch_queue = Arc::new(Mutex::new(VecDeque::<usize>::new()));
-    let mut completion_queue = Arc::new(Mutex::new(VecDeque::<usize>::new()));
-    let mut scheduler = Scheduler::new(streams, &dispatch_queue, &completion_queue);
-    let mut execution_unit = ExecutionUnit::new(
-        &dispatch_queue,
-        &completion_queue,
-        &handler,
-        streams,
-        instructions,
-    );
-
-    let execution_unit_handle = ExecutionUnit::spawn(execution_unit);
-    let scheduler_handle = Scheduler::spawn(scheduler);
-    scheduler = scheduler_handle.join().unwrap();
-    execution_unit = execution_unit_handle.join().unwrap();
+    run_scheduler(streams, instructions, max_concurrent_streams, &handler);
 }
 
 /// Simulate an execution of streams and emit operand transactions.
@@ -118,21 +104,42 @@ pub fn simulate_execution_and_collect_transactions(
 ) -> Vec<Transaction> {
     let handler = TransactionEmitter::new(streams, simple_instructions);
     let handler = Arc::new(Mutex::new(handler));
-    let mut dispatch_queue = Arc::new(Mutex::new(VecDeque::<usize>::new()));
-    let mut completion_queue = Arc::new(Mutex::new(VecDeque::<usize>::new()));
-    let mut scheduler = Scheduler::new(streams, &dispatch_queue, &completion_queue);
-    let mut execution_unit = ExecutionUnit::new(
+    run_scheduler(streams, instructions, max_concurrent_streams, &handler);
+    handler.clone().lock().unwrap().actual_transactions.clone()
+}
+
+fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
+    streams: &Arc<Vec<Stream>>,
+    instructions: &Arc<Vec<Instruction>>,
+    max_concurrent_streams: usize,
+    handler: &Arc<Mutex<Handler>>,
+) {
+    let dispatch_queue = Arc::new(Mutex::new(VecDeque::<usize>::new()));
+    let completion_queue = Arc::new(Mutex::new(VecDeque::<usize>::new()));
+    let scheduler = Scheduler::new(
+        streams,
         &dispatch_queue,
         &completion_queue,
-        &handler,
-        streams,
-        instructions,
+        max_concurrent_streams,
     );
-    let execution_unit_handle = ExecutionUnit::spawn(execution_unit);
+
+    let execution_unit_handles = (0..max_concurrent_streams)
+        .map(|_| {
+            let execution_unit = ExecutionUnit::new(
+                &dispatch_queue,
+                &completion_queue,
+                &handler,
+                streams,
+                instructions,
+            );
+            ExecutionUnit::spawn(execution_unit)
+        })
+        .collect::<Vec<_>>();
     let scheduler_handle = Scheduler::spawn(scheduler);
-    scheduler = scheduler_handle.join().unwrap();
-    execution_unit = execution_unit_handle.join().unwrap();
-    handler.clone().lock().unwrap().actual_transactions.clone()
+    let _ = scheduler_handle.join().unwrap();
+    let _ = execution_unit_handles
+        .into_iter()
+        .map(|x| x.join().unwrap());
 }
 
 pub struct Scheduler {
@@ -141,6 +148,7 @@ pub struct Scheduler {
     dispatch_queue: Arc<Mutex<VecDeque<usize>>>,
     completion_queue: Arc<Mutex<VecDeque<usize>>>,
     completed_streams: usize,
+    max_concurrent_streams: usize,
 }
 
 impl Scheduler {
@@ -148,6 +156,7 @@ impl Scheduler {
         streams: &[Stream],
         emit_queue: &Arc<Mutex<VecDeque<usize>>>,
         retire_queue: &Arc<Mutex<VecDeque<usize>>>,
+        max_concurrent_streams: usize,
     ) -> Self {
         let pending_dependencies = streams.iter().map(|x| x.dependencies.len()).collect();
         let mut dependents = vec![vec![]; streams.len()];
@@ -162,6 +171,7 @@ impl Scheduler {
             dispatch_queue: emit_queue.clone(),
             completion_queue: retire_queue.clone(),
             completed_streams: 0,
+            max_concurrent_streams,
         }
     }
 
@@ -197,7 +207,9 @@ impl Scheduler {
         }
 
         if self.completed_streams == self.dependents.len() {
-            self.dispatch_queue.lock().unwrap().push_back(STOP);
+            for _ in 0..self.max_concurrent_streams {
+                self.dispatch_queue.lock().unwrap().push_back(STOP);
+            }
             false
         } else {
             true

@@ -63,8 +63,7 @@ impl<T> NeuralMachine<T> {
         // TODO we need CUDA streams exposed by DeviceTrait to bump this to 32.
         let max_concurrent_streams = 1;
         #[cfg(not(feature = "cuda"))]
-        // TODO bump this to 32.
-        let max_concurrent_streams = 1;
+        let max_concurrent_streams = 32;
 
         let example_input = program.example_input;
         let example_output = program.example_output;
@@ -290,8 +289,7 @@ impl<T> NeuralMachine<T> {
         let simple_instructions = make_simple_instructions(instructions);
         verify_machine_inputs(&machine_inputs, &simple_instructions);
         let minimum_write_before_read_for_new_stream = 4;
-        // TODO set minimum_stream_instructions to 32
-        let minimum_stream_instructions = 1;
+        let minimum_stream_instructions = 32;
         let streams = make_streams(
             &simple_instructions,
             minimum_write_before_read_for_new_stream,

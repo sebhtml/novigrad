@@ -1,4 +1,4 @@
-use std::{ops::Deref, rc::Rc, sync::Arc};
+use std::{ops::Deref, sync::Arc};
 
 use crate::{
     mega_man_attention::MegaManAttentionModel,
@@ -375,7 +375,7 @@ fn reads_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) 
     let instructions = get_test_instructions(filter).unwrap();
     let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
-    let simple_instructions = Rc::new(simple_instructions);
+    let simple_instructions = Arc::new(simple_instructions);
     let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
@@ -427,7 +427,7 @@ fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>)
     let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
     print_instructions(&simple_instructions);
-    let simple_instructions = Rc::new(simple_instructions);
+    let simple_instructions = Arc::new(simple_instructions);
     let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
@@ -468,7 +468,7 @@ fn writes_and_reads_of_same_operand_are_not_reordered(filter: Option<Category>) 
     let instructions = get_test_instructions(filter).unwrap();
     let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
-    let simple_instructions = Rc::new(simple_instructions);
+    let simple_instructions = Arc::new(simple_instructions);
     let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);

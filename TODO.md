@@ -1,5 +1,4 @@
-- reuse threads in streams scheduler
-- spawn threads with CPU device
+- use Condvar
 - add device stream support in devices to execute attention heads in parallel
 
 == Transformer ==

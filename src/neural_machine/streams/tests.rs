@@ -1,4 +1,4 @@
-use std::{ops::Deref, rc::Rc, sync::Arc};
+use std::{ops::Deref, sync::Arc};
 
 use crate::{
     mega_man_attention::MegaManAttentionModel,
@@ -364,111 +364,32 @@ fn many_independent_instructions_in_one_stream() {
     assert_eq!(vec![0, 1], *streams[0].instructions);
 }
 
-#[test_case(None ; "no category filter")]
-#[test_case(Some(Category::Inference) ; "inference filter")]
-#[test_case(Some(Category::Loss) ; "loss filter")]
-#[test_case(Some(Category::Gradient) ; "gradient filter")]
-#[test_case(Some(Category::Optimization) ; "optimization filter")]
-fn reads_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) {
+#[test]
+fn reads_and_writes_of_same_operand_are_not_reordered() {
     let access = Access::Read;
     let prior_access = Access::Write;
-    let instructions = get_test_instructions(filter).unwrap();
-    let instructions = Arc::new(instructions);
-    let simple_instructions = make_simple_instructions(&instructions);
-    let simple_instructions = Rc::new(simple_instructions);
-    let expected_transactions = get_all_instruction_transactions(&simple_instructions);
-    let expected_read_write_pairs =
-        get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
-
-    let minimum_write_before_read_for_new_stream = 4;
-    let minimum_stream_instructions = 32;
-    let actual_streams = make_streams(
-        &simple_instructions,
-        minimum_write_before_read_for_new_stream,
-        minimum_stream_instructions,
-    );
-    let actual_streams = Arc::new(actual_streams);
-    let max_concurrent_streams = 32;
-    let actual_transactions = simulate_execution_and_collect_transactions(
-        &actual_streams,
-        &instructions,
-        &simple_instructions,
-        max_concurrent_streams,
-    );
-    let actual_read_write_pairs =
-        get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
-
-    for (operand, expected_pairs) in expected_read_write_pairs.iter() {
-        let empty = vec![];
-        let actual_pairs = actual_read_write_pairs.get(operand).unwrap_or(&empty);
-        assert_eq!(expected_pairs.len(), actual_pairs.len());
-        for i in 0..expected_pairs.len() {
-            println!("i {}", i);
-            println!("expected_pair {:?}", expected_pairs[i]);
-            println!("actual_pair {:?}", actual_pairs[i]);
-        }
-        for expected_pair in expected_pairs.iter() {
-            let contains = actual_pairs.contains(expected_pair);
-            println!("CONTAINS {}", contains);
-        }
-        //assert_eq!(expected_pairs, actual_pairs);
-    }
+    test_that_accesses_are_not_reordered(access, prior_access);
 }
 
-#[test_case(None ; "no category filter")]
-#[test_case(Some(Category::Inference) ; "inference filter")]
-#[test_case(Some(Category::Loss) ; "loss filter")]
-#[test_case(Some(Category::Gradient) ; "gradient filter")]
-#[test_case(Some(Category::Optimization) ; "optimization filter")]
-fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) {
+#[test]
+fn writes_and_writes_of_same_operand_are_not_reordered() {
     let access = Access::Write;
     let prior_access = Access::Write;
-    let instructions = get_test_instructions(filter).unwrap();
-    let instructions = Arc::new(instructions);
-    let simple_instructions = make_simple_instructions(&instructions);
-    print_instructions(&simple_instructions);
-    let simple_instructions = Rc::new(simple_instructions);
-    let expected_transactions = get_all_instruction_transactions(&simple_instructions);
-    let expected_read_write_pairs =
-        get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
-
-    let minimum_write_before_read_for_new_stream = 4;
-    let minimum_stream_instructions = 32;
-    let actual_streams = make_streams(
-        &simple_instructions,
-        minimum_write_before_read_for_new_stream,
-        minimum_stream_instructions,
-    );
-    let actual_streams = Arc::new(actual_streams);
-    print_streams("streams", &actual_streams.deref());
-    let max_concurrent_streams = 32;
-    let actual_transactions = simulate_execution_and_collect_transactions(
-        &actual_streams,
-        &instructions,
-        &simple_instructions,
-        max_concurrent_streams,
-    );
-    let actual_read_write_pairs =
-        get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
-
-    for (operand, expected_pairs) in expected_read_write_pairs.iter() {
-        let actual_pairs = actual_read_write_pairs.get(operand).unwrap();
-        assert_eq!(expected_pairs, actual_pairs);
-    }
+    test_that_accesses_are_not_reordered(access, prior_access);
 }
 
-#[test_case(None ; "no category filter")]
-#[test_case(Some(Category::Inference) ; "inference filter")]
-#[test_case(Some(Category::Loss) ; "loss filter")]
-#[test_case(Some(Category::Gradient) ; "gradient filter")]
-#[test_case(Some(Category::Optimization) ; "optimization filter")]
-fn writes_and_reads_of_same_operand_are_not_reordered(filter: Option<Category>) {
+#[test]
+fn writes_and_reads_of_same_operand_are_not_reordered() {
     let access = Access::Write;
     let prior_access = Access::Read;
-    let instructions = get_test_instructions(filter).unwrap();
+    test_that_accesses_are_not_reordered(access, prior_access);
+}
+
+fn test_that_accesses_are_not_reordered(access: Access, prior_access: Access) {
+    let instructions = get_test_instructions(None).unwrap();
     let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
-    let simple_instructions = Rc::new(simple_instructions);
+    let simple_instructions = Arc::new(simple_instructions);
     let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);

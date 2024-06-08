@@ -1,5 +1,5 @@
-- reuse threads in streams scheduler
-- spawn threads with CPU device
+- use Condvar
+- instantiate dispatch queue, completion queue, scheduler, and execution units in NeuralMachine
 - add device stream support in devices to execute attention heads in parallel
 
 == Transformer ==

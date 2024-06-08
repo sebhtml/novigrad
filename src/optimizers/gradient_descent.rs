@@ -1,6 +1,6 @@
 use crate::{
-    optimization_instruction, tensor::Error, Device, Instruction, OpCode, OptimizerTrait,
-    TensorWithGrad,
+    new_tensor, optimization_instruction, tensor::Error, Device, Instruction, OpCode,
+    OptimizerTrait, TensorWithGrad,
 };
 
 pub struct GradientDescent {
@@ -20,14 +20,18 @@ impl OptimizerTrait for GradientDescent {
         tensors: &[TensorWithGrad],
     ) -> Result<Vec<Instruction>, Error> {
         let mut instructions = vec![];
-        let zero = device.tensor(1, 1, vec![0.0])?;
+        let zero = new_tensor!(device, 1, 1, vec![0.0])?;
         for optimizable_tensor in tensors {
             let tensor = &optimizable_tensor.tensor();
             let gradient = &optimizable_tensor.gradient();
             debug_assert_eq!(*gradient.size(), *tensor.size(),);
 
-            let scaled_gradient =
-                device.tensor(tensor.rows(), tensor.cols(), vec![0.0; tensor.len()])?;
+            let scaled_gradient = new_tensor!(
+                device,
+                tensor.rows(),
+                tensor.cols(),
+                vec![0.0; tensor.len()]
+            )?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&zero, &scaled_gradient],
@@ -40,7 +44,7 @@ impl OptimizerTrait for GradientDescent {
                 &[&scaled_gradient],
             ));
 
-            let alpha = device.tensor(1, 1, vec![-self.learning_rate])?;
+            let alpha = new_tensor!(device, 1, 1, vec![-self.learning_rate])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&alpha, &scaled_gradient],

@@ -2,6 +2,7 @@ use crate::devices::Device;
 use crate::{
     gradient_instruction, inference_instruction, tensor::Tensor, DeviceTrait, OpCode, UnaryOperator,
 };
+use crate::{new_tensor, new_tensor_with_grad};
 use crate::{tensor::Error, TensorWithGrad};
 
 pub struct Softmax {
@@ -38,12 +39,18 @@ impl UnaryOperator for Softmax {
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output =
-            self.device
-                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false)?;
+        let output = new_tensor_with_grad!(
+            self.device,
+            rows,
+            cols,
+            vec![0.0; len],
+            &[input],
+            true,
+            false
+        )?;
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0])?;
+        let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor()],
@@ -96,21 +103,21 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
         let rows = output_.rows();
         let cols = output_.cols();
         let len = rows * cols;
-        let ones = device.tensor(rows, cols, vec![1.0; len])?;
-        let one_minus_output = device.tensor(rows, cols, vec![0.0; len])?;
+        let ones = new_tensor!(device, rows, cols, vec![1.0; len])?;
+        let one_minus_output = new_tensor!(device, rows, cols, vec![0.0; len])?;
 
         output.push_instruction(gradient_instruction!(
             OpCode::Sub,
             &[&ones, input],
             &[&one_minus_output],
         ));
-        let layer_f_derivative = device.tensor(rows, cols, vec![0.0; len])?;
+        let layer_f_derivative = new_tensor!(device, rows, cols, vec![0.0; len])?;
         output.push_instruction(gradient_instruction!(
             OpCode::Mul,
             &[input, &one_minus_output],
             &[&layer_f_derivative],
         ));
-        let tmp = device.tensor(rows, cols, vec![0.0; len])?;
+        let tmp = new_tensor!(device, rows, cols, vec![0.0; len])?;
 
         output.push_instruction(gradient_instruction!(
             OpCode::Mul,

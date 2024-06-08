@@ -1,8 +1,8 @@
+use crate::{new_tensor_with_grad, Linear, Model, WeightsInitialization};
 use crate::{
     tensor::Error, Device, GradientDescent, Metrics, ModelDetails, ReduceSumSquare, TensorWithGrad,
     UnaryModel, UnaryOperator,
 };
-use crate::{Linear, Model, WeightsInitialization};
 
 struct PerceptronModel {
     linear: Linear,
@@ -42,12 +42,8 @@ fn load_examples(device: &Device) -> Result<Vec<(TensorWithGrad, TensorWithGrad)
     let examples = examples
         .into_iter()
         .filter_map(|(x, y)| {
-            let x = device
-                .tensor_with_grad(1, x.len(), x, &[], false, false)
-                .ok();
-            let y = device
-                .tensor_with_grad(1, y.len(), y, &[], false, false)
-                .ok();
+            let x = new_tensor_with_grad!(device, 1, x.len(), x, &[], false, false).ok();
+            let y = new_tensor_with_grad!(device, 1, y.len(), y, &[], false, false).ok();
             match (x, y) {
                 (Some(x), Some(y)) => Some((x, y)),
                 _ => None,

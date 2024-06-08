@@ -16,6 +16,12 @@ pub struct Tensor {
     device: Device,
     size: Arc<RwLock<Vec<usize>>>,
     device_slice: Arc<RwLock<DevSlice>>,
+    #[cfg(debug_assertions)]
+    file: String,
+    #[cfg(debug_assertions)]
+    line: u32,
+    #[cfg(debug_assertions)]
+    column: u32,
 }
 
 impl PartialEq for Tensor {
@@ -33,6 +39,9 @@ impl Tensor {
         cols: usize,
         values: Vec<f32>,
         device: &Device,
+        #[cfg(debug_assertions)] file: &str,
+        #[cfg(debug_assertions)] line: u32,
+        #[cfg(debug_assertions)] column: u32,
     ) -> Result<Self, Error> {
         debug_assert_eq!(values.len(), rows * cols);
         let mut buffer = device.buffer(values.len());
@@ -42,6 +51,12 @@ impl Tensor {
             device: device.clone(),
             size: Arc::new(RwLock::new(vec![rows, cols])),
             device_slice: Arc::new(RwLock::new(buffer)),
+            #[cfg(debug_assertions)]
+            file: file.into(),
+            #[cfg(debug_assertions)]
+            line,
+            #[cfg(debug_assertions)]
+            column,
         };
         Ok(tensor)
     }
@@ -233,7 +248,20 @@ impl Tensor {
 
     pub fn clip_norm(&self) -> Result<(), Error> {
         let norm_max = 1.0;
-        let l2_norm = self.device.tensor(1, 1, vec![0.0]).unwrap();
+        let l2_norm = self
+            .device
+            .tensor(
+                1,
+                1,
+                vec![0.0],
+                #[cfg(debug_assertions)]
+                &self.file,
+                #[cfg(debug_assertions)]
+                self.line,
+                #[cfg(debug_assertions)]
+                self.column,
+            )
+            .unwrap();
         self.l2_norm(&l2_norm)?;
         let l2_norm = l2_norm.get_values()?[0];
         // Can not normalize a vector with no direction.
@@ -246,7 +274,19 @@ impl Tensor {
         let alpha = 1.0 / l2_norm;
         let x = self;
         let device = self.device();
-        let alpha = device.tensor(1, 1, vec![alpha]).unwrap();
+        let alpha = device
+            .tensor(
+                1,
+                1,
+                vec![alpha],
+                #[cfg(debug_assertions)]
+                &self.file,
+                #[cfg(debug_assertions)]
+                self.line,
+                #[cfg(debug_assertions)]
+                self.column,
+            )
+            .unwrap();
         device.scalar_mul(&alpha, x)
     }
 

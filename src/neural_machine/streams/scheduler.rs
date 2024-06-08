@@ -115,8 +115,8 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
     handler: &Arc<Mutex<Handler>>,
 ) {
     let dispatch_queues = (0..max_concurrent_streams)
-    .map(|_| Arc::new(Queue::<usize>::default()))
-    .collect::<Vec<_>>();
+        .map(|_| Arc::new(Queue::<usize>::default()))
+        .collect::<Vec<_>>();
     let completion_queue = Arc::new(Queue::default());
     let scheduler = Scheduler::new(
         streams,
@@ -223,7 +223,7 @@ impl Scheduler {
 
 /// https://en.wikipedia.org/wiki/Instruction_pipelining
 pub struct ExecutionUnit<Handler: StreamEventHandler> {
-    ordinal: usize,
+    _ordinal: usize,
     handler: Arc<Mutex<Handler>>,
     streams: Arc<Vec<Stream>>,
     instructions: Arc<Vec<Instruction>>,
@@ -242,7 +242,7 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<
         instructions: &Arc<Vec<Instruction>>,
     ) -> Self {
         Self {
-            ordinal,
+            _ordinal: ordinal,
             handler: handler.clone(),
             streams: streams.clone(),
             instructions: instructions.clone(),

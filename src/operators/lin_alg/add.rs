@@ -1,6 +1,7 @@
 use crate::{
-    gradient_instruction, inference_instruction, tensor::Error, tensor::Tensor, BinaryOperator,
-    Device, OpCode, TensorWithGrad,
+    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    tensor::{Error, Tensor},
+    BinaryOperator, Device, OpCode, TensorWithGrad,
 };
 
 pub struct Add {
@@ -35,7 +36,8 @@ impl BinaryOperator for Add {
         let rows = input_0_t.rows();
         let cols = input_0_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor_with_grad(
+        let output = new_tensor_with_grad!(
+            self.device,
             rows,
             cols,
             vec![0.0; len],
@@ -45,7 +47,7 @@ impl BinaryOperator for Add {
         )?;
         let inputs = [input_1, input_2];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0])?;
+        let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor()],

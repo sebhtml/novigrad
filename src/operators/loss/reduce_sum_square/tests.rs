@@ -1,33 +1,39 @@
-use crate::{tensor::Tensor, BinaryOperator, Device, DeviceTrait};
+use crate::{
+    new_tensor, new_tensor_with_grad, tensor::Tensor, BinaryOperator, Device, DeviceTrait,
+};
 
 use super::ReduceSumSquare;
 
 #[test]
 fn derive() {
     let device = Device::default();
-    let expected_tensor = device
-        .tensor_with_grad(
-            1,
-            8,
-            vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0],
-            &[],
-            false,
-            false,
-        )
-        .unwrap();
-    let actual_tensor = device
-        .tensor_with_grad(
-            1,
-            8,
-            vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-            &[],
-            true,
-            false,
-        )
-        .unwrap();
-    let expected_derived_loss = device
-        .tensor(1, 8, vec![-6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0])
-        .unwrap();
+    let expected_tensor = new_tensor_with_grad!(
+        device,
+        1,
+        8,
+        vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0],
+        &[],
+        false,
+        false,
+    )
+    .unwrap();
+    let actual_tensor = new_tensor_with_grad!(
+        device,
+        1,
+        8,
+        vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+        &[],
+        true,
+        false,
+    )
+    .unwrap();
+    let expected_derived_loss = new_tensor!(
+        device,
+        1,
+        8,
+        vec![-6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0]
+    )
+    .unwrap();
     let operator = ReduceSumSquare::new(&device);
     let loss = operator.forward(&expected_tensor, &actual_tensor).unwrap();
     loss.forward().unwrap();
@@ -39,13 +45,11 @@ fn derive() {
 #[test]
 fn evaluate() {
     let device = Device::default();
-    let expected_tensor = device
-        .tensor(1, 8, vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0])
-        .unwrap();
-    let actual_tensor = device
-        .tensor(1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
-        .unwrap();
-    let loss = device.tensor(1, 1, vec![0.0]).unwrap();
+    let expected_tensor =
+        new_tensor!(device, 1, 8, vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]).unwrap();
+    let actual_tensor =
+        new_tensor!(device, 1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]).unwrap();
+    let loss = new_tensor!(device, 1, 1, vec![0.0]).unwrap();
     device
         .reduce_square_sum(&expected_tensor, &actual_tensor, &loss)
         .unwrap();

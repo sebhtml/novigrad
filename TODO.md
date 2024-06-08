@@ -1,3 +1,5 @@
+- print all tensors of neural machine
+
 - instantiate dispatch queue, completion queue, scheduler, and execution units in NeuralMachine
 - add device stream support in devices to execute attention heads in parallel
 

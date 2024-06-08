@@ -1,9 +1,10 @@
 use super::load_examples;
-use crate::{tensor::Error, ModelDetails};
 use crate::{
-    BinaryOperator, Device, GradientDescent, Metrics, SoftmaxCrossEntropyLoss, Tokenizer,
-    TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
+    new_tensor_with_grad, BinaryOperator, Device, GradientDescent, Metrics,
+    SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
+    WeightsInitialization,
 };
+use crate::{tensor::Error, ModelDetails};
 use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, TensorWithGrad};
 
 struct MegaManModel {
@@ -27,7 +28,8 @@ impl MegaManModel {
         let model = Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![output_rows, vocab_size],
-            parameters: device.tensor_with_grad(
+            parameters: new_tensor_with_grad!(
+                device,
                 n_embd,
                 n_embd,
                 vec![0.0; n_embd * n_embd],

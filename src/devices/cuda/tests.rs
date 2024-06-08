@@ -1,7 +1,7 @@
 use cudarc::driver::LaunchAsync;
 use more_asserts::assert_ge;
 
-use crate::EPSILON;
+use crate::{new_tensor, EPSILON};
 
 #[test]
 fn cublas_sgemm_column_major() {
@@ -11,44 +11,44 @@ fn cublas_sgemm_column_major() {
     let device = Device::cuda().unwrap();
 
     let (m, n, k) = (2, 4, 3);
-    let a = device
-        .tensor(
-            2,
-            3,
-            vec![
-                //
-                1.0, 4.0, //
-                2.0, 5.0, //
-                3.0, 6.0, //
-            ],
-        )
-        .unwrap();
-    let b = device
-        .tensor(
-            3,
-            4,
-            vec![
-                //
-                1.0, 5.0, 9.0, //
-                2.0, 6.0, 10.0, //
-                3.0, 7.0, 11.0, //
-                4.0, 8.0, 12.0, //
-            ],
-        )
-        .unwrap();
-    let c = device
-        .tensor(
-            2,
-            4,
-            vec![
-                //
-                2.0, 7.0, //
-                6.0, 2.0, //
-                0.0, 7.0, //
-                4.0, 2.0, //
-            ],
-        )
-        .unwrap();
+    let a = new_tensor!(
+        device,
+        2,
+        3,
+        vec![
+            //
+            1.0, 4.0, //
+            2.0, 5.0, //
+            3.0, 6.0, //
+        ],
+    )
+    .unwrap();
+    let b = new_tensor!(
+        device,
+        3,
+        4,
+        vec![
+            //
+            1.0, 5.0, 9.0, //
+            2.0, 6.0, 10.0, //
+            3.0, 7.0, 11.0, //
+            4.0, 8.0, 12.0, //
+        ],
+    )
+    .unwrap();
+    let c = new_tensor!(
+        device,
+        2,
+        4,
+        vec![
+            //
+            2.0, 7.0, //
+            6.0, 2.0, //
+            0.0, 7.0, //
+            4.0, 2.0, //
+        ],
+    )
+    .unwrap();
 
     let alpha = 1.0;
     let beta = 1.0;
@@ -88,9 +88,7 @@ fn cublas_sgemm_column_major() {
 fn cuda_tensor() {
     use crate::Device;
     let device = Device::cuda().unwrap();
-    let tensor = device
-        .tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
-        .unwrap();
+    let tensor = new_tensor!(device, 2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
     assert_eq!(
         tensor.get_values().unwrap(),
         vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0,]
@@ -263,9 +261,9 @@ fn cuda_dot_kernel() {
 
     let cpu_output = {
         let device = Device::cpu();
-        let left = device.tensor(1, n as usize, left_data).unwrap();
-        let right = device.tensor(1, n as usize, right_data).unwrap();
-        let output = device.tensor(1, 1 as usize, vec![0.0]).unwrap();
+        let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
+        let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
+        let output = new_tensor!(device, 1, 1 as usize, vec![0.0]).unwrap();
         device.dot(&left, &right, &output).unwrap();
         output.get_values().unwrap()
     };
@@ -312,9 +310,9 @@ fn cuda_dot_kernel_big_vectors() {
 
     let cpu_output = {
         let device = Device::cpu();
-        let left = device.tensor(1, n as usize, left_data).unwrap();
-        let right = device.tensor(1, n as usize, right_data).unwrap();
-        let output = device.tensor(1, 1 as usize, vec![0.0]).unwrap();
+        let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
+        let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
+        let output = new_tensor!(device, 1, 1 as usize, vec![0.0]).unwrap();
         device.dot(&left, &right, &output).unwrap();
         output.get_values().unwrap()
     };
@@ -363,9 +361,9 @@ fn cuda_cross_entropy_loss() {
 
     let cpu_output = {
         let device = Device::cpu();
-        let left = device.tensor(1, n as usize, left_data).unwrap();
-        let right = device.tensor(1, n as usize, right_data).unwrap();
-        let output = device.tensor(1, 1 as usize, vec![0.0]).unwrap();
+        let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
+        let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
+        let output = new_tensor!(device, 1, 1 as usize, vec![0.0]).unwrap();
         device.cross_entropy_loss(&left, &right, &output).unwrap();
         output.get_values().unwrap()
     };

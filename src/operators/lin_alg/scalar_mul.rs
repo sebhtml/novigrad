@@ -1,5 +1,5 @@
 use crate::{
-    gradient_instruction, inference_instruction,
+    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     tensor::{Error, Tensor},
     Device, DeviceTrait, OpCode, TensorWithGrad, UnaryOperator,
 };
@@ -33,12 +33,18 @@ impl UnaryOperator for ScalarMul {
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output =
-            self.device
-                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false)?;
+        let output = new_tensor_with_grad!(
+            self.device,
+            rows,
+            cols,
+            vec![0.0; len],
+            &[input],
+            true,
+            false
+        )?;
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0])?;
+        let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor()],
@@ -49,7 +55,7 @@ impl UnaryOperator for ScalarMul {
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
-        let alpha = self.device.tensor(1, 1, vec![self.alpha])?;
+        let alpha = new_tensor!(self.device, 1, 1, vec![self.alpha])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&alpha, &inputs[0].tensor()],

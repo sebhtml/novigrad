@@ -3,6 +3,7 @@ use crate::{
     emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, tensor::Error,
     DeviceTrait, TensorWithGrad,
 };
+use crate::{new_tensor, new_tensor_with_grad};
 use crate::{tensor::Tensor, OpCode, UnaryOperator};
 
 pub struct Sigmoid {
@@ -30,13 +31,19 @@ impl UnaryOperator for Sigmoid {
         let rows = input_t.rows();
         let cols = input_t.cols();
         let len = rows * cols;
-        let output =
-            self.device
-                .tensor_with_grad(rows, cols, vec![0.0; len], &[input], true, false)?;
+        let output = new_tensor_with_grad!(
+            self.device,
+            rows,
+            cols,
+            vec![0.0; len],
+            &[input],
+            true,
+            false
+        )?;
 
         let inputs = [input];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0])?;
+        let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor()],

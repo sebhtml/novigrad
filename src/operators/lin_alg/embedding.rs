@@ -1,6 +1,8 @@
 use crate::{
-    devices::Device, tensor::Error, tensor::Tensor, BinaryOperator, DeviceTrait, MatMul,
-    TensorWithGrad, UnaryOperator,
+    devices::Device,
+    new_tensor, new_tensor_with_grad,
+    tensor::{Error, Tensor},
+    BinaryOperator, DeviceTrait, MatMul, TensorWithGrad, UnaryOperator,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -17,9 +19,10 @@ impl Embedding {
     ) -> Result<Self, Error> {
         let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim)?;
         let len = embedding_table.len();
-        let mut transposed = device.tensor(embedding_dim, num_embeddings, vec![0.0; len])?;
+        let mut transposed = new_tensor!(device, embedding_dim, num_embeddings, vec![0.0; len])?;
         device.transpose(&embedding_table, &mut transposed)?;
-        let embedding_table = device.tensor_with_grad(
+        let embedding_table = new_tensor_with_grad!(
+            device,
             transposed.rows(),
             transposed.cols(),
             transposed.get_values().unwrap(),
@@ -66,5 +69,5 @@ fn get_embedding_table(
         embeddings_table.append(&mut token_embeddings);
         token += 1;
     }
-    device.tensor(num_embeddings, embedding_dim, embeddings_table)
+    new_tensor!(device, num_embeddings, embedding_dim, embeddings_table)
 }

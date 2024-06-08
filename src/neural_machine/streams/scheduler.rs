@@ -7,6 +7,7 @@ use std::{
 use crate::{tensor::Error, Instruction};
 
 use super::{
+    queue::Queue,
     stream::Stream,
     transaction::{get_instruction_transactions, Transaction},
 };
@@ -114,7 +115,7 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
     max_concurrent_streams: usize,
     handler: &Arc<Mutex<Handler>>,
 ) {
-    let dispatch_queue = Arc::new(Mutex::new(VecDeque::<usize>::new()));
+    let dispatch_queue = Arc::new(Queue::default());
     let completion_queue = Arc::new(Mutex::new(VecDeque::<usize>::new()));
     let scheduler = Scheduler::new(
         streams,
@@ -145,7 +146,7 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
 pub struct Scheduler {
     dependents: Vec<Vec<usize>>,
     pending_dependencies: Vec<usize>,
-    dispatch_queue: Arc<Mutex<VecDeque<usize>>>,
+    dispatch_queue: Arc<Queue<usize>>,
     completion_queue: Arc<Mutex<VecDeque<usize>>>,
     completed_streams: usize,
     max_concurrent_streams: usize,
@@ -154,8 +155,8 @@ pub struct Scheduler {
 impl Scheduler {
     pub fn new(
         streams: &[Stream],
-        emit_queue: &Arc<Mutex<VecDeque<usize>>>,
-        retire_queue: &Arc<Mutex<VecDeque<usize>>>,
+        dispatch_queue: &Arc<Queue<usize>>,
+        completion_queue: &Arc<Mutex<VecDeque<usize>>>,
         max_concurrent_streams: usize,
     ) -> Self {
         let pending_dependencies = streams.iter().map(|x| x.dependencies.len()).collect();
@@ -168,8 +169,8 @@ impl Scheduler {
         Self {
             dependents,
             pending_dependencies,
-            dispatch_queue: emit_queue.clone(),
-            completion_queue: retire_queue.clone(),
+            dispatch_queue: dispatch_queue.clone(),
+            completion_queue: completion_queue.clone(),
             completed_streams: 0,
             max_concurrent_streams,
         }
@@ -191,7 +192,7 @@ impl Scheduler {
     fn maybe_dispatch(&self, stream: usize) {
         let pending_dependencies = self.pending_dependencies[stream];
         if pending_dependencies == 0 {
-            self.dispatch_queue.lock().unwrap().push_back(stream);
+            self.dispatch_queue.push_back(stream);
         }
     }
 
@@ -208,7 +209,7 @@ impl Scheduler {
 
         if self.completed_streams == self.dependents.len() {
             for _ in 0..self.max_concurrent_streams {
-                self.dispatch_queue.lock().unwrap().push_back(STOP);
+                self.dispatch_queue.push_back(STOP);
             }
             false
         } else {
@@ -222,13 +223,13 @@ pub struct ExecutionUnit<Handler: StreamEventHandler> {
     handler: Arc<Mutex<Handler>>,
     streams: Arc<Vec<Stream>>,
     instructions: Arc<Vec<Instruction>>,
-    dispatch_queue: Arc<Mutex<VecDeque<usize>>>,
+    dispatch_queue: Arc<Queue<usize>>,
     completion_queue: Arc<Mutex<VecDeque<usize>>>,
 }
 
 impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<Handler> {
     pub fn new(
-        dispatch_queue: &Arc<Mutex<VecDeque<usize>>>,
+        dispatch_queue: &Arc<Queue<usize>>,
         completion_queue: &Arc<Mutex<VecDeque<usize>>>,
         handler: &Arc<Mutex<Handler>>,
         streams: &Arc<Vec<Stream>>,
@@ -253,7 +254,7 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<
 
     fn step(&mut self) -> bool {
         // Fetch
-        let stream = self.dispatch_queue.lock().unwrap().pop_front();
+        let stream = self.dispatch_queue.pop_front();
         if let Some(stream) = stream {
             if stream == STOP {
                 return false;

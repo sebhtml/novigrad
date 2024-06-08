@@ -24,8 +24,10 @@ impl<T> Queue<T> {
     }
 
     pub fn pop_front(&self) -> Option<T> {
-        let guard = self.deque.lock().unwrap();
-        let mut guard = self.cvar.wait(guard).unwrap();
-        guard.pop_front()
+        let mut deque = self.deque.lock().unwrap();
+        while deque.is_empty() {
+            deque = self.cvar.wait(deque).unwrap();
+        }
+        deque.pop_front()
     }
 }

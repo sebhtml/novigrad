@@ -114,19 +114,22 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
     max_concurrent_streams: usize,
     handler: &Arc<Mutex<Handler>>,
 ) {
-    let dispatch_queue = Arc::new(Queue::default());
+    let dispatch_queues = (0..max_concurrent_streams)
+    .map(|_| Arc::new(Queue::<usize>::default()))
+    .collect::<Vec<_>>();
     let completion_queue = Arc::new(Queue::default());
     let scheduler = Scheduler::new(
         streams,
-        &dispatch_queue,
+        &dispatch_queues,
         &completion_queue,
         max_concurrent_streams,
     );
 
     let execution_unit_handles = (0..max_concurrent_streams)
-        .map(|_| {
+        .map(|ordinal| {
             let execution_unit = ExecutionUnit::new(
-                &dispatch_queue,
+                ordinal,
+                &dispatch_queues[ordinal],
                 &completion_queue,
                 &handler,
                 streams,
@@ -145,7 +148,7 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
 pub struct Scheduler {
     dependents: Vec<Vec<usize>>,
     pending_dependencies: Vec<usize>,
-    dispatch_queue: Arc<Queue<usize>>,
+    dispatch_queues: Vec<Arc<Queue<usize>>>,
     completion_queue: Arc<Queue<usize>>,
     completed_streams: usize,
     max_concurrent_streams: usize,
@@ -154,7 +157,7 @@ pub struct Scheduler {
 impl Scheduler {
     pub fn new(
         streams: &[Stream],
-        dispatch_queue: &Arc<Queue<usize>>,
+        dispatch_queues: &Vec<Arc<Queue<usize>>>,
         completion_queue: &Arc<Queue<usize>>,
         max_concurrent_streams: usize,
     ) -> Self {
@@ -168,7 +171,7 @@ impl Scheduler {
         Self {
             dependents,
             pending_dependencies,
-            dispatch_queue: dispatch_queue.clone(),
+            dispatch_queues: dispatch_queues.clone(),
             completion_queue: completion_queue.clone(),
             completed_streams: 0,
             max_concurrent_streams,
@@ -191,7 +194,8 @@ impl Scheduler {
     fn maybe_dispatch(&self, stream: usize) {
         let pending_dependencies = self.pending_dependencies[stream];
         if pending_dependencies == 0 {
-            self.dispatch_queue.push_back(stream);
+            let ordinal = stream % self.max_concurrent_streams;
+            self.dispatch_queues[ordinal].push_back(stream);
         }
     }
 
@@ -207,8 +211,8 @@ impl Scheduler {
         }
 
         if self.completed_streams == self.dependents.len() {
-            for _ in 0..self.max_concurrent_streams {
-                self.dispatch_queue.push_back(STOP);
+            for ordinal in 0..self.max_concurrent_streams {
+                self.dispatch_queues[ordinal].push_back(STOP);
             }
             false
         } else {
@@ -219,15 +223,18 @@ impl Scheduler {
 
 /// https://en.wikipedia.org/wiki/Instruction_pipelining
 pub struct ExecutionUnit<Handler: StreamEventHandler> {
+    ordinal: usize,
     handler: Arc<Mutex<Handler>>,
     streams: Arc<Vec<Stream>>,
     instructions: Arc<Vec<Instruction>>,
     dispatch_queue: Arc<Queue<usize>>,
     completion_queue: Arc<Queue<usize>>,
+    completed_items: usize,
 }
 
 impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<Handler> {
     pub fn new(
+        ordinal: usize,
         dispatch_queue: &Arc<Queue<usize>>,
         completion_queue: &Arc<Queue<usize>>,
         handler: &Arc<Mutex<Handler>>,
@@ -235,11 +242,13 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<
         instructions: &Arc<Vec<Instruction>>,
     ) -> Self {
         Self {
+            ordinal,
             handler: handler.clone(),
             streams: streams.clone(),
             instructions: instructions.clone(),
             dispatch_queue: dispatch_queue.clone(),
             completion_queue: completion_queue.clone(),
+            completed_items: 0,
         }
     }
 
@@ -266,7 +275,14 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<
                 .unwrap();
             // Writeback
             self.completion_queue.push_back(stream);
+            self.completed_items += 1;
         }
         true
+    }
+}
+
+impl<Handler: StreamEventHandler> Drop for ExecutionUnit<Handler> {
+    fn drop(&mut self) {
+        //println!("execution unit: {}, completed_items: {}", self.ordinal, self.completed_items);
     }
 }

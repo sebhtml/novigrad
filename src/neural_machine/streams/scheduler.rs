@@ -170,18 +170,14 @@ impl Scheduler {
 
     fn maybe_emit(&self, stream: usize) {
         let pending_dependencies = self.pending_dependencies[stream];
-        //println!("stream {} pending_dependencies {}", stream, pending_dependencies);
         if pending_dependencies == 0 {
-            //println!("EMIT {}", stream);
             self.fetch_queue.deref().borrow_mut().push_back(stream);
         }
     }
 
     pub fn step(&mut self) -> bool {
         if let Some(stream) = self.writeback_queue.deref().borrow_mut().pop_front() {
-            //RETIRE {}", stream);
             let dependents = &self.dependents[stream];
-            //println!("stream {}  dependents {:?}", stream, dependents);
             for dependent in dependents.iter() {
                 self.pending_dependencies[*dependent] -= 1;
                 self.maybe_emit(*dependent);
@@ -190,12 +186,6 @@ impl Scheduler {
         } else {
             false
         }
-    }
-}
-
-impl Drop for Scheduler {
-    fn drop(&mut self) {
-        //println!("pending_dependencies {:?}", self.pending_dependencies);
     }
 }
 

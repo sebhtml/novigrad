@@ -5,7 +5,6 @@
 == Transformer ==
 
 - add Standardize
-
 - implement LayerNormalization which is Standardize + ScalarMul + Add
 - implement Gelu
 - implement LayerNorm
@@ -15,6 +14,7 @@
 
 - implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
 - rename RowMax to ArgMax (https://onnx.ai/onnx/operators/onnx__ArgMax.html)
+- add code that discard useless instructions, for example when a operand write is never read betfore the next write
 
 ---------------
 
@@ -22,7 +22,6 @@
 
 ---------------
 
-- add code that discard useless instructions, for example when a operand write is never read betfore the next write
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 
 - improve Bernoulli CUDA kernel by using other shift values for halt the indices

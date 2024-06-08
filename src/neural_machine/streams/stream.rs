@@ -50,9 +50,9 @@ pub fn make_streams(
         println!(
             "[assign_streams] INSTRUCTION_DEPENDENCIES  instruction: {},  write_before_read: {:?},  read_before_write: {:?},  write_before_write: {:?}",
             i,
-            i_dependencies.write_before_read,
-            i_dependencies.read_before_write,
-            i_dependencies.write_before_write,
+            i_dependencies.write_before_read_dependencies,
+            i_dependencies.read_before_write_dependencies,
+            i_dependencies.write_before_write_dependencies,
         );
     }
 
@@ -99,13 +99,21 @@ pub fn make_streams(
 
     // Assign stream dependencies
     for i in 0..streams.len() {
+        // The dependencies of a stream are the assigned streams of all the instructions it contains.
         let stream_instructions = &streams[i].instructions;
-        let first_instruction = stream_instructions[0];
-        let dependency_instructions = &instruction_dependencies[first_instruction].all_dependencies;
-        let mut dependency_streams = dependency_instructions
+        let mut dependency_streams = stream_instructions
             .iter()
-            .map(|i| instruction_streams[*i])
-            .collect::<Vec<_>>();
+            .map(|instruction| {
+                let dependency_instructions =
+                    &instruction_dependencies[*instruction].all_dependencies;
+                dependency_instructions
+                    .iter()
+                    .map(|instruction| instruction_streams[*instruction])
+                    .filter(|x| *x != i)
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
+            .concat();
         dependency_streams.sort();
         dependency_streams.dedup();
         streams[i].dependencies = dependency_streams;
@@ -209,7 +217,7 @@ fn assign_instructions_to_streams(
         }
     }
 
-    #[cfg(feature = "verbose_streams")]
+    //#[cfg(feature = "verbose_streams")]
     for (i_inst, i_stream) in instruction_streams.iter().enumerate() {
         println!(
             "[assign_streams] INSTRUCTION_STREAM  instruction: {},  stream: {}",

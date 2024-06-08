@@ -364,10 +364,8 @@ fn many_independent_instructions_in_one_stream() {
     assert_eq!(vec![0, 1], *streams[0].instructions);
 }
 
-// TODO
-//#[test_case(None ; "no category filter")]
-// TODO
-//#[test_case(Some(Category::Inference) ; "inference filter")]
+#[test_case(None ; "no category filter")]
+#[test_case(Some(Category::Inference) ; "inference filter")]
 #[test_case(Some(Category::Loss) ; "loss filter")]
 #[test_case(Some(Category::Gradient) ; "gradient filter")]
 #[test_case(Some(Category::Optimization) ; "optimization filter")]
@@ -417,11 +415,9 @@ fn reads_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) 
     }
 }
 
-// TODO
-//#[test_case(None ; "no category filter")]
-//#[test_case(Some(Category::Inference) ; "inference filter")]
-// TODO
-//#[test_case(Some(Category::Loss) ; "loss filter")]
+#[test_case(None ; "no category filter")]
+#[test_case(Some(Category::Inference) ; "inference filter")]
+#[test_case(Some(Category::Loss) ; "loss filter")]
 #[test_case(Some(Category::Gradient) ; "gradient filter")]
 #[test_case(Some(Category::Optimization) ; "optimization filter")]
 fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>) {
@@ -430,6 +426,7 @@ fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>)
     let instructions = get_test_instructions(filter).unwrap();
     let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
+    print_instructions(&simple_instructions);
     let simple_instructions = Rc::new(simple_instructions);
     let expected_transactions = get_all_instruction_transactions(&simple_instructions);
     let expected_read_write_pairs =
@@ -443,6 +440,7 @@ fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>)
         minimum_stream_instructions,
     );
     let actual_streams = Arc::new(actual_streams);
+    print_streams("streams", &actual_streams.deref());
     let max_concurrent_streams = 32;
     let actual_transactions = simulate_execution_and_collect_transactions(
         &actual_streams,
@@ -459,10 +457,8 @@ fn writes_and_writes_of_same_operand_are_not_reordered(filter: Option<Category>)
     }
 }
 
-// TODO
-//#[test_case(None ; "no category filter")]
-// TODO
-//#[test_case(Some(Category::Inference) ; "inference filter")]
+#[test_case(None ; "no category filter")]
+#[test_case(Some(Category::Inference) ; "inference filter")]
 #[test_case(Some(Category::Loss) ; "loss filter")]
 #[test_case(Some(Category::Gradient) ; "gradient filter")]
 #[test_case(Some(Category::Optimization) ; "optimization filter")]

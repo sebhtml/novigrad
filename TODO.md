@@ -1,4 +1,3 @@
-- don't pass a Arc for handler
 - instantiate dispatch queue, completion queue, scheduler, and execution units in NeuralMachine
 
 - add device stream support in devices to execute attention heads in parallel

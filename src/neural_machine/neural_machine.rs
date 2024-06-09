@@ -297,10 +297,12 @@ impl<T> NeuralMachine<T> {
         let simple_instructions = make_simple_instructions(instructions);
         verify_machine_inputs(&machine_inputs, &simple_instructions);
         let minimum_write_before_read_for_new_stream = 4;
+        let minimum_dependents_for_stream = 12;
         let minimum_stream_instructions = 32;
         let streams = make_streams(
             &simple_instructions,
             minimum_write_before_read_for_new_stream,
+            minimum_dependents_for_stream,
             minimum_stream_instructions,
         );
         streams

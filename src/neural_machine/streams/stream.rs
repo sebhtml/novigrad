@@ -40,6 +40,7 @@ pub fn print_streams(name: &str, streams: &[Stream]) {
 pub fn make_streams(
     instructions: &[(Vec<usize>, Vec<usize>)],
     minimum_write_before_read_for_new_stream: usize,
+    minimum_dependents_for_stream: usize,
     minimum_stream_instructions: usize,
 ) -> Vec<Stream> {
     // A list of dependencies for each instruction.
@@ -58,6 +59,7 @@ pub fn make_streams(
 
     let instruction_streams = assign_instructions_to_streams(
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
         &instruction_dependencies,
     );
@@ -133,6 +135,7 @@ pub fn make_streams(
 /// Returns assigned streams, in the same order as the input instructions.
 fn assign_instructions_to_streams(
     minimum_write_before_read_for_new_stream: usize,
+    minimum_dependents_for_stream: usize,
     minimum_stream_instructions: usize,
     instruction_dependencies: &[Dependencies],
 ) -> Vec<usize> {
@@ -144,7 +147,7 @@ fn assign_instructions_to_streams(
     // Assign streams when an instruction has more than N inputs.
     // Gemm has 3 inputs.
     // Concat has N inputs.
-    // So we compute the inputs of Concat in parallel basically.
+    // So we can compute the inputs of Concat in parallel basically.
     for (i, deps) in instruction_dependencies.iter().enumerate() {
         if !instructions_with_no_stream.contains(&i) {
             continue;
@@ -167,6 +170,20 @@ fn assign_instructions_to_streams(
                 next_stream += 1;
                 instructions_with_no_stream.remove(j);
             }
+        }
+    }
+
+    // Assign a stream to any instruction that have more than N dependents
+    for (i, deps) in instruction_dependencies.iter().enumerate() {
+        if !instructions_with_no_stream.contains(&i) {
+            continue;
+        }
+        let dependents = &deps.all_dependents;
+        //println!("DEBUG instruction: {}  dependents: {:?}", i, dependents);
+        if dependents.len() >= minimum_dependents_for_stream {
+            instruction_streams[i] = next_stream;
+            next_stream += 1;
+            instructions_with_no_stream.remove(&i);
         }
     }
 

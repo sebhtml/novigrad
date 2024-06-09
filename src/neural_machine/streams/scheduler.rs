@@ -114,22 +114,9 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
     max_concurrent_streams: usize,
     handler: &Handler,
 ) {
-    let scheduler = Scheduler::new(max_concurrent_streams, streams, handler, instructions);
-
-    let execution_units = scheduler.execution_units;
-    let controller = scheduler.controller;
-
-    // Spawn threads
-    let execution_unit_handles = execution_units
-        .into_iter()
-        .map(|execution_unit| ExecutionUnit::spawn(execution_unit))
-        .collect::<Vec<_>>();
-    let controller_handle = Controller::spawn(controller);
-    let _controller = controller_handle.join().unwrap();
-    let _execution_units = execution_unit_handles
-        .into_iter()
-        .map(|x| x.join().unwrap())
-        .collect::<Vec<_>>();
+    let mut scheduler = Scheduler::new(max_concurrent_streams, streams, handler, instructions);
+    scheduler.start();
+    scheduler.stop();
 }
 
 pub struct Controller {
@@ -276,10 +263,10 @@ impl<Handler: StreamEventHandler + Send + Sync> Drop for ExecutionUnit<Handler> 
 }
 
 pub struct Scheduler<Handler: StreamEventHandler + Send + Sync> {
-    pub dispatch_queues: Vec<Arc<Queue<usize>>>,
-    pub completion_queue: Arc<Queue<usize>>,
-    pub controller: Controller,
-    pub execution_units: Vec<ExecutionUnit<Handler>>,
+    controller: Option<Controller>,
+    execution_units: Option<Vec<ExecutionUnit<Handler>>>,
+    controller_handle: Option<JoinHandle<Controller>>,
+    execution_unit_handles: Option<Vec<JoinHandle<ExecutionUnit<Handler>>>>,
 }
 
 impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Handler> {
@@ -314,10 +301,57 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Hand
             })
             .collect::<Vec<_>>();
         Self {
-            dispatch_queues,
-            completion_queue,
-            controller,
-            execution_units,
+            controller: Some(controller),
+            execution_units: Some(execution_units),
+            controller_handle: None,
+            execution_unit_handles: None,
         }
+    }
+
+    /// Pre-conditions
+    /// - self.execution_units is some
+    /// - self.execution_unit_handles is none
+    /// - self.controller is some
+    /// - self.controller_handle is none
+    /// Post-conditions
+    /// - self.execution_units is none
+    /// - self.execution_unit_handles is some
+    /// - self.controller is none
+    /// - self.controller_handle is some
+    pub fn start(&mut self) {
+        // Spawn threads
+        let execution_unit_handles = self
+            .execution_units
+            .take()
+            .unwrap()
+            .into_iter()
+            .map(|execution_unit| ExecutionUnit::spawn(execution_unit))
+            .collect::<Vec<_>>();
+        let controller_handle = Controller::spawn(self.controller.take().unwrap());
+        self.execution_unit_handles = Some(execution_unit_handles);
+        self.controller_handle = Some(controller_handle);
+    }
+
+    /// Pre-conditions
+    /// - self.execution_units is none
+    /// - self.execution_unit_handles is some
+    /// - self.controller is none
+    /// - self.controller_handle is some
+    /// Post-conditions
+    /// - self.execution_units is some
+    /// - self.execution_unit_handles is none
+    /// - self.controller is some
+    /// - self.controller_handle is none
+    pub fn stop(&mut self) {
+        let controller = self.controller_handle.take().unwrap().join().unwrap();
+        let execution_units = self
+            .execution_unit_handles
+            .take()
+            .unwrap()
+            .into_iter()
+            .map(|x| x.join().unwrap())
+            .collect::<Vec<_>>();
+        self.controller = Some(controller);
+        self.execution_units = Some(execution_units);
     }
 }

@@ -1,13 +1,19 @@
 use crate::{
-    clip::Clip, statistics::bernoulli::Bernoulli, tensor::Error, tensor::Tensor, Add, ClipNorm,
-    Concat, Div, Gemm, Mul, ReduceSum, ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid,
-    Softmax, SoftmaxCrossEntropyLoss, Sqrt, Sub, Unconcat,
+    clip::Clip,
+    identity::Identity,
+    statistics::bernoulli::Bernoulli,
+    tensor::{Error, Tensor},
+    Add, ClipNorm, Concat, Div, Gemm, Mul, ReduceSum, ReduceSumSquare, Reshape, ScalarAdd,
+    ScalarMul, Sigmoid, Softmax, SoftmaxCrossEntropyLoss, Sqrt, Sub, Unconcat,
 };
 
 #[derive(Clone, Debug)]
 pub enum OpCode {
     /// https://onnx.ai/onnx/operators/onnx__Gemm.html
     Gemm(bool, bool, bool),
+
+    /// https://onnx.ai/onnx/operators/onnx__Identity.html
+    Identity(String),
 
     /// https://onnx.ai/onnx/operators/onnx__ReduceSum.html
     ReduceSum,
@@ -85,6 +91,7 @@ impl Into<String> for OpCode {
     fn into(self) -> String {
         match self {
             OpCode::Gemm(_, _, _) => "Gemm".into(),
+            OpCode::Identity(label) => "Identity".to_string() + " label=" + label.as_str(),
             OpCode::ReduceSum => "ReduceSum".into(),
             OpCode::Add => "Add".into(),
             OpCode::Sub => "Sub".into(),
@@ -114,6 +121,7 @@ impl OpCode {
             OpCode::Gemm(trans_a, trans_b, trans_result) => {
                 Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)
             }
+            OpCode::Identity(_) => Identity::execute(inputs, outputs),
             OpCode::ReduceSum => ReduceSum::execute(inputs, outputs),
             OpCode::Add => Add::execute(inputs, outputs),
             OpCode::ScalarMul => ScalarMul::execute(inputs, outputs),

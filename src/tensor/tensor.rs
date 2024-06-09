@@ -312,6 +312,15 @@ impl Display for Tensor {
             self.size.deref().read().unwrap()
         );
         _ = write!(f, "\n");
+        #[cfg(debug_assertions)]
+        {
+            _ = write!(
+                f,
+                "Tensor file: {}, line: {}, column: {}",
+                self.file, self.line, self.column,
+            );
+        }
+        _ = write!(f, "\n");
         for row in 0..self.rows() {
             for col in 0..self.cols() {
                 let value = self_values[self.index(row, col)];

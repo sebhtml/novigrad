@@ -72,7 +72,7 @@ fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
 fn the_instructions_length_is_correct() {
     let instructions = get_test_instructions(None).unwrap();
     let simple_instructions = make_simple_instructions(&instructions);
-    assert_eq!(2810, instructions.len());
+    assert_eq!(2635, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
@@ -85,7 +85,7 @@ fn the_instructions_length_is_correct() {
         .map(|i| i.instructions.deref().clone())
         .collect::<Vec<Vec<usize>>>()
         .concat();
-    assert_eq!(2810, actual_instructions.len());
+    assert_eq!(2635, actual_instructions.len());
 }
 
 #[test]
@@ -101,7 +101,7 @@ fn the_streams_length_are_correct() {
     );
     print_streams("test", &streams);
     assert_eq!(
-        106,
+        104,
         streams.iter().filter(|x| x.instructions.len() > 0).count()
     );
 }

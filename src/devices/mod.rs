@@ -179,6 +179,7 @@ impl Debug for dyn DeviceTrait + Send + Sync {
 pub struct Device {
     next_name: Arc<RwLock<usize>>,
     used: Arc<RwLock<usize>>,
+    tensors: Arc<RwLock<Vec<Tensor>>>,
     tensors_to_optimize: Arc<RwLock<Vec<TensorWithGrad>>>,
     device: Arc<dyn DeviceTrait + Send + Sync>,
     available_buffers: Arc<RwLock<HashMap<usize, LinkedList<DevSlice>>>>,
@@ -198,7 +199,8 @@ impl Device {
         Self {
             next_name: Default::default(),
             used: Default::default(),
-            tensors_to_optimize: Arc::new(RwLock::new(vec![])),
+            tensors: Default::default(),
+            tensors_to_optimize: Default::default(),
             device,
             available_buffers: Default::default(),
         }
@@ -244,7 +246,7 @@ impl Device {
     ) -> Result<Tensor, Error> {
         let name = *self.next_name.read().unwrap();
         *self.next_name.write().unwrap() += 1;
-        Tensor::new(
+        let tensor = Tensor::new(
             name,
             rows,
             cols,
@@ -256,7 +258,10 @@ impl Device {
             line,
             #[cfg(debug_assertions)]
             column,
-        )
+        )?;
+        self.tensors.write().unwrap().push(tensor.clone());
+
+        Ok(tensor)
     }
 
     pub fn tensor_with_grad(
@@ -331,6 +336,10 @@ impl Device {
             count += t.tensor().len();
         }
         count
+    }
+
+    pub fn tensors(&self) -> impl Deref<Target = Vec<Tensor>> + '_ {
+        self.tensors.read().unwrap()
     }
 
     pub fn tensors_to_optimize(&self) -> impl Deref<Target = Vec<TensorWithGrad>> + '_ {

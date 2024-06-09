@@ -1,6 +1,7 @@
 use crate::{
-    inference_instruction, tensor::Error, tensor::Tensor, BinaryOperator, Device, Mul, OpCode,
-    ScalarMul, TensorWithGrad, UnaryOperator,
+    inference_instruction, new_tensor, new_tensor_with_grad,
+    tensor::{Error, Tensor},
+    BinaryOperator, Device, Mul, OpCode, ScalarMul, TensorWithGrad, UnaryOperator,
 };
 
 #[cfg(test)]
@@ -22,10 +23,10 @@ impl Dropout {
     ) -> Result<Self, Error> {
         let len = mask_rows * mask_cols;
         let mask = vec![1.0; len];
-        let mask = device.tensor_with_grad(mask_rows, mask_cols, mask, &[], false, false)?;
+        let mask = new_tensor_with_grad!(device, mask_rows, mask_cols, mask, &[], false, false)?;
         let probability = 1.0 - dropout_probability;
         let probabilities = vec![probability; len];
-        let probabilities = device.tensor(mask_rows, mask_cols, probabilities)?;
+        let probabilities = new_tensor!(device, mask_rows, mask_cols, probabilities)?;
         let mul = Mul::new(device);
         let alpha = 1.0 / (1.0 - dropout_probability);
         let scalar_mul = ScalarMul::new(device, alpha);

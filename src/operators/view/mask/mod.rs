@@ -1,5 +1,7 @@
 use crate::{
-    tensor::Error, tensor::Tensor, BinaryOperator, Device, Mul, TensorWithGrad, UnaryOperator,
+    new_tensor_with_grad,
+    tensor::{Error, Tensor},
+    BinaryOperator, Device, Mul, TensorWithGrad, UnaryOperator,
 };
 
 #[cfg(test)]
@@ -25,7 +27,7 @@ impl Mask {
                 }
             }
         }
-        let mask = device.tensor_with_grad(mask_rows, mask_cols, values, &[], true, true)?;
+        let mask = new_tensor_with_grad!(device, mask_rows, mask_cols, values, &[], true, true)?;
 
         let mul = Mul::new(device);
         let mask = Self { mask, mul };

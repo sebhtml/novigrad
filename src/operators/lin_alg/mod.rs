@@ -23,4 +23,5 @@ pub use div::*;
 mod sqrt;
 pub use sqrt::*;
 pub mod clip;
+pub mod identity;
 pub mod row_max;

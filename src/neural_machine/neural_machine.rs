@@ -209,6 +209,14 @@ impl<T> NeuralMachine<T> {
             "Optimization Instructions: {}",
             self.optimization_instructions.len()
         );
+
+        /*
+        println!("Tensors");
+        for tensor in self.device.tensors().iter() {
+            println!("{}", tensor);
+        }
+         */
+
         println!("------------------------------");
         for (i, instruction) in self.inference_instructions.iter().enumerate() {
             self.print_instruction(i, instruction);

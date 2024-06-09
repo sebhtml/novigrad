@@ -1,3 +1,5 @@
+use crate::new_tensor;
+
 /// This is the example from https://docs.rs/cblas/latest/cblas/.
 #[test]
 fn cblas_sgemm_column_major() {
@@ -5,44 +7,44 @@ fn cblas_sgemm_column_major() {
     use crate::Device;
     let device = Device::cpu();
     let (m, n, k) = (2, 4, 3);
-    let a = device
-        .tensor(
-            2,
-            3,
-            vec![
-                //
-                1.0, 4.0, //
-                2.0, 5.0, //
-                3.0, 6.0, //
-            ],
-        )
-        .unwrap();
-    let b = device
-        .tensor(
-            3,
-            4,
-            vec![
-                //
-                1.0, 5.0, 9.0, //
-                2.0, 6.0, 10.0, //
-                3.0, 7.0, 11.0, //
-                4.0, 8.0, 12.0, //
-            ],
-        )
-        .unwrap();
-    let c = device
-        .tensor(
-            2,
-            4,
-            vec![
-                //
-                2.0, 7.0, //
-                6.0, 2.0, //
-                0.0, 7.0, //
-                4.0, 2.0, //
-            ],
-        )
-        .unwrap();
+    let a = new_tensor!(
+        device,
+        2,
+        3,
+        vec![
+            //
+            1.0, 4.0, //
+            2.0, 5.0, //
+            3.0, 6.0, //
+        ],
+    )
+    .unwrap();
+    let b = new_tensor!(
+        device,
+        3,
+        4,
+        vec![
+            //
+            1.0, 5.0, 9.0, //
+            2.0, 6.0, 10.0, //
+            3.0, 7.0, 11.0, //
+            4.0, 8.0, 12.0, //
+        ],
+    )
+    .unwrap();
+    let c = new_tensor!(
+        device,
+        2,
+        4,
+        vec![
+            //
+            2.0, 7.0, //
+            6.0, 2.0, //
+            0.0, 7.0, //
+            4.0, 2.0, //
+        ],
+    )
+    .unwrap();
 
     let alpha = 1.0;
     let beta = 1.0;
@@ -89,42 +91,42 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
     let n = 4;
     let k = 3;
 
-    let a = device
-        .tensor(
-            2,
-            3,
-            vec![
-                //
-                1.0, 2.0, 3.0, //
-                4.0, 5.0, 6.0, //
-            ],
-        )
-        .unwrap();
+    let a = new_tensor!(
+        device,
+        2,
+        3,
+        vec![
+            //
+            1.0, 2.0, 3.0, //
+            4.0, 5.0, 6.0, //
+        ],
+    )
+    .unwrap();
 
-    let b = device
-        .tensor(
-            3,
-            4,
-            vec![
-                //
-                1.0, 2.0, 3.0, 4.0, //
-                5.0, 6.0, 7.0, 8.0, //
-                9.0, 10.0, 11.0, 12.0, //
-            ],
-        )
-        .unwrap();
+    let b = new_tensor!(
+        device,
+        3,
+        4,
+        vec![
+            //
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 7.0, 8.0, //
+            9.0, 10.0, 11.0, 12.0, //
+        ],
+    )
+    .unwrap();
 
-    let c = device
-        .tensor(
-            2,
-            4,
-            vec![
-                //
-                2.0, 6.0, 0.0, 4.0, //
-                7.0, 2.0, 7.0, 2.0, //
-            ],
-        )
-        .unwrap();
+    let c = new_tensor!(
+        device,
+        2,
+        4,
+        vec![
+            //
+            2.0, 6.0, 0.0, 4.0, //
+            7.0, 2.0, 7.0, 2.0, //
+        ],
+    )
+    .unwrap();
 
     let alpha = 1.0;
     let beta = 1.0;
@@ -160,9 +162,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
 fn cpu_tensor() {
     use crate::Device;
     let device = Device::cpu();
-    let tensor = device
-        .tensor(2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
-        .unwrap();
+    let tensor = new_tensor!(device, 2, 3, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
     assert_eq!(
         tensor.get_values().unwrap(),
         vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0,]

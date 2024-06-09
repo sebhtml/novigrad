@@ -1,3 +1,4 @@
+use crate::new_tensor;
 use crate::{
     optimization_instruction, tensor::Error, Device, Instruction, OpCode, OptimizerTrait,
     TensorWithGrad,
@@ -34,14 +35,14 @@ impl OptimizerTrait for Adam {
         let beta2 = self.beta2;
         let epsilon = self.epsilon;
 
-        let alpha_rate_tensor = device.tensor(1, 1, vec![alpha])?;
-        let one_minus_beta1 = device.tensor(1, 1, vec![1.0 - beta1])?;
-        let beta1_tensor = device.tensor(1, 1, vec![beta1])?;
-        let one_minus_beta2 = device.tensor(1, 1, vec![1.0 - beta2])?;
-        let beta2_tensor = device.tensor(1, 1, vec![beta2])?;
-        let epsilon_tensor = device.tensor(1, 1, vec![epsilon])?;
-        let zero = device.tensor(1, 1, vec![0.0])?;
-        let f32_max = device.tensor(1, 1, vec![f32::MAX])?;
+        let alpha_rate_tensor = new_tensor!(device, 1, 1, vec![alpha])?;
+        let one_minus_beta1 = new_tensor!(device, 1, 1, vec![1.0 - beta1])?;
+        let beta1_tensor = new_tensor!(device, 1, 1, vec![beta1])?;
+        let one_minus_beta2 = new_tensor!(device, 1, 1, vec![1.0 - beta2])?;
+        let beta2_tensor = new_tensor!(device, 1, 1, vec![beta2])?;
+        let epsilon_tensor = new_tensor!(device, 1, 1, vec![epsilon])?;
+        let zero = new_tensor!(device, 1, 1, vec![0.0])?;
+        let f32_max = new_tensor!(device, 1, 1, vec![f32::MAX])?;
 
         let mut instructions = vec![];
 
@@ -50,11 +51,11 @@ impl OptimizerTrait for Adam {
             let g = &optimizable_tensor.gradient();
             debug_assert_eq!(*g.size(), *theta.size());
 
-            let m = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
-            let v = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
+            let m = new_tensor!(device, theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
+            let v = new_tensor!(device, theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
 
-            let tmp1 = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
-            let tmp2 = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
+            let tmp1 = new_tensor!(device, theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
+            let tmp2 = new_tensor!(device, theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
 
             // Update 1st moment
             // m = beta1 * m + (1 - beta1) * g
@@ -101,16 +102,16 @@ impl OptimizerTrait for Adam {
             // TODO t should be in 0..num_iterations
             let t = 10;
             // m_hat = m / (1 - beta1**t)
-            let m_hat = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
-            let m_multiplier = device.tensor(1, 1, vec![1.0 / (1.0 - beta1.powi(t))])?;
+            let m_hat = new_tensor!(device, theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
+            let m_multiplier = new_tensor!(device, 1, 1, vec![1.0 / (1.0 - beta1.powi(t))])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&m_multiplier, &m],
                 &[&m_hat],
             ));
             // v_hat = v / (1 - beta2**t)
-            let v_hat = device.tensor(theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
-            let v_multiplier = device.tensor(1, 1, vec![1.0 / (1.0 - beta2.powi(t))])?;
+            let v_hat = new_tensor!(device, theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
+            let v_multiplier = new_tensor!(device, 1, 1, vec![1.0 / (1.0 - beta2.powi(t))])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 &[&v_multiplier, &v],

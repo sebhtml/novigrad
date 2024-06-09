@@ -21,6 +21,48 @@ use core::fmt::Debug;
 
 use self::slice::{DevSlice, DevSliceEnum};
 
+#[cfg(debug_assertions)]
+#[macro_export]
+macro_rules! new_tensor {
+    ( $device:expr, $rows:expr, $cols:expr, $values:expr $(,)? ) => {
+        $device.tensor($rows, $cols, $values, file!(), line!(), column!())
+    };
+}
+
+#[cfg(not(debug_assertions))]
+#[macro_export]
+macro_rules! new_tensor {
+    ( $device:expr, $rows:expr, $cols:expr, $values:expr $(,)? ) => {
+        $device.tensor($rows, $cols, $values)
+    };
+}
+
+#[cfg(debug_assertions)]
+#[macro_export]
+macro_rules! new_tensor_with_grad {
+    ( $device:expr, $rows:expr, $cols:expr, $values:expr, $inputs:expr, $requires_grad:expr, $optimize:expr $(,)? ) => {
+        $device.tensor_with_grad(
+            $rows,
+            $cols,
+            $values,
+            $inputs,
+            $requires_grad,
+            $optimize,
+            file!(),
+            line!(),
+            column!(),
+        )
+    };
+}
+
+#[cfg(not(debug_assertions))]
+#[macro_export]
+macro_rules! new_tensor_with_grad {
+    ( $device:expr, $rows:expr, $cols:expr, $values:expr, $inputs:expr, $requires_grad:expr, $optimize:expr $(,)? ) => {
+        $device.tensor_with_grad($rows, $cols, $values, $inputs, $requires_grad, $optimize)
+    };
+}
+
 pub struct MemoryInfo {
     pub used: usize,
     pub free: usize,
@@ -137,6 +179,7 @@ impl Debug for dyn DeviceTrait + Send + Sync {
 pub struct Device {
     next_name: Arc<RwLock<usize>>,
     used: Arc<RwLock<usize>>,
+    tensors: Arc<RwLock<Vec<Tensor>>>,
     tensors_to_optimize: Arc<RwLock<Vec<TensorWithGrad>>>,
     device: Arc<dyn DeviceTrait + Send + Sync>,
     available_buffers: Arc<RwLock<HashMap<usize, LinkedList<DevSlice>>>>,
@@ -156,7 +199,8 @@ impl Device {
         Self {
             next_name: Default::default(),
             used: Default::default(),
-            tensors_to_optimize: Arc::new(RwLock::new(vec![])),
+            tensors: Default::default(),
+            tensors_to_optimize: Default::default(),
             device,
             available_buffers: Default::default(),
         }
@@ -191,10 +235,33 @@ impl Device {
         }
     }
 
-    pub fn tensor(&self, rows: usize, cols: usize, values: Vec<f32>) -> Result<Tensor, Error> {
+    pub fn tensor(
+        &self,
+        rows: usize,
+        cols: usize,
+        values: Vec<f32>,
+        #[cfg(debug_assertions)] file: &str,
+        #[cfg(debug_assertions)] line: u32,
+        #[cfg(debug_assertions)] column: u32,
+    ) -> Result<Tensor, Error> {
         let name = *self.next_name.read().unwrap();
         *self.next_name.write().unwrap() += 1;
-        Tensor::new(name, rows, cols, values, self)
+        let tensor = Tensor::new(
+            name,
+            rows,
+            cols,
+            values,
+            self,
+            #[cfg(debug_assertions)]
+            file,
+            #[cfg(debug_assertions)]
+            line,
+            #[cfg(debug_assertions)]
+            column,
+        )?;
+        self.tensors.write().unwrap().push(tensor.clone());
+
+        Ok(tensor)
     }
 
     pub fn tensor_with_grad(
@@ -205,13 +272,49 @@ impl Device {
         inputs: &[&TensorWithGrad],
         requires_grad: bool,
         optimize: bool,
+        #[cfg(debug_assertions)] file: &str,
+        #[cfg(debug_assertions)] line: u32,
+        #[cfg(debug_assertions)] column: u32,
     ) -> Result<TensorWithGrad, Error> {
         let len = rows * cols;
-        let tensor = Self::tensor(&self, rows, cols, values)?;
+        let tensor = Self::tensor(
+            &self,
+            rows,
+            cols,
+            values,
+            #[cfg(debug_assertions)]
+            file,
+            #[cfg(debug_assertions)]
+            line,
+            #[cfg(debug_assertions)]
+            column,
+        )?;
         let gradient = if requires_grad {
-            Self::tensor(&self, rows, cols, vec![0.0; len])?
+            Self::tensor(
+                &self,
+                rows,
+                cols,
+                vec![0.0; len],
+                #[cfg(debug_assertions)]
+                file,
+                #[cfg(debug_assertions)]
+                line,
+                #[cfg(debug_assertions)]
+                column,
+            )?
         } else {
-            Self::tensor(&self, 0, 0, vec![])?
+            Self::tensor(
+                &self,
+                0,
+                0,
+                vec![],
+                #[cfg(debug_assertions)]
+                file,
+                #[cfg(debug_assertions)]
+                line,
+                #[cfg(debug_assertions)]
+                column,
+            )?
         };
         let tensor = TensorWithGrad::new(tensor, gradient, inputs);
         if optimize {
@@ -233,6 +336,10 @@ impl Device {
             count += t.tensor().len();
         }
         count
+    }
+
+    pub fn tensors(&self) -> impl Deref<Target = Vec<Tensor>> + '_ {
+        self.tensors.read().unwrap()
     }
 
     pub fn tensors_to_optimize(&self) -> impl Deref<Target = Vec<TensorWithGrad>> + '_ {

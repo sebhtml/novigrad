@@ -1,5 +1,5 @@
-- use Condvar
-- instantiate dispatch queue, completion queue, scheduler, and execution units in NeuralMachine
+- TODO put instructions with many dependent instructions in their own stream to have Embedding be in its own stream.
+
 - add device stream support in devices to execute attention heads in parallel
 
 == Transformer ==
@@ -10,6 +10,9 @@
 - implement LayerNorm
 - implement Transformer
 
+---------------
+
+- instantiate dispatch queue, completion queue, scheduler, and execution units in NeuralMachine
 ---------------
 
 - implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html

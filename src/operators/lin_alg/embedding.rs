@@ -1,10 +1,14 @@
 use crate::{
-    devices::Device, tensor::Error, tensor::Tensor, BinaryOperator, DeviceTrait, MatMul,
-    TensorWithGrad, UnaryOperator,
+    devices::Device,
+    new_tensor, new_tensor_with_grad,
+    tensor::{Error, Tensor},
+    BinaryOperator, DeviceTrait, MatMul, TensorWithGrad, UnaryOperator,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
+    //id_entry: Identity,
+    //id_exit: Identity,
     embedding_table: TensorWithGrad,
     matmul: MatMul,
 }
@@ -17,9 +21,10 @@ impl Embedding {
     ) -> Result<Self, Error> {
         let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim)?;
         let len = embedding_table.len();
-        let mut transposed = device.tensor(embedding_dim, num_embeddings, vec![0.0; len])?;
+        let mut transposed = new_tensor!(device, embedding_dim, num_embeddings, vec![0.0; len])?;
         device.transpose(&embedding_table, &mut transposed)?;
-        let embedding_table = device.tensor_with_grad(
+        let embedding_table = new_tensor_with_grad!(
+            device,
             transposed.rows(),
             transposed.cols(),
             transposed.get_values().unwrap(),
@@ -31,7 +36,11 @@ impl Embedding {
         let transb = true;
         let matmul = MatMul::new(device, transb);
 
+        //let id_entry = Identity::new("Embedding entry".into());
+        //let id_exit = Identity::new("Embedding exit".into());
         let op = Self {
+            //id_entry,
+            //id_exit,
             embedding_table,
             matmul,
         };
@@ -41,7 +50,10 @@ impl Embedding {
 
 impl UnaryOperator for Embedding {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
-        self.matmul.forward(input, &self.embedding_table)
+        //let input = self.id_entry.forward(input)?;
+        let output = self.matmul.forward(&input, &self.embedding_table)?;
+        //let output = self.id_exit.forward(&output)?;
+        Ok(output)
     }
 }
 
@@ -66,5 +78,5 @@ fn get_embedding_table(
         embeddings_table.append(&mut token_embeddings);
         token += 1;
     }
-    device.tensor(num_embeddings, embedding_dim, embeddings_table)
+    new_tensor!(device, num_embeddings, embedding_dim, embeddings_table)
 }

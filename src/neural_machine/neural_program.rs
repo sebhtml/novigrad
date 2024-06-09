@@ -1,7 +1,7 @@
-use std::ops::Deref;
+use std::{collections::HashSet, ops::Deref};
 
 use crate::{
-    gradient_instruction,
+    gradient_instruction, new_tensor_with_grad,
     tensor::{Error, Tensor},
     BinaryOperator, Device, Instruction, OpCode, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
@@ -24,7 +24,8 @@ impl NeuralProgram {
         // input
         let input_shape = model.input_size();
         let input_len = input_shape[0] * input_shape[1];
-        let example_input = device.tensor_with_grad(
+        let example_input = new_tensor_with_grad!(
+            device,
             input_shape[0],
             input_shape[1],
             vec![0.7; input_len],
@@ -35,7 +36,8 @@ impl NeuralProgram {
         // output
         let output_shape = model.output_size();
         let output_len = output_shape[0] * output_shape[1];
-        let example_output = device.tensor_with_grad(
+        let example_output = new_tensor_with_grad!(
+            device,
             output_shape[0],
             output_shape[1],
             vec![0.7; output_len],
@@ -50,13 +52,24 @@ impl NeuralProgram {
         let tape = loss.get_tape();
         let mut instructions = vec![];
 
+        let mut processed_forward_tensors = HashSet::<usize>::new();
         for tensor in tape.iter() {
+            let tensor_name = tensor.tensor().name();
+            if processed_forward_tensors.contains(&tensor_name) {
+                continue;
+            }
             for instruction in tensor.forward_instructions().into_iter() {
                 instructions.push(instruction);
             }
+            processed_forward_tensors.insert(tensor_name);
         }
 
+        let mut processed_backward_tensors = HashSet::<usize>::new();
         for tensor in tape.iter().rev() {
+            let tensor_name = tensor.tensor().name();
+            if processed_backward_tensors.contains(&tensor_name) {
+                continue;
+            }
             for instruction in tensor.gradient_instructions().into_iter() {
                 let outputs: Vec<Tensor> =
                     instruction.outputs().deref().clone().into_iter().collect();
@@ -72,6 +85,7 @@ impl NeuralProgram {
                     ));
                 }
             }
+            processed_backward_tensors.insert(tensor_name);
         }
 
         let tensors = device.tensors_to_optimize();

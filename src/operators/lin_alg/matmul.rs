@@ -1,6 +1,8 @@
 use crate::{
-    devices::Device, error, gradient_instruction, inference_instruction, tensor::Error,
-    tensor::ErrorEnum, tensor::Tensor, BinaryOperator, OpCode, TensorWithGrad,
+    devices::Device,
+    error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    tensor::{Error, ErrorEnum, Tensor},
+    BinaryOperator, OpCode, TensorWithGrad,
 };
 
 pub struct MatMul {
@@ -49,7 +51,8 @@ impl BinaryOperator for MatMul {
             input_1_tensor.cols()
         };
         let len = rows * cols;
-        let output = self.device.tensor_with_grad(
+        let output = new_tensor_with_grad!(
+            self.device,
             rows,
             cols,
             vec![0.0; len],
@@ -60,7 +63,7 @@ impl BinaryOperator for MatMul {
 
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0])?;
+        let zero = new_tensor!(&self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor()],
@@ -71,6 +74,7 @@ impl BinaryOperator for MatMul {
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
+
         output.push_instruction(inference_instruction!(
             OpCode::Gemm(false, transb, false),
             &[
@@ -80,7 +84,6 @@ impl BinaryOperator for MatMul {
             ],
             &[&outputs[0].tensor()],
         ));
-
         if input_1.gradient().requires_grad() {
             output.push_instruction(gradient_instruction!(
                 OpCode::Gemm(true, false, transb),

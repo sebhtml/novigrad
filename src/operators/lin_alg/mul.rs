@@ -1,6 +1,7 @@
 use crate::{
-    gradient_instruction, inference_instruction, tensor::Error, tensor::Tensor, BinaryOperator,
-    Device, OpCode, TensorWithGrad,
+    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    tensor::{Error, Tensor},
+    BinaryOperator, Device, OpCode, TensorWithGrad,
 };
 
 pub struct Mul {
@@ -34,7 +35,8 @@ impl BinaryOperator for Mul {
         let rows = input_0_t.rows();
         let cols = input_0_t.cols();
         let len = rows * cols;
-        let output = self.device.tensor_with_grad(
+        let output = new_tensor_with_grad!(
+            self.device,
             rows,
             cols,
             vec![0.0; len],
@@ -44,7 +46,7 @@ impl BinaryOperator for Mul {
         )?;
         let inputs = [input_0, input_1];
         let outputs = [&output];
-        let zero = self.device.tensor(1, 1, vec![0.0])?;
+        let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             &[&zero, &outputs[0].tensor()],
@@ -82,7 +84,7 @@ impl BinaryOperator for Mul {
             if outputs[1].requires_grad() {
                 let output_1_gradient = outputs[1];
                 let output_0 = inputs[0];
-                let tmp = self.device.tensor(rows, cols, vec![0.0; len])?;
+                let tmp = new_tensor!(self.device, rows, cols, vec![0.0; len])?;
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
@@ -100,7 +102,7 @@ impl BinaryOperator for Mul {
             if outputs[0].requires_grad() {
                 let output_0_gradient = outputs[0];
                 let output_ = inputs[1];
-                let tmp = self.device.tensor(rows, cols, vec![0.0; len])?;
+                let tmp = new_tensor!(self.device, rows, cols, vec![0.0; len])?;
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Mul,

@@ -1,42 +1,44 @@
 use more_asserts::{assert_ge, assert_le};
 
+use crate::new_tensor;
+
 #[test]
 fn clip_min() {
     use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
-    let input = device
-        .tensor(
-            2,
-            3,
-            vec![
-                //
-                -1.0, 4.0, //
-                2.0, 5.0, //
-                3.0, -6.0, //
-            ],
-        )
-        .unwrap();
-    let output = device.tensor(2, 3, vec![0.0; 6]).unwrap();
+    let input = new_tensor!(
+        device,
+        2,
+        3,
+        vec![
+            //
+            -1.0, 4.0, //
+            2.0, 5.0, //
+            3.0, -6.0, //
+        ],
+    )
+    .unwrap();
+    let output = new_tensor!(device, 2, 3, vec![0.0; 6]).unwrap();
 
-    let min = device.tensor(1, 1, vec![0.0]).unwrap();
+    let min = new_tensor!(device, 1, 1, vec![0.0]).unwrap();
 
-    let max = device.tensor(1, 1, vec![f32::INFINITY]).unwrap();
+    let max = new_tensor!(device, 1, 1, vec![f32::INFINITY]).unwrap();
 
     device.clip(&min, &max, &input, &output).unwrap();
 
-    let expected = device
-        .tensor(
-            2,
-            3,
-            vec![
-                //
-                0.0, 4.0, //
-                2.0, 5.0, //
-                3.0, 0.0, //
-            ],
-        )
-        .unwrap();
+    let expected = new_tensor!(
+        device,
+        2,
+        3,
+        vec![
+            //
+            0.0, 4.0, //
+            2.0, 5.0, //
+            3.0, 0.0, //
+        ],
+    )
+    .unwrap();
     assert_eq!(expected.get_values(), output.get_values(),);
 }
 
@@ -45,38 +47,38 @@ fn clip_max() {
     use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
-    let input = device
-        .tensor(
-            2,
-            3,
-            vec![
-                //
-                -1.0, 4.0, //
-                2.0, 5.0, //
-                3.0, -6.0, //
-            ],
-        )
-        .unwrap();
-    let output = device.tensor(2, 3, vec![0.0; 6]).unwrap();
+    let input = new_tensor!(
+        device,
+        2,
+        3,
+        vec![
+            //
+            -1.0, 4.0, //
+            2.0, 5.0, //
+            3.0, -6.0, //
+        ],
+    )
+    .unwrap();
+    let output = new_tensor!(device, 2, 3, vec![0.0; 6]).unwrap();
 
-    let min = device.tensor(1, 1, vec![f32::NEG_INFINITY]).unwrap();
+    let min = new_tensor!(device, 1, 1, vec![f32::NEG_INFINITY]).unwrap();
 
-    let max = device.tensor(1, 1, vec![2.0]).unwrap();
+    let max = new_tensor!(device, 1, 1, vec![2.0]).unwrap();
 
     device.clip(&min, &max, &input, &output).unwrap();
 
-    let expected = device
-        .tensor(
-            2,
-            3,
-            vec![
-                //
-                -1.0, 2.0, //
-                2.0, 2.0, //
-                2.0, -6.0, //
-            ],
-        )
-        .unwrap();
+    let expected = new_tensor!(
+        device,
+        2,
+        3,
+        vec![
+            //
+            -1.0, 2.0, //
+            2.0, 2.0, //
+            2.0, -6.0, //
+        ],
+    )
+    .unwrap();
     assert_eq!(expected.get_values(), output.get_values(),);
 }
 
@@ -85,8 +87,8 @@ fn bernoulli() {
     use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
-    let input = device.tensor(1, 100, vec![0.3; 100]).unwrap();
-    let output = device.tensor(1, 100, vec![0.0; 100]).unwrap();
+    let input = new_tensor!(device, 1, 100, vec![0.3; 100]).unwrap();
+    let output = new_tensor!(device, 1, 100, vec![0.0; 100]).unwrap();
 
     device.bernoulli(&input, &output).unwrap();
 

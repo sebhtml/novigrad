@@ -5,7 +5,7 @@ mod mega_man;
 pub mod mega_man_attention;
 mod perceptron;
 mod simple;
-use crate::{error, BinaryOperator, Metrics, OptimizerTrait};
+use crate::{error, new_tensor, new_tensor_with_grad, BinaryOperator, Metrics, OptimizerTrait};
 pub use perceptron::*;
 use std::fs;
 
@@ -55,7 +55,8 @@ pub fn into_one_hot_encoded_rows(
 ) -> Result<TensorWithGrad, Error> {
     debug_assert_lt!(*input_tokens.iter().max().unwrap(), num_classes);
     let len = input_tokens.len() * num_classes;
-    let result = device.tensor(
+    let result = new_tensor!(
+        device,
         input_tokens.len(),
         num_classes,
         vec![Default::default(); len],
@@ -64,7 +65,8 @@ pub fn into_one_hot_encoded_rows(
     for (index, token) in input_tokens.iter().enumerate() {
         result_values[result.index(index, *token)] = 1.0;
     }
-    device.tensor_with_grad(
+    new_tensor_with_grad!(
+        device,
         input_tokens.len(),
         num_classes,
         result_values,

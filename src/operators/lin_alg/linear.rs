@@ -1,5 +1,5 @@
 use crate::{
-    error,
+    error, new_tensor_with_grad,
     tensor::{Error, ErrorEnum},
     Add, BinaryOperator, Device, MatMul, TensorWithGrad, UnaryOperator,
 };
@@ -56,10 +56,11 @@ impl Linear {
         }
 
         let weights =
-            device.tensor_with_grad(weights_rows, weights_cols, weights, &[], true, true)?;
+            new_tensor_with_grad!(device, weights_rows, weights_cols, weights, &[], true, true)?;
 
         let biases_len = bias_rows * weights_rows;
-        let biases = device.tensor_with_grad(
+        let biases = new_tensor_with_grad!(
+            device,
             bias_rows,
             weights_rows,
             vec![0.0; biases_len],

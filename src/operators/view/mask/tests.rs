@@ -1,13 +1,20 @@
-use crate::{tensor::Tensor, Device, Mask, UnaryOperator};
+use crate::{new_tensor_with_grad, tensor::Tensor, Device, Mask, UnaryOperator};
 
 #[test]
 fn forward() {
     let device = Device::default();
     let rows = 3;
     let cols = 3;
-    let input = device
-        .tensor_with_grad(rows, cols, vec![1.0; rows * cols], &[], false, false)
-        .unwrap();
+    let input = new_tensor_with_grad!(
+        device,
+        rows,
+        cols,
+        vec![1.0; rows * cols],
+        &[],
+        false,
+        false
+    )
+    .unwrap();
     let mask = Mask::try_new(&device, rows, cols).unwrap();
 
     let output = mask.forward(&input).unwrap();

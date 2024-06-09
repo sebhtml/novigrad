@@ -53,10 +53,12 @@ fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
     let simple_instructions = make_simple_instructions(&instructions);
     let expected_instructions = (0..instructions.len()).collect::<Vec<_>>();
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
         &simple_instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
     let mut actual_instructions = streams
@@ -74,10 +76,12 @@ fn the_instructions_length_is_correct() {
     let simple_instructions = make_simple_instructions(&instructions);
     assert_eq!(2635, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
         &simple_instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
     let actual_instructions = streams
@@ -93,15 +97,17 @@ fn the_streams_length_are_correct() {
     let instructions = get_test_instructions(None).unwrap();
     let simple_instructions = make_simple_instructions(&instructions);
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
         &simple_instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
     print_streams("test", &streams);
     assert_eq!(
-        104,
+        107,
         streams.iter().filter(|x| x.instructions.len() > 0).count()
     );
 }
@@ -117,10 +123,12 @@ fn simple_problem_for_streams() {
         (vec![12, 13], vec![14]),
     ];
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
 
@@ -155,10 +163,12 @@ fn problem_2_for_streams_with_fuse() {
     ];
 
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 2;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
 
@@ -195,10 +205,12 @@ fn problem_2_for_streams_no_fuse() {
     ];
 
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 1;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
 
@@ -235,10 +247,12 @@ fn problem_3_for_streams() {
         (vec![6], vec![7]),
     ];
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
 
@@ -278,10 +292,12 @@ fn problem_4_for_streams() {
         (vec![8, 9, 10, 11], vec![12]),
     ];
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
 
@@ -323,10 +339,12 @@ fn problem_4_for_streams() {
 fn many_independent_instructions_in_two_streams() {
     let instructions = vec![(vec![0, 1], vec![2]), (vec![3, 4], vec![5])];
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 1;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
 
@@ -348,10 +366,12 @@ fn many_independent_instructions_in_one_stream() {
         (vec![3, 4], vec![5]), //
     ];
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 32;
     let streams = make_streams(
         &instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
 
@@ -395,10 +415,12 @@ fn test_that_accesses_are_not_reordered(access: Access, prior_access: Access) {
         get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
 
     let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 32;
     let actual_streams = make_streams(
         &simple_instructions,
         minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
         minimum_stream_instructions,
     );
     let actual_streams = Arc::new(actual_streams);

@@ -114,6 +114,7 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
     max_concurrent_streams: usize,
     handler: &Arc<Mutex<Handler>>,
 ) {
+    // Create structures
     let dispatch_queues = (0..max_concurrent_streams)
         .map(|_| Arc::new(Queue::<usize>::default()))
         .collect::<Vec<_>>();
@@ -124,8 +125,7 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
         &completion_queue,
         max_concurrent_streams,
     );
-
-    let execution_unit_handles = (0..max_concurrent_streams)
+    let execution_units = (0..max_concurrent_streams)
         .map(|ordinal| {
             let execution_unit = ExecutionUnit::new(
                 ordinal,
@@ -135,14 +135,21 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
                 streams,
                 instructions,
             );
-            ExecutionUnit::spawn(execution_unit)
+            execution_unit
         })
         .collect::<Vec<_>>();
-    let scheduler_handle = Scheduler::spawn(scheduler);
-    let _ = scheduler_handle.join().unwrap();
-    let _ = execution_unit_handles
+
+    // Spawn threads
+    let execution_unit_handles = execution_units
         .into_iter()
-        .map(|x| x.join().unwrap());
+        .map(|execution_unit| ExecutionUnit::spawn(execution_unit))
+        .collect::<Vec<_>>();
+    let scheduler_handle = Scheduler::spawn(scheduler);
+    let _scheduler = scheduler_handle.join().unwrap();
+    let _execution_units = execution_unit_handles
+        .into_iter()
+        .map(|x| x.join().unwrap())
+        .collect::<Vec<_>>();
 }
 
 pub struct Scheduler {
@@ -223,7 +230,8 @@ impl Scheduler {
 
 /// https://en.wikipedia.org/wiki/Instruction_pipelining
 pub struct ExecutionUnit<Handler: StreamEventHandler> {
-    _ordinal: usize,
+    #[allow(unused)]
+    ordinal: usize,
     handler: Arc<Mutex<Handler>>,
     streams: Arc<Vec<Stream>>,
     instructions: Arc<Vec<Instruction>>,
@@ -242,7 +250,7 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<
         instructions: &Arc<Vec<Instruction>>,
     ) -> Self {
         Self {
-            _ordinal: ordinal,
+            ordinal,
             handler: handler.clone(),
             streams: streams.clone(),
             instructions: instructions.clone(),
@@ -267,12 +275,14 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ExecutionUnit<
             if stream == STOP {
                 return false;
             }
+            //println!("execution unit ordinal {} dispatch {:?}", self.ordinal, Instant::now());
             // Call handler to execute the instructions for that stream.
             self.handler
                 .lock()
                 .unwrap()
                 .on_execute(&self.streams, &self.instructions, stream)
                 .unwrap();
+            //println!("execution unit ordinal {} completion {:?}", self.ordinal, Instant::now());
             // Writeback
             self.completion_queue.push_back(stream);
             self.completed_items += 1;

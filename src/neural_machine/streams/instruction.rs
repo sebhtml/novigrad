@@ -6,6 +6,7 @@ pub struct Dependencies {
     pub write_before_write_dependencies: Vec<usize>,
     pub read_before_write_dependencies: Vec<usize>,
     pub all_dependencies: Vec<usize>,
+    pub all_dependents: Vec<usize>,
 }
 
 impl Default for Dependencies {
@@ -15,6 +16,7 @@ impl Default for Dependencies {
             write_before_write_dependencies: Default::default(),
             read_before_write_dependencies: Default::default(),
             all_dependencies: Default::default(),
+            all_dependents: Default::default(),
         }
     }
 }
@@ -97,6 +99,12 @@ pub fn get_instruction_dependencies(
         deps.sort();
         deps.dedup();
         entry.all_dependencies = deps;
+    }
+
+    for dependent in 0..dependencies.len() {
+        for dependency in dependencies[dependent].all_dependencies.clone().iter() {
+            dependencies[*dependency].all_dependents.push(dependent);
+        }
     }
 
     dependencies

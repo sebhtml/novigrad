@@ -114,25 +114,25 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
     max_concurrent_streams: usize,
     handler: &Arc<Mutex<Handler>>,
 ) {
-    let core = ProcessingCore::new(max_concurrent_streams, streams, handler, instructions);
+    let scheduler = Scheduler::new(max_concurrent_streams, streams, handler, instructions);
 
-    let execution_units = core.execution_units;
-    let scheduler = core.scheduler;
+    let execution_units = scheduler.execution_units;
+    let controller = scheduler.controller;
 
     // Spawn threads
     let execution_unit_handles = execution_units
         .into_iter()
         .map(|execution_unit| ExecutionUnit::spawn(execution_unit))
         .collect::<Vec<_>>();
-    let scheduler_handle = Scheduler::spawn(scheduler);
-    let _scheduler = scheduler_handle.join().unwrap();
+    let controller_handle = Controller::spawn(controller);
+    let _controller = controller_handle.join().unwrap();
     let _execution_units = execution_unit_handles
         .into_iter()
         .map(|x| x.join().unwrap())
         .collect::<Vec<_>>();
 }
 
-pub struct Scheduler {
+pub struct Controller {
     dependents: Vec<Vec<usize>>,
     pending_dependencies: Vec<usize>,
     dispatch_queues: Vec<Arc<Queue<usize>>>,
@@ -141,7 +141,7 @@ pub struct Scheduler {
     max_concurrent_streams: usize,
 }
 
-impl Scheduler {
+impl Controller {
     pub fn new(
         streams: &[Stream],
         dispatch_queues: &Vec<Arc<Queue<usize>>>,
@@ -165,15 +165,15 @@ impl Scheduler {
         }
     }
 
-    pub fn spawn(mut scheduler: Self) -> JoinHandle<Self> {
+    pub fn spawn(mut controller: Self) -> JoinHandle<Self> {
         // Dispatch immediately all streams with no dependencies.
-        for (stream, _) in scheduler.pending_dependencies.iter().enumerate() {
-            scheduler.maybe_dispatch(stream);
+        for (stream, _) in controller.pending_dependencies.iter().enumerate() {
+            controller.maybe_dispatch(stream);
         }
 
         let handle = thread::spawn(|| {
-            while scheduler.step() {}
-            scheduler
+            while controller.step() {}
+            controller
         });
         handle
     }
@@ -277,47 +277,49 @@ impl<Handler: StreamEventHandler> Drop for ExecutionUnit<Handler> {
     }
 }
 
-pub struct ProcessingCore<Handler: StreamEventHandler> {
+pub struct Scheduler<Handler: StreamEventHandler> {
     pub dispatch_queues: Vec<Arc<Queue<usize>>>,
     pub completion_queue: Arc<Queue<usize>>,
-    pub scheduler: Scheduler,
+    pub controller: Controller,
     pub execution_units: Vec<ExecutionUnit<Handler>>,
 }
 
-impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> ProcessingCore<Handler> {
-    pub fn new(max_concurrent_streams: usize,
+impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Handler> {
+    pub fn new(
+        max_concurrent_streams: usize,
         streams: &Arc<Vec<Stream>>,
-    handler: &Arc<Mutex<Handler>>,
-    instructions: &Arc<Vec<Instruction>>,) -> Self {
-            // Create structures
-    let dispatch_queues = (0..max_concurrent_streams)
-    .map(|_| Arc::new(Queue::<usize>::default()))
-    .collect::<Vec<_>>();
-let completion_queue = Arc::new(Queue::default());
-let scheduler = Scheduler::new(
-    streams,
-    &dispatch_queues,
-    &completion_queue,
-    max_concurrent_streams,
-);
-let execution_units = (0..max_concurrent_streams)
-    .map(|ordinal| {
-        let execution_unit = ExecutionUnit::new(
-            ordinal,
-            &dispatch_queues[ordinal],
-            &completion_queue,
-            &handler,
+        handler: &Arc<Mutex<Handler>>,
+        instructions: &Arc<Vec<Instruction>>,
+    ) -> Self {
+        // Create structures
+        let dispatch_queues = (0..max_concurrent_streams)
+            .map(|_| Arc::new(Queue::<usize>::default()))
+            .collect::<Vec<_>>();
+        let completion_queue = Arc::new(Queue::default());
+        let controller = Controller::new(
             streams,
-            instructions,
+            &dispatch_queues,
+            &completion_queue,
+            max_concurrent_streams,
         );
-        execution_unit
-    })
-    .collect::<Vec<_>>();
-Self {
-    dispatch_queues,
-    completion_queue,
-    scheduler,
-    execution_units,
-}
+        let execution_units = (0..max_concurrent_streams)
+            .map(|ordinal| {
+                let execution_unit = ExecutionUnit::new(
+                    ordinal,
+                    &dispatch_queues[ordinal],
+                    &completion_queue,
+                    &handler,
+                    streams,
+                    instructions,
+                );
+                execution_unit
+            })
+            .collect::<Vec<_>>();
+        Self {
+            dispatch_queues,
+            completion_queue,
+            controller,
+            execution_units,
+        }
     }
 }

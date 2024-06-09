@@ -121,11 +121,13 @@ impl<T> NeuralMachine<T> {
     }
 
     pub fn compute_gradient(&mut self) -> Result<(), Error> {
-        self.forward(&Category::Gradient)
+        self.forward(&Category::Gradient)?;
+        Ok(())
     }
 
     pub fn optimize(&mut self) -> Result<(), Error> {
-        self.forward(&Category::Optimization)
+        self.forward(&Category::Optimization)?;
+        Ok(())
     }
 
     fn forward_with_streams(&mut self, category: &Category) -> Result<(), Error> {

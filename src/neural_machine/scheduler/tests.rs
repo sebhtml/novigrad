@@ -9,7 +9,9 @@ use crate::{
     },
 };
 
-use super::simulate_execution_and_collect_transactions;
+use super::{
+    simulate_execution_and_collect_instructions, simulate_execution_and_collect_transactions,
+};
 
 #[test]
 fn reads_and_writes_of_same_operand_are_not_reordered() {
@@ -51,12 +53,12 @@ fn test_that_accesses_are_not_reordered(access: Access, prior_access: Access) {
         minimum_stream_instructions,
     );
     let actual_streams = Arc::new(actual_streams);
-    let max_concurrent_streams = 32;
+    let execution_units_len = 32;
     let actual_transactions = simulate_execution_and_collect_transactions(
         &actual_streams,
         &instructions,
         &simple_instructions,
-        max_concurrent_streams,
+        execution_units_len,
     );
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
@@ -65,4 +67,39 @@ fn test_that_accesses_are_not_reordered(access: Access, prior_access: Access) {
         let actual_pairs = actual_read_write_pairs.get(operand).unwrap();
         assert_eq!(expected_pairs, actual_pairs);
     }
+}
+
+#[test]
+fn all_instructions_are_executed_with_out_of_order_execution() {
+    let instructions = get_megaman_attention_instructions().unwrap();
+    let instructions = Arc::new(instructions);
+    let simple_instructions = make_simple_instructions(&instructions);
+    let simple_instructions = Arc::new(simple_instructions);
+
+    let minimum_write_before_read_for_new_stream = 4;
+    let minimum_dependents_for_stream = 12;
+    let minimum_stream_instructions = 32;
+    let actual_streams = make_streams(
+        &simple_instructions,
+        minimum_write_before_read_for_new_stream,
+        minimum_dependents_for_stream,
+        minimum_stream_instructions,
+    );
+    let actual_streams = Arc::new(actual_streams);
+    let execution_units_len = 32;
+
+    let executed_instructions = simulate_execution_and_collect_instructions(
+        &actual_streams,
+        &instructions,
+        execution_units_len,
+    );
+
+    assert_eq!(instructions.len(), executed_instructions.len());
+
+    let sequential_instructions = (0..instructions.len()).collect::<Vec<_>>();
+    assert_ne!(sequential_instructions, executed_instructions);
+
+    let mut sorted_executed_instructions = executed_instructions;
+    sorted_executed_instructions.sort();
+    assert_eq!(sequential_instructions, sorted_executed_instructions);
 }

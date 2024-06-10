@@ -32,16 +32,44 @@ pub trait StreamEventHandler {
 }
 
 #[derive(Clone)]
+pub struct InstructionEmitter {
+    pub executed_instructions: Arc<Mutex<Vec<usize>>>,
+}
+
+impl InstructionEmitter {
+    pub fn new() -> Self {
+        Self {
+            executed_instructions: Default::default(),
+        }
+    }
+}
+
+impl StreamEventHandler for InstructionEmitter {
+    fn on_execute(
+        &mut self,
+        streams: &Arc<Vec<Stream>>,
+        _instructions: &Arc<Vec<Instruction>>,
+        stream: usize,
+    ) -> Result<(), Error> {
+        let stream_instructions = &streams[stream].instructions;
+        for instruction in stream_instructions.iter() {
+            self.executed_instructions
+                .lock()
+                .unwrap()
+                .push(*instruction);
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone)]
 pub struct TransactionEmitter {
     simple_instructions: Arc<Vec<(Vec<usize>, Vec<usize>)>>,
     pub actual_transactions: Arc<Mutex<Vec<Transaction>>>,
 }
 
 impl TransactionEmitter {
-    pub fn new(
-        _streams: &[Stream],
-        simple_instructions: &Arc<Vec<(Vec<usize>, Vec<usize>)>>,
-    ) -> Self {
+    pub fn new(simple_instructions: &Arc<Vec<(Vec<usize>, Vec<usize>)>>) -> Self {
         Self {
             simple_instructions: simple_instructions.clone(),
             actual_transactions: Default::default(),
@@ -98,10 +126,10 @@ impl StreamEventHandler for StreamExecutor {
 pub fn execute_streams(
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
-    max_concurrent_streams: usize,
+    execution_units_len: usize,
 ) {
     let mut handler = StreamExecutor::new();
-    run_scheduler(streams, instructions, max_concurrent_streams, &handler);
+    run_scheduler(streams, instructions, execution_units_len, &handler);
 }
 
 /// Simulate an execution of streams and emit operand transactions.
@@ -110,22 +138,39 @@ pub fn simulate_execution_and_collect_transactions(
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     simple_instructions: &Arc<Vec<(Vec<usize>, Vec<usize>)>>,
-    max_concurrent_streams: usize,
+    execution_units_len: usize,
 ) -> Vec<Transaction> {
-    let handler = TransactionEmitter::new(streams, simple_instructions);
-    run_scheduler(streams, instructions, max_concurrent_streams, &handler);
+    let handler = TransactionEmitter::new(simple_instructions);
+    run_scheduler(streams, instructions, execution_units_len, &handler);
     handler.clone().actual_transactions.lock().unwrap().clone()
+}
+
+/// Simulate an execution of streams and emit executed instructions.
+#[allow(unused)]
+pub fn simulate_execution_and_collect_instructions(
+    streams: &Arc<Vec<Stream>>,
+    instructions: &Arc<Vec<Instruction>>,
+    execution_units_len: usize,
+) -> Vec<usize> {
+    let handler = InstructionEmitter::new();
+    run_scheduler(streams, instructions, execution_units_len, &handler);
+    handler
+        .clone()
+        .executed_instructions
+        .lock()
+        .unwrap()
+        .clone()
 }
 
 fn run_scheduler<Handler>(
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
-    max_concurrent_streams: usize,
+    execution_units_len: usize,
     handler: &Handler,
 ) where
     Handler: StreamEventHandler + Clone + Send + Sync + 'static,
 {
-    let mut scheduler = Scheduler::new(max_concurrent_streams, streams, handler, instructions);
+    let mut scheduler = Scheduler::new(execution_units_len, streams, handler, instructions);
     scheduler.spawn();
     scheduler.execute();
     scheduler.join();
@@ -138,7 +183,7 @@ pub struct Controller {
     execution_unit_command_queues: Vec<Arc<Queue<Command>>>,
     controller_command_queue: Arc<Queue<Command>>,
     completed_streams: usize,
-    max_concurrent_streams: usize,
+    execution_units_len: usize,
 }
 
 impl Controller {
@@ -162,7 +207,7 @@ impl Controller {
             execution_unit_command_queues: execution_unit_command_queues.clone(),
             controller_command_queue: controller_command_queue.clone(),
             completed_streams: 0,
-            max_concurrent_streams: execution_units_len,
+            execution_units_len,
         }
     }
 
@@ -177,7 +222,7 @@ impl Controller {
     fn maybe_dispatch(&self, stream: usize) {
         let pending_dependencies = self.current_pending_dependencies[stream];
         if pending_dependencies == 0 {
-            let ordinal = stream % self.max_concurrent_streams;
+            let ordinal = stream % self.execution_units_len;
             self.execution_unit_command_queues[ordinal].push_back(Command::Dispatch(stream));
         }
     }
@@ -204,7 +249,7 @@ impl Controller {
         }
 
         if self.completed_streams == self.dependents.len() {
-            for ordinal in 0..self.max_concurrent_streams {
+            for ordinal in 0..self.execution_units_len {
                 self.execution_unit_command_queues[ordinal].push_back(Command::Stop);
             }
             false
@@ -299,13 +344,13 @@ where
     Handler: StreamEventHandler + Clone + Send + Sync + 'static,
 {
     pub fn new(
-        max_concurrent_streams: usize,
+        execution_units_len: usize,
         streams: &Arc<Vec<Stream>>,
         handler: &Handler,
         instructions: &Arc<Vec<Instruction>>,
     ) -> Self {
         // Create structures
-        let execution_unit_command_queues = (0..max_concurrent_streams)
+        let execution_unit_command_queues = (0..execution_units_len)
             .map(|_| Arc::new(Queue::<Command>::default()))
             .collect::<Vec<_>>();
         let controller_command_queue = Arc::new(Queue::default());
@@ -313,9 +358,9 @@ where
             streams,
             &execution_unit_command_queues,
             &controller_command_queue,
-            max_concurrent_streams,
+            execution_units_len,
         );
-        let execution_units = (0..max_concurrent_streams)
+        let execution_units = (0..execution_units_len)
             .map(|ordinal| {
                 let execution_unit = ExecutionUnit::new(
                     ordinal,

@@ -18,8 +18,9 @@ use super::streams::{
 pub enum Command {
     Execute,
     Stop,
-    Dispatch(usize),
-    Completion(usize),
+    WorkUnitDispatch(usize),
+    WorkUnitCompletion(usize),
+    ExecutionCompletion,
 }
 
 pub trait StreamEventHandler {
@@ -162,7 +163,7 @@ pub fn simulate_execution_and_collect_instructions(
         .clone()
 }
 
-fn run_scheduler<Handler>(
+pub fn run_scheduler<Handler>(
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     execution_units_len: usize,
@@ -223,7 +224,8 @@ impl Controller {
         let pending_dependencies = self.current_pending_dependencies[stream];
         if pending_dependencies == 0 {
             let ordinal = stream % self.execution_units_len;
-            self.execution_unit_command_queues[ordinal].push_back(Command::Dispatch(stream));
+            self.execution_unit_command_queues[ordinal]
+                .push_back(Command::WorkUnitDispatch(stream));
         }
     }
 
@@ -237,7 +239,7 @@ impl Controller {
                     self.maybe_dispatch(stream);
                 }
             }
-            Some(Command::Completion(stream)) => {
+            Some(Command::WorkUnitCompletion(stream)) => {
                 self.completed_streams += 1;
                 let dependents = &self.dependents[stream];
                 for dependent in dependents.iter() {
@@ -312,14 +314,14 @@ where
             Some(Command::Stop) => {
                 return false;
             }
-            Some(Command::Dispatch(stream)) => {
+            Some(Command::WorkUnitDispatch(stream)) => {
                 // Call handler to execute the instructions for that stream.
                 self.handler
                     .on_execute(&self.streams, &self.instructions, stream)
                     .unwrap();
                 // Writeback
                 self.controller_command_queue
-                    .push_back(Command::Completion(stream));
+                    .push_back(Command::WorkUnitCompletion(stream));
                 self.completed_items += 1;
             }
             _ => {}
@@ -418,7 +420,11 @@ where
     /// - self.controller is some
     /// - self.controller_handle is none
     pub fn join(&mut self) {
+        // Join the controller
         let controller = self.controller_handle.take().unwrap().join().unwrap();
+        self.controller = Some(controller);
+
+        // Join the execution units.
         let execution_units = self
             .execution_unit_handles
             .take()
@@ -426,7 +432,6 @@ where
             .into_iter()
             .map(|x| x.join().unwrap())
             .collect::<Vec<_>>();
-        self.controller = Some(controller);
         self.execution_units = Some(execution_units);
     }
 

@@ -109,12 +109,14 @@ pub fn simulate_execution_and_collect_transactions(
     handler.clone().actual_transactions.lock().unwrap().clone()
 }
 
-fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
+fn run_scheduler<Handler>(
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     max_concurrent_streams: usize,
     handler: &Handler,
-) {
+) where
+    Handler: StreamEventHandler + Clone + Send + Sync + 'static,
+{
     let mut scheduler = Scheduler::new(max_concurrent_streams, streams, handler, instructions);
     scheduler.spawn();
     scheduler.execute();
@@ -205,7 +207,10 @@ impl Controller {
 }
 
 /// https://en.wikipedia.org/wiki/Instruction_pipelining
-pub struct ExecutionUnit<Handler: StreamEventHandler + Send + Sync> {
+pub struct ExecutionUnit<Handler>
+where
+    Handler: StreamEventHandler + Send + Sync,
+{
     #[allow(unused)]
     ordinal: usize,
     handler: Handler,
@@ -216,7 +221,10 @@ pub struct ExecutionUnit<Handler: StreamEventHandler + Send + Sync> {
     completed_items: usize,
 }
 
-impl<Handler: StreamEventHandler + Send + Sync + 'static> ExecutionUnit<Handler> {
+impl<Handler> ExecutionUnit<Handler>
+where
+    Handler: StreamEventHandler + Send + Sync + 'static,
+{
     pub fn new(
         ordinal: usize,
         execution_unit_command_queue: &Arc<Queue<usize>>,
@@ -265,13 +273,19 @@ impl<Handler: StreamEventHandler + Send + Sync + 'static> ExecutionUnit<Handler>
     }
 }
 
-impl<Handler: StreamEventHandler + Send + Sync> Drop for ExecutionUnit<Handler> {
+impl<Handler> Drop for ExecutionUnit<Handler>
+where
+    Handler: StreamEventHandler + Send + Sync,
+{
     fn drop(&mut self) {
         //println!("execution unit: {}, completed_items: {}", self.ordinal, self.completed_items);
     }
 }
 
-pub struct Scheduler<Handler: StreamEventHandler + Send + Sync> {
+pub struct Scheduler<Handler>
+where
+    Handler: StreamEventHandler + Send + Sync,
+{
     controller_command_queue: Arc<Queue<usize>>,
     controller: Option<Controller>,
     execution_units: Option<Vec<ExecutionUnit<Handler>>>,
@@ -279,7 +293,10 @@ pub struct Scheduler<Handler: StreamEventHandler + Send + Sync> {
     execution_unit_handles: Option<Vec<JoinHandle<ExecutionUnit<Handler>>>>,
 }
 
-impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Handler> {
+impl<Handler> Scheduler<Handler>
+where
+    Handler: StreamEventHandler + Clone + Send + Sync + 'static,
+{
     pub fn new(
         max_concurrent_streams: usize,
         streams: &Arc<Vec<Stream>>,

@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use std::{
     sync::{Arc, Mutex},
     thread::{self, JoinHandle},

@@ -1,8 +1,9 @@
 use super::load_examples;
+use crate::neural_program::NeuralProgram;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
-    Adam, Device, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss, TernaryOperator, Tokenizer,
-    TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
+    Adam, Device, Instruction, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss,
+    TernaryOperator, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
@@ -129,4 +130,15 @@ pub fn load_mega_man_attention_model(
         },
     };
     Ok(details)
+}
+
+pub fn get_megaman_attention_instructions() -> Result<Vec<Instruction>, Error> {
+    let device = Device::default();
+    let details = load_mega_man_attention_model(&device)?;
+    let model = details.model;
+    let loss_operator = details.loss_operator;
+    let optimizer = details.optimizer;
+    let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
+    let instructions = program.instructions;
+    Ok(instructions)
 }

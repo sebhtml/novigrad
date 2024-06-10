@@ -156,3 +156,17 @@ impl Instruction {
         self.opcode.execute(&inputs, &outputs_f32)
     }
 }
+
+pub fn filter_instructions(
+    instructions: Vec<Instruction>,
+    filter: Option<Category>,
+) -> Vec<Instruction> {
+    let instructions = match filter {
+        Some(category) => instructions
+            .into_iter()
+            .filter(|x| x.category() == category)
+            .collect(),
+        None => instructions,
+    };
+    instructions
+}

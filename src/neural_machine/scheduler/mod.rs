@@ -3,14 +3,14 @@ mod tests;
 
 use std::{
     sync::{Arc, Mutex},
-    thread::{self, sleep, JoinHandle},
-    time::Duration,
+    thread::{self, JoinHandle},
 };
 
 use queue::Queue;
 
 use crate::{tensor::Error, Instruction};
 pub mod queue;
+
 use super::streams::{
     stream::Stream,
     transaction::{get_instruction_transactions, Transaction},
@@ -237,6 +237,7 @@ impl Controller {
         let command = self.controller_command_queue.pop_front();
         match command {
             Some(Command::Execute) => {
+                self.completed_streams = 0;
                 self.current_pending_dependencies = self.initial_pending_dependencies.clone();
                 // Dispatch immediately all streams with no dependencies.
                 for (stream, _) in self.current_pending_dependencies.iter().enumerate() {
@@ -250,21 +251,20 @@ impl Controller {
                     self.current_pending_dependencies[*dependent] -= 1;
                     self.maybe_dispatch(*dependent);
                 }
+                if self.completed_streams == self.dependents.len() {
+                    self.scheduler_command_queue
+                        .push_back(Command::ExecutionCompletion);
+                }
+            }
+            Some(Command::Stop) => {
+                for ordinal in 0..self.execution_units_len {
+                    self.execution_unit_command_queues[ordinal].push_back(Command::Stop);
+                }
+                return false;
             }
             _ => {}
         }
-
-        if self.completed_streams == self.dependents.len() {
-            for ordinal in 0..self.execution_units_len {
-                self.execution_unit_command_queues[ordinal].push_back(Command::Stop);
-            }
-            println!("push ExecutionCompletion");
-            self.scheduler_command_queue
-                .push_back(Command::ExecutionCompletion);
-            false
-        } else {
-            true
-        }
+        true
     }
 }
 
@@ -439,6 +439,7 @@ where
     /// - self.controller_handle is none
     pub fn join(&mut self) {
         // Join the controller
+        self.controller_command_queue.push_back(Command::Stop);
         let controller = self.controller_handle.take().unwrap().join().unwrap();
         self.controller = Some(controller);
 
@@ -455,9 +456,10 @@ where
 
     pub fn execute(&mut self) {
         self.controller_command_queue.push_back(Command::Execute);
-        // TODO remove sleep.
-        sleep(Duration::from_secs(1));
-        let _ = self.scheduler_command_queue.pop_front();
-        println!("Popped from scheduler_command_queue");
+        let command = self.scheduler_command_queue.pop_front();
+        match command {
+            Some(Command::ExecutionCompletion) => {}
+            _ => panic!(),
+        }
     }
 }

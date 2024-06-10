@@ -46,7 +46,7 @@ pub fn make_streams(
     // A list of dependencies for each instruction.
     let instruction_dependencies = get_instruction_dependencies(instructions);
 
-    //#[cfg(feature = "verbose_streams")]
+    #[cfg(feature = "verbose_streams")]
     for (i, i_dependencies) in instruction_dependencies.iter().enumerate() {
         println!(
             "[assign_streams] INSTRUCTION_DEPENDENCIES  instruction: {},  write_before_read: {:?},  read_before_write: {:?},  write_before_write: {:?}",
@@ -234,7 +234,7 @@ fn assign_instructions_to_streams(
         }
     }
 
-    //#[cfg(feature = "verbose_streams")]
+    #[cfg(feature = "verbose_streams")]
     for (i_inst, i_stream) in instruction_streams.iter().enumerate() {
         println!(
             "[assign_streams] INSTRUCTION_STREAM  instruction: {},  stream: {}",

@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use ntest::timeout;
 
 use crate::{
     mega_man_attention::get_megaman_attention_instructions,
@@ -109,7 +108,6 @@ fn all_instructions_are_executed_with_out_of_order_execution() {
     assert_eq!(sequential_instructions, sorted_executed_instructions);
 }
 
-//#[ntest::timeout(1000)]
 #[test]
 fn all_instructions_are_executed_in_each_scheduler_execution() {
     let instructions = get_megaman_attention_instructions().unwrap();
@@ -135,26 +133,24 @@ fn all_instructions_are_executed_in_each_scheduler_execution() {
 
     let sequential_instructions = (0..instructions.len()).collect::<Vec<_>>();
 
-    let n = 1; // TODO use 10.
+    let n = 10;
     for _ in 0..n {
         scheduler.execute();
-        let executed_instructions = handler
-            .clone()
-            .executed_instructions
-            .lock()
-            .unwrap()
-            .clone();
+        let executed_instructions =
+            &mut handler.executed_instructions.lock().unwrap();
 
         // Same length
         assert_eq!(instructions.len(), executed_instructions.len());
 
         // Out-of-order execution means that the order is different.
-        assert_ne!(sequential_instructions, executed_instructions);
+        assert_ne!(sequential_instructions, **executed_instructions);
 
         // When sorted, the instructions are the same.
-        let mut sorted_executed_instructions = executed_instructions;
-        sorted_executed_instructions.sort();
-        assert_eq!(sequential_instructions, sorted_executed_instructions);
+        executed_instructions.sort();
+        assert_eq!(sequential_instructions, **executed_instructions);
+
+        // Clear the instructions.
+        executed_instructions.clear();
     }
     scheduler.join();
     //panic!()

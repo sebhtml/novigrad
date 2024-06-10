@@ -125,8 +125,8 @@ pub struct Controller {
     dependents: Vec<Vec<usize>>,
     initial_pending_dependencies: Vec<usize>,
     current_pending_dependencies: Vec<usize>,
-    dispatch_queues: Vec<Arc<Queue<usize>>>,
-    completion_queue: Arc<Queue<usize>>,
+    execution_unit_command_queues: Vec<Arc<Queue<usize>>>,
+    controller_command_queue: Arc<Queue<usize>>,
     completed_streams: usize,
     max_concurrent_streams: usize,
 }
@@ -134,9 +134,9 @@ pub struct Controller {
 impl Controller {
     pub fn new(
         streams: &[Stream],
-        dispatch_queues: &Vec<Arc<Queue<usize>>>,
-        completion_queue: &Arc<Queue<usize>>,
-        max_concurrent_streams: usize,
+        execution_unit_command_queues: &Vec<Arc<Queue<usize>>>,
+        controller_command_queue: &Arc<Queue<usize>>,
+        execution_units_len: usize,
     ) -> Self {
         let pending_dependencies = streams.iter().map(|x| x.dependencies.len()).collect();
         let mut dependents = vec![vec![]; streams.len()];
@@ -149,10 +149,10 @@ impl Controller {
             dependents,
             initial_pending_dependencies: pending_dependencies,
             current_pending_dependencies: Default::default(),
-            dispatch_queues: dispatch_queues.clone(),
-            completion_queue: completion_queue.clone(),
+            execution_unit_command_queues: execution_unit_command_queues.clone(),
+            controller_command_queue: controller_command_queue.clone(),
             completed_streams: 0,
-            max_concurrent_streams,
+            max_concurrent_streams: execution_units_len,
         }
     }
 
@@ -168,12 +168,12 @@ impl Controller {
         let pending_dependencies = self.current_pending_dependencies[stream];
         if pending_dependencies == 0 {
             let ordinal = stream % self.max_concurrent_streams;
-            self.dispatch_queues[ordinal].push_back(stream);
+            self.execution_unit_command_queues[ordinal].push_back(stream);
         }
     }
 
     pub fn step(&mut self) -> bool {
-        let command = self.completion_queue.pop_front();
+        let command = self.controller_command_queue.pop_front();
         match command {
             Some(EXECUTE) => {
                 self.current_pending_dependencies = self.initial_pending_dependencies.clone();
@@ -195,7 +195,7 @@ impl Controller {
 
         if self.completed_streams == self.dependents.len() {
             for ordinal in 0..self.max_concurrent_streams {
-                self.dispatch_queues[ordinal].push_back(STOP);
+                self.execution_unit_command_queues[ordinal].push_back(STOP);
             }
             false
         } else {
@@ -211,16 +211,16 @@ pub struct ExecutionUnit<Handler: StreamEventHandler + Send + Sync> {
     handler: Handler,
     streams: Arc<Vec<Stream>>,
     instructions: Arc<Vec<Instruction>>,
-    dispatch_queue: Arc<Queue<usize>>,
-    completion_queue: Arc<Queue<usize>>,
+    execution_unit_command_queue: Arc<Queue<usize>>,
+    controller_command_queue: Arc<Queue<usize>>,
     completed_items: usize,
 }
 
 impl<Handler: StreamEventHandler + Send + Sync + 'static> ExecutionUnit<Handler> {
     pub fn new(
         ordinal: usize,
-        dispatch_queue: &Arc<Queue<usize>>,
-        completion_queue: &Arc<Queue<usize>>,
+        execution_unit_command_queue: &Arc<Queue<usize>>,
+        controller_command_queue: &Arc<Queue<usize>>,
         handler: Handler,
         streams: &Arc<Vec<Stream>>,
         instructions: &Arc<Vec<Instruction>>,
@@ -230,8 +230,8 @@ impl<Handler: StreamEventHandler + Send + Sync + 'static> ExecutionUnit<Handler>
             handler,
             streams: streams.clone(),
             instructions: instructions.clone(),
-            dispatch_queue: dispatch_queue.clone(),
-            completion_queue: completion_queue.clone(),
+            execution_unit_command_queue: execution_unit_command_queue.clone(),
+            controller_command_queue: controller_command_queue.clone(),
             completed_items: 0,
         }
     }
@@ -246,7 +246,7 @@ impl<Handler: StreamEventHandler + Send + Sync + 'static> ExecutionUnit<Handler>
 
     fn step(&mut self) -> bool {
         // Fetch
-        let stream = self.dispatch_queue.pop_front();
+        let stream = self.execution_unit_command_queue.pop_front();
         if let Some(stream) = stream {
             if stream == STOP {
                 return false;
@@ -258,7 +258,7 @@ impl<Handler: StreamEventHandler + Send + Sync + 'static> ExecutionUnit<Handler>
                 .unwrap();
             //println!("execution unit ordinal {} completion {:?}", self.ordinal, Instant::now());
             // Writeback
-            self.completion_queue.push_back(stream);
+            self.controller_command_queue.push_back(stream);
             self.completed_items += 1;
         }
         true
@@ -272,7 +272,7 @@ impl<Handler: StreamEventHandler + Send + Sync> Drop for ExecutionUnit<Handler> 
 }
 
 pub struct Scheduler<Handler: StreamEventHandler + Send + Sync> {
-    completion_queue: Arc<Queue<usize>>,
+    controller_command_queue: Arc<Queue<usize>>,
     controller: Option<Controller>,
     execution_units: Option<Vec<ExecutionUnit<Handler>>>,
     controller_handle: Option<JoinHandle<Controller>>,
@@ -287,22 +287,22 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Hand
         instructions: &Arc<Vec<Instruction>>,
     ) -> Self {
         // Create structures
-        let dispatch_queues = (0..max_concurrent_streams)
+        let execution_unit_command_queues = (0..max_concurrent_streams)
             .map(|_| Arc::new(Queue::<usize>::default()))
             .collect::<Vec<_>>();
-        let completion_queue = Arc::new(Queue::default());
+        let controller_command_queue = Arc::new(Queue::default());
         let controller = Controller::new(
             streams,
-            &dispatch_queues,
-            &completion_queue,
+            &execution_unit_command_queues,
+            &controller_command_queue,
             max_concurrent_streams,
         );
         let execution_units = (0..max_concurrent_streams)
             .map(|ordinal| {
                 let execution_unit = ExecutionUnit::new(
                     ordinal,
-                    &dispatch_queues[ordinal],
-                    &completion_queue,
+                    &execution_unit_command_queues[ordinal],
+                    &controller_command_queue,
                     handler.clone(),
                     streams,
                     instructions,
@@ -311,7 +311,7 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Hand
             })
             .collect::<Vec<_>>();
         Self {
-            completion_queue,
+            controller_command_queue,
             controller: Some(controller),
             execution_units: Some(execution_units),
             controller_handle: None,
@@ -368,6 +368,6 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Hand
     }
 
     pub fn execute(&mut self) {
-        self.completion_queue.push_back(EXECUTE);
+        self.controller_command_queue.push_back(EXECUTE);
     }
 }

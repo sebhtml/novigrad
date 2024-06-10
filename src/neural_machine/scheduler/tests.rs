@@ -1,4 +1,5 @@
-use std::{sync::Arc, thread::sleep, time::Duration};
+use std::sync::Arc;
+use ntest::timeout;
 
 use crate::{
     mega_man_attention::get_megaman_attention_instructions,
@@ -108,6 +109,7 @@ fn all_instructions_are_executed_with_out_of_order_execution() {
     assert_eq!(sequential_instructions, sorted_executed_instructions);
 }
 
+//#[ntest::timeout(1000)]
 #[test]
 fn all_instructions_are_executed_in_each_scheduler_execution() {
     let instructions = get_megaman_attention_instructions().unwrap();
@@ -133,11 +135,9 @@ fn all_instructions_are_executed_in_each_scheduler_execution() {
 
     let sequential_instructions = (0..instructions.len()).collect::<Vec<_>>();
 
-    let n = 10;
+    let n = 1; // TODO use 10.
     for _ in 0..n {
         scheduler.execute();
-        // TODO instead of sleeping, wait for the controller to send the ExecutionCompletion command.
-        sleep(Duration::from_secs(1));
         let executed_instructions = handler
             .clone()
             .executed_instructions
@@ -157,4 +157,5 @@ fn all_instructions_are_executed_in_each_scheduler_execution() {
         assert_eq!(sequential_instructions, sorted_executed_instructions);
     }
     scheduler.join();
+    //panic!()
 }

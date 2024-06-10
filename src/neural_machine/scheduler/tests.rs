@@ -129,15 +129,14 @@ fn all_instructions_are_executed_in_each_scheduler_execution() {
 
     let handler = InstructionEmitter::new();
     let mut scheduler = Scheduler::new(execution_units_len, &streams, &handler, &instructions);
-    scheduler.spawn();
+    scheduler.start();
 
     let sequential_instructions = (0..instructions.len()).collect::<Vec<_>>();
 
     let n = 10;
     for _ in 0..n {
         scheduler.execute();
-        let executed_instructions =
-            &mut handler.executed_instructions.lock().unwrap();
+        let executed_instructions = &mut handler.executed_instructions.lock().unwrap();
 
         // Same length
         assert_eq!(instructions.len(), executed_instructions.len());
@@ -152,6 +151,6 @@ fn all_instructions_are_executed_in_each_scheduler_execution() {
         // Clear the instructions.
         executed_instructions.clear();
     }
-    scheduler.join();
+    scheduler.stop();
     //panic!()
 }

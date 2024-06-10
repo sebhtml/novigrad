@@ -27,9 +27,9 @@ fn main() {
     let mut scheduler = Scheduler::new(execution_units_len, &streams, &handler, &instructions);
 
     let n = 100;
-    scheduler.spawn();
+    scheduler.start();
     for _ in 0..n {
         scheduler.execute();
     }
-    scheduler.join();
+    scheduler.stop();
 }

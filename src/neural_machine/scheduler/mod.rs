@@ -173,9 +173,9 @@ pub fn run_scheduler<Handler>(
     Handler: StreamEventHandler + Clone + Send + Sync + 'static,
 {
     let mut scheduler = Scheduler::new(execution_units_len, streams, handler, instructions);
-    scheduler.spawn();
+    scheduler.start();
     scheduler.execute();
-    scheduler.join();
+    scheduler.stop();
 }
 
 pub struct Controller {
@@ -412,7 +412,7 @@ where
     /// - self.execution_unit_handles is some
     /// - self.controller is none
     /// - self.controller_handle is some
-    pub fn spawn(&mut self) {
+    pub fn start(&mut self) {
         // Spawn threads
         let execution_unit_handles = self
             .execution_units
@@ -437,7 +437,7 @@ where
     /// - self.execution_unit_handles is none
     /// - self.controller is some
     /// - self.controller_handle is none
-    pub fn join(&mut self) {
+    pub fn stop(&mut self) {
         // Join the controller
         self.controller_command_queue.push_back(Command::Stop);
         let controller = self.controller_handle.take().unwrap().join().unwrap();

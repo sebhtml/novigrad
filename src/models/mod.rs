@@ -10,11 +10,14 @@ use std::fs;
 
 use crate::{tensor::Error, tensor::ErrorEnum, Device, TensorWithGrad, Tokenizer, TokenizerTrait};
 
-pub struct ModelDetails {
+pub struct ModelDetails<Model>
+where
+    Model: UnaryModel,
+{
     pub device: Device,
     pub tokenizer: Option<Tokenizer>,
     pub examples: Vec<(TensorWithGrad, TensorWithGrad)>,
-    pub model: Box<dyn UnaryModel>,
+    pub model: Model,
     pub loss_operator: Box<dyn BinaryOperator>,
     pub optimizer: Box<dyn OptimizerTrait>,
     pub learning_rate: f32,

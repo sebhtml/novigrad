@@ -80,7 +80,9 @@ impl Model for MegaManAttentionModel {
     }
 }
 
-pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Error> {
+pub fn load_mega_man_attention_model(
+    device: &Device,
+) -> Result<ModelDetails<MegaManAttentionModel>, Error> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -109,7 +111,7 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
-        model: Box::new(model),
+        model,
         loss_operator: Box::new(loss_operator),
         optimizer: Box::new(optimizer),
         epochs: 200,

@@ -5,7 +5,7 @@ use crate::{
 };
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax, WeightsInitialization};
 
-struct SimpleModel {
+pub struct SimpleModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,
@@ -128,7 +128,7 @@ fn load_examples(
     examples
 }
 
-pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
+pub fn load_simple_model(device: &Device) -> Result<ModelDetails<SimpleModel>, Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 6;
     let examples = load_examples(&device, &mut tokenizer)?;
@@ -141,7 +141,7 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails, Error> {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
-        model: Box::new(model),
+        model,
         loss_operator: Box::new(loss_operator),
         optimizer: Box::new(GradientDescent::new(learning_rate)),
         epochs: 500,

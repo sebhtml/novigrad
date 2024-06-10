@@ -17,7 +17,7 @@ pub struct NeuralProgram {
 impl NeuralProgram {
     pub fn try_new(
         device: &Device,
-        model: &Box<dyn UnaryModel>,
+        model: &impl UnaryModel,
         loss_operator: &Box<dyn BinaryOperator>,
         optimizer: &Box<dyn OptimizerTrait>,
     ) -> Result<NeuralProgram, Error> {

@@ -8,8 +8,9 @@ use crate::simple::load_simple_model;
 use crate::train_model;
 use crate::Device;
 use crate::ModelDetails;
+use crate::UnaryModel;
 
-fn test_model(details: ModelDetails) {
+fn test_model(details: ModelDetails<impl UnaryModel>) {
     let expected_initial_total_loss_min = details.initial_metrics.total_loss;
     let expected_final_total_loss_max = details.final_metrics.total_loss;
     let expected_initial_total_perplexity_min = details.initial_metrics.total_perplexity;

@@ -2,6 +2,6 @@ use novigrad::{mega_man_attention::load_mega_man_attention_model, train_model, D
 
 fn main() {
     let device = Device::default();
-    let details: novigrad::ModelDetails = load_mega_man_attention_model(&device).unwrap();
+    let details = load_mega_man_attention_model(&device).unwrap();
     train_model::<f32>(details).unwrap();
 }

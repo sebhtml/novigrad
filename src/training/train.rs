@@ -6,7 +6,7 @@ use crate::{
     neural_program::NeuralProgram,
     perplexity::get_perplexity,
     tensor::{Error, Tensor},
-    Device, ModelDetails, NeuralMachine, TensorWithGrad, Tokenizer, TokenizerTrait,
+    Device, ModelDetails, NeuralMachine, TensorWithGrad, Tokenizer, TokenizerTrait, UnaryModel,
 };
 
 trait IsPrintable {
@@ -141,7 +141,9 @@ pub struct NeuralMachineTestOutput {
     pub actual_argmax_values: Vec<usize>,
 }
 
-pub fn train_model<T>(details: ModelDetails) -> Result<NeuralMachineTestOutput, Error> {
+pub fn train_model<T>(
+    details: ModelDetails<impl UnaryModel>,
+) -> Result<NeuralMachineTestOutput, Error> {
     let mut initial_metrics = Metrics {
         total_loss: f32::NAN,
         total_perplexity: f32::NAN,

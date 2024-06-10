@@ -88,7 +88,6 @@ fn main() -> Result<(), Error> {
     let vocab_size = tokenizer.vocab_size();
     let model = ChatbotModel::new(&device, sequence_length, vocab_size)?;
     let vocab_size = tokenizer.vocab_size();
-    let model: Box<dyn UnaryModel> = Box::new(model);
     let loss_operator: Box<dyn BinaryOperator> = Box::new(SoftmaxCrossEntropyLoss::new(&device));
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
@@ -179,7 +178,7 @@ fn _read_prompt() -> Result<String, Error> {
 }
 
 fn auto_regressive_inference(
-    model: &Box<dyn UnaryModel>,
+    model: &impl UnaryModel,
     neural_machine: &mut NeuralMachine<f32>,
     device: &Device,
     prompt_tokens: &[usize],

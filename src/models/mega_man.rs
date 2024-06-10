@@ -7,7 +7,7 @@ use crate::{
 use crate::{tensor::Error, ModelDetails};
 use crate::{Embedding, Linear, MatMul, Model, Reshape, Softmax, TensorWithGrad};
 
-struct MegaManModel {
+pub struct MegaManModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     parameters: TensorWithGrad,
@@ -77,7 +77,7 @@ impl Model for MegaManModel {
     }
 }
 
-pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails, Error> {
+pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails<MegaManModel>, Error> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -102,7 +102,7 @@ pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails, Error> {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
-        model: Box::new(model),
+        model,
         loss_operator: Box::new(loss_operator),
         optimizer: Box::new(GradientDescent::new(learning_rate)),
         epochs: 100,

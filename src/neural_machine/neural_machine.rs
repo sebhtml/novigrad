@@ -3,7 +3,7 @@ use std::{marker::PhantomData, ops::Deref, sync::Arc};
 use crate::{
     neural_machine::streams::stream::print_streams,
     neural_program::NeuralProgram,
-    scheduler::execute_streams,
+    scheduler::{Scheduler, StreamExecutor},
     tensor::{Error, Tensor},
     Category, Device, Instruction, TensorWithGrad,
 };
@@ -22,14 +22,17 @@ pub struct NeuralMachine<T> {
     loss: TensorWithGrad,
     inference_instructions: Arc<Vec<Instruction>>,
     inference_streams: Arc<Vec<Stream>>,
+    inference_scheduler: Scheduler<StreamExecutor>,
     loss_instructions: Arc<Vec<Instruction>>,
     loss_streams: Arc<Vec<Stream>>,
+    loss_scheduler: Scheduler<StreamExecutor>,
     gradient_instructions: Arc<Vec<Instruction>>,
     gradient_streams: Arc<Vec<Stream>>,
+    gradient_scheduler: Scheduler<StreamExecutor>,
     optimization_instructions: Arc<Vec<Instruction>>,
     optimization_streams: Arc<Vec<Stream>>,
+    optimization_scheduler: Scheduler<StreamExecutor>,
     phantom_data: PhantomData<T>,
-    max_concurrent_streams: usize,
 }
 
 impl<T> NeuralMachine<T> {
@@ -40,30 +43,34 @@ impl<T> NeuralMachine<T> {
             .into_iter()
             .filter(|i| i.category() == Category::Inference)
             .collect();
+        let inference_instructions = Arc::new(inference_instructions);
 
         let loss_instructions = all_instructions
             .clone()
             .into_iter()
             .filter(|i| i.category() == Category::Loss)
             .collect();
+        let loss_instructions = Arc::new(loss_instructions);
 
         let gradient_instructions = all_instructions
             .clone()
             .into_iter()
             .filter(|i| i.category() == Category::Gradient)
             .collect();
+        let gradient_instructions = Arc::new(gradient_instructions);
 
         let optimization_instructions = all_instructions
             .clone()
             .into_iter()
             .filter(|i| i.category() == Category::Optimization)
             .collect();
+        let optimization_instructions = Arc::new(optimization_instructions);
 
         #[cfg(feature = "cuda")]
         // TODO we need CUDA streams exposed by DeviceTrait to bump this to 16.
-        let max_concurrent_streams = 1;
+        let execution_units_len = 1;
         #[cfg(not(feature = "cuda"))]
-        let max_concurrent_streams = 16;
+        let execution_units_len = 16;
 
         let example_input = program.example_input;
         let example_output = program.example_output;
@@ -71,9 +78,44 @@ impl<T> NeuralMachine<T> {
         let loss = program.loss;
 
         let inference_streams = Self::assign_streams(&example_input, &inference_instructions);
+        let inference_streams = Arc::new(inference_streams);
         let loss_streams = Self::assign_streams(&example_input, &loss_instructions);
+        let loss_streams = Arc::new(loss_streams);
         let gradient_streams = Self::assign_streams(&example_input, &gradient_instructions);
+        let gradient_streams = Arc::new(gradient_streams);
         let optimization_streams = Self::assign_streams(&example_input, &optimization_instructions);
+        let optimization_streams = Arc::new(optimization_streams);
+
+        let handler = StreamExecutor::new();
+        let mut inference_scheduler = Scheduler::new(
+            execution_units_len,
+            &inference_streams,
+            &handler,
+            &inference_instructions,
+        );
+        let mut loss_scheduler = Scheduler::new(
+            execution_units_len,
+            &loss_streams,
+            &handler,
+            &loss_instructions,
+        );
+        let mut gradient_scheduler = Scheduler::new(
+            execution_units_len,
+            &gradient_streams,
+            &handler,
+            &gradient_instructions,
+        );
+        let mut optimization_scheduler = Scheduler::new(
+            execution_units_len,
+            &optimization_streams,
+            &handler,
+            &optimization_instructions,
+        );
+
+        inference_scheduler.start();
+        loss_scheduler.start();
+        gradient_scheduler.start();
+        optimization_scheduler.start();
 
         let machine = NeuralMachine::<T> {
             device: device.clone(),
@@ -81,15 +123,18 @@ impl<T> NeuralMachine<T> {
             example_output,
             machine_output,
             loss,
-            inference_instructions: inference_instructions.into(),
-            inference_streams: inference_streams.into(),
-            loss_instructions: loss_instructions.into(),
-            loss_streams: loss_streams.into(),
-            gradient_instructions: gradient_instructions.into(),
-            gradient_streams: gradient_streams.into(),
-            optimization_instructions: optimization_instructions.into(),
-            optimization_streams: optimization_streams.into(),
-            max_concurrent_streams,
+            inference_instructions,
+            inference_streams,
+            inference_scheduler,
+            loss_instructions,
+            loss_streams,
+            loss_scheduler,
+            gradient_instructions,
+            gradient_streams,
+            gradient_scheduler,
+            optimization_instructions,
+            optimization_streams,
+            optimization_scheduler,
             phantom_data: Default::default(),
         };
 
@@ -131,19 +176,13 @@ impl<T> NeuralMachine<T> {
     }
 
     fn forward_with_streams(&mut self, category: &Category) -> Result<(), Error> {
-        let streams = match category {
-            Category::Inference => &mut self.inference_streams,
-            Category::Loss => &mut self.loss_streams,
-            Category::Gradient => &mut self.gradient_streams,
-            Category::Optimization => &mut self.optimization_streams,
+        let scheduler = match category {
+            Category::Inference => &mut self.inference_scheduler,
+            Category::Loss => &mut self.loss_scheduler,
+            Category::Gradient => &mut self.gradient_scheduler,
+            Category::Optimization => &mut self.optimization_scheduler,
         };
-        let instructions = match category {
-            Category::Inference => &self.inference_instructions,
-            Category::Loss => &self.loss_instructions,
-            Category::Gradient => &self.gradient_instructions,
-            Category::Optimization => &self.optimization_instructions,
-        };
-        execute_streams(streams, &instructions, self.max_concurrent_streams);
+        scheduler.execute();
         Ok(())
     }
 
@@ -308,5 +347,14 @@ impl<T> NeuralMachine<T> {
             minimum_stream_instructions,
         );
         streams
+    }
+}
+
+impl<T> Drop for NeuralMachine<T> {
+    fn drop(&mut self) {
+        self.inference_scheduler.stop();
+        self.loss_scheduler.stop();
+        self.gradient_scheduler.stop();
+        self.optimization_scheduler.stop();
     }
 }

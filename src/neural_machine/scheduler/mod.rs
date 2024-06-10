@@ -10,6 +10,7 @@ use queue::Queue;
 
 use crate::{tensor::Error, Instruction};
 pub mod queue;
+
 use super::streams::{
     stream::Stream,
     transaction::{get_instruction_transactions, Transaction},
@@ -172,17 +173,18 @@ pub fn run_scheduler<Handler>(
     Handler: StreamEventHandler + Clone + Send + Sync + 'static,
 {
     let mut scheduler = Scheduler::new(execution_units_len, streams, handler, instructions);
-    scheduler.spawn();
+    scheduler.start();
     scheduler.execute();
-    scheduler.join();
+    scheduler.stop();
 }
 
 pub struct Controller {
     dependents: Vec<Vec<usize>>,
     initial_pending_dependencies: Vec<usize>,
     current_pending_dependencies: Vec<usize>,
-    execution_unit_command_queues: Vec<Arc<Queue<Command>>>,
+    scheduler_command_queue: Arc<Queue<Command>>,
     controller_command_queue: Arc<Queue<Command>>,
+    execution_unit_command_queues: Vec<Arc<Queue<Command>>>,
     completed_streams: usize,
     execution_units_len: usize,
 }
@@ -190,8 +192,9 @@ pub struct Controller {
 impl Controller {
     pub fn new(
         streams: &[Stream],
-        execution_unit_command_queues: &Vec<Arc<Queue<Command>>>,
+        scheduler_command_queue: &Arc<Queue<Command>>,
         controller_command_queue: &Arc<Queue<Command>>,
+        execution_unit_command_queues: &Vec<Arc<Queue<Command>>>,
         execution_units_len: usize,
     ) -> Self {
         let pending_dependencies = streams.iter().map(|x| x.dependencies.len()).collect();
@@ -205,8 +208,9 @@ impl Controller {
             dependents,
             initial_pending_dependencies: pending_dependencies,
             current_pending_dependencies: Default::default(),
-            execution_unit_command_queues: execution_unit_command_queues.clone(),
+            scheduler_command_queue: scheduler_command_queue.clone(),
             controller_command_queue: controller_command_queue.clone(),
+            execution_unit_command_queues: execution_unit_command_queues.clone(),
             completed_streams: 0,
             execution_units_len,
         }
@@ -233,6 +237,7 @@ impl Controller {
         let command = self.controller_command_queue.pop_front();
         match command {
             Some(Command::Execute) => {
+                self.completed_streams = 0;
                 self.current_pending_dependencies = self.initial_pending_dependencies.clone();
                 // Dispatch immediately all streams with no dependencies.
                 for (stream, _) in self.current_pending_dependencies.iter().enumerate() {
@@ -246,18 +251,20 @@ impl Controller {
                     self.current_pending_dependencies[*dependent] -= 1;
                     self.maybe_dispatch(*dependent);
                 }
+                if self.completed_streams == self.dependents.len() {
+                    self.scheduler_command_queue
+                        .push_back(Command::ExecutionCompletion);
+                }
+            }
+            Some(Command::Stop) => {
+                for ordinal in 0..self.execution_units_len {
+                    self.execution_unit_command_queues[ordinal].push_back(Command::Stop);
+                }
+                return false;
             }
             _ => {}
         }
-
-        if self.completed_streams == self.dependents.len() {
-            for ordinal in 0..self.execution_units_len {
-                self.execution_unit_command_queues[ordinal].push_back(Command::Stop);
-            }
-            false
-        } else {
-            true
-        }
+        true
     }
 }
 
@@ -334,6 +341,8 @@ pub struct Scheduler<Handler>
 where
     Handler: StreamEventHandler + Send + Sync,
 {
+    #[allow(unused)]
+    scheduler_command_queue: Arc<Queue<Command>>,
     controller_command_queue: Arc<Queue<Command>>,
     controller: Option<Controller>,
     execution_units: Option<Vec<ExecutionUnit<Handler>>>,
@@ -352,16 +361,15 @@ where
         instructions: &Arc<Vec<Instruction>>,
     ) -> Self {
         // Create structures
+
+        // Various command queues.
+        let scheduler_command_queue = Arc::new(Queue::default());
+        let controller_command_queue = Arc::new(Queue::default());
         let execution_unit_command_queues = (0..execution_units_len)
             .map(|_| Arc::new(Queue::<Command>::default()))
             .collect::<Vec<_>>();
-        let controller_command_queue = Arc::new(Queue::default());
-        let controller = Controller::new(
-            streams,
-            &execution_unit_command_queues,
-            &controller_command_queue,
-            execution_units_len,
-        );
+
+        // For the execution units.
         let execution_units = (0..execution_units_len)
             .map(|ordinal| {
                 let execution_unit = ExecutionUnit::new(
@@ -375,7 +383,17 @@ where
                 execution_unit
             })
             .collect::<Vec<_>>();
+
+        // For the controller.
+        let controller = Controller::new(
+            streams,
+            &scheduler_command_queue,
+            &controller_command_queue,
+            &execution_unit_command_queues,
+            execution_units_len,
+        );
         Self {
+            scheduler_command_queue,
             controller_command_queue,
             controller: Some(controller),
             execution_units: Some(execution_units),
@@ -394,7 +412,7 @@ where
     /// - self.execution_unit_handles is some
     /// - self.controller is none
     /// - self.controller_handle is some
-    pub fn spawn(&mut self) {
+    pub fn start(&mut self) {
         // Spawn threads
         let execution_unit_handles = self
             .execution_units
@@ -419,8 +437,9 @@ where
     /// - self.execution_unit_handles is none
     /// - self.controller is some
     /// - self.controller_handle is none
-    pub fn join(&mut self) {
+    pub fn stop(&mut self) {
         // Join the controller
+        self.controller_command_queue.push_back(Command::Stop);
         let controller = self.controller_handle.take().unwrap().join().unwrap();
         self.controller = Some(controller);
 
@@ -437,5 +456,10 @@ where
 
     pub fn execute(&mut self) {
         self.controller_command_queue.push_back(Command::Execute);
+        let command = self.scheduler_command_queue.pop_front();
+        match command {
+            Some(Command::ExecutionCompletion) => {}
+            _ => panic!(),
+        }
     }
 }

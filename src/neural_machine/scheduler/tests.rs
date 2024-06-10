@@ -1,4 +1,4 @@
-use std::{sync::Arc, thread::sleep, time::Duration};
+use std::sync::Arc;
 
 use crate::{
     mega_man_attention::get_megaman_attention_instructions,
@@ -129,32 +129,28 @@ fn all_instructions_are_executed_in_each_scheduler_execution() {
 
     let handler = InstructionEmitter::new();
     let mut scheduler = Scheduler::new(execution_units_len, &streams, &handler, &instructions);
-    scheduler.spawn();
+    scheduler.start();
 
     let sequential_instructions = (0..instructions.len()).collect::<Vec<_>>();
 
     let n = 10;
     for _ in 0..n {
         scheduler.execute();
-        // TODO instead of sleeping, wait for the controller to send the ExecutionCompletion command.
-        sleep(Duration::from_secs(1));
-        let executed_instructions = handler
-            .clone()
-            .executed_instructions
-            .lock()
-            .unwrap()
-            .clone();
+        let executed_instructions = &mut handler.executed_instructions.lock().unwrap();
 
         // Same length
         assert_eq!(instructions.len(), executed_instructions.len());
 
         // Out-of-order execution means that the order is different.
-        assert_ne!(sequential_instructions, executed_instructions);
+        assert_ne!(sequential_instructions, **executed_instructions);
 
         // When sorted, the instructions are the same.
-        let mut sorted_executed_instructions = executed_instructions;
-        sorted_executed_instructions.sort();
-        assert_eq!(sequential_instructions, sorted_executed_instructions);
+        executed_instructions.sort();
+        assert_eq!(sequential_instructions, **executed_instructions);
+
+        // Clear the instructions.
+        executed_instructions.clear();
     }
-    scheduler.join();
+    scheduler.stop();
+    //panic!()
 }

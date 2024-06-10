@@ -28,6 +28,9 @@ impl<T> Queue<T> {
         while deque.is_empty() {
             deque = self.cvar.wait(deque).unwrap();
         }
+        if deque.is_empty() {
+            panic!();
+        }
         deque.pop_front()
     }
 }

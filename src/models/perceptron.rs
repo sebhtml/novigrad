@@ -4,7 +4,7 @@ use crate::{
     UnaryModel, UnaryOperator,
 };
 
-struct PerceptronModel {
+pub struct PerceptronModel {
     linear: Linear,
 }
 
@@ -53,7 +53,9 @@ fn load_examples(device: &Device) -> Result<Vec<(TensorWithGrad, TensorWithGrad)
     Ok(examples)
 }
 
-pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
+pub fn load_perceptron(
+    device: &Device,
+) -> Result<ModelDetails<PerceptronModel, ReduceSumSquare, GradientDescent>, Error> {
     let model = PerceptronModel::new(device)?;
     let examples = load_examples(&device)?;
     let loss_operator = ReduceSumSquare::new(device);
@@ -63,9 +65,9 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails, Error> {
         device: device.clone(),
         tokenizer: None,
         examples,
-        model: Box::new(model),
-        loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(optimizer),
+        model,
+        loss_operator,
+        optimizer,
         epochs: 100,
         progress: 10,
         learning_rate,

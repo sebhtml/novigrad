@@ -1,8 +1,9 @@
 use super::load_examples;
+use crate::neural_program::NeuralProgram;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
-    Adam, Device, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss, TernaryOperator, Tokenizer,
-    TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
+    Adam, Device, Instruction, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss,
+    TernaryOperator, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
@@ -80,7 +81,9 @@ impl Model for MegaManAttentionModel {
     }
 }
 
-pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Error> {
+pub fn load_mega_man_attention_model(
+    device: &Device,
+) -> Result<ModelDetails<MegaManAttentionModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -109,9 +112,9 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
-        model: Box::new(model),
-        loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(optimizer),
+        model,
+        loss_operator,
+        optimizer,
         epochs: 200,
         progress: 10,
         learning_rate,
@@ -127,4 +130,15 @@ pub fn load_mega_man_attention_model(device: &Device) -> Result<ModelDetails, Er
         },
     };
     Ok(details)
+}
+
+pub fn get_megaman_attention_instructions() -> Result<Vec<Instruction>, Error> {
+    let device = Device::default();
+    let details = load_mega_man_attention_model(&device)?;
+    let model = details.model;
+    let loss_operator = details.loss_operator;
+    let optimizer = details.optimizer;
+    let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
+    let instructions = program.instructions;
+    Ok(instructions)
 }

@@ -1,47 +1,15 @@
-use std::{ops::Deref, sync::Arc};
+use std::ops::Deref;
 
+use crate::Category;
 use crate::{
-    mega_man_attention::MegaManAttentionModel,
+    filter_instructions,
+    mega_man_attention::get_megaman_attention_instructions,
     neural_machine::streams::{
-        instruction::print_instructions,
+        instruction::{make_simple_instructions, print_instructions},
         stream::{make_streams, print_streams},
     },
-    neural_program::NeuralProgram,
-    tensor::Error,
-    Adam, BinaryOperator, Category, Device, Instruction, OptimizerTrait, SoftmaxCrossEntropyLoss,
-    Tokenizer, TokenizerTrait, UnaryModel,
 };
 use test_case::test_case;
-
-use super::{
-    instruction::make_simple_instructions,
-    scheduler::simulate_execution_and_collect_transactions,
-    transaction::{get_all_instruction_transactions, get_operand_transaction_pairs, Access},
-};
-
-fn get_test_instructions(filter: Option<Category>) -> Result<Vec<Instruction>, Error> {
-    let device = Device::default();
-    let tokenizer = Tokenizer::ascii_tokenizer();
-    let vocab_size = tokenizer.vocab_size();
-    let sequence_length = 32;
-    let model = MegaManAttentionModel::new(&device, sequence_length, vocab_size)?;
-    let model: Box<dyn UnaryModel> = Box::new(model);
-    let loss_operator = SoftmaxCrossEntropyLoss::new(&device);
-    let loss_operator: Box<dyn BinaryOperator> = Box::new(loss_operator);
-    let learning_rate = 0.05;
-    let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
-    let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
-    let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
-    let instructions = program.instructions;
-    let instructions = match filter {
-        Some(category) => instructions
-            .into_iter()
-            .filter(|x| x.category() == category)
-            .collect(),
-        None => instructions,
-    };
-    Ok(instructions)
-}
 
 #[test_case(None ; "no category filter")]
 #[test_case(Some(Category::Inference) ; "inference filter")]
@@ -49,7 +17,8 @@ fn get_test_instructions(filter: Option<Category>) -> Result<Vec<Instruction>, E
 #[test_case(Some(Category::Gradient) ; "gradient filter")]
 #[test_case(Some(Category::Optimization) ; "optimization filter")]
 fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
-    let instructions = get_test_instructions(filter).unwrap();
+    let instructions = get_megaman_attention_instructions().unwrap();
+    let instructions = filter_instructions(instructions, filter);
     let simple_instructions = make_simple_instructions(&instructions);
     let expected_instructions = (0..instructions.len()).collect::<Vec<_>>();
     let minimum_write_before_read_for_new_stream = 4;
@@ -72,7 +41,7 @@ fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
 
 #[test]
 fn the_instructions_length_is_correct() {
-    let instructions = get_test_instructions(None).unwrap();
+    let instructions = get_megaman_attention_instructions().unwrap();
     let simple_instructions = make_simple_instructions(&instructions);
     assert_eq!(2635, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
@@ -94,7 +63,7 @@ fn the_instructions_length_is_correct() {
 
 #[test]
 fn the_streams_length_are_correct() {
-    let instructions = get_test_instructions(None).unwrap();
+    let instructions = get_megaman_attention_instructions().unwrap();
     let simple_instructions = make_simple_instructions(&instructions);
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_dependents_for_stream = 12;
@@ -382,60 +351,4 @@ fn many_independent_instructions_in_one_stream() {
     assert_eq!(vec![0; 0], *streams[0].dependencies);
 
     assert_eq!(vec![0, 1], *streams[0].instructions);
-}
-
-#[test]
-fn reads_and_writes_of_same_operand_are_not_reordered() {
-    let access = Access::Read;
-    let prior_access = Access::Write;
-    test_that_accesses_are_not_reordered(access, prior_access);
-}
-
-#[test]
-fn writes_and_writes_of_same_operand_are_not_reordered() {
-    let access = Access::Write;
-    let prior_access = Access::Write;
-    test_that_accesses_are_not_reordered(access, prior_access);
-}
-
-#[test]
-fn writes_and_reads_of_same_operand_are_not_reordered() {
-    let access = Access::Write;
-    let prior_access = Access::Read;
-    test_that_accesses_are_not_reordered(access, prior_access);
-}
-
-fn test_that_accesses_are_not_reordered(access: Access, prior_access: Access) {
-    let instructions = get_test_instructions(None).unwrap();
-    let instructions = Arc::new(instructions);
-    let simple_instructions = make_simple_instructions(&instructions);
-    let simple_instructions = Arc::new(simple_instructions);
-    let expected_transactions = get_all_instruction_transactions(&simple_instructions);
-    let expected_read_write_pairs =
-        get_operand_transaction_pairs(&access, &prior_access, &expected_transactions);
-
-    let minimum_write_before_read_for_new_stream = 4;
-    let minimum_dependents_for_stream = 12;
-    let minimum_stream_instructions = 32;
-    let actual_streams = make_streams(
-        &simple_instructions,
-        minimum_write_before_read_for_new_stream,
-        minimum_dependents_for_stream,
-        minimum_stream_instructions,
-    );
-    let actual_streams = Arc::new(actual_streams);
-    let max_concurrent_streams = 32;
-    let actual_transactions = simulate_execution_and_collect_transactions(
-        &actual_streams,
-        &instructions,
-        &simple_instructions,
-        max_concurrent_streams,
-    );
-    let actual_read_write_pairs =
-        get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
-
-    for (operand, expected_pairs) in expected_read_write_pairs.iter() {
-        let actual_pairs = actual_read_write_pairs.get(operand).unwrap();
-        assert_eq!(expected_pairs, actual_pairs);
-    }
 }

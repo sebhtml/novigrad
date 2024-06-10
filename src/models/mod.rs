@@ -1,35 +1,27 @@
 mod model;
 pub use model::*;
 use more_asserts::debug_assert_lt;
-mod mega_man;
+pub mod mega_man;
 pub mod mega_man_attention;
-mod perceptron;
-mod simple;
+pub mod perceptron;
+pub mod simple;
 use crate::{error, new_tensor, new_tensor_with_grad, BinaryOperator, Metrics, OptimizerTrait};
-pub use perceptron::*;
 use std::fs;
 
 use crate::{tensor::Error, tensor::ErrorEnum, Device, TensorWithGrad, Tokenizer, TokenizerTrait};
 
-use self::{
-    mega_man::load_mega_man_model, mega_man_attention::load_mega_man_attention_model,
-    simple::load_simple_model,
-};
-
-pub enum ModelEnum {
-    Perceptron,
-    Simple,
-    MegaMan,
-    MegaManAttention,
-}
-
-pub struct ModelDetails {
+pub struct ModelDetails<Model, LossOperator, Optimizer>
+where
+    Model: UnaryModel,
+    LossOperator: BinaryOperator,
+    Optimizer: OptimizerTrait,
+{
     pub device: Device,
     pub tokenizer: Option<Tokenizer>,
     pub examples: Vec<(TensorWithGrad, TensorWithGrad)>,
-    pub model: Box<dyn UnaryModel>,
-    pub loss_operator: Box<dyn BinaryOperator>,
-    pub optimizer: Box<dyn OptimizerTrait>,
+    pub model: Model,
+    pub loss_operator: LossOperator,
+    pub optimizer: Optimizer,
     pub learning_rate: f32,
     pub shuffle_examples: bool,
     pub clipped_gradient_norm: f32,
@@ -37,15 +29,6 @@ pub struct ModelDetails {
     pub progress: usize,
     pub initial_metrics: Metrics,
     pub final_metrics: Metrics,
-}
-
-pub fn load_model_details(model: ModelEnum, device: &Device) -> Result<ModelDetails, Error> {
-    match model {
-        ModelEnum::Perceptron => load_perceptron(device),
-        ModelEnum::Simple => load_simple_model(device),
-        ModelEnum::MegaMan => load_mega_man_model(device),
-        ModelEnum::MegaManAttention => load_mega_man_attention_model(device),
-    }
 }
 
 pub fn into_one_hot_encoded_rows(

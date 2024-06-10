@@ -17,9 +17,9 @@ pub struct NeuralProgram {
 impl NeuralProgram {
     pub fn try_new(
         device: &Device,
-        model: &Box<dyn UnaryModel>,
-        loss_operator: &Box<dyn BinaryOperator>,
-        optimizer: &Box<dyn OptimizerTrait>,
+        model: &impl UnaryModel,
+        loss_operator: &impl BinaryOperator,
+        optimizer: &impl OptimizerTrait,
     ) -> Result<NeuralProgram, Error> {
         // input
         let input_shape = model.input_size();
@@ -47,8 +47,7 @@ impl NeuralProgram {
         )?;
 
         let machine_output = model.forward(&example_input)?;
-        let loss =
-            BinaryOperator::forward(loss_operator.deref(), &example_output, &machine_output)?;
+        let loss = BinaryOperator::forward(loss_operator, &example_output, &machine_output)?;
         let tape = loss.get_tape();
         let mut instructions = vec![];
 

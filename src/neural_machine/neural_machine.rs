@@ -3,13 +3,13 @@ use std::{marker::PhantomData, ops::Deref, sync::Arc};
 use crate::{
     neural_machine::streams::stream::print_streams,
     neural_program::NeuralProgram,
+    scheduler::execute_streams,
     tensor::{Error, Tensor},
     Category, Device, Instruction, TensorWithGrad,
 };
 
 use super::streams::{
     instruction::make_simple_instructions,
-    scheduler::execute_streams,
     stream::{make_streams, Stream},
     verify_machine_inputs,
 };

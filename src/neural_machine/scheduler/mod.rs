@@ -3,10 +3,11 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-use crate::{tensor::Error, Instruction};
+use queue::Queue;
 
-use super::{
-    queue::Queue,
+use crate::{tensor::Error, Instruction};
+pub mod queue;
+use super::streams::{
     stream::Stream,
     transaction::{get_instruction_transactions, Transaction},
 };

@@ -2,8 +2,6 @@
 mod tests;
 
 pub mod instruction;
-pub mod queue;
-pub mod scheduler;
 pub mod stream;
 pub mod transaction;
 

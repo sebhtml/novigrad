@@ -7,6 +7,7 @@ use crate::{
         stream::{make_streams, print_streams},
     },
     neural_program::NeuralProgram,
+    scheduler::simulate_execution_and_collect_transactions,
     tensor::Error,
     Adam, Category, Device, Instruction, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
@@ -14,7 +15,6 @@ use test_case::test_case;
 
 use super::{
     instruction::make_simple_instructions,
-    scheduler::simulate_execution_and_collect_transactions,
     transaction::{get_all_instruction_transactions, get_operand_transaction_pairs, Access},
 };
 

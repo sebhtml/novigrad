@@ -1,27 +1,14 @@
 mod model;
 pub use model::*;
 use more_asserts::debug_assert_lt;
-mod mega_man;
+pub mod mega_man;
 pub mod mega_man_attention;
-mod perceptron;
-mod simple;
+pub mod perceptron;
+pub mod simple;
 use crate::{error, new_tensor, new_tensor_with_grad, BinaryOperator, Metrics, OptimizerTrait};
-pub use perceptron::*;
 use std::fs;
 
 use crate::{tensor::Error, tensor::ErrorEnum, Device, TensorWithGrad, Tokenizer, TokenizerTrait};
-
-use self::{
-    mega_man::load_mega_man_model, mega_man_attention::load_mega_man_attention_model,
-    simple::load_simple_model,
-};
-
-pub enum ModelEnum {
-    Perceptron,
-    Simple,
-    MegaMan,
-    MegaManAttention,
-}
 
 pub struct ModelDetails {
     pub device: Device,
@@ -37,15 +24,6 @@ pub struct ModelDetails {
     pub progress: usize,
     pub initial_metrics: Metrics,
     pub final_metrics: Metrics,
-}
-
-pub fn load_model_details(model: ModelEnum, device: &Device) -> Result<ModelDetails, Error> {
-    match model {
-        ModelEnum::Perceptron => load_perceptron(device),
-        ModelEnum::Simple => load_simple_model(device),
-        ModelEnum::MegaMan => load_mega_man_model(device),
-        ModelEnum::MegaManAttention => load_mega_man_attention_model(device),
-    }
 }
 
 pub fn into_one_hot_encoded_rows(

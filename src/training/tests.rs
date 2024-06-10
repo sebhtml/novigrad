@@ -1,13 +1,15 @@
 use more_asserts::assert_ge;
 use more_asserts::assert_le;
 
-use crate::load_model_details;
+use crate::mega_man::load_mega_man_model;
+use crate::mega_man_attention::load_mega_man_attention_model;
+use crate::perceptron::load_perceptron;
+use crate::simple::load_simple_model;
 use crate::train_model;
 use crate::Device;
-use crate::ModelEnum;
+use crate::ModelDetails;
 
-fn test_model(model: ModelEnum, device: &Device) {
-    let details = load_model_details(model, device).unwrap();
+fn test_model(details: ModelDetails) {
     let expected_initial_total_loss_min = details.initial_metrics.total_loss;
     let expected_final_total_loss_max = details.final_metrics.total_loss;
     let expected_initial_total_perplexity_min = details.initial_metrics.total_perplexity;
@@ -51,23 +53,27 @@ fn test_model(model: ModelEnum, device: &Device) {
 #[test]
 fn perceptron_model() {
     let device = Device::default();
-    test_model(ModelEnum::Perceptron, &device);
+    let details = load_perceptron(&device).unwrap();
+    test_model(details);
 }
 
 #[test]
 fn simple_model() {
     let device = Device::default();
-    test_model(ModelEnum::Simple, &device);
+    let details = load_simple_model(&device).unwrap();
+    test_model(details);
 }
 
 #[test]
 fn mega_man_model() {
     let device = Device::default();
-    test_model(ModelEnum::MegaMan, &device);
+    let details = load_mega_man_model(&device).unwrap();
+    test_model(details);
 }
 
 #[test]
 fn mega_man_attention_model() {
     let device = Device::default();
-    test_model(ModelEnum::MegaManAttention, &device);
+    let details = load_mega_man_attention_model(&device).unwrap();
+    test_model(details);
 }

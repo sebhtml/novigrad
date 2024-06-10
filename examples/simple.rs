@@ -1,8 +1,7 @@
-use novigrad::{load_model_details, train_model, Device, ModelEnum};
+use novigrad::{simple::load_simple_model, train_model, Device};
 
 fn main() {
     let device = Device::default();
-    let model = ModelEnum::Simple;
-    let details = load_model_details(model, &device).unwrap();
+    let details = load_simple_model(&device).unwrap();
     train_model::<f32>(details).unwrap();
 }

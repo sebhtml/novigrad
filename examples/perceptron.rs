@@ -1,4 +1,4 @@
-use novigrad::{load_perceptron, train_model, Device};
+use novigrad::{perceptron::load_perceptron, train_model, Device};
 
 fn main() {
     let device = Device::default();

@@ -1,8 +1,7 @@
-use novigrad::{load_model_details, train_model, Device, ModelEnum};
+use novigrad::{mega_man_attention::load_mega_man_attention_model, train_model, Device};
 
 fn main() {
     let device = Device::default();
-    let model = ModelEnum::MegaManAttention;
-    let details = load_model_details(model, &device).unwrap();
+    let details: novigrad::ModelDetails = load_mega_man_attention_model(&device).unwrap();
     train_model::<f32>(details).unwrap();
 }

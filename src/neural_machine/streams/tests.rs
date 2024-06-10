@@ -8,8 +8,7 @@ use crate::{
     },
     neural_program::NeuralProgram,
     tensor::Error,
-    Adam, BinaryOperator, Category, Device, Instruction, OptimizerTrait, SoftmaxCrossEntropyLoss,
-    Tokenizer, TokenizerTrait,
+    Adam, Category, Device, Instruction, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
 use test_case::test_case;
 
@@ -26,10 +25,8 @@ fn get_test_instructions(filter: Option<Category>) -> Result<Vec<Instruction>, E
     let sequence_length = 32;
     let model = MegaManAttentionModel::new(&device, sequence_length, vocab_size)?;
     let loss_operator = SoftmaxCrossEntropyLoss::new(&device);
-    let loss_operator: Box<dyn BinaryOperator> = Box::new(loss_operator);
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
-    let optimizer: Box<dyn OptimizerTrait> = Box::new(optimizer);
     let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
     let instructions = program.instructions;
     let instructions = match filter {

@@ -10,16 +10,18 @@ use std::fs;
 
 use crate::{tensor::Error, tensor::ErrorEnum, Device, TensorWithGrad, Tokenizer, TokenizerTrait};
 
-pub struct ModelDetails<Model>
+pub struct ModelDetails<Model, LossOperator, Optimizer>
 where
     Model: UnaryModel,
+    LossOperator: BinaryOperator,
+    Optimizer: OptimizerTrait,
 {
     pub device: Device,
     pub tokenizer: Option<Tokenizer>,
     pub examples: Vec<(TensorWithGrad, TensorWithGrad)>,
     pub model: Model,
-    pub loss_operator: Box<dyn BinaryOperator>,
-    pub optimizer: Box<dyn OptimizerTrait>,
+    pub loss_operator: LossOperator,
+    pub optimizer: Optimizer,
     pub learning_rate: f32,
     pub shuffle_examples: bool,
     pub clipped_gradient_norm: f32,

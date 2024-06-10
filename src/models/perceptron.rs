@@ -53,7 +53,9 @@ fn load_examples(device: &Device) -> Result<Vec<(TensorWithGrad, TensorWithGrad)
     Ok(examples)
 }
 
-pub fn load_perceptron(device: &Device) -> Result<ModelDetails<PerceptronModel>, Error> {
+pub fn load_perceptron(
+    device: &Device,
+) -> Result<ModelDetails<PerceptronModel, ReduceSumSquare, GradientDescent>, Error> {
     let model = PerceptronModel::new(device)?;
     let examples = load_examples(&device)?;
     let loss_operator = ReduceSumSquare::new(device);
@@ -64,8 +66,8 @@ pub fn load_perceptron(device: &Device) -> Result<ModelDetails<PerceptronModel>,
         tokenizer: None,
         examples,
         model,
-        loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(optimizer),
+        loss_operator,
+        optimizer,
         epochs: 100,
         progress: 10,
         learning_rate,

@@ -77,7 +77,9 @@ impl Model for MegaManModel {
     }
 }
 
-pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails<MegaManModel>, Error> {
+pub fn load_mega_man_model(
+    device: &Device,
+) -> Result<ModelDetails<MegaManModel, SoftmaxCrossEntropyLoss, GradientDescent>, Error> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -98,13 +100,14 @@ pub fn load_mega_man_model(device: &Device) -> Result<ModelDetails<MegaManModel>
     let model = MegaManModel::new(device, sequence_length, vocab_size)?;
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.5;
+    let optimizer = GradientDescent::new(learning_rate);
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
         model,
-        loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(GradientDescent::new(learning_rate)),
+        loss_operator,
+        optimizer,
         epochs: 100,
         progress: 10,
         learning_rate,

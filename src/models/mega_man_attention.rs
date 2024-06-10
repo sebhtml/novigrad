@@ -82,7 +82,7 @@ impl Model for MegaManAttentionModel {
 
 pub fn load_mega_man_attention_model(
     device: &Device,
-) -> Result<ModelDetails<MegaManAttentionModel>, Error> {
+) -> Result<ModelDetails<MegaManAttentionModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -112,8 +112,8 @@ pub fn load_mega_man_attention_model(
         tokenizer: Some(tokenizer),
         examples,
         model,
-        loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(optimizer),
+        loss_operator,
+        optimizer,
         epochs: 200,
         progress: 10,
         learning_rate,

@@ -128,7 +128,9 @@ fn load_examples(
     examples
 }
 
-pub fn load_simple_model(device: &Device) -> Result<ModelDetails<SimpleModel>, Error> {
+pub fn load_simple_model(
+    device: &Device,
+) -> Result<ModelDetails<SimpleModel, SoftmaxCrossEntropyLoss, GradientDescent>, Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 6;
     let examples = load_examples(&device, &mut tokenizer)?;
@@ -137,13 +139,14 @@ pub fn load_simple_model(device: &Device) -> Result<ModelDetails<SimpleModel>, E
     let learning_rate = 0.5;
     let vocab_size = tokenizer.vocab_size();
     let model = SimpleModel::new(device, sequence_length, vocab_size)?;
+    let optimizer = GradientDescent::new(learning_rate);
     let details = ModelDetails {
         device: device.clone(),
         tokenizer: Some(tokenizer),
         examples,
         model,
-        loss_operator: Box::new(loss_operator),
-        optimizer: Box::new(GradientDescent::new(learning_rate)),
+        loss_operator,
+        optimizer,
         epochs: 500,
         progress: 100,
         learning_rate,

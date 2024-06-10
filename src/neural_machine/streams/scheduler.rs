@@ -11,6 +11,7 @@ use super::{
     transaction::{get_instruction_transactions, Transaction},
 };
 
+const EXECUTE: usize = usize::MAX - 1;
 const STOP: usize = usize::MAX;
 
 pub trait StreamEventHandler {
@@ -115,13 +116,15 @@ fn run_scheduler<Handler: StreamEventHandler + Clone + Send + Sync + 'static>(
     handler: &Handler,
 ) {
     let mut scheduler = Scheduler::new(max_concurrent_streams, streams, handler, instructions);
-    scheduler.start();
-    scheduler.stop();
+    scheduler.spawn();
+    scheduler.execute();
+    scheduler.join();
 }
 
 pub struct Controller {
     dependents: Vec<Vec<usize>>,
-    pending_dependencies: Vec<usize>,
+    initial_pending_dependencies: Vec<usize>,
+    current_pending_dependencies: Vec<usize>,
     dispatch_queues: Vec<Arc<Queue<usize>>>,
     completion_queue: Arc<Queue<usize>>,
     completed_streams: usize,
@@ -144,7 +147,8 @@ impl Controller {
         }
         Self {
             dependents,
-            pending_dependencies,
+            initial_pending_dependencies: pending_dependencies,
+            current_pending_dependencies: Default::default(),
             dispatch_queues: dispatch_queues.clone(),
             completion_queue: completion_queue.clone(),
             completed_streams: 0,
@@ -153,11 +157,6 @@ impl Controller {
     }
 
     pub fn spawn(mut controller: Self) -> JoinHandle<Self> {
-        // Dispatch immediately all streams with no dependencies.
-        for (stream, _) in controller.pending_dependencies.iter().enumerate() {
-            controller.maybe_dispatch(stream);
-        }
-
         let handle = thread::spawn(|| {
             while controller.step() {}
             controller
@@ -166,7 +165,7 @@ impl Controller {
     }
 
     fn maybe_dispatch(&self, stream: usize) {
-        let pending_dependencies = self.pending_dependencies[stream];
+        let pending_dependencies = self.current_pending_dependencies[stream];
         if pending_dependencies == 0 {
             let ordinal = stream % self.max_concurrent_streams;
             self.dispatch_queues[ordinal].push_back(stream);
@@ -174,14 +173,24 @@ impl Controller {
     }
 
     pub fn step(&mut self) -> bool {
-        let stream = self.completion_queue.pop_front();
-        if let Some(stream) = stream {
-            self.completed_streams += 1;
-            let dependents = &self.dependents[stream];
-            for dependent in dependents.iter() {
-                self.pending_dependencies[*dependent] -= 1;
-                self.maybe_dispatch(*dependent);
+        let command = self.completion_queue.pop_front();
+        match command {
+            Some(EXECUTE) => {
+                self.current_pending_dependencies = self.initial_pending_dependencies.clone();
+                // Dispatch immediately all streams with no dependencies.
+                for (stream, _) in self.current_pending_dependencies.iter().enumerate() {
+                    self.maybe_dispatch(stream);
+                }
             }
+            Some(stream) => {
+                self.completed_streams += 1;
+                let dependents = &self.dependents[stream];
+                for dependent in dependents.iter() {
+                    self.current_pending_dependencies[*dependent] -= 1;
+                    self.maybe_dispatch(*dependent);
+                }
+            }
+            None => {}
         }
 
         if self.completed_streams == self.dependents.len() {
@@ -263,6 +272,7 @@ impl<Handler: StreamEventHandler + Send + Sync> Drop for ExecutionUnit<Handler> 
 }
 
 pub struct Scheduler<Handler: StreamEventHandler + Send + Sync> {
+    completion_queue: Arc<Queue<usize>>,
     controller: Option<Controller>,
     execution_units: Option<Vec<ExecutionUnit<Handler>>>,
     controller_handle: Option<JoinHandle<Controller>>,
@@ -301,6 +311,7 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Hand
             })
             .collect::<Vec<_>>();
         Self {
+            completion_queue,
             controller: Some(controller),
             execution_units: Some(execution_units),
             controller_handle: None,
@@ -318,7 +329,7 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Hand
     /// - self.execution_unit_handles is some
     /// - self.controller is none
     /// - self.controller_handle is some
-    pub fn start(&mut self) {
+    pub fn spawn(&mut self) {
         // Spawn threads
         let execution_unit_handles = self
             .execution_units
@@ -327,8 +338,9 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Hand
             .into_iter()
             .map(|execution_unit| ExecutionUnit::spawn(execution_unit))
             .collect::<Vec<_>>();
-        let controller_handle = Controller::spawn(self.controller.take().unwrap());
         self.execution_unit_handles = Some(execution_unit_handles);
+
+        let controller_handle = Controller::spawn(self.controller.take().unwrap());
         self.controller_handle = Some(controller_handle);
     }
 
@@ -342,7 +354,7 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Hand
     /// - self.execution_unit_handles is none
     /// - self.controller is some
     /// - self.controller_handle is none
-    pub fn stop(&mut self) {
+    pub fn join(&mut self) {
         let controller = self.controller_handle.take().unwrap().join().unwrap();
         let execution_units = self
             .execution_unit_handles
@@ -353,5 +365,9 @@ impl<Handler: StreamEventHandler + Clone + Send + Sync + 'static> Scheduler<Hand
             .collect::<Vec<_>>();
         self.controller = Some(controller);
         self.execution_units = Some(execution_units);
+    }
+
+    pub fn execute(&mut self) {
+        self.completion_queue.push_back(EXECUTE);
     }
 }

@@ -18,6 +18,7 @@ impl Gemm {
         trans_result: bool,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        _execution_unit: usize,
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 3);
         debug_assert_eq!(outputs.len(), 1);

@@ -3,7 +3,11 @@ use crate::{tensor::Error, tensor::Tensor, DeviceTrait};
 pub struct ScalarAdd {}
 
 impl ScalarAdd {
-    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+    pub fn execute(
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+        _execution_unit: usize,
+    ) -> Result<(), Error> {
         let alpha = inputs[0];
         let input = inputs[1];
         let output = outputs[0];

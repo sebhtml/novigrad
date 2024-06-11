@@ -3,7 +3,11 @@ use crate::{tensor::Error, tensor::Tensor, DeviceTrait};
 pub struct Clip {}
 
 impl Clip {
-    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+    pub fn execute(
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+        _execution_unit: usize,
+    ) -> Result<(), Error> {
         let min = inputs[0];
         let max = inputs[1];
         let input = inputs[2];

@@ -24,6 +24,7 @@ impl Reshape {
         output_size: &[usize],
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        _execution_unit: usize,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];

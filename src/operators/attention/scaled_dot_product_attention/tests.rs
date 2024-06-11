@@ -23,7 +23,7 @@ fn forward() {
         ScaledDotProductAttention::try_new(&device, rows, cols, mask, dropout_probability).unwrap();
 
     let output = attention.forward(&input, &input, &input).unwrap();
-    output.forward().unwrap();
+    output.forward(Default::default()).unwrap();
 
     let actual: &Tensor = &output.tensor();
 

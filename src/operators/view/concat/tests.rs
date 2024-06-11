@@ -56,7 +56,7 @@ fn concat() {
 
     let inputs = [&input_1, &input_2, &input_3];
     let outputs = [&output];
-    Concat::execute(&inputs, &outputs).unwrap();
+    Concat::execute(&inputs, &outputs, Default::default()).unwrap();
     assert_eq!(*output.size(), *expected.size());
     assert_eq!(output.get_values(), expected.get_values());
 }
@@ -119,7 +119,7 @@ fn unconcat() {
     )
     .unwrap();
 
-    Unconcat::execute(inputs, outputs).unwrap();
+    Unconcat::execute(inputs, outputs, Default::default()).unwrap();
 
     assert_eq!(output_1.get_values(), expected_output_1.get_values());
     assert_eq!(output_2.get_values(), expected_output_2.get_values());

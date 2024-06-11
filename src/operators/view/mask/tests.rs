@@ -18,7 +18,7 @@ fn forward() {
     let mask = Mask::try_new(&device, rows, cols).unwrap();
 
     let output = mask.forward(&input).unwrap();
-    output.forward().unwrap();
+    output.forward(Default::default()).unwrap();
 
     let actual: &Tensor = &output.tensor();
 

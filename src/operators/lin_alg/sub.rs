@@ -3,7 +3,11 @@ use crate::{tensor::Error, tensor::Tensor};
 pub struct Sub {}
 
 impl Sub {
-    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+    pub fn execute(
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+        _execution_unit: usize,
+    ) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];

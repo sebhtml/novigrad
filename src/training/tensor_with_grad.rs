@@ -76,16 +76,16 @@ impl TensorWithGrad {
         tape.into_iter().rev().collect()
     }
 
-    pub fn forward(&self) -> Result<(), Error> {
+    pub fn forward(&self, execution_unit: usize) -> Result<(), Error> {
         for inst in self.forward_instructions().iter() {
-            inst.execute()?;
+            inst.execute(execution_unit)?;
         }
         Ok(())
     }
 
-    pub fn compute_gradient(&self) -> Result<(), Error> {
+    pub fn compute_gradient(&self, execution_unit: usize) -> Result<(), Error> {
         for inst in self.gradient_instructions().iter() {
-            inst.execute()?;
+            inst.execute(execution_unit)?;
         }
         Ok(())
     }

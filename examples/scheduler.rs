@@ -1,6 +1,6 @@
 use novigrad::{
     mega_man_attention::get_megaman_attention_instructions,
-    scheduler::{InstructionEmitter, Scheduler},
+    scheduler::{scheduler::Scheduler, InstructionEmitter},
     streams::{instruction::make_simple_instructions, stream::make_streams},
 };
 use std::sync::Arc;

@@ -3,7 +3,7 @@ use std::{marker::PhantomData, ops::Deref, sync::Arc};
 use crate::{
     neural_machine::streams::stream::print_streams,
     neural_program::NeuralProgram,
-    scheduler::{Scheduler, StreamExecutor},
+    scheduler::{scheduler::Scheduler, StreamExecutor},
     tensor::{Error, Tensor},
     Category, Device, Instruction, TensorWithGrad,
 };

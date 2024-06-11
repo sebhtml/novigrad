@@ -3,7 +3,6 @@ mod tests;
 
 pub mod instruction;
 pub mod stream;
-pub mod transaction;
 
 /// Maker sure that no instruction writes to machine inputs.
 pub fn verify_machine_inputs(machine_inputs: &[usize], instructions: &[(Vec<usize>, Vec<usize>)]) {

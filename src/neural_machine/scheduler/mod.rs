@@ -7,14 +7,11 @@ use std::{
 };
 
 use queue::Queue;
+use transaction::{get_instruction_transactions, Transaction};
 
-use crate::{tensor::Error, Instruction};
+use crate::{streams::stream::Stream, tensor::Error, Instruction};
 pub mod queue;
-
-use super::streams::{
-    stream::Stream,
-    transaction::{get_instruction_transactions, Transaction},
-};
+pub mod transaction;
 
 pub enum Command {
     Execute,

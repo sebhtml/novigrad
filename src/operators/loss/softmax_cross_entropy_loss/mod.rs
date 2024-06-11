@@ -20,7 +20,7 @@ impl SoftmaxCrossEntropyLoss {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _execution_unit: usize,
+        _device_stream: usize,
     ) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];

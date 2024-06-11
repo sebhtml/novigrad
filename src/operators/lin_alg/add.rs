@@ -18,7 +18,7 @@ impl Add {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _execution_unit: usize,
+        _device_stream: usize,
     ) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];

@@ -50,7 +50,7 @@ impl StreamEventHandler for InstructionEmitter {
         streams: &Arc<Vec<Stream>>,
         _instructions: &Arc<Vec<Instruction>>,
         stream: usize,
-        _execution_unit: usize,
+        _device_stream: usize,
     ) -> Result<(), Error> {
         let stream_instructions = &streams[stream].instructions;
         for instruction in stream_instructions.iter() {
@@ -84,7 +84,7 @@ impl StreamEventHandler for TransactionEmitter {
         streams: &Arc<Vec<Stream>>,
         _instructions: &Arc<Vec<Instruction>>,
         stream: usize,
-        _execution_unit: usize,
+        _device_stream: usize,
     ) -> Result<(), Error> {
         let stream_instructions = &streams[stream].instructions;
         for instruction in stream_instructions.iter() {

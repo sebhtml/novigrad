@@ -150,10 +150,10 @@ impl Instruction {
     pub fn outputs(&self) -> impl Deref<Target = Vec<Tensor>> + '_ {
         self.outputs.deref()
     }
-    pub fn execute(&self, execution_unit: usize) -> Result<(), Error> {
+    pub fn execute(&self, device_stream: usize) -> Result<(), Error> {
         let inputs: Vec<&Tensor> = self.inputs.iter().collect();
         let outputs: Vec<&Tensor> = self.outputs.iter().collect();
-        self.opcode.execute(&inputs, &outputs, execution_unit)
+        self.opcode.execute(&inputs, &outputs, device_stream)
     }
 }
 

@@ -18,7 +18,7 @@ impl Identity {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _execution_unit: usize,
+        _device_stream: usize,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];

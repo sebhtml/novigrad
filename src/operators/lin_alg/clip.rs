@@ -6,7 +6,7 @@ impl Clip {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _execution_unit: usize,
+        _device_stream: usize,
     ) -> Result<(), Error> {
         let min = inputs[0];
         let max = inputs[1];

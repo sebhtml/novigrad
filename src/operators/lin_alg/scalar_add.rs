@@ -6,7 +6,7 @@ impl ScalarAdd {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _execution_unit: usize,
+        _device_stream: usize,
     ) -> Result<(), Error> {
         let alpha = inputs[0];
         let input = inputs[1];

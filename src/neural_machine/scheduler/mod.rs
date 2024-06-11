@@ -116,7 +116,10 @@ impl StreamEventHandler for StreamExecutor {
     ) -> Result<(), Error> {
         let stream_instructions = streams[stream].instructions.clone();
         let instructions = instructions.clone();
-        crate::execution_unit::ExecutionUnit::execute(stream_instructions, instructions)?;
+        for i in stream_instructions.iter() {
+            let instruction = &instructions[*i];
+            instruction.execute()?;
+        }
         Ok(())
     }
 }

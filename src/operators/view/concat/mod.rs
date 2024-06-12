@@ -18,7 +18,11 @@ impl Concat {
         }
     }
 
-    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+    pub fn execute(
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+        _device_stream: usize,
+    ) -> Result<(), Error> {
         let dst = outputs[0];
         for input_index in 0..inputs.len() {
             let src = inputs[input_index];
@@ -81,7 +85,11 @@ impl NaryOperator for Concat {
 pub struct Unconcat {}
 
 impl Unconcat {
-    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+    pub fn execute(
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+        _device_stream: usize,
+    ) -> Result<(), Error> {
         let src = inputs[0];
         for output_index in 0..outputs.len() {
             let dst = outputs[output_index];

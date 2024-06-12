@@ -63,7 +63,7 @@ where
             Some(Command::WorkUnitDispatch(stream)) => {
                 // Call handler to execute the instructions for that stream.
                 self.handler
-                    .on_execute(&self.streams, &self.instructions, stream)
+                    .on_execute(&self.streams, &self.instructions, stream, self.ordinal)
                     .unwrap();
                 // Writeback
                 self.controller_command_queue

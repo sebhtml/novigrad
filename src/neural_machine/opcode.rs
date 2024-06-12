@@ -116,30 +116,44 @@ impl Into<String> for OpCode {
 }
 
 impl OpCode {
-    pub fn execute(&self, inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+    pub fn execute(
+        &self,
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+        device_stream: usize,
+    ) -> Result<(), Error> {
         match self {
-            OpCode::Gemm(trans_a, trans_b, trans_result) => {
-                Gemm::execute(*trans_a, *trans_b, *trans_result, inputs, outputs)
+            OpCode::Gemm(trans_a, trans_b, trans_result) => Gemm::execute(
+                *trans_a,
+                *trans_b,
+                *trans_result,
+                inputs,
+                outputs,
+                device_stream,
+            ),
+            OpCode::Identity(_) => Identity::execute(inputs, outputs, device_stream),
+            OpCode::ReduceSum => ReduceSum::execute(inputs, outputs, device_stream),
+            OpCode::Add => Add::execute(inputs, outputs, device_stream),
+            OpCode::ScalarMul => ScalarMul::execute(inputs, outputs, device_stream),
+            OpCode::Clip => Clip::execute(inputs, outputs, device_stream),
+            OpCode::ClipNorm => ClipNorm::execute(inputs, outputs, device_stream),
+            OpCode::Mul => Mul::execute(inputs, outputs, device_stream),
+            OpCode::Softmax => Softmax::execute(inputs, outputs, device_stream),
+            OpCode::Sub => Sub::execute(inputs, outputs, device_stream),
+            OpCode::Reshape(output_size) => {
+                Reshape::execute(output_size, inputs, outputs, device_stream)
             }
-            OpCode::Identity(_) => Identity::execute(inputs, outputs),
-            OpCode::ReduceSum => ReduceSum::execute(inputs, outputs),
-            OpCode::Add => Add::execute(inputs, outputs),
-            OpCode::ScalarMul => ScalarMul::execute(inputs, outputs),
-            OpCode::Clip => Clip::execute(inputs, outputs),
-            OpCode::ClipNorm => ClipNorm::execute(inputs, outputs),
-            OpCode::Mul => Mul::execute(inputs, outputs),
-            OpCode::Softmax => Softmax::execute(inputs, outputs),
-            OpCode::Sub => Sub::execute(inputs, outputs),
-            OpCode::Reshape(output_size) => Reshape::execute(output_size, inputs, outputs),
-            OpCode::Concat => Concat::execute(inputs, outputs),
-            OpCode::Unconcat => Unconcat::execute(inputs, outputs),
-            OpCode::Sigmoid => Sigmoid::execute(inputs, outputs),
-            OpCode::SoftmaxCrossEntropyLoss => SoftmaxCrossEntropyLoss::execute(inputs, outputs),
-            OpCode::ReduceSumSquare => ReduceSumSquare::execute(inputs, outputs),
-            OpCode::Bernoulli => Bernoulli::execute(inputs, outputs),
-            OpCode::Div => Div::execute(inputs, outputs),
-            OpCode::Sqrt => Sqrt::execute(inputs, outputs),
-            OpCode::ScalarAdd => ScalarAdd::execute(inputs, outputs),
+            OpCode::Concat => Concat::execute(inputs, outputs, device_stream),
+            OpCode::Unconcat => Unconcat::execute(inputs, outputs, device_stream),
+            OpCode::Sigmoid => Sigmoid::execute(inputs, outputs, device_stream),
+            OpCode::SoftmaxCrossEntropyLoss => {
+                SoftmaxCrossEntropyLoss::execute(inputs, outputs, device_stream)
+            }
+            OpCode::ReduceSumSquare => ReduceSumSquare::execute(inputs, outputs, device_stream),
+            OpCode::Bernoulli => Bernoulli::execute(inputs, outputs, device_stream),
+            OpCode::Div => Div::execute(inputs, outputs, device_stream),
+            OpCode::Sqrt => Sqrt::execute(inputs, outputs, device_stream),
+            OpCode::ScalarAdd => ScalarAdd::execute(inputs, outputs, device_stream),
         }
     }
 }

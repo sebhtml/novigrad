@@ -27,6 +27,7 @@ pub trait StreamEventHandler {
         streams: &Arc<Vec<Stream>>,
         instructions: &Arc<Vec<Instruction>>,
         stream: usize,
+        execution_unit: usize,
     ) -> Result<(), Error>;
 }
 
@@ -49,6 +50,7 @@ impl StreamEventHandler for InstructionEmitter {
         streams: &Arc<Vec<Stream>>,
         _instructions: &Arc<Vec<Instruction>>,
         stream: usize,
+        _device_stream: usize,
     ) -> Result<(), Error> {
         let stream_instructions = &streams[stream].instructions;
         for instruction in stream_instructions.iter() {
@@ -82,6 +84,7 @@ impl StreamEventHandler for TransactionEmitter {
         streams: &Arc<Vec<Stream>>,
         _instructions: &Arc<Vec<Instruction>>,
         stream: usize,
+        _device_stream: usize,
     ) -> Result<(), Error> {
         let stream_instructions = &streams[stream].instructions;
         for instruction in stream_instructions.iter() {
@@ -113,12 +116,13 @@ impl StreamEventHandler for StreamExecutor {
         streams: &Arc<Vec<Stream>>,
         instructions: &Arc<Vec<Instruction>>,
         stream: usize,
+        execution_unit: usize,
     ) -> Result<(), Error> {
         let stream_instructions = streams[stream].instructions.clone();
         let instructions = instructions.clone();
         for i in stream_instructions.iter() {
             let instruction = &instructions[*i];
-            instruction.execute()?;
+            instruction.execute(execution_unit)?;
         }
         Ok(())
     }

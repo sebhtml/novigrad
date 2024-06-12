@@ -36,8 +36,8 @@ fn derive() {
     .unwrap();
     let operator = ReduceSumSquare::new(&device);
     let loss = operator.forward(&expected_tensor, &actual_tensor).unwrap();
-    loss.forward().unwrap();
-    loss.compute_gradient().unwrap();
+    loss.forward(Default::default()).unwrap();
+    loss.compute_gradient(Default::default()).unwrap();
     let actual_derived_loss: &Tensor = &actual_tensor.gradient();
     assert_eq!(actual_derived_loss, &expected_derived_loss);
 }

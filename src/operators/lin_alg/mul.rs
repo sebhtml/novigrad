@@ -15,7 +15,11 @@ impl Mul {
         }
     }
 
-    pub fn execute(inputs: &[&Tensor], outputs: &[&Tensor]) -> Result<(), Error> {
+    pub fn execute(
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+        _device_stream: usize,
+    ) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];

@@ -5,7 +5,7 @@ mod tests;
 
 use cudarc::{
     cublas::{
-        sys::{cublasOperation_t, cublasSaxpy_v2, cublasScopy_v2, cublasSgemm_v2},
+        sys::{cublasOperation_t, lib},
         CudaBlas,
     },
     driver::{self, CudaDevice, CudaFunction, CudaSlice, LaunchAsync, LaunchConfig},
@@ -207,7 +207,7 @@ impl DeviceTrait for CudaDev {
         let beta = &beta;
 
         let status = unsafe {
-            cublasSgemm_v2(
+            lib().cublasSgemm_v2(
                 handle, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
             )
         };
@@ -227,7 +227,7 @@ impl DeviceTrait for CudaDev {
     ) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
         let alpha = &alpha as *const f32;
-        let status = unsafe { cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
+        let status = unsafe { lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
         status
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
@@ -261,7 +261,7 @@ impl DeviceTrait for CudaDev {
 
     fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
         let handle = *self.cuda_blas.handle();
-        let status = unsafe { cublasScopy_v2(handle, n, x, incx, y, incy) };
+        let status = unsafe { lib().cublasScopy_v2(handle, n, x, incx, y, incy) };
         status
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))

@@ -19,7 +19,7 @@ impl Identity {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
@@ -30,6 +30,7 @@ impl Identity {
             1,
             output.as_mut_ptr(),
             1,
+            device_stream,
         )
     }
 }

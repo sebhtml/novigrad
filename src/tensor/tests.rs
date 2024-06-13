@@ -149,6 +149,7 @@ fn set_values() {
 #[test]
 fn assign() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     let mut tensor = new_tensor!(
         device,
         3,
@@ -172,13 +173,14 @@ fn assign() {
         ],
     )
     .unwrap();
-    Tensor::copy(&tensor2, &mut tensor).unwrap();
+    Tensor::copy(&tensor2, &mut tensor, &device_stream).unwrap();
     assert_eq!(tensor, tensor2);
 }
 
 #[test]
 fn matrix_addition_result() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the addition lhs + rhs is done
     // Then the resulting matrix has the correct values
@@ -224,8 +226,8 @@ fn matrix_addition_result() {
     let cols = rhs.cols();
     let len = rows * cols;
     let mut result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
-    Tensor::copy(&rhs, &mut result).unwrap();
-    Tensor::add(&lhs, &mut result).unwrap();
+    Tensor::copy(&rhs, &mut result, &device_stream).unwrap();
+    Tensor::add(&lhs, &mut result, &device_stream).unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -281,6 +283,7 @@ fn element_wise_mul_result() {
 #[test]
 fn scalar_mul() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     // Given a left-hand side matrix and and a right-hand scalar
     // When scalar multiplication is done
     // Then the resulting matrix has the correct values
@@ -313,7 +316,7 @@ fn scalar_mul() {
     .unwrap();
 
     let mut result = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
-    Tensor::copy(&lhs, &mut result).unwrap();
+    Tensor::copy(&lhs, &mut result, &device_stream).unwrap();
     let rhs = new_tensor!(device, 1, 1, vec![rhs]).unwrap();
     device.scalar_mul(&rhs, &mut result).unwrap();
     assert_eq!(result, expected_result);
@@ -322,6 +325,7 @@ fn scalar_mul() {
 #[test]
 fn big_matrix_addition() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     let rows = 1024;
     let cols = 1024;
     let len = rows * cols;
@@ -332,8 +336,8 @@ fn big_matrix_addition() {
     let m = new_tensor!(device, rows, cols, values).unwrap();
 
     let result = new_tensor!(device, rows, cols, vec![0.0; rows * cols]).unwrap();
-    Tensor::copy(&m, &result).unwrap();
-    Tensor::add(&m, &result).unwrap();
+    Tensor::copy(&m, &result, &device_stream).unwrap();
+    Tensor::add(&m, &result, &device_stream).unwrap();
 }
 
 #[test]
@@ -357,6 +361,7 @@ fn transpose() {
 #[test]
 fn copy() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     let expected = new_tensor!(
         device,
         2,
@@ -370,13 +375,14 @@ fn copy() {
 
     let mut actual = new_tensor!(device, 2, 4, vec![0.0; 2 * 4]).unwrap();
 
-    Tensor::copy(&expected, &mut actual).unwrap();
+    Tensor::copy(&expected, &mut actual, &device_stream).unwrap();
     assert_eq!(actual, expected);
 }
 
 #[test]
 fn copy_slice() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     let from = new_tensor!(
         device,
         2,
@@ -410,6 +416,6 @@ fn copy_slice() {
     )
     .unwrap();
 
-    Tensor::copy_slice(from.cols(), &from, 0, 0, &mut actual, 1, 2).unwrap();
+    Tensor::copy_slice(from.cols(), &from, 0, 0, &mut actual, 1, 2, &device_stream).unwrap();
     assert_eq!(actual, expected);
 }

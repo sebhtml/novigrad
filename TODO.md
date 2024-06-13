@@ -30,6 +30,7 @@
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 - maybe the pthread lock is caused by checking if the loss is 0
 
+- use a different RNG state seed for each device stream
 - improve Bernoulli CUDA kernel by using other shift values for halt the indices
 
 - add Tensor categories

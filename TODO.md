@@ -1,5 +1,8 @@
 - store cublas handle in CudaDeviceStream
-- use device_stream in device methods
+- use device_stream in all device methods
+- add method in DeviceStream to synchronize stream
+- synchronize streams in execution units
+- synchronize io_stream
 
 ---------------
 

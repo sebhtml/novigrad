@@ -2,6 +2,7 @@ use crate::{
     clip::Clip,
     identity::Identity,
     statistics::bernoulli::Bernoulli,
+    stream::DeviceStream,
     tensor::{Error, Tensor},
     Add, ClipNorm, Concat, Div, Gemm, Mul, ReduceSum, ReduceSumSquare, Reshape, ScalarAdd,
     ScalarMul, Sigmoid, Softmax, SoftmaxCrossEntropyLoss, Sqrt, Sub, Unconcat,
@@ -120,7 +121,7 @@ impl OpCode {
         &self,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        device_stream: usize,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         match self {
             OpCode::Gemm(trans_a, trans_b, trans_result) => Gemm::execute(

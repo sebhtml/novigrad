@@ -132,13 +132,12 @@ pub fn load_mega_man_attention_model(
     Ok(details)
 }
 
-pub fn get_megaman_attention_instructions() -> Result<Vec<Instruction>, Error> {
-    let device = Device::default();
+pub fn get_megaman_attention_instructions(device: &Device) -> Result<Vec<Instruction>, Error> {
     let details = load_mega_man_attention_model(&device)?;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;
-    let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
+    let program = NeuralProgram::try_new(device, &model, &loss_operator, &optimizer)?;
     let instructions = program.instructions;
     Ok(instructions)
 }

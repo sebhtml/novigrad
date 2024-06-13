@@ -1,12 +1,18 @@
 - add device stream support in devices to execute attention heads in parallel
+  needs: https://github.com/coreylowman/cudarc/pull/254
+
+---------------
 
 == Transformer ==
 
 - add Standardize
 - implement LayerNormalization which is Standardize + ScalarMul + Add
-- implement Gelu
 - implement LayerNorm
 - implement Transformer
+
+---------------
+
+- implement Gelu
 
 ---------------
 

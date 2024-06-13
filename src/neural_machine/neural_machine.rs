@@ -88,24 +88,28 @@ impl<T> NeuralMachine<T> {
 
         let handler = StreamExecutor::new();
         let mut inference_scheduler = Scheduler::new(
+            device,
             execution_units_len,
             &inference_streams,
             &handler,
             &inference_instructions,
         );
         let mut loss_scheduler = Scheduler::new(
+            device,
             execution_units_len,
             &loss_streams,
             &handler,
             &loss_instructions,
         );
         let mut gradient_scheduler = Scheduler::new(
+            device,
             execution_units_len,
             &gradient_streams,
             &handler,
             &gradient_instructions,
         );
         let mut optimization_scheduler = Scheduler::new(
+            device,
             execution_units_len,
             &optimization_streams,
             &handler,

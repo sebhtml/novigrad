@@ -1,5 +1,6 @@
 use crate::{
     gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    stream::DeviceStream,
     tensor::{Error, Tensor},
     BinaryOperator, Device, OpCode, TensorWithGrad,
 };
@@ -18,7 +19,7 @@ impl Mul {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];

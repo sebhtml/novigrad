@@ -1,5 +1,6 @@
 use std::{fs::File, io::Read, sync::Arc};
 pub mod slice;
+pub mod stream;
 #[cfg(test)]
 mod tests;
 
@@ -10,10 +11,14 @@ use cudarc::{
     },
     driver::{self, CudaDevice, CudaFunction, CudaSlice, LaunchAsync, LaunchConfig},
 };
+use stream::CudaDeviceStream;
 
 use crate::{
-    error, slice::DevSliceEnum, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceTrait,
-    EPSILON,
+    error,
+    slice::DeviceSlice,
+    stream::DeviceStream,
+    tensor::{Error, ErrorEnum, Tensor},
+    DeviceTrait, EPSILON,
 };
 
 use self::slice::CudaDevSlice;
@@ -244,9 +249,9 @@ impl DeviceTrait for CudaDev {
 
         match (left, right, result) {
             (
-                DevSliceEnum::CudaDevSlice(left),
-                DevSliceEnum::CudaDevSlice(right),
-                DevSliceEnum::CudaDevSlice(result),
+                DeviceSlice::CudaDevSlice(left),
+                DeviceSlice::CudaDevSlice(right),
+                DeviceSlice::CudaDevSlice(result),
             ) => {
                 let result =
                     unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
@@ -274,7 +279,7 @@ impl DeviceTrait for CudaDev {
         let kernel = self.get_func("scalar_mul_kernel_module", "scalar_mul_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
-            (DevSliceEnum::CudaDevSlice(alpha), DevSliceEnum::CudaDevSlice(x)) => {
+            (DeviceSlice::CudaDevSlice(alpha), DeviceSlice::CudaDevSlice(x)) => {
                 let result = unsafe { kernel.launch(cfg, (n, x.slice(), alpha.slice())) };
                 match result {
                     Ok(_) => Ok(()),
@@ -292,7 +297,7 @@ impl DeviceTrait for CudaDev {
         let kernel = self.get_func("scalar_add_kernel_module", "scalar_add_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
-            (DevSliceEnum::CudaDevSlice(alpha), DevSliceEnum::CudaDevSlice(x)) => {
+            (DeviceSlice::CudaDevSlice(alpha), DeviceSlice::CudaDevSlice(x)) => {
                 let result = unsafe { kernel.launch(cfg, (n, x.slice(), alpha.slice())) };
                 match result {
                     Ok(_) => Ok(()),
@@ -303,9 +308,9 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn slice(&self, n: i32) -> Result<DevSliceEnum, Error> {
+    fn slice(&self, n: i32) -> Result<DeviceSlice, Error> {
         match self.dev.alloc_zeros(n as usize) {
-            Ok(slice) => Ok(DevSliceEnum::CudaDevSlice(CudaDevSlice::new(slice))),
+            Ok(slice) => Ok(DeviceSlice::CudaDevSlice(CudaDevSlice::new(slice))),
             _ => Err(error!(ErrorEnum::UnsupportedOperation)),
         }
     }
@@ -319,7 +324,7 @@ impl DeviceTrait for CudaDev {
         let input = &input.device_slice().buffer;
         let output = &output.device_slice().buffer;
         match (input, output) {
-            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
                 let result =
                     unsafe { kernel.launch(cfg, (input.slice(), output.slice(), rows, cols)) };
                 match result {
@@ -338,7 +343,7 @@ impl DeviceTrait for CudaDev {
         let input = &input.device_slice().buffer;
         let output = &output.device_slice().buffer;
         match (input, output) {
-            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
                 let result = unsafe { sum_kernel.launch(cfg, (input.slice(), n, output.slice())) };
                 match result {
                     Ok(_) => Ok(()),
@@ -360,9 +365,9 @@ impl DeviceTrait for CudaDev {
 
         match (left, right, result) {
             (
-                DevSliceEnum::CudaDevSlice(left),
-                DevSliceEnum::CudaDevSlice(right),
-                DevSliceEnum::CudaDevSlice(result),
+                DeviceSlice::CudaDevSlice(left),
+                DeviceSlice::CudaDevSlice(right),
+                DeviceSlice::CudaDevSlice(result),
             ) => {
                 let result =
                     unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
@@ -382,7 +387,7 @@ impl DeviceTrait for CudaDev {
         let input = &input.device_slice().buffer;
         let output = &output.device_slice().buffer;
         match (input, output) {
-            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
                 let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
                 match result {
                     Ok(_) => Ok(()),
@@ -404,9 +409,9 @@ impl DeviceTrait for CudaDev {
 
         match (left, right, result) {
             (
-                DevSliceEnum::CudaDevSlice(left),
-                DevSliceEnum::CudaDevSlice(right),
-                DevSliceEnum::CudaDevSlice(result),
+                DeviceSlice::CudaDevSlice(left),
+                DeviceSlice::CudaDevSlice(right),
+                DeviceSlice::CudaDevSlice(result),
             ) => {
                 let result =
                     unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
@@ -426,7 +431,7 @@ impl DeviceTrait for CudaDev {
         let input = &input.device_slice().buffer;
         let output = &output.device_slice().buffer;
         match (input, output) {
-            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
                 let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
                 match result {
                     Ok(_) => Ok(()),
@@ -453,10 +458,10 @@ impl DeviceTrait for CudaDev {
         let output = &output.device_slice().buffer;
         match (min, max, input, output) {
             (
-                DevSliceEnum::CudaDevSlice(min),
-                DevSliceEnum::CudaDevSlice(max),
-                DevSliceEnum::CudaDevSlice(input),
-                DevSliceEnum::CudaDevSlice(output),
+                DeviceSlice::CudaDevSlice(min),
+                DeviceSlice::CudaDevSlice(max),
+                DeviceSlice::CudaDevSlice(input),
+                DeviceSlice::CudaDevSlice(output),
             ) => {
                 let result = unsafe {
                     kernel.launch(
@@ -492,9 +497,9 @@ impl DeviceTrait for CudaDev {
 
         match (expected, actual, loss) {
             (
-                DevSliceEnum::CudaDevSlice(expected),
-                DevSliceEnum::CudaDevSlice(actual),
-                DevSliceEnum::CudaDevSlice(loss),
+                DeviceSlice::CudaDevSlice(expected),
+                DeviceSlice::CudaDevSlice(actual),
+                DeviceSlice::CudaDevSlice(loss),
             ) => {
                 let result = unsafe {
                     kernel.launch(
@@ -559,7 +564,7 @@ impl DeviceTrait for CudaDev {
         let input = &input.device_slice().buffer;
         let output = &output.device_slice().buffer;
         match (input, output) {
-            (DevSliceEnum::CudaDevSlice(input), DevSliceEnum::CudaDevSlice(output)) => {
+            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
                 let rng_state = &self.rng_state;
                 let result =
                     unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n, rng_state)) };
@@ -569,6 +574,13 @@ impl DeviceTrait for CudaDev {
                 }
             }
             _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
+    }
+
+    fn stream(&self) -> Result<DeviceStream, Error> {
+        match self.dev.fork_default_stream() {
+            Ok(stream) => Ok(DeviceStream::CudaDeviceStream(CudaDeviceStream { stream })),
+            Err(_) => Err(error!(ErrorEnum::UnsupportedOperation)),
         }
     }
 }

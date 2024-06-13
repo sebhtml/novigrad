@@ -1,4 +1,5 @@
 use crate::devices::Device;
+use crate::stream::DeviceStream;
 use crate::{
     gradient_instruction, inference_instruction, tensor::Tensor, DeviceTrait, OpCode, UnaryOperator,
 };
@@ -28,7 +29,7 @@ impl Softmax {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];

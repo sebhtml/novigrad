@@ -22,7 +22,7 @@ impl Gemm {
         trans_result: bool,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        device_stream: &DeviceStream,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 3);
         debug_assert_eq!(outputs.len(), 1);
@@ -38,17 +38,7 @@ impl Gemm {
         let transpose_result = trans_result;
         let alpha = 1.0;
         let beta = 1.0;
-        Gemm::gemm(
-            transa,
-            transb,
-            alpha,
-            a,
-            b,
-            beta,
-            c,
-            transpose_result,
-            device_stream,
-        )
+        Gemm::gemm(transa, transb, alpha, a, b, beta, c, transpose_result)
     }
 
     pub fn gemm(
@@ -60,19 +50,8 @@ impl Gemm {
         beta: f32,
         c: &Tensor,
         transpose_result: bool,
-        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let op_result = Self::_gemm(
-            transa,
-            transb,
-            alpha,
-            a,
-            b,
-            beta,
-            c,
-            transpose_result,
-            device_stream,
-        );
+        let op_result = Self::_gemm(transa, transb, alpha, a, b, beta, c, transpose_result);
         match op_result {
             Ok(value) => Ok(value),
             Err(error) => {
@@ -102,7 +81,6 @@ impl Gemm {
         beta: f32,
         c: &Tensor,
         transpose_result: bool,
-        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let device = a.device();
         if !transa && !transb && !transpose_result {
@@ -130,7 +108,6 @@ impl Gemm {
                 beta,
                 c.as_mut_ptr(),
                 n as i32,
-                device_stream,
             )
         } else if transa && !transb && !transpose_result {
             if a.rows() != b.rows() {
@@ -159,7 +136,6 @@ impl Gemm {
                 beta,
                 c.as_mut_ptr(),
                 n as i32,
-                device_stream,
             )
         } else if !transa && transb && !transpose_result {
             if a.cols() != b.cols() {
@@ -187,7 +163,6 @@ impl Gemm {
                 beta,
                 c.as_mut_ptr(),
                 n as i32,
-                device_stream,
             )
         } else if transa && transb && !transpose_result {
             if a.rows() != b.cols() {
@@ -215,7 +190,6 @@ impl Gemm {
                 beta,
                 c.as_mut_ptr(),
                 n as i32,
-                device_stream,
             )
         } else if transa && transb && transpose_result {
             if a.rows() != b.cols() {
@@ -243,7 +217,6 @@ impl Gemm {
                 beta,
                 c.as_mut_ptr(),
                 m as i32,
-                device_stream,
             )
         } else if transa && !transb && transpose_result {
             if a.rows() != b.rows() {
@@ -271,7 +244,6 @@ impl Gemm {
                 beta,
                 c.as_mut_ptr(),
                 m as i32,
-                device_stream,
             )
         } else {
             Err(error!(ErrorEnum::UnsupportedOperation))

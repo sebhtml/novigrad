@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-use crate::Category;
 use crate::{
     filter_instructions,
     mega_man_attention::get_megaman_attention_instructions,
@@ -9,6 +8,7 @@ use crate::{
         stream::{make_streams, print_streams},
     },
 };
+use crate::{Category, Device};
 use test_case::test_case;
 
 #[test_case(None ; "no category filter")]
@@ -17,7 +17,8 @@ use test_case::test_case;
 #[test_case(Some(Category::Gradient) ; "gradient filter")]
 #[test_case(Some(Category::Optimization) ; "optimization filter")]
 fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
-    let instructions = get_megaman_attention_instructions().unwrap();
+    let device = Device::default();
+    let instructions = get_megaman_attention_instructions(&device).unwrap();
     let instructions = filter_instructions(instructions, filter);
     let simple_instructions = make_simple_instructions(&instructions);
     let expected_instructions = (0..instructions.len()).collect::<Vec<_>>();
@@ -41,7 +42,8 @@ fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
 
 #[test]
 fn the_instructions_length_is_correct() {
-    let instructions = get_megaman_attention_instructions().unwrap();
+    let device = Device::default();
+    let instructions = get_megaman_attention_instructions(&device).unwrap();
     let simple_instructions = make_simple_instructions(&instructions);
     assert_eq!(2635, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
@@ -63,7 +65,8 @@ fn the_instructions_length_is_correct() {
 
 #[test]
 fn the_streams_length_are_correct() {
-    let instructions = get_megaman_attention_instructions().unwrap();
+    let device = Device::default();
+    let instructions = get_megaman_attention_instructions(&device).unwrap();
     let simple_instructions = make_simple_instructions(&instructions);
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_dependents_for_stream = 12;

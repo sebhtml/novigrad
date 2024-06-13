@@ -1,4 +1,5 @@
 use crate::devices::Device;
+use crate::stream::DeviceStream;
 use crate::{
     emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, tensor::Error,
     DeviceTrait, TensorWithGrad,
@@ -20,7 +21,7 @@ impl Sigmoid {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];

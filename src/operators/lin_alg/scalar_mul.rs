@@ -1,5 +1,6 @@
 use crate::{
     gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    stream::DeviceStream,
     tensor::{Error, Tensor},
     Device, DeviceTrait, OpCode, TensorWithGrad, UnaryOperator,
 };
@@ -20,7 +21,7 @@ impl ScalarMul {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let alpha = inputs[0];
         let input = inputs[1];

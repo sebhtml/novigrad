@@ -4,7 +4,11 @@ use cblas::{Layout, Transpose};
 use rand::{distributions::Uniform, thread_rng, Rng};
 extern crate cblas_sys as ffi;
 use crate::{
-    error, slice::DevSliceEnum, tensor::Error, tensor::ErrorEnum, tensor::Tensor, EPSILON,
+    error,
+    slice::DeviceSlice,
+    stream::DeviceStream,
+    tensor::{Error, ErrorEnum, Tensor},
+    EPSILON,
 };
 
 use self::slice::CpuDevSlice;
@@ -126,10 +130,10 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn slice(&self, n: i32) -> Result<DevSliceEnum, Error> {
+    fn slice(&self, n: i32) -> Result<DeviceSlice, Error> {
         let len = n as usize;
         let values = vec![0.0; len];
-        let slice = DevSliceEnum::CpuDevSlice(CpuDevSlice::new(values));
+        let slice = DeviceSlice::CpuDevSlice(CpuDevSlice::new(values));
         Ok(slice)
     }
 
@@ -360,6 +364,10 @@ impl DeviceTrait for CpuDevice {
             unsafe { *output_ptr.add(i) = random_number };
         }
         Ok(())
+    }
+
+    fn stream(&self) -> Result<DeviceStream, Error> {
+        Ok(DeviceStream::CpuDeviceStream)
     }
 }
 

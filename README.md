@@ -54,6 +54,7 @@ They all do back-propagation using a forward-backward algorithm.
 # Other frameworks
 
 Rust
+- [Luminal](https://github.com/jafioti/luminal)
 - [Burn](https://github.com/tracel-ai/burn/tree/main)
 - [candle](https://github.com/huggingface/candle)
 - [dfdx]( https://github.com/coreylowman/dfdx)

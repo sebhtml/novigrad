@@ -1,4 +1,4 @@
-use crate::{new_tensor_with_grad, tensor::Tensor, Device, Mask, UnaryOperator};
+use crate::{new_tensor_with_grad, tensor::Tensor, Device, DeviceTrait, Mask, UnaryOperator};
 
 #[test]
 fn forward() {
@@ -18,7 +18,8 @@ fn forward() {
     let mask = Mask::try_new(&device, rows, cols).unwrap();
 
     let output = mask.forward(&input).unwrap();
-    output.forward(Default::default()).unwrap();
+    let device_stream = device.stream().unwrap();
+    output.forward(&device_stream).unwrap();
 
     let actual: &Tensor = &output.tensor();
 

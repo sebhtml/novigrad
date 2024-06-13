@@ -1,3 +1,4 @@
+use crate::stream::DeviceStream;
 use crate::{tensor::Error, tensor::Tensor, Category, Instruction};
 use core::fmt::Debug;
 use std::fmt::Display;
@@ -76,16 +77,16 @@ impl TensorWithGrad {
         tape.into_iter().rev().collect()
     }
 
-    pub fn forward(&self, execution_unit: usize) -> Result<(), Error> {
+    pub fn forward(&self, device_stream: &DeviceStream) -> Result<(), Error> {
         for inst in self.forward_instructions().iter() {
-            inst.execute(execution_unit)?;
+            inst.execute(device_stream)?;
         }
         Ok(())
     }
 
-    pub fn compute_gradient(&self, execution_unit: usize) -> Result<(), Error> {
+    pub fn compute_gradient(&self, device_stream: &DeviceStream) -> Result<(), Error> {
         for inst in self.gradient_instructions().iter() {
-            inst.execute(execution_unit)?;
+            inst.execute(device_stream)?;
         }
         Ok(())
     }

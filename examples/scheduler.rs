@@ -2,11 +2,13 @@ use novigrad::{
     mega_man_attention::get_megaman_attention_instructions,
     scheduler::{scheduler::Scheduler, InstructionEmitter},
     streams::{instruction::make_simple_instructions, stream::make_streams},
+    Device,
 };
 use std::sync::Arc;
 
 fn main() {
-    let instructions = get_megaman_attention_instructions().unwrap();
+    let device = Device::default();
+    let instructions = get_megaman_attention_instructions(&device).unwrap();
     let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
     let simple_instructions = Arc::new(simple_instructions);
@@ -24,7 +26,13 @@ fn main() {
 
     let execution_units_len = 32;
     let handler = InstructionEmitter::new();
-    let mut scheduler = Scheduler::new(execution_units_len, &streams, &handler, &instructions);
+    let mut scheduler = Scheduler::new(
+        &device,
+        execution_units_len,
+        &streams,
+        &handler,
+        &instructions,
+    );
 
     let n = 100;
     scheduler.start();

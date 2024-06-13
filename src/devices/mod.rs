@@ -14,12 +14,14 @@ pub use cpu::*;
 mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
+use stream::DeviceStream;
 
 use crate::{tensor::Tensor, TensorWithGrad};
 pub mod slice;
+pub mod stream;
 use core::fmt::Debug;
 
-use self::slice::{DevSlice, DevSliceEnum};
+use self::slice::{DevSlice, DeviceSlice};
 
 #[cfg(debug_assertions)]
 #[macro_export]
@@ -137,7 +139,9 @@ pub trait DeviceTrait {
     fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error>;
 
     /// Allocate a slice on the device.
-    fn slice(&self, n: i32) -> Result<DevSliceEnum, Error>;
+    fn slice(&self, n: i32) -> Result<DeviceSlice, Error>;
+
+    fn stream(&self) -> Result<DeviceStream, Error>;
 
     fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
@@ -423,7 +427,7 @@ impl DeviceTrait for Device {
         self.device.scalar_add(alpha, x)
     }
 
-    fn slice(&self, n: i32) -> Result<DevSliceEnum, Error> {
+    fn slice(&self, n: i32) -> Result<DeviceSlice, Error> {
         self.device.slice(n)
     }
 
@@ -488,5 +492,9 @@ impl DeviceTrait for Device {
 
     fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         self.device.bernoulli(input, output)
+    }
+
+    fn stream(&self) -> Result<DeviceStream, Error> {
+        self.device.stream()
     }
 }

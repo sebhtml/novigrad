@@ -1,6 +1,7 @@
 use crate::{
     devices::Device,
     gradient_instruction, loss_instruction, new_tensor, new_tensor_with_grad,
+    stream::DeviceStream,
     tensor::{Error, Tensor},
     BinaryOperator, DeviceTrait, OpCode, TensorWithGrad,
 };
@@ -22,7 +23,7 @@ impl ReduceSumSquare {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];

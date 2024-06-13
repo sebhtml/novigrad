@@ -1,5 +1,9 @@
 use crate::{
-    devices::Device, error, tensor::Error, tensor::ErrorEnum, tensor::Tensor, DeviceTrait,
+    devices::Device,
+    error,
+    stream::DeviceStream,
+    tensor::{Error, ErrorEnum, Tensor},
+    DeviceTrait,
 };
 
 #[cfg(test)]
@@ -18,7 +22,7 @@ impl Gemm {
         trans_result: bool,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 3);
         debug_assert_eq!(outputs.len(), 1);

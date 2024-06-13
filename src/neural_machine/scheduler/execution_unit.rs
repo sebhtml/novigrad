@@ -3,7 +3,13 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-use crate::{streams::stream::Stream, Instruction};
+use crate::{
+    error,
+    stream::DeviceStream,
+    streams::stream::Stream,
+    tensor::{Error, ErrorEnum},
+    Device, DeviceTrait, Instruction,
+};
 
 use super::{queue::Queue, Command, StreamEventHandler};
 
@@ -13,7 +19,8 @@ where
     Handler: StreamEventHandler + Send + Sync,
 {
     #[allow(unused)]
-    ordinal: usize,
+    device: Device,
+    _ordinal: usize,
     handler: Handler,
     streams: Arc<Vec<Stream>>,
     instructions: Arc<Vec<Instruction>>,
@@ -27,6 +34,7 @@ where
     Handler: StreamEventHandler + Send + Sync + 'static,
 {
     pub fn new(
+        device: &Device,
         ordinal: usize,
         execution_unit_command_queue: &Arc<Queue<Command>>,
         controller_command_queue: &Arc<Queue<Command>>,
@@ -35,7 +43,8 @@ where
         instructions: &Arc<Vec<Instruction>>,
     ) -> Self {
         Self {
-            ordinal,
+            device: device.clone(),
+            _ordinal: ordinal,
             handler,
             streams: streams.clone(),
             instructions: instructions.clone(),
@@ -45,15 +54,19 @@ where
         }
     }
 
-    pub fn spawn(mut execution_unit: Self) -> JoinHandle<Self> {
+    pub fn spawn(mut execution_unit: Self) -> JoinHandle<Result<Self, Error>> {
         let handle = thread::spawn(|| {
-            while execution_unit.step() {}
-            execution_unit
+            let device_stream = execution_unit
+                .device
+                .stream()
+                .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+            while execution_unit.step(&device_stream) {}
+            Ok(execution_unit)
         });
         handle
     }
 
-    fn step(&mut self) -> bool {
+    fn step(&mut self, device_stream: &DeviceStream) -> bool {
         // Fetch
         let command = self.execution_unit_command_queue.pop_front();
         match command {
@@ -63,7 +76,7 @@ where
             Some(Command::WorkUnitDispatch(stream)) => {
                 // Call handler to execute the instructions for that stream.
                 self.handler
-                    .on_execute(&self.streams, &self.instructions, stream, self.ordinal)
+                    .on_execute(&self.streams, &self.instructions, stream, device_stream)
                     .unwrap();
                 // Writeback
                 self.controller_command_queue

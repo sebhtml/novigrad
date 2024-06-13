@@ -1,5 +1,6 @@
 use crate::{
-    new_tensor_with_grad, tensor::Tensor, Device, ScaledDotProductAttention, TernaryOperator,
+    new_tensor_with_grad, tensor::Tensor, Device, DeviceTrait, ScaledDotProductAttention,
+    TernaryOperator,
 };
 
 #[test]
@@ -23,7 +24,8 @@ fn forward() {
         ScaledDotProductAttention::try_new(&device, rows, cols, mask, dropout_probability).unwrap();
 
     let output = attention.forward(&input, &input, &input).unwrap();
-    output.forward(Default::default()).unwrap();
+    let device_stream = device.stream().unwrap();
+    output.forward(&device_stream).unwrap();
 
     let actual: &Tensor = &output.tensor();
 

@@ -1,4 +1,8 @@
-use crate::{tensor::Error, tensor::Tensor, OpCode};
+use crate::{
+    stream::DeviceStream,
+    tensor::{Error, Tensor},
+    OpCode,
+};
 use std::{ops::Deref, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -150,7 +154,7 @@ impl Instruction {
     pub fn outputs(&self) -> impl Deref<Target = Vec<Tensor>> + '_ {
         self.outputs.deref()
     }
-    pub fn execute(&self, device_stream: usize) -> Result<(), Error> {
+    pub fn execute(&self, device_stream: &DeviceStream) -> Result<(), Error> {
         let inputs: Vec<&Tensor> = self.inputs.iter().collect();
         let outputs: Vec<&Tensor> = self.outputs.iter().collect();
         self.opcode.execute(&inputs, &outputs, device_stream)

@@ -9,7 +9,7 @@ pub mod scheduler;
 use scheduler::Scheduler;
 use transaction::{get_instruction_transactions, Transaction};
 
-use crate::{streams::stream::Stream, tensor::Error, Instruction};
+use crate::{stream::DeviceStream, streams::stream::Stream, tensor::Error, Device, Instruction};
 pub mod queue;
 pub mod transaction;
 
@@ -27,7 +27,7 @@ pub trait StreamEventHandler {
         streams: &Arc<Vec<Stream>>,
         instructions: &Arc<Vec<Instruction>>,
         stream: usize,
-        execution_unit: usize,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 }
 
@@ -50,7 +50,7 @@ impl StreamEventHandler for InstructionEmitter {
         streams: &Arc<Vec<Stream>>,
         _instructions: &Arc<Vec<Instruction>>,
         stream: usize,
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let stream_instructions = &streams[stream].instructions;
         for instruction in stream_instructions.iter() {
@@ -84,7 +84,7 @@ impl StreamEventHandler for TransactionEmitter {
         streams: &Arc<Vec<Stream>>,
         _instructions: &Arc<Vec<Instruction>>,
         stream: usize,
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let stream_instructions = &streams[stream].instructions;
         for instruction in stream_instructions.iter() {
@@ -116,13 +116,13 @@ impl StreamEventHandler for StreamExecutor {
         streams: &Arc<Vec<Stream>>,
         instructions: &Arc<Vec<Instruction>>,
         stream: usize,
-        execution_unit: usize,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let stream_instructions = streams[stream].instructions.clone();
         let instructions = instructions.clone();
         for i in stream_instructions.iter() {
             let instruction = &instructions[*i];
-            instruction.execute(execution_unit)?;
+            instruction.execute(device_stream)?;
         }
         Ok(())
     }
@@ -130,36 +130,39 @@ impl StreamEventHandler for StreamExecutor {
 
 #[allow(unused)]
 pub fn execute_streams(
+    device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     execution_units_len: usize,
 ) {
     let mut handler = StreamExecutor::new();
-    run_scheduler(streams, instructions, execution_units_len, &handler);
+    run_scheduler(device, streams, instructions, execution_units_len, &handler);
 }
 
 /// Simulate an execution of streams and emit operand transactions.
 #[allow(unused)]
 pub fn simulate_execution_and_collect_transactions(
+    device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     simple_instructions: &Arc<Vec<(Vec<usize>, Vec<usize>)>>,
     execution_units_len: usize,
 ) -> Vec<Transaction> {
     let handler = TransactionEmitter::new(simple_instructions);
-    run_scheduler(streams, instructions, execution_units_len, &handler);
+    run_scheduler(device, streams, instructions, execution_units_len, &handler);
     handler.clone().actual_transactions.lock().unwrap().clone()
 }
 
 /// Simulate an execution of streams and emit executed instructions.
 #[allow(unused)]
 pub fn simulate_execution_and_collect_instructions(
+    device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     execution_units_len: usize,
 ) -> Vec<usize> {
     let handler = InstructionEmitter::new();
-    run_scheduler(streams, instructions, execution_units_len, &handler);
+    run_scheduler(device, streams, instructions, execution_units_len, &handler);
     handler
         .clone()
         .executed_instructions
@@ -169,6 +172,7 @@ pub fn simulate_execution_and_collect_instructions(
 }
 
 pub fn run_scheduler<Handler>(
+    device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     execution_units_len: usize,
@@ -176,7 +180,7 @@ pub fn run_scheduler<Handler>(
 ) where
     Handler: StreamEventHandler + Clone + Send + Sync + 'static,
 {
-    let mut scheduler = Scheduler::new(execution_units_len, streams, handler, instructions);
+    let mut scheduler = Scheduler::new(device, execution_units_len, streams, handler, instructions);
     scheduler.start();
     scheduler.execute();
     scheduler.stop();

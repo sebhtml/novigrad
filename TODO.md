@@ -1,12 +1,18 @@
-- add device stream support in devices to execute attention heads in parallel
+- store cublas handle in CudaDeviceStream
+- use device_stream in device methods
+
+---------------
 
 == Transformer ==
 
 - add Standardize
 - implement LayerNormalization which is Standardize + ScalarMul + Add
-- implement Gelu
 - implement LayerNorm
 - implement Transformer
+
+---------------
+
+- implement Gelu
 
 ---------------
 

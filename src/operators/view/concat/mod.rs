@@ -1,5 +1,6 @@
 use crate::{
     gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    stream::DeviceStream,
     tensor::{Error, Tensor},
     Device, NaryOperator, OpCode, TensorWithGrad,
 };
@@ -21,7 +22,7 @@ impl Concat {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let dst = outputs[0];
         for input_index in 0..inputs.len() {
@@ -88,7 +89,7 @@ impl Unconcat {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let src = inputs[0];
         for output_index in 0..outputs.len() {

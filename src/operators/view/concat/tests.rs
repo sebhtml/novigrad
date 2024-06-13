@@ -1,4 +1,4 @@
-use crate::{new_tensor, Concat, Device, Unconcat};
+use crate::{new_tensor, Concat, Device, DeviceTrait, Unconcat};
 
 #[test]
 fn concat() {
@@ -56,7 +56,8 @@ fn concat() {
 
     let inputs = [&input_1, &input_2, &input_3];
     let outputs = [&output];
-    Concat::execute(&inputs, &outputs, Default::default()).unwrap();
+    let device_stream = device.stream().unwrap();
+    Concat::execute(&inputs, &outputs, &device_stream).unwrap();
     assert_eq!(*output.size(), *expected.size());
     assert_eq!(output.get_values(), expected.get_values());
 }
@@ -119,7 +120,8 @@ fn unconcat() {
     )
     .unwrap();
 
-    Unconcat::execute(inputs, outputs, Default::default()).unwrap();
+    let device_stream = device.stream().unwrap();
+    Unconcat::execute(inputs, outputs, &device_stream).unwrap();
 
     assert_eq!(output_1.get_values(), expected_output_1.get_values());
     assert_eq!(output_2.get_values(), expected_output_2.get_values());

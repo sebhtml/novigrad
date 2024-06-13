@@ -1,4 +1,8 @@
-use crate::{tensor::Error, tensor::Tensor, DeviceTrait};
+use crate::{
+    stream::DeviceStream,
+    tensor::{Error, Tensor},
+    DeviceTrait,
+};
 
 pub struct ScalarAdd {}
 
@@ -6,7 +10,7 @@ impl ScalarAdd {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let alpha = inputs[0];
         let input = inputs[1];

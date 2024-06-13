@@ -1,5 +1,6 @@
 use crate::{
     gradient_instruction, inference_instruction, new_tensor_with_grad,
+    stream::DeviceStream,
     tensor::{Error, Tensor},
     DeviceTrait, OpCode, TensorWithGrad, UnaryOperator,
 };
@@ -18,7 +19,7 @@ impl Identity {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: usize,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];

@@ -9,7 +9,7 @@ use std::borrow::BorrowMut;
 #[derive(Debug)]
 pub struct DevSlice {
     device: Device,
-    pub buffer: DevSliceEnum,
+    pub buffer: DeviceSlice,
 }
 
 impl Drop for DevSlice {
@@ -23,7 +23,7 @@ impl Drop for DevSlice {
 }
 
 #[derive(Debug)]
-pub enum DevSliceEnum {
+pub enum DeviceSlice {
     CpuDevSlice(CpuDevSlice),
     #[cfg(feature = "cuda")]
     CudaDevSlice(CudaDevSlice),
@@ -51,41 +51,41 @@ impl DevSlice {
 impl DevSliceTrait for DevSlice {
     fn as_ptr(&self) -> *const f32 {
         match &self.buffer {
-            DevSliceEnum::CpuDevSlice(ref slice) => slice.as_ptr(),
+            DeviceSlice::CpuDevSlice(ref slice) => slice.as_ptr(),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(ref slice) => slice.as_ptr(),
+            DeviceSlice::CudaDevSlice(ref slice) => slice.as_ptr(),
         }
     }
 
     fn as_mut_ptr(&mut self) -> *mut f32 {
         match self.buffer.borrow_mut() {
-            DevSliceEnum::CpuDevSlice(ref mut slice) => slice.as_mut_ptr(),
+            DeviceSlice::CpuDevSlice(ref mut slice) => slice.as_mut_ptr(),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(ref mut slice) => slice.as_mut_ptr(),
+            DeviceSlice::CudaDevSlice(ref mut slice) => slice.as_mut_ptr(),
         }
     }
 
     fn get_values(&self) -> Result<Vec<f32>, Error> {
         match self.buffer {
-            DevSliceEnum::CpuDevSlice(ref slice) => slice.get_values(),
+            DeviceSlice::CpuDevSlice(ref slice) => slice.get_values(),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(ref slice) => slice.get_values(),
+            DeviceSlice::CudaDevSlice(ref slice) => slice.get_values(),
         }
     }
 
     fn set_values(&mut self, new_values: Vec<f32>) -> Result<(), Error> {
         match self.buffer.borrow_mut() {
-            DevSliceEnum::CpuDevSlice(ref mut slice) => slice.set_values(new_values),
+            DeviceSlice::CpuDevSlice(ref mut slice) => slice.set_values(new_values),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(ref mut slice) => slice.set_values(new_values),
+            DeviceSlice::CudaDevSlice(ref mut slice) => slice.set_values(new_values),
         }
     }
 
     fn len(&self) -> usize {
         match &self.buffer {
-            DevSliceEnum::CpuDevSlice(slice) => slice.len(),
+            DeviceSlice::CpuDevSlice(slice) => slice.len(),
             #[cfg(feature = "cuda")]
-            DevSliceEnum::CudaDevSlice(slice) => slice.len(),
+            DeviceSlice::CudaDevSlice(slice) => slice.len(),
         }
     }
 }

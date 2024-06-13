@@ -44,6 +44,7 @@ impl DeviceTrait for CpuDevice {
         beta: f32,
         c: *mut f32,
         ldc: i32,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let layout = Layout::ColumnMajor;
         let transa = match transa {
@@ -90,7 +91,15 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
+    fn copy(
+        &self,
+        n: i32,
+        x: *const f32,
+        incx: i32,
+        y: *mut f32,
+        incy: i32,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         unsafe { ffi::cblas_scopy(n, x, incx, y, incy) }
         Ok(())
     }
@@ -103,6 +112,7 @@ impl DeviceTrait for CpuDevice {
         incx: i32,
         y: *mut f32,
         incy: i32,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         unsafe { ffi::cblas_saxpy(n, alpha, x, incx, y, incy) }
         Ok(())

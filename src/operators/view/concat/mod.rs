@@ -22,7 +22,7 @@ impl Concat {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let dst = outputs[0];
         for input_index in 0..inputs.len() {
@@ -33,7 +33,16 @@ impl Concat {
             for src_row in 0..input_rows {
                 let dst_row = src_row;
                 let dst_col = input_index * input_cols;
-                Tensor::copy_slice(src.cols(), &src, src_row, src_col, &dst, dst_row, dst_col)?;
+                Tensor::copy_slice(
+                    src.cols(),
+                    &src,
+                    src_row,
+                    src_col,
+                    &dst,
+                    dst_row,
+                    dst_col,
+                    device_stream,
+                )?;
             }
         }
         Ok(())
@@ -89,7 +98,7 @@ impl Unconcat {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let src = inputs[0];
         for output_index in 0..outputs.len() {
@@ -100,7 +109,16 @@ impl Unconcat {
             for dst_row in 0..input_rows {
                 let src_row = dst_row;
                 let src_col = output_index * input_cols;
-                Tensor::copy_slice(dst.cols(), src, src_row, src_col, dst, dst_row, dst_col)?;
+                Tensor::copy_slice(
+                    dst.cols(),
+                    src,
+                    src_row,
+                    src_col,
+                    dst,
+                    dst_row,
+                    dst_col,
+                    device_stream,
+                )?;
             }
         }
         Ok(())

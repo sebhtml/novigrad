@@ -1,4 +1,5 @@
 use crate::devices::slice::DevSliceTrait;
+use crate::stream::DeviceStream;
 use crate::tensor::ErrorEnum;
 use crate::{
     devices::{Device, DeviceTrait},
@@ -185,14 +186,14 @@ impl Tensor {
         Ok(false)
     }
 
-    pub fn copy(x: &Tensor, y: &Tensor) -> Result<(), Error> {
+    pub fn copy(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
         let device = &x.device;
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
-        device.copy(n, x, incx, y, incy)
+        device.copy(n, x, incx, y, incy, device_stream)
     }
 
     pub fn copy_slice(
@@ -203,6 +204,7 @@ impl Tensor {
         dst: &Tensor,
         dst_row: usize,
         dst_col: usize,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let device = &src.device;
         let n = n as i32;
@@ -212,20 +214,25 @@ impl Tensor {
         let y = dst
             .as_mut_ptr()
             .wrapping_add(dst_row * dst.cols() + dst_col);
-        device.copy(n, x, incx, y, incy)
+        device.copy(n, x, incx, y, incy, device_stream)
     }
 
-    pub fn sub(x: &Tensor, y: &Tensor) -> Result<(), Error> {
+    pub fn sub(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
         let alpha = -1.0;
-        Self::a_x_plus_y(alpha, x, y)
+        Self::a_x_plus_y(alpha, x, y, device_stream)
     }
 
-    pub fn add(x: &Tensor, y: &Tensor) -> Result<(), Error> {
+    pub fn add(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
         let alpha = 1.0;
-        Self::a_x_plus_y(alpha, x, y)
+        Self::a_x_plus_y(alpha, x, y, device_stream)
     }
 
-    fn a_x_plus_y(alpha: f32, x: &Tensor, y: &Tensor) -> Result<(), Error> {
+    fn a_x_plus_y(
+        alpha: f32,
+        x: &Tensor,
+        y: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
             println!("Incompatible sizes");
@@ -236,7 +243,15 @@ impl Tensor {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.axpy(n, alpha, x.as_ptr(), incx, y.as_mut_ptr(), incy)
+        device.axpy(
+            n,
+            alpha,
+            x.as_ptr(),
+            incx,
+            y.as_mut_ptr(),
+            incy,
+            device_stream,
+        )
     }
 
     pub fn l2_norm(&self, output: &Tensor) -> Result<(), Error> {

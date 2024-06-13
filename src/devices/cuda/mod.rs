@@ -25,23 +25,21 @@ use self::slice::CudaDevSlice;
 
 #[derive(Debug)]
 pub struct CudaDev {
-    cuda_blas: CudaBlas,
     pub dev: Arc<CudaDevice>,
 }
 
 impl CudaDev {
     pub fn try_default() -> Result<CudaDev, Error> {
         let dev = CudaDevice::new(0);
-        let cuda_blas = dev.clone().map(|x| CudaBlas::new(x));
-        match (cuda_blas, dev) {
-            (Ok(Ok(cuda_blas)), Ok(dev)) => Self::try_new(cuda_blas, dev),
+        match dev {
+            Ok(dev) => Self::try_new(dev),
 
             _ => Err(error!(ErrorEnum::UnsupportedOperation)),
         }
     }
 
-    pub fn try_new(cuda_blas: CudaBlas, dev: Arc<driver::CudaDevice>) -> Result<Self, Error> {
-        let device = CudaDev { cuda_blas, dev };
+    pub fn try_new(dev: Arc<driver::CudaDevice>) -> Result<Self, Error> {
+        let device = CudaDev { dev };
 
         device.load_module(
             "sin_kernel_module",
@@ -186,8 +184,13 @@ impl DeviceTrait for CudaDev {
         beta: f32,
         c: *mut f32,
         ldc: i32,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = *self.cuda_blas.handle();
+        let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+            *stream.cuda_blas.handle()
+        } else {
+            return Err(error!(ErrorEnum::UnsupportedOperation));
+        };
         let transa = match transa {
             false => cublasOperation_t::CUBLAS_OP_N,
             true => cublasOperation_t::CUBLAS_OP_T,
@@ -221,8 +224,13 @@ impl DeviceTrait for CudaDev {
         incx: i32,
         y: *mut f32,
         incy: i32,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = *self.cuda_blas.handle();
+        let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+            *stream.cuda_blas.handle()
+        } else {
+            return Err(error!(ErrorEnum::UnsupportedOperation));
+        };
         let alpha = &alpha as *const f32;
         let status = unsafe { lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
         status
@@ -256,8 +264,20 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
-        let handle = *self.cuda_blas.handle();
+    fn copy(
+        &self,
+        n: i32,
+        x: *const f32,
+        incx: i32,
+        y: *mut f32,
+        incy: i32,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+            *stream.cuda_blas.handle()
+        } else {
+            return Err(error!(ErrorEnum::UnsupportedOperation));
+        };
         let status = unsafe { lib().cublasScopy_v2(handle, n, x, incx, y, incy) };
         status
             .result()
@@ -584,9 +604,17 @@ impl DeviceTrait for CudaDev {
             .dev
             .htod_copy(vec![1337])
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        let cuda_blas =
+            CudaBlas::new(self.dev.clone()).map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
         match self.dev.fork_default_stream() {
             Ok(stream) => {
-                let cuda_stream = CudaDeviceStream { stream, rng_state };
+                unsafe { cuda_blas.set_stream(Some(&stream)) }
+                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+                let cuda_stream = CudaDeviceStream {
+                    stream,
+                    rng_state,
+                    cuda_blas,
+                };
                 Ok(DeviceStream::CudaDeviceStream(cuda_stream))
             }
             Err(_) => Err(error!(ErrorEnum::UnsupportedOperation)),

@@ -5,6 +5,7 @@ use crate::{new_tensor, Device, DeviceTrait, Gemm};
 #[test]
 fn big_matrix_multiplication() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     let rows = 1024;
     let cols = 1024;
     let len = rows * cols;
@@ -21,12 +22,24 @@ fn big_matrix_multiplication() {
 
     let alpha = 1.0;
     let beta = 1.0;
-    Gemm::gemm(false, false, alpha, &m, &m, beta, &mut result, false).unwrap();
+    Gemm::gemm(
+        false,
+        false,
+        alpha,
+        &m,
+        &m,
+        beta,
+        &mut result,
+        false,
+        &device_stream,
+    )
+    .unwrap();
 }
 
 #[test]
 fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     let lhs2 = new_tensor!(
         device,
         4,
@@ -85,13 +98,25 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
 
     let alpha = 1.0;
     let beta = 1.0;
-    Gemm::gemm(true, false, alpha, &lhs, &rhs, beta, &mut result, true).unwrap();
+    Gemm::gemm(
+        true,
+        false,
+        alpha,
+        &lhs,
+        &rhs,
+        beta,
+        &mut result,
+        true,
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(result, expected_result);
 }
 
 #[test]
 fn transposed_lhs_matrix_multiplication_result() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
@@ -144,13 +169,25 @@ fn transposed_lhs_matrix_multiplication_result() {
 
     let alpha = 1.0;
     let beta = 1.0;
-    Gemm::gemm(true, false, alpha, &lhs, &rhs, beta, &mut result, false).unwrap();
+    Gemm::gemm(
+        true,
+        false,
+        alpha,
+        &lhs,
+        &rhs,
+        beta,
+        &mut result,
+        false,
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(result, expected_result);
 }
 
 #[test]
 fn matrix_multiplication_result() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
@@ -201,13 +238,25 @@ fn matrix_multiplication_result() {
 
     let alpha = 1.0;
     let beta = 1.0;
-    Gemm::gemm(false, false, alpha, &lhs, &rhs, beta, &mut result, false).unwrap();
+    Gemm::gemm(
+        false,
+        false,
+        alpha,
+        &lhs,
+        &rhs,
+        beta,
+        &mut result,
+        false,
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(result, expected_result);
 }
 
 #[test]
 fn transposed_rhs_matrix_multiplication_result() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
@@ -260,13 +309,25 @@ fn transposed_rhs_matrix_multiplication_result() {
 
     let alpha = 1.0;
     let beta = 1.0;
-    Gemm::gemm(false, true, alpha, &lhs, &rhs, beta, &mut result, false).unwrap();
+    Gemm::gemm(
+        false,
+        true,
+        alpha,
+        &lhs,
+        &rhs,
+        beta,
+        &mut result,
+        false,
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(result, expected_result);
 }
 
 #[test]
 fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     let lhs2 = new_tensor!(
         device,
         3,
@@ -317,13 +378,25 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
 
     let alpha = 1.0;
     let beta = 1.0;
-    Gemm::gemm(true, true, alpha, &lhs, &rhs, beta, &mut result, false).unwrap();
+    Gemm::gemm(
+        true,
+        true,
+        alpha,
+        &lhs,
+        &rhs,
+        beta,
+        &mut result,
+        false,
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(result, expected_result);
 }
 
 #[test]
 fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     let lhs2 = new_tensor!(
         device,
         4,
@@ -385,6 +458,17 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
 
     let alpha = 1.0;
     let beta = 1.0;
-    Gemm::gemm(true, true, alpha, &lhs, &rhs, beta, &mut result, true).unwrap();
+    Gemm::gemm(
+        true,
+        true,
+        alpha,
+        &lhs,
+        &rhs,
+        beta,
+        &mut result,
+        true,
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(result, expected_result);
 }

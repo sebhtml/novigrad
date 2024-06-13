@@ -25,11 +25,11 @@ impl Reshape {
         output_size: &[usize],
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        Tensor::copy(input, output)?;
+        Tensor::copy(input, output, device_stream)?;
         output.resize(output_size)
     }
 }

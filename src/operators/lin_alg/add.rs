@@ -19,13 +19,13 @@ impl Add {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];
-        Tensor::copy(input_0, output)?;
-        Tensor::add(input_1, output)
+        Tensor::copy(input_0, output, device_stream)?;
+        Tensor::add(input_1, output, device_stream)
     }
 }
 

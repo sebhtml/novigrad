@@ -1,5 +1,5 @@
-- add device stream support in devices to execute attention heads in parallel
-  needs: https://github.com/coreylowman/cudarc/pull/254
+- store cublas handle in CudaDeviceStream
+- use device_stream in device methods
 
 ---------------
 

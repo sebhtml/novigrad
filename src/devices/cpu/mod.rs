@@ -347,7 +347,12 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn bernoulli(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let len = input.len();
         let output_ptr = output.as_mut_ptr();
         let mut rng = thread_rng();

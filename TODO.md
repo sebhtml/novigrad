@@ -1,5 +1,8 @@
 - store cublas handle in CudaDeviceStream
-- use device_stream in device methods
+- use device_stream in all device methods
+- add method in DeviceStream to synchronize stream
+- synchronize streams in execution units
+- synchronize io_stream
 
 ---------------
 
@@ -30,6 +33,7 @@
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 - maybe the pthread lock is caused by checking if the loss is 0
 
+- use a different RNG state seed for each device stream
 - improve Bernoulli CUDA kernel by using other shift values for halt the indices
 
 - add Tensor categories

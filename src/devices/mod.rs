@@ -147,7 +147,12 @@ pub trait DeviceTrait {
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
-    fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+    fn bernoulli(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
     fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
@@ -490,8 +495,13 @@ impl DeviceTrait for Device {
         self.device.transpose(input, output)
     }
 
-    fn bernoulli(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        self.device.bernoulli(input, output)
+    fn bernoulli(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.bernoulli(input, output, device_stream)
     }
 
     fn stream(&self) -> Result<DeviceStream, Error> {

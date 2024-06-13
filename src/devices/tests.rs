@@ -89,8 +89,8 @@ fn bernoulli() {
     let device = Device::default();
     let input = new_tensor!(device, 1, 100, vec![0.3; 100]).unwrap();
     let output = new_tensor!(device, 1, 100, vec![0.0; 100]).unwrap();
-
-    device.bernoulli(&input, &output).unwrap();
+    let device_stream = device.stream().unwrap();
+    device.bernoulli(&input, &output, &device_stream).unwrap();
 
     let values = output.get_values().unwrap();
     let ones = values.iter().filter(|x| **x == 1.0).count();

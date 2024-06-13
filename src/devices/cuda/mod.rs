@@ -600,16 +600,16 @@ impl DeviceTrait for CudaDev {
     }
 
     fn stream(&self) -> Result<DeviceStream, Error> {
-        let rng_state = self
-            .dev
-            .htod_copy(vec![1337])
-            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-        let cuda_blas =
-            CudaBlas::new(self.dev.clone()).map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
         match self.dev.fork_default_stream() {
             Ok(stream) => {
-                // TODO if a stream is assigned, I get a stack overflow.
-                //unsafe { cuda_blas.set_stream(Some(&stream)) }
+                let rng_state = self
+                    .dev
+                    .htod_copy(vec![1337])
+                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+                let cuda_blas = CudaBlas::new(self.dev.clone())
+                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+                // TODO if a stream is assigned, I get a stack overflow and bad output.
+                // unsafe { cuda_blas.set_stream(Some(&stream)) }
                 //.map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
                 let cuda_stream = CudaDeviceStream {
                     stream,

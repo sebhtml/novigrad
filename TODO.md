@@ -1,4 +1,3 @@
-- store cublas handle in CudaDeviceStream
 - use device_stream in all device methods
 - add method in DeviceStream to synchronize stream
 - synchronize streams in execution units
@@ -15,6 +14,7 @@
 
 ---------------
 
+- add interface for ExecutableOperator with fn execute
 - implement Gelu
 
 ---------------
@@ -26,6 +26,7 @@
 
 ---------------
 
+- move copy from tensor.rs to identity.rs
 - increase examples in mega_man_attention from 10 to 100
 
 ---------------

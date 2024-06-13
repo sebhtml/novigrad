@@ -4,8 +4,9 @@ use crate::{
     neural_machine::streams::stream::print_streams,
     neural_program::NeuralProgram,
     scheduler::{scheduler::Scheduler, StreamExecutor},
+    stream::DeviceStream,
     tensor::{Error, Tensor},
-    Category, Device, Instruction, TensorWithGrad,
+    Category, Device, DeviceTrait, Instruction, TensorWithGrad,
 };
 
 use super::streams::{
@@ -16,6 +17,7 @@ use super::streams::{
 
 pub struct NeuralMachine<T> {
     device: Device,
+    io_stream: DeviceStream,
     example_input: TensorWithGrad,
     example_output: TensorWithGrad,
     machine_output: TensorWithGrad,
@@ -123,6 +125,7 @@ impl<T> NeuralMachine<T> {
 
         let machine = NeuralMachine::<T> {
             device: device.clone(),
+            io_stream: device.stream()?,
             example_input,
             example_output,
             machine_output,
@@ -161,7 +164,7 @@ impl<T> NeuralMachine<T> {
         {
             let example_output = &self.example_output.tensor();
             let expected_output = &expected_output.tensor();
-            Tensor::copy(expected_output, example_output)?;
+            Tensor::copy(expected_output, example_output, &self.io_stream)?;
         }
 
         self.forward(&Category::Loss)?;
@@ -200,7 +203,7 @@ impl<T> NeuralMachine<T> {
         {
             let example_input = &self.example_input.tensor();
             let input = &input.tensor();
-            Tensor::copy(input, example_input)?;
+            Tensor::copy(input, example_input, &self.io_stream)?;
         }
 
         self.forward(&Category::Inference)?;

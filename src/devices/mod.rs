@@ -102,6 +102,7 @@ pub trait DeviceTrait {
         beta: f32,
         c: *mut f32,
         ldc: i32,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
     fn div(&self, input1: &Tensor, input2: &Tensor, output: &Tensor) -> Result<(), Error>;
@@ -116,6 +117,7 @@ pub trait DeviceTrait {
         incx: i32,
         y: *mut f32,
         incy: i32,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
     /// dot performs the dot product of two vectors.
@@ -130,7 +132,15 @@ pub trait DeviceTrait {
     ) -> Result<(), Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
-    fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error>;
+    fn copy(
+        &self,
+        n: i32,
+        x: *const f32,
+        incx: i32,
+        y: *mut f32,
+        incy: i32,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
     fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error>;
 
@@ -393,9 +403,24 @@ impl DeviceTrait for Device {
         beta: f32,
         c: *mut f32,
         ldc: i32,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        self.device
-            .gemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        self.device.gemm(
+            transa,
+            transb,
+            m,
+            n,
+            k,
+            alpha,
+            a,
+            lda,
+            b,
+            ldb,
+            beta,
+            c,
+            ldc,
+            device_stream,
+        )
     }
 
     fn dot(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
@@ -408,8 +433,16 @@ impl DeviceTrait for Device {
         self.device.dot(left, right, result)
     }
 
-    fn copy(&self, n: i32, x: *const f32, incx: i32, y: *mut f32, incy: i32) -> Result<(), Error> {
-        self.device.copy(n, x, incx, y, incy)
+    fn copy(
+        &self,
+        n: i32,
+        x: *const f32,
+        incx: i32,
+        y: *mut f32,
+        incy: i32,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.copy(n, x, incx, y, incy, device_stream)
     }
 
     fn axpy(
@@ -420,8 +453,9 @@ impl DeviceTrait for Device {
         incx: i32,
         y: *mut f32,
         incy: i32,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        self.device.axpy(n, alpha, x, incx, y, incy)
+        self.device.axpy(n, alpha, x, incx, y, incy, device_stream)
     }
 
     fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {

@@ -21,12 +21,12 @@ impl ScalarMul {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let alpha = inputs[0];
         let input = inputs[1];
         let output = outputs[0];
-        Tensor::copy(input, output)?;
+        Tensor::copy(input, output, device_stream)?;
         let device = input.device();
         device.scalar_mul(alpha, output)
     }

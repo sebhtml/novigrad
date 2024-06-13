@@ -6,6 +6,7 @@ fn cblas_sgemm_column_major() {
     use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::cpu();
+    let device_stream = device.stream().unwrap();
     let (m, n, k) = (2, 4, 3);
     let a = new_tensor!(
         device,
@@ -64,6 +65,7 @@ fn cblas_sgemm_column_major() {
             beta,
             c.as_mut_ptr(),
             m,
+            &device_stream,
         )
         .unwrap();
 
@@ -86,7 +88,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
     use crate::Device;
 
     let device = Device::cpu();
-
+    let device_stream = device.stream().unwrap();
     let m = 2;
     let n = 4;
     let k = 3;
@@ -145,6 +147,7 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
             beta,
             c.as_mut_ptr(),
             n,
+            &device_stream,
         )
         .unwrap();
 

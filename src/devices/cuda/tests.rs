@@ -9,7 +9,7 @@ fn cublas_sgemm_column_major() {
     use crate::Device;
 
     let device = Device::cuda().unwrap();
-
+    let device_stream = device.stream().unwrap();
     let (m, n, k) = (2, 4, 3);
     let a = new_tensor!(
         device,
@@ -67,6 +67,7 @@ fn cublas_sgemm_column_major() {
             beta,
             c.as_mut_ptr(),
             m,
+            &device_stream,
         )
         .unwrap();
 

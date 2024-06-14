@@ -1,9 +1,9 @@
 use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
 use crate::{
+    cpu_scheduler::{scheduler::Scheduler, StreamExecutor},
     neural_machine::streams::stream::print_streams,
     neural_program::NeuralProgram,
-    scheduler::{scheduler::Scheduler, StreamExecutor},
     stream::DeviceStream,
     tensor::{Error, Tensor},
     Category, Device, DeviceTrait, Instruction, TensorWithGrad,

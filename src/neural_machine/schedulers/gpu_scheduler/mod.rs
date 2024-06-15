@@ -36,6 +36,7 @@ where
         handler: &Handler,
         instructions: &std::sync::Arc<Vec<Instruction>>,
     ) -> Self {
+        println!("GPU Scheduler execution_units_len: {execution_units_len}");
         let pending_dependencies = streams.iter().map(|x| x.dependencies.len()).collect();
         let mut dependents = vec![vec![]; streams.len()];
         for (dependent, dependencies) in streams.iter().map(|x| &x.dependencies).enumerate() {
@@ -70,7 +71,7 @@ where
     fn execute(&mut self) {
         self.completed_logical_streams = 0;
         self.current_pending_dependencies = self.initial_pending_dependencies.clone();
-        // Queue immediately all streams with no dependencies.
+        // Queue immediately all logical streams with no dependencies.
         for (logical_stream, pending_dependencies) in
             self.current_pending_dependencies.iter().enumerate()
         {
@@ -79,8 +80,10 @@ where
             }
         }
 
+        // Launch initial logical streams on physical streams.
         while self.maybe_launch_device_stream().unwrap() {}
 
+        // While any logical stream has not completed its execution.
         while self.completed_logical_streams != self.dependents.len() {
             let _ = self.wait_for_physical_stream().unwrap();
             let _ = self.maybe_launch_device_stream().unwrap();
@@ -93,12 +96,15 @@ where
     Handler: StreamEventHandler + Send + Sync + Clone,
 {
     fn maybe_launch_device_stream(&mut self) -> Result<bool, Error> {
+        // There is a queued logical stream and there is an available physical stream.
         if self.queued_logical_streams.len() > 0 && self.free_physical_streams.len() > 0 {
             match (
                 self.queued_logical_streams.pop_front(),
                 self.free_physical_streams.pop_front(),
             ) {
                 (Some(logical_stream), Some(physical_stream)) => {
+                    // The launch of a kernel on a GPU stream is asynchronous from the
+                    // perspective of the host.
                     self.handler.on_execute(
                         &self.streams,
                         &self.instructions,
@@ -109,7 +115,7 @@ where
                         .push_back((logical_stream, physical_stream));
                     return Ok(true);
                 }
-                _ => {}
+                _ => panic!("Not supposed to happen"),
             }
         }
         Ok(false)
@@ -125,11 +131,10 @@ where
                     self.current_pending_dependencies[*dependent] -= 1;
                     self.queued_logical_streams.push_back(*dependent);
                 }
+                self.free_physical_streams.push_back(physical_stream);
                 return Ok(true);
             }
-            _ => {}
+            _ => panic!("Not supposed to happen bro"),
         }
-
-        Ok(false)
     }
 }

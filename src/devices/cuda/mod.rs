@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, sync::Arc};
+use std::{fs::File, io::Read, ops::Deref, sync::Arc};
 pub mod slice;
 pub mod stream;
 #[cfg(test)]
@@ -9,7 +9,7 @@ use cudarc::{
         sys::{cublasOperation_t, lib},
         CudaBlas,
     },
-    driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
+    driver::{self, CudaDevice, CudaFunction, CudaStream, LaunchAsync, LaunchConfig},
 };
 use stream::CudaDeviceStream;
 
@@ -608,7 +608,6 @@ impl DeviceTrait for CudaDev {
                     .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
                 let cuda_blas = CudaBlas::new(self.dev.clone())
                     .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-                // TODO if a stream is assigned, I get a stack overflow and bad output.
                 //unsafe { cuda_blas.set_stream(Some(&stream)) }
                 //.unwrap();
                 //.map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;

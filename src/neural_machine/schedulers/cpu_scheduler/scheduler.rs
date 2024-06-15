@@ -1,12 +1,13 @@
 use std::{sync::Arc, thread::JoinHandle};
 
 use crate::{
-    schedulers::{SchedulerTrait, StreamEventHandler}, streams::stream::Stream, tensor::Error, Device, Instruction,
+    schedulers::{SchedulerTrait, StreamEventHandler},
+    streams::stream::Stream,
+    tensor::Error,
+    Device, Instruction,
 };
 
-use super::{
-    controller::Controller, execution_unit::ExecutionUnit, queue::Queue, Command,
-};
+use super::{controller::Controller, execution_unit::ExecutionUnit, queue::Queue, Command};
 
 pub struct CpuStreamScheduler<Handler>
 where

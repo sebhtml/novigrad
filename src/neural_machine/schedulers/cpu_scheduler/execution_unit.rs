@@ -4,7 +4,12 @@ use std::{
 };
 
 use crate::{
-    error, schedulers::StreamEventHandler, stream::{DeviceStream, StreamTrait}, streams::stream::Stream, tensor::{Error, ErrorEnum}, Device, DeviceTrait, Instruction
+    error,
+    schedulers::StreamEventHandler,
+    stream::{DeviceStream, StreamTrait},
+    streams::stream::Stream,
+    tensor::{Error, ErrorEnum},
+    Device, DeviceTrait, Instruction,
 };
 
 use super::{queue::Queue, Command};

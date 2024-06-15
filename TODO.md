@@ -1,3 +1,4 @@
+- implement GpuStreamScheduler
 - use device_stream in all device methods
 - add method in DeviceStream to synchronize stream
 - synchronize streams in execution units

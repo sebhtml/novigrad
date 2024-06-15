@@ -148,11 +148,6 @@ pub trait DeviceTrait {
 
     fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error>;
 
-    /// Allocate a slice on the device.
-    fn slice(&self, n: i32) -> Result<DeviceSlice, Error>;
-
-    fn stream(&self) -> Result<DeviceStream, Error>;
-
     fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
@@ -186,6 +181,11 @@ pub trait DeviceTrait {
     ) -> Result<(), Error>;
 
     fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+
+    /// Allocate a slice on the device.
+    fn slice(&self, n: i32) -> Result<DeviceSlice, Error>;
+
+    fn stream(&self) -> Result<DeviceStream, Error>;
 }
 
 impl Debug for dyn DeviceTrait + Send + Sync {

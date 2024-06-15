@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, ops::Deref, sync::Arc};
+use std::{fs::File, io::Read, sync::Arc};
 pub mod slice;
 pub mod stream;
 #[cfg(test)]
@@ -9,7 +9,7 @@ use cudarc::{
         sys::{cublasOperation_t, lib},
         CudaBlas,
     },
-    driver::{self, CudaDevice, CudaFunction, CudaStream, LaunchAsync, LaunchConfig},
+    driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
 };
 use stream::CudaDeviceStream;
 

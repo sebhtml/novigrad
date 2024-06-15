@@ -1,6 +1,8 @@
 use std::{sync::Arc, thread::JoinHandle};
 
-use crate::{streams::stream::Stream, tensor::Error, Device, Instruction};
+use crate::{
+    schedulers::SchedulerTrait, streams::stream::Stream, tensor::Error, Device, Instruction,
+};
 
 use super::{
     controller::Controller, execution_unit::ExecutionUnit, queue::Queue, Command,
@@ -20,11 +22,11 @@ where
     execution_unit_handles: Option<Vec<JoinHandle<Result<ExecutionUnit<Handler>, Error>>>>,
 }
 
-impl<Handler> Scheduler<Handler>
+impl<Handler> SchedulerTrait<Handler> for Scheduler<Handler>
 where
     Handler: StreamEventHandler + Clone + Send + Sync + 'static,
 {
-    pub fn new(
+    fn new(
         device: &Device,
         execution_units_len: usize,
         streams: &Arc<Vec<Stream>>,
@@ -84,7 +86,7 @@ where
     /// - self.execution_unit_handles is some
     /// - self.controller is none
     /// - self.controller_handle is some
-    pub fn start(&mut self) {
+    fn start(&mut self) {
         // Spawn threads
         let execution_unit_handles = self
             .execution_units
@@ -109,7 +111,7 @@ where
     /// - self.execution_unit_handles is none
     /// - self.controller is some
     /// - self.controller_handle is none
-    pub fn stop(&mut self) {
+    fn stop(&mut self) {
         // Join the controller
         self.controller_command_queue.push_back(Command::Stop);
         let controller = self.controller_handle.take().unwrap().join().unwrap();
@@ -126,7 +128,8 @@ where
         self.execution_units = Some(execution_units.into_iter().map(|x| x.unwrap()).collect());
     }
 
-    pub fn execute(&mut self) {
+    /// Execute all streams.
+    fn execute(&mut self) {
         self.controller_command_queue.push_back(Command::Execute);
         let command = self.scheduler_command_queue.pop_front();
         match command {

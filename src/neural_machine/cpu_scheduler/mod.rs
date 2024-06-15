@@ -9,7 +9,10 @@ pub mod scheduler;
 use scheduler::Scheduler;
 use transaction::{get_instruction_transactions, Transaction};
 
-use crate::{stream::DeviceStream, streams::stream::Stream, tensor::Error, Device, Instruction};
+use crate::{
+    schedulers::SchedulerTrait, stream::DeviceStream, streams::stream::Stream, tensor::Error,
+    Device, Instruction,
+};
 pub mod queue;
 pub mod transaction;
 

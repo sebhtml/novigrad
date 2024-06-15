@@ -7,3 +7,4 @@ pub mod streams;
 pub use opcode::*;
 pub mod cpu_scheduler;
 pub mod neural_program;
+pub mod schedulers;

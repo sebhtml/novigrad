@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{
     mega_man_attention::get_megaman_attention_instructions,
     neural_machine::streams::{instruction::make_simple_instructions, stream::make_streams},
+    schedulers::SchedulerTrait,
     Device,
 };
 

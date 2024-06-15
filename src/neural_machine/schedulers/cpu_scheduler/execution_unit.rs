@@ -4,14 +4,10 @@ use std::{
 };
 
 use crate::{
-    error,
-    stream::{DeviceStream, StreamTrait},
-    streams::stream::Stream,
-    tensor::{Error, ErrorEnum},
-    Device, DeviceTrait, Instruction,
+    error, schedulers::StreamEventHandler, stream::{DeviceStream, StreamTrait}, streams::stream::Stream, tensor::{Error, ErrorEnum}, Device, DeviceTrait, Instruction
 };
 
-use super::{queue::Queue, Command, StreamEventHandler};
+use super::{queue::Queue, Command};
 
 /// https://en.wikipedia.org/wiki/Instruction_pipelining
 pub struct ExecutionUnit<Handler>

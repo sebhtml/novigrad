@@ -1,4 +1,3 @@
-use crate::schedulers::cpu_scheduler::scheduler::CpuStreamScheduler;
 use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
 use crate::schedulers::SchedulerTrait;
@@ -17,7 +16,10 @@ use super::streams::{
     verify_machine_inputs,
 };
 
-pub struct NeuralMachine<T> {
+pub struct NeuralMachine<T, Scheduler>
+where
+    Scheduler: SchedulerTrait<StreamExecutor>,
+{
     device: Device,
     io_stream: DeviceStream,
     example_input: TensorWithGrad,
@@ -26,20 +28,23 @@ pub struct NeuralMachine<T> {
     loss: TensorWithGrad,
     inference_instructions: Arc<Vec<Instruction>>,
     inference_streams: Arc<Vec<Stream>>,
-    inference_scheduler: CpuStreamScheduler<StreamExecutor>,
+    inference_scheduler: Scheduler,
     loss_instructions: Arc<Vec<Instruction>>,
     loss_streams: Arc<Vec<Stream>>,
-    loss_scheduler: CpuStreamScheduler<StreamExecutor>,
+    loss_scheduler: Scheduler,
     gradient_instructions: Arc<Vec<Instruction>>,
     gradient_streams: Arc<Vec<Stream>>,
-    gradient_scheduler: CpuStreamScheduler<StreamExecutor>,
+    gradient_scheduler: Scheduler,
     optimization_instructions: Arc<Vec<Instruction>>,
     optimization_streams: Arc<Vec<Stream>>,
-    optimization_scheduler: CpuStreamScheduler<StreamExecutor>,
+    optimization_scheduler: Scheduler,
     phantom_data: PhantomData<T>,
 }
 
-impl<T> NeuralMachine<T> {
+impl<T, Scheduler> NeuralMachine<T, Scheduler>
+where
+    Scheduler: SchedulerTrait<StreamExecutor>,
+{
     pub fn try_new(device: &Device, program: NeuralProgram) -> Result<Self, Error> {
         let all_instructions = program.instructions;
         let inference_instructions = all_instructions
@@ -91,41 +96,40 @@ impl<T> NeuralMachine<T> {
         let optimization_streams = Arc::new(optimization_streams);
 
         let handler = StreamExecutor::new();
-        let mut inference_scheduler = CpuStreamScheduler::new(
+        let mut inference_scheduler = Scheduler::new(
             device,
             execution_units_len,
             &inference_streams,
             &handler,
             &inference_instructions,
         );
-        let mut loss_scheduler = CpuStreamScheduler::new(
+        let mut loss_scheduler = Scheduler::new(
             device,
             execution_units_len,
             &loss_streams,
             &handler,
             &loss_instructions,
         );
-        let mut gradient_scheduler = CpuStreamScheduler::new(
+        let mut gradient_scheduler = Scheduler::new(
             device,
             execution_units_len,
             &gradient_streams,
             &handler,
             &gradient_instructions,
         );
-        let mut optimization_scheduler = CpuStreamScheduler::new(
+        let mut optimization_scheduler = Scheduler::new(
             device,
             execution_units_len,
             &optimization_streams,
             &handler,
             &optimization_instructions,
         );
-
         inference_scheduler.start();
         loss_scheduler.start();
         gradient_scheduler.start();
         optimization_scheduler.start();
 
-        let machine = NeuralMachine::<T> {
+        let machine = NeuralMachine::<T, Scheduler> {
             device: device.clone(),
             io_stream: device.stream()?,
             example_input,
@@ -359,7 +363,10 @@ impl<T> NeuralMachine<T> {
     }
 }
 
-impl<T> Drop for NeuralMachine<T> {
+impl<T, Scheduler> Drop for NeuralMachine<T, Scheduler>
+where
+    Scheduler: SchedulerTrait<StreamExecutor>,
+{
     fn drop(&mut self) {
         self.inference_scheduler.stop();
         self.loss_scheduler.stop();

@@ -55,7 +55,7 @@ fn test_that_accesses_are_not_reordered(access: Access, prior_access: Access) {
     );
     let actual_streams = Arc::new(actual_streams);
     let execution_units_len = 32;
-    let actual_transactions = simulate_execution_and_collect_transactions(
+    let actual_transactions = simulate_execution_and_collect_transactions::<CpuStreamScheduler<_>>(
         &device,
         &actual_streams,
         &instructions,
@@ -91,7 +91,7 @@ fn all_instructions_are_executed_with_out_of_order_execution() {
     let actual_streams = Arc::new(actual_streams);
     let execution_units_len = 32;
 
-    let executed_instructions = simulate_execution_and_collect_instructions(
+    let executed_instructions = simulate_execution_and_collect_instructions::<CpuStreamScheduler<_>>(
         &device,
         &actual_streams,
         &instructions,

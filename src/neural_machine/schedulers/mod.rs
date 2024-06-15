@@ -96,45 +96,53 @@ impl StreamEventHandler for StreamExecutor {
 }
 
 #[allow(unused)]
-pub fn execute_streams(
+pub fn execute_streams<Scheduler>(
     device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     execution_units_len: usize,
-) {
+) where
+    Scheduler: SchedulerTrait<StreamExecutor>,
+{
     let mut handler = StreamExecutor::new();
     let mut scheduler =
-        CpuStreamScheduler::new(device, execution_units_len, streams, &handler, instructions);
+        Scheduler::new(device, execution_units_len, streams, &handler, instructions);
     run_scheduler(&mut scheduler);
 }
 
 /// Simulate an execution of streams and emit operand transactions.
 #[allow(unused)]
-pub fn simulate_execution_and_collect_transactions(
+pub fn simulate_execution_and_collect_transactions<Scheduler>(
     device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     simple_instructions: &Arc<Vec<(Vec<usize>, Vec<usize>)>>,
     execution_units_len: usize,
-) -> Vec<Transaction> {
+) -> Vec<Transaction>
+where
+    Scheduler: SchedulerTrait<TransactionEmitter>,
+{
     let handler = TransactionEmitter::new(simple_instructions);
     let mut scheduler =
-        CpuStreamScheduler::new(device, execution_units_len, streams, &handler, instructions);
+        Scheduler::new(device, execution_units_len, streams, &handler, instructions);
     run_scheduler(&mut scheduler);
     handler.clone().actual_transactions.lock().unwrap().clone()
 }
 
 /// Simulate an execution of streams and emit executed instructions.
 #[allow(unused)]
-pub fn simulate_execution_and_collect_instructions(
+pub fn simulate_execution_and_collect_instructions<Scheduler>(
     device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     execution_units_len: usize,
-) -> Vec<usize> {
+) -> Vec<usize>
+where
+    Scheduler: SchedulerTrait<InstructionEmitter>,
+{
     let handler = InstructionEmitter::new();
     let mut scheduler =
-        CpuStreamScheduler::new(device, execution_units_len, streams, &handler, instructions);
+        Scheduler::new(device, execution_units_len, streams, &handler, instructions);
     run_scheduler(&mut scheduler);
     handler
         .clone()
@@ -152,3 +160,9 @@ where
     scheduler.execute();
     scheduler.stop();
 }
+
+#[cfg(feature = "cuda")]
+// TODO implement GpuStreamScheduler
+pub type DefaultStreamScheduler = CpuStreamScheduler<StreamExecutor>;
+#[cfg(not(feature = "cuda"))]
+pub type DefaultStreamScheduler = CpuStreamScheduler<StreamExecutor>;

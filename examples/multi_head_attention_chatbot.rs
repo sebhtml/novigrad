@@ -1,6 +1,7 @@
 use novigrad::{
     error, get_row_argmax, into_one_hot_encoded_rows,
     neural_program::NeuralProgram,
+    schedulers::DefaultStreamScheduler,
     tensor::{Error, ErrorEnum, Tensor},
     Adam, Device, Embedding, Linear, Model, MultiHeadAttention, NeuralMachine, Softmax,
     SoftmaxCrossEntropyLoss, TensorWithGrad, TernaryOperator, Tokenizer, TokenizerTrait,
@@ -92,7 +93,8 @@ fn main() -> Result<(), Error> {
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
-    let mut neural_machine = NeuralMachine::<f32>::try_new(&device, program).unwrap();
+    let mut neural_machine =
+        NeuralMachine::<f32, DefaultStreamScheduler>::try_new(&device, program).unwrap();
 
     println!("-------------------------------------------------------------------");
     println!("This is a Novigrad-powered chatbot");
@@ -178,7 +180,7 @@ fn _read_prompt() -> Result<String, Error> {
 
 fn auto_regressive_inference(
     model: &impl UnaryModel,
-    neural_machine: &mut NeuralMachine<f32>,
+    neural_machine: &mut NeuralMachine<f32, DefaultStreamScheduler>,
     device: &Device,
     prompt_tokens: &[usize],
     max_len: usize,

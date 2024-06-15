@@ -1,8 +1,12 @@
 use std::sync::{Arc, Mutex};
 pub mod cpu_scheduler;
+pub mod gpu_scheduler;
 pub mod transaction;
 
+#[allow(unused)]
 use cpu_scheduler::scheduler::CpuStreamScheduler;
+#[allow(unused)]
+use gpu_scheduler::GpuStreamScheduler;
 use transaction::{Transaction, TransactionEmitter};
 
 use crate::{stream::DeviceStream, streams::stream::Stream, tensor::Error, Device, Instruction};
@@ -162,7 +166,8 @@ where
 }
 
 #[cfg(feature = "cuda")]
-// TODO implement GpuStreamScheduler
 pub type DefaultStreamScheduler = CpuStreamScheduler<StreamExecutor>;
+// TODO use GpuStreamScheduler
+//pub type DefaultStreamScheduler = GpuStreamScheduler<StreamExecutor>;
 #[cfg(not(feature = "cuda"))]
 pub type DefaultStreamScheduler = CpuStreamScheduler<StreamExecutor>;

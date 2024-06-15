@@ -166,6 +166,8 @@ where
 }
 
 #[cfg(feature = "cuda")]
-pub type DefaultStreamScheduler = GpuStreamScheduler<StreamExecutor>;
+// TODO use GPU scheduler.
+//pub type DefaultStreamScheduler = GpuStreamScheduler<StreamExecutor>;
+pub type DefaultStreamScheduler = CpuStreamScheduler<StreamExecutor>;
 #[cfg(not(feature = "cuda"))]
 pub type DefaultStreamScheduler = CpuStreamScheduler<StreamExecutor>;

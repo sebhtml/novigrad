@@ -105,7 +105,13 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
-    fn div(&self, input1: &Tensor, input2: &Tensor, output: &Tensor) -> Result<(), Error>;
+    fn div(
+        &self,
+        input1: &Tensor,
+        input2: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
     /// SAXPY constant times a vector plus a vector.
     /// y = alpha * x + y
@@ -129,6 +135,7 @@ pub trait DeviceTrait {
         max: &Tensor,
         input: &Tensor,
         output: &Tensor,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
     /// SCOPY copies a vector, x, to a vector, y.
@@ -493,8 +500,14 @@ impl DeviceTrait for Device {
         self.device.sqrt(input, output)
     }
 
-    fn div(&self, input1: &Tensor, input2: &Tensor, output: &Tensor) -> Result<(), Error> {
-        self.device.div(input1, input2, output)
+    fn div(
+        &self,
+        input1: &Tensor,
+        input2: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.div(input1, input2, output, device_stream)
     }
 
     fn clip(
@@ -503,8 +516,9 @@ impl DeviceTrait for Device {
         max: &Tensor,
         input: &Tensor,
         output: &Tensor,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        self.device.clip(min, max, input, output)
+        self.device.clip(min, max, input, output, device_stream)
     }
 
     fn cross_entropy_loss(

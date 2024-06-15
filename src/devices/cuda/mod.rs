@@ -410,7 +410,18 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn div(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+    fn div(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let _stream = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+            &stream.stream
+        } else {
+            return Err(error!(ErrorEnum::NvLaunchError));
+        };
         let n = left.len();
         let kernel = self.get_func("div_kernel_module", "div_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -460,7 +471,13 @@ impl DeviceTrait for CudaDev {
         max: &Tensor,
         input: &Tensor,
         output: &Tensor,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _stream = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+            &stream.stream
+        } else {
+            return Err(error!(ErrorEnum::NvLaunchError));
+        };
         let kernel = self.get_func("clip_kernel_module", "clip_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);

@@ -7,6 +7,7 @@ fn clip_min() {
     use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
+    let stream = device.stream().unwrap();
     let input = new_tensor!(
         device,
         2,
@@ -25,7 +26,7 @@ fn clip_min() {
 
     let max = new_tensor!(device, 1, 1, vec![f32::INFINITY]).unwrap();
 
-    device.clip(&min, &max, &input, &output).unwrap();
+    device.clip(&min, &max, &input, &output, &stream).unwrap();
 
     let expected = new_tensor!(
         device,
@@ -47,6 +48,7 @@ fn clip_max() {
     use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
+    let stream = device.stream().unwrap();
     let input = new_tensor!(
         device,
         2,
@@ -65,7 +67,7 @@ fn clip_max() {
 
     let max = new_tensor!(device, 1, 1, vec![2.0]).unwrap();
 
-    device.clip(&min, &max, &input, &output).unwrap();
+    device.clip(&min, &max, &input, &output, &stream).unwrap();
 
     let expected = new_tensor!(
         device,

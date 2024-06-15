@@ -1,9 +1,10 @@
 use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
+use crate::schedulers::SchedulerTrait;
 use crate::{
     neural_machine::streams::stream::print_streams,
     neural_program::NeuralProgram,
-    scheduler::{scheduler::Scheduler, StreamExecutor},
+    schedulers::StreamExecutor,
     stream::DeviceStream,
     tensor::{Error, Tensor},
     Category, Device, DeviceTrait, Instruction, TensorWithGrad,
@@ -15,7 +16,10 @@ use super::streams::{
     verify_machine_inputs,
 };
 
-pub struct NeuralMachine<T> {
+pub struct NeuralMachine<T, Scheduler>
+where
+    Scheduler: SchedulerTrait<StreamExecutor>,
+{
     device: Device,
     io_stream: DeviceStream,
     example_input: TensorWithGrad,
@@ -24,20 +28,23 @@ pub struct NeuralMachine<T> {
     loss: TensorWithGrad,
     inference_instructions: Arc<Vec<Instruction>>,
     inference_streams: Arc<Vec<Stream>>,
-    inference_scheduler: Scheduler<StreamExecutor>,
+    inference_scheduler: Scheduler,
     loss_instructions: Arc<Vec<Instruction>>,
     loss_streams: Arc<Vec<Stream>>,
-    loss_scheduler: Scheduler<StreamExecutor>,
+    loss_scheduler: Scheduler,
     gradient_instructions: Arc<Vec<Instruction>>,
     gradient_streams: Arc<Vec<Stream>>,
-    gradient_scheduler: Scheduler<StreamExecutor>,
+    gradient_scheduler: Scheduler,
     optimization_instructions: Arc<Vec<Instruction>>,
     optimization_streams: Arc<Vec<Stream>>,
-    optimization_scheduler: Scheduler<StreamExecutor>,
+    optimization_scheduler: Scheduler,
     phantom_data: PhantomData<T>,
 }
 
-impl<T> NeuralMachine<T> {
+impl<T, Scheduler> NeuralMachine<T, Scheduler>
+where
+    Scheduler: SchedulerTrait<StreamExecutor>,
+{
     pub fn try_new(device: &Device, program: NeuralProgram) -> Result<Self, Error> {
         let all_instructions = program.instructions;
         let inference_instructions = all_instructions
@@ -117,13 +124,12 @@ impl<T> NeuralMachine<T> {
             &handler,
             &optimization_instructions,
         );
-
         inference_scheduler.start();
         loss_scheduler.start();
         gradient_scheduler.start();
         optimization_scheduler.start();
 
-        let machine = NeuralMachine::<T> {
+        let machine = NeuralMachine::<T, Scheduler> {
             device: device.clone(),
             io_stream: device.stream()?,
             example_input,
@@ -357,7 +363,10 @@ impl<T> NeuralMachine<T> {
     }
 }
 
-impl<T> Drop for NeuralMachine<T> {
+impl<T, Scheduler> Drop for NeuralMachine<T, Scheduler>
+where
+    Scheduler: SchedulerTrait<StreamExecutor>,
+{
     fn drop(&mut self) {
         self.inference_scheduler.stop();
         self.loss_scheduler.stop();

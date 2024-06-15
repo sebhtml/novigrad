@@ -1,24 +1,29 @@
-#[cfg(test)]
-mod tests;
-
 use std::sync::{Arc, Mutex};
-
-mod controller;
-mod execution_unit;
-pub mod scheduler;
-use scheduler::Scheduler;
-use transaction::{get_instruction_transactions, Transaction};
-
-use crate::{stream::DeviceStream, streams::stream::Stream, tensor::Error, Device, Instruction};
-pub mod queue;
+pub mod cpu_scheduler;
 pub mod transaction;
 
-pub enum Command {
-    Execute,
-    Stop,
-    WorkUnitDispatch(usize),
-    WorkUnitCompletion(usize),
-    ExecutionCompletion,
+use cpu_scheduler::scheduler::CpuStreamScheduler;
+use transaction::{Transaction, TransactionEmitter};
+
+use crate::{stream::DeviceStream, streams::stream::Stream, tensor::Error, Device, Instruction};
+
+pub trait SchedulerTrait<Handler>
+where
+    Handler: StreamEventHandler,
+{
+    fn new(
+        device: &Device,
+        execution_units_len: usize,
+        streams: &Arc<Vec<Stream>>,
+        handler: &Handler,
+        instructions: &Arc<Vec<Instruction>>,
+    ) -> Self;
+
+    fn start(&mut self);
+
+    fn stop(&mut self);
+
+    fn execute(&mut self);
 }
 
 pub trait StreamEventHandler {
@@ -64,44 +69,6 @@ impl StreamEventHandler for InstructionEmitter {
 }
 
 #[derive(Clone)]
-pub struct TransactionEmitter {
-    simple_instructions: Arc<Vec<(Vec<usize>, Vec<usize>)>>,
-    pub actual_transactions: Arc<Mutex<Vec<Transaction>>>,
-}
-
-impl TransactionEmitter {
-    pub fn new(simple_instructions: &Arc<Vec<(Vec<usize>, Vec<usize>)>>) -> Self {
-        Self {
-            simple_instructions: simple_instructions.clone(),
-            actual_transactions: Default::default(),
-        }
-    }
-}
-
-impl StreamEventHandler for TransactionEmitter {
-    fn on_execute(
-        &mut self,
-        streams: &Arc<Vec<Stream>>,
-        _instructions: &Arc<Vec<Instruction>>,
-        stream: usize,
-        _device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        let stream_instructions = &streams[stream].instructions;
-        for instruction in stream_instructions.iter() {
-            let instruction = *instruction;
-            let (inputs, outputs) = &self.simple_instructions[instruction];
-            let mut instruction_transactions =
-                get_instruction_transactions(instruction, inputs, outputs);
-            self.actual_transactions
-                .lock()
-                .unwrap()
-                .extend_from_slice(&mut instruction_transactions);
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone)]
 pub struct StreamExecutor {}
 
 impl StreamExecutor {
@@ -129,40 +96,54 @@ impl StreamEventHandler for StreamExecutor {
 }
 
 #[allow(unused)]
-pub fn execute_streams(
+pub fn execute_streams<Scheduler>(
     device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     execution_units_len: usize,
-) {
+) where
+    Scheduler: SchedulerTrait<StreamExecutor>,
+{
     let mut handler = StreamExecutor::new();
-    run_scheduler(device, streams, instructions, execution_units_len, &handler);
+    let mut scheduler =
+        Scheduler::new(device, execution_units_len, streams, &handler, instructions);
+    run_scheduler(&mut scheduler);
 }
 
 /// Simulate an execution of streams and emit operand transactions.
 #[allow(unused)]
-pub fn simulate_execution_and_collect_transactions(
+pub fn simulate_execution_and_collect_transactions<Scheduler>(
     device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     simple_instructions: &Arc<Vec<(Vec<usize>, Vec<usize>)>>,
     execution_units_len: usize,
-) -> Vec<Transaction> {
+) -> Vec<Transaction>
+where
+    Scheduler: SchedulerTrait<TransactionEmitter>,
+{
     let handler = TransactionEmitter::new(simple_instructions);
-    run_scheduler(device, streams, instructions, execution_units_len, &handler);
+    let mut scheduler =
+        Scheduler::new(device, execution_units_len, streams, &handler, instructions);
+    run_scheduler(&mut scheduler);
     handler.clone().actual_transactions.lock().unwrap().clone()
 }
 
 /// Simulate an execution of streams and emit executed instructions.
 #[allow(unused)]
-pub fn simulate_execution_and_collect_instructions(
+pub fn simulate_execution_and_collect_instructions<Scheduler>(
     device: &Device,
     streams: &Arc<Vec<Stream>>,
     instructions: &Arc<Vec<Instruction>>,
     execution_units_len: usize,
-) -> Vec<usize> {
+) -> Vec<usize>
+where
+    Scheduler: SchedulerTrait<InstructionEmitter>,
+{
     let handler = InstructionEmitter::new();
-    run_scheduler(device, streams, instructions, execution_units_len, &handler);
+    let mut scheduler =
+        Scheduler::new(device, execution_units_len, streams, &handler, instructions);
+    run_scheduler(&mut scheduler);
     handler
         .clone()
         .executed_instructions
@@ -171,17 +152,17 @@ pub fn simulate_execution_and_collect_instructions(
         .clone()
 }
 
-pub fn run_scheduler<Handler>(
-    device: &Device,
-    streams: &Arc<Vec<Stream>>,
-    instructions: &Arc<Vec<Instruction>>,
-    execution_units_len: usize,
-    handler: &Handler,
-) where
+pub fn run_scheduler<Handler>(scheduler: &mut impl SchedulerTrait<Handler>)
+where
     Handler: StreamEventHandler + Clone + Send + Sync + 'static,
 {
-    let mut scheduler = Scheduler::new(device, execution_units_len, streams, handler, instructions);
     scheduler.start();
     scheduler.execute();
     scheduler.stop();
 }
+
+#[cfg(feature = "cuda")]
+// TODO implement GpuStreamScheduler
+pub type DefaultStreamScheduler = CpuStreamScheduler<StreamExecutor>;
+#[cfg(not(feature = "cuda"))]
+pub type DefaultStreamScheduler = CpuStreamScheduler<StreamExecutor>;

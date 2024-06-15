@@ -5,13 +5,14 @@ use std::{
 
 use crate::{
     error,
-    stream::DeviceStream,
+    schedulers::StreamEventHandler,
+    stream::{DeviceStream, StreamTrait},
     streams::stream::Stream,
     tensor::{Error, ErrorEnum},
     Device, DeviceTrait, Instruction,
 };
 
-use super::{queue::Queue, Command, StreamEventHandler};
+use super::{queue::Queue, Command};
 
 /// https://en.wikipedia.org/wiki/Instruction_pipelining
 pub struct ExecutionUnit<Handler>
@@ -60,18 +61,18 @@ where
                 .device
                 .stream()
                 .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-            while execution_unit.step(&device_stream) {}
+            while execution_unit.step(&device_stream)? {}
             Ok(execution_unit)
         });
         handle
     }
 
-    fn step(&mut self, device_stream: &DeviceStream) -> bool {
+    fn step(&mut self, device_stream: &DeviceStream) -> Result<bool, Error> {
         // Fetch
         let command = self.execution_unit_command_queue.pop_front();
         match command {
             Some(Command::Stop) => {
-                return false;
+                return Ok(false);
             }
             Some(Command::WorkUnitDispatch(stream)) => {
                 // Call handler to execute the instructions for that stream.
@@ -82,9 +83,10 @@ where
                 self.controller_command_queue
                     .push_back(Command::WorkUnitCompletion(stream));
                 self.completed_items += 1;
+                device_stream.synchronize()?;
             }
             _ => {}
         }
-        true
+        Ok(true)
     }
 }

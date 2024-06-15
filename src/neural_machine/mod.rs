@@ -6,4 +6,4 @@ mod opcode;
 pub mod streams;
 pub use opcode::*;
 pub mod neural_program;
-pub mod scheduler;
+pub mod schedulers;

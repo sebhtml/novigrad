@@ -3,14 +3,15 @@ use std::sync::Arc;
 use crate::{
     mega_man_attention::get_megaman_attention_instructions,
     neural_machine::streams::{instruction::make_simple_instructions, stream::make_streams},
+    schedulers::{
+        simulate_execution_and_collect_instructions, simulate_execution_and_collect_transactions,
+        transaction::{get_all_instruction_transactions, get_operand_transaction_pairs, Access},
+        InstructionEmitter, SchedulerTrait,
+    },
     Device,
 };
 
-use super::{
-    simulate_execution_and_collect_instructions, simulate_execution_and_collect_transactions,
-    transaction::{get_all_instruction_transactions, get_operand_transaction_pairs, Access},
-    InstructionEmitter, Scheduler,
-};
+use super::scheduler::CpuStreamScheduler;
 
 #[test]
 fn reads_and_writes_of_same_operand_are_not_reordered() {
@@ -54,7 +55,7 @@ fn test_that_accesses_are_not_reordered(access: Access, prior_access: Access) {
     );
     let actual_streams = Arc::new(actual_streams);
     let execution_units_len = 32;
-    let actual_transactions = simulate_execution_and_collect_transactions(
+    let actual_transactions = simulate_execution_and_collect_transactions::<CpuStreamScheduler<_>>(
         &device,
         &actual_streams,
         &instructions,
@@ -90,7 +91,7 @@ fn all_instructions_are_executed_with_out_of_order_execution() {
     let actual_streams = Arc::new(actual_streams);
     let execution_units_len = 32;
 
-    let executed_instructions = simulate_execution_and_collect_instructions(
+    let executed_instructions = simulate_execution_and_collect_instructions::<CpuStreamScheduler<_>>(
         &device,
         &actual_streams,
         &instructions,
@@ -131,7 +132,7 @@ fn all_instructions_are_executed_in_each_scheduler_execution() {
     let execution_units_len = 32;
 
     let handler = InstructionEmitter::new();
-    let mut scheduler = Scheduler::new(
+    let mut scheduler = CpuStreamScheduler::new(
         &device,
         execution_units_len,
         &streams,

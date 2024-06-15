@@ -5,6 +5,7 @@ use std::time::SystemTime;
 use crate::{
     neural_program::NeuralProgram,
     perplexity::get_perplexity,
+    schedulers::DefaultStreamScheduler,
     tensor::{Error, Tensor},
     BinaryOperator, Device, ModelDetails, NeuralMachine, OptimizerTrait, TensorWithGrad, Tokenizer,
     TokenizerTrait, UnaryModel,
@@ -161,7 +162,7 @@ pub fn train_model<T>(
     let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
     let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
-    let mut neural_machine = NeuralMachine::<T>::try_new(&device, program)?;
+    let mut neural_machine = NeuralMachine::<T, DefaultStreamScheduler>::try_new(&device, program)?;
 
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
@@ -210,7 +211,7 @@ pub fn train_model<T>(
 
 fn print_results<T>(
     epoch: usize,
-    neural_machine: &mut NeuralMachine<T>,
+    neural_machine: &mut NeuralMachine<T, DefaultStreamScheduler>,
     tokenizer: &mut Option<Tokenizer>,
     inputs: &[TensorWithGrad],
     outputs: &[TensorWithGrad],
@@ -290,7 +291,7 @@ pub fn get_row_argmax(tensor: &Tensor, row: usize) -> Result<usize, Error> {
 }
 
 pub fn train<T>(
-    neural_machine: &mut NeuralMachine<T>,
+    neural_machine: &mut NeuralMachine<T, DefaultStreamScheduler>,
     shuffle_examples: bool,
     inputs: &Vec<TensorWithGrad>,
     outputs: &Vec<TensorWithGrad>,
@@ -306,7 +307,7 @@ pub fn train<T>(
 }
 
 pub fn total_metrics<T>(
-    neural_machine: &mut NeuralMachine<T>,
+    neural_machine: &mut NeuralMachine<T, DefaultStreamScheduler>,
     inputs: &[TensorWithGrad],
     outputs: &[TensorWithGrad],
 ) -> Result<Metrics, Error> {
@@ -336,7 +337,7 @@ pub fn total_metrics<T>(
 }
 
 fn train_with_one_example<T>(
-    neural_machine: &mut NeuralMachine<T>,
+    neural_machine: &mut NeuralMachine<T, DefaultStreamScheduler>,
     input: &TensorWithGrad,
     output: &TensorWithGrad,
 ) -> Result<(), Error> {

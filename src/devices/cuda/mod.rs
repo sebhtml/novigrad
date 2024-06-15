@@ -609,9 +609,11 @@ impl DeviceTrait for CudaDev {
                 let cuda_blas = CudaBlas::new(self.dev.clone())
                     .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
                 // TODO if a stream is assigned, I get a stack overflow and bad output.
-                // unsafe { cuda_blas.set_stream(Some(&stream)) }
+                //unsafe { cuda_blas.set_stream(Some(&stream)) }
+                //.unwrap();
                 //.map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
                 let cuda_stream = CudaDeviceStream {
+                    device: self.dev.clone(),
                     stream,
                     rng_state,
                     cuda_blas,

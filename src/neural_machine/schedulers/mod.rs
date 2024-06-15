@@ -1,7 +1,9 @@
 use std::sync::{Arc, Mutex};
+pub mod cpu_scheduler;
+use crate::schedulers::cpu_scheduler::transaction::Transaction;
+use crate::schedulers::cpu_scheduler::transaction::get_instruction_transactions;
 
 use crate::{
-    cpu_scheduler::transaction::{get_instruction_transactions, Transaction},
     stream::DeviceStream,
     streams::stream::Stream,
     tensor::Error,

@@ -1,10 +1,11 @@
 use std::{marker::PhantomData, ops::Deref, sync::Arc};
+use crate::schedulers::cpu_scheduler::scheduler::Scheduler;
 
+use crate::schedulers::SchedulerTrait;
 use crate::{
-    cpu_scheduler::scheduler::Scheduler,
     neural_machine::streams::stream::print_streams,
     neural_program::NeuralProgram,
-    schedulers::{SchedulerTrait, StreamExecutor},
+    schedulers::StreamExecutor,
     stream::DeviceStream,
     tensor::{Error, Tensor},
     Category, Device, DeviceTrait, Instruction, TensorWithGrad,

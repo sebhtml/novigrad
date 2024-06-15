@@ -6,7 +6,7 @@ use std::sync::Arc;
 mod controller;
 mod execution_unit;
 pub mod scheduler;
-use scheduler::Scheduler;
+use scheduler::CpuStreamScheduler;
 use transaction::Transaction;
 
 use crate::{
@@ -79,7 +79,7 @@ pub fn run_scheduler<Handler>(
 ) where
     Handler: StreamEventHandler + Clone + Send + Sync + 'static,
 {
-    let mut scheduler = Scheduler::new(device, execution_units_len, streams, handler, instructions);
+    let mut scheduler = CpuStreamScheduler::new(device, execution_units_len, streams, handler, instructions);
     scheduler.start();
     scheduler.execute();
     scheduler.stop();

@@ -1,5 +1,5 @@
 use std::{marker::PhantomData, ops::Deref, sync::Arc};
-use crate::schedulers::cpu_scheduler::scheduler::Scheduler;
+use crate::schedulers::cpu_scheduler::scheduler::CpuStreamScheduler;
 
 use crate::schedulers::SchedulerTrait;
 use crate::{
@@ -26,16 +26,16 @@ pub struct NeuralMachine<T> {
     loss: TensorWithGrad,
     inference_instructions: Arc<Vec<Instruction>>,
     inference_streams: Arc<Vec<Stream>>,
-    inference_scheduler: Scheduler<StreamExecutor>,
+    inference_scheduler: CpuStreamScheduler<StreamExecutor>,
     loss_instructions: Arc<Vec<Instruction>>,
     loss_streams: Arc<Vec<Stream>>,
-    loss_scheduler: Scheduler<StreamExecutor>,
+    loss_scheduler: CpuStreamScheduler<StreamExecutor>,
     gradient_instructions: Arc<Vec<Instruction>>,
     gradient_streams: Arc<Vec<Stream>>,
-    gradient_scheduler: Scheduler<StreamExecutor>,
+    gradient_scheduler: CpuStreamScheduler<StreamExecutor>,
     optimization_instructions: Arc<Vec<Instruction>>,
     optimization_streams: Arc<Vec<Stream>>,
-    optimization_scheduler: Scheduler<StreamExecutor>,
+    optimization_scheduler: CpuStreamScheduler<StreamExecutor>,
     phantom_data: PhantomData<T>,
 }
 
@@ -91,28 +91,28 @@ impl<T> NeuralMachine<T> {
         let optimization_streams = Arc::new(optimization_streams);
 
         let handler = StreamExecutor::new();
-        let mut inference_scheduler = Scheduler::new(
+        let mut inference_scheduler = CpuStreamScheduler::new(
             device,
             execution_units_len,
             &inference_streams,
             &handler,
             &inference_instructions,
         );
-        let mut loss_scheduler = Scheduler::new(
+        let mut loss_scheduler = CpuStreamScheduler::new(
             device,
             execution_units_len,
             &loss_streams,
             &handler,
             &loss_instructions,
         );
-        let mut gradient_scheduler = Scheduler::new(
+        let mut gradient_scheduler = CpuStreamScheduler::new(
             device,
             execution_units_len,
             &gradient_streams,
             &handler,
             &gradient_instructions,
         );
-        let mut optimization_scheduler = Scheduler::new(
+        let mut optimization_scheduler = CpuStreamScheduler::new(
             device,
             execution_units_len,
             &optimization_streams,

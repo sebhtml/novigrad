@@ -9,7 +9,7 @@ use super::{
     StreamEventHandler,
 };
 
-pub struct Scheduler<Handler>
+pub struct CpuStreamScheduler<Handler>
 where
     Handler: StreamEventHandler + Send + Sync,
 {
@@ -22,7 +22,7 @@ where
     execution_unit_handles: Option<Vec<JoinHandle<Result<ExecutionUnit<Handler>, Error>>>>,
 }
 
-impl<Handler> SchedulerTrait<Handler> for Scheduler<Handler>
+impl<Handler> SchedulerTrait<Handler> for CpuStreamScheduler<Handler>
 where
     Handler: StreamEventHandler + Clone + Send + Sync + 'static,
 {

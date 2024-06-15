@@ -10,7 +10,7 @@ use crate::{
 use super::{
     simulate_execution_and_collect_instructions, simulate_execution_and_collect_transactions,
     transaction::{get_all_instruction_transactions, get_operand_transaction_pairs, Access},
-    InstructionEmitter, Scheduler,
+    InstructionEmitter, CpuStreamScheduler,
 };
 
 #[test]
@@ -132,7 +132,7 @@ fn all_instructions_are_executed_in_each_scheduler_execution() {
     let execution_units_len = 32;
 
     let handler = InstructionEmitter::new();
-    let mut scheduler = Scheduler::new(
+    let mut scheduler = CpuStreamScheduler::new(
         &device,
         execution_units_len,
         &streams,

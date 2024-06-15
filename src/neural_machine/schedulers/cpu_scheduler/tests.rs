@@ -3,14 +3,16 @@ use std::sync::Arc;
 use crate::{
     mega_man_attention::get_megaman_attention_instructions,
     neural_machine::streams::{instruction::make_simple_instructions, stream::make_streams},
-    schedulers::SchedulerTrait,
+    schedulers::{
+        transaction::{get_all_instruction_transactions, get_operand_transaction_pairs, Access},
+        SchedulerTrait,
+    },
     Device,
 };
 
 use super::{
     simulate_execution_and_collect_instructions, simulate_execution_and_collect_transactions,
-    transaction::{get_all_instruction_transactions, get_operand_transaction_pairs, Access},
-    InstructionEmitter, CpuStreamScheduler,
+    CpuStreamScheduler, InstructionEmitter,
 };
 
 #[test]

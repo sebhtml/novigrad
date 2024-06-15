@@ -1,14 +1,10 @@
 use std::sync::{Arc, Mutex};
 pub mod cpu_scheduler;
-use crate::schedulers::cpu_scheduler::transaction::Transaction;
-use crate::schedulers::cpu_scheduler::transaction::get_instruction_transactions;
+pub mod transaction;
 
-use crate::{
-    stream::DeviceStream,
-    streams::stream::Stream,
-    tensor::Error,
-    Device, Instruction,
-};
+use transaction::{get_instruction_transactions, Transaction};
+
+use crate::{stream::DeviceStream, streams::stream::Stream, tensor::Error, Device, Instruction};
 
 pub trait SchedulerTrait<Handler>
 where

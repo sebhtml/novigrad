@@ -1,5 +1,5 @@
-use std::{marker::PhantomData, ops::Deref, sync::Arc};
 use crate::schedulers::cpu_scheduler::scheduler::CpuStreamScheduler;
+use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
 use crate::schedulers::SchedulerTrait;
 use crate::{

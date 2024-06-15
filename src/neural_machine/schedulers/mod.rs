@@ -2,8 +2,6 @@ use std::sync::{Arc, Mutex};
 pub mod cpu_scheduler;
 pub mod transaction;
 
-use transaction::{get_instruction_transactions, Transaction};
-
 use crate::{stream::DeviceStream, streams::stream::Stream, tensor::Error, Device, Instruction};
 
 pub trait SchedulerTrait<Handler>
@@ -62,44 +60,6 @@ impl StreamEventHandler for InstructionEmitter {
                 .lock()
                 .unwrap()
                 .push(*instruction);
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone)]
-pub struct TransactionEmitter {
-    simple_instructions: Arc<Vec<(Vec<usize>, Vec<usize>)>>,
-    pub actual_transactions: Arc<Mutex<Vec<Transaction>>>,
-}
-
-impl TransactionEmitter {
-    pub fn new(simple_instructions: &Arc<Vec<(Vec<usize>, Vec<usize>)>>) -> Self {
-        Self {
-            simple_instructions: simple_instructions.clone(),
-            actual_transactions: Default::default(),
-        }
-    }
-}
-
-impl StreamEventHandler for TransactionEmitter {
-    fn on_execute(
-        &mut self,
-        streams: &Arc<Vec<Stream>>,
-        _instructions: &Arc<Vec<Instruction>>,
-        stream: usize,
-        _device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        let stream_instructions = &streams[stream].instructions;
-        for instruction in stream_instructions.iter() {
-            let instruction = *instruction;
-            let (inputs, outputs) = &self.simple_instructions[instruction];
-            let mut instruction_transactions =
-                get_instruction_transactions(instruction, inputs, outputs);
-            self.actual_transactions
-                .lock()
-                .unwrap()
-                .extend_from_slice(&mut instruction_transactions);
         }
         Ok(())
     }

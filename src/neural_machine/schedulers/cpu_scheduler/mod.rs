@@ -9,14 +9,12 @@ pub mod scheduler;
 use scheduler::CpuStreamScheduler;
 
 use crate::{
-    schedulers::{
-        InstructionEmitter, SchedulerTrait, StreamEventHandler, StreamExecutor, TransactionEmitter,
-    },
+    schedulers::{InstructionEmitter, SchedulerTrait, StreamEventHandler, StreamExecutor},
     streams::stream::Stream,
     Device, Instruction,
 };
 
-use super::transaction::Transaction;
+use super::transaction::{Transaction, TransactionEmitter};
 pub mod queue;
 
 pub enum Command {

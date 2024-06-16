@@ -1,4 +1,6 @@
 use std::{collections::VecDeque, sync::Arc};
+#[cfg(test)]
+mod tests;
 
 use crate::{
     stream::{DeviceStream, StreamTrait},

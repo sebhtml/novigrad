@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 pub mod cpu_scheduler;
 pub mod gpu_scheduler;
 pub mod transaction;
+pub mod verification;
 
 #[allow(unused)]
 use cpu_scheduler::scheduler::CpuStreamScheduler;

@@ -232,6 +232,7 @@ impl DeviceTrait for CpuDevice {
         max: &Tensor,
         input: &Tensor,
         output: &Tensor,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let n = input.len();
         let input = input.as_ptr();
@@ -247,7 +248,13 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn div(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+    fn div(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         if *left.size() != *right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }

@@ -131,7 +131,10 @@ where
                 let dependents = &self.dependents[logical_stream];
                 for dependent in dependents.iter() {
                     self.current_pending_dependencies[*dependent] -= 1;
-                    self.queued_logical_streams.push_back(*dependent);
+                    let pending_dependencies = self.current_pending_dependencies[*dependent];
+                    if pending_dependencies == 0 {
+                        self.queued_logical_streams.push_back(*dependent);
+                    }
                 }
                 self.free_physical_streams.push_back(physical_stream);
                 return Ok(true);

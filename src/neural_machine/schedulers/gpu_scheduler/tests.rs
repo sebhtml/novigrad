@@ -39,7 +39,6 @@ fn test_all_instructions_are_executed_with_out_of_order_execution() {
     helper_all_instructions_are_executed_with_out_of_order_execution::<GpuStreamScheduler<_>>();
 }
 
-#[ignore]
 #[test]
 fn test_all_instructions_are_executed_in_each_scheduler_execution() {
     helper_all_instructions_are_executed_in_each_scheduler_execution::<GpuStreamScheduler<_>>();

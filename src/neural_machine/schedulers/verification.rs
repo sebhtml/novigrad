@@ -15,7 +15,7 @@ use super::{
     InstructionEmitter, SchedulerTrait,
 };
 
-pub fn helper_test_that_accesses_are_not_reordered<Scheduler>(access: Access, prior_access: Access)
+pub fn verify_that_accesses_are_not_reordered<Scheduler>(access: Access, prior_access: Access)
 where
     Scheduler: SchedulerTrait<TransactionEmitter>,
 {
@@ -55,7 +55,7 @@ where
     }
 }
 
-pub fn helper_all_instructions_are_executed_with_out_of_order_execution<Scheduler>()
+pub fn verify_that_all_instructions_are_executed_with_out_of_order_execution<Scheduler>()
 where
     Scheduler: SchedulerTrait<InstructionEmitter>,
 {
@@ -97,7 +97,7 @@ where
     assert_eq!(sequential_instructions, sorted_executed_instructions);
 }
 
-pub fn helper_all_instructions_are_executed_in_each_scheduler_execution<Scheduler>()
+pub fn verify_that_all_instructions_are_executed_in_each_scheduler_execution<Scheduler>()
 where
     Scheduler: SchedulerTrait<InstructionEmitter>,
 {

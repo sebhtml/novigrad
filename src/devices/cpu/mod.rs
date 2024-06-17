@@ -158,7 +158,12 @@ impl DeviceTrait for CpuDevice {
         Ok(slice)
     }
 
-    fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn softmax(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let rows = input.rows() as i32;
         let cols = input.cols() as i32;
         let input = input.as_ptr();
@@ -204,7 +209,12 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn sigmoid(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let rows = input.rows();
         let cols = input.cols();
         let values = input.as_ptr();

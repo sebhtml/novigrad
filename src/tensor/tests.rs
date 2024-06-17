@@ -3,7 +3,7 @@ use std::vec;
 use crate::{
     new_tensor,
     tensor::{ErrorEnum, Tensor},
-    Device, DeviceTrait, ExecutableOperator, ScalarMul,
+    Device, DeviceTrait,
 };
 
 #[test]
@@ -147,53 +147,6 @@ fn assign() {
     .unwrap();
     Tensor::copy(&tensor2, &mut tensor, &device_stream).unwrap();
     assert_eq!(tensor, tensor2);
-}
-
-#[test]
-fn scalar_mul() {
-    let device = Device::default();
-    let device_stream = device.stream().unwrap();
-    // Given a left-hand side matrix and and a right-hand scalar
-    // When scalar multiplication is done
-    // Then the resulting matrix has the correct values
-
-    let lhs = new_tensor!(
-        device,
-        3,
-        2,
-        vec![
-            1.0, 2.0, //
-            3.0, 4.0, //
-            5.0, 6.0, //
-        ],
-    )
-    .unwrap();
-    let rhs = -2.0;
-    let expected_result = new_tensor!(
-        device,
-        3,
-        2,
-        vec![
-            1.0 * -2.0,
-            2.0 * -2.0, //
-            3.0 * -2.0,
-            4.0 * -2.0, //
-            5.0 * -2.0,
-            6.0 * -2.0, //
-        ],
-    )
-    .unwrap();
-
-    let result = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
-    let rhs = new_tensor!(device, 1, 1, vec![rhs]).unwrap();
-    ScalarMul::execute(
-        &Default::default(),
-        &[&rhs, &lhs],
-        &[&result],
-        &device_stream,
-    )
-    .unwrap();
-    assert_eq!(result, expected_result);
 }
 
 #[test]

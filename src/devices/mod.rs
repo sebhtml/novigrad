@@ -172,9 +172,19 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
-    fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+    fn softmax(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
-    fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+    fn sigmoid(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
     fn bernoulli(
         &self,
@@ -505,8 +515,13 @@ impl DeviceTrait for Device {
         self.device.slice(n)
     }
 
-    fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        self.device.softmax(input, output)
+    fn softmax(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.softmax(input, output, device_stream)
     }
 
     fn sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
@@ -526,8 +541,13 @@ impl DeviceTrait for Device {
         self.device.mul(left, right, result, device_stream)
     }
 
-    fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
-        self.device.sigmoid(input, output)
+    fn sigmoid(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.sigmoid(input, output, device_stream)
     }
 
     fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {

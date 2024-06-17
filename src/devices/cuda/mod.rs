@@ -338,7 +338,12 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn softmax(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let kernel = self.get_func("softmax_kernel_module", "softmax_kernel")?;
         let rows = input.rows();
         let cols = input.cols();
@@ -409,7 +414,12 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn sigmoid(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let kernel = self.get_func("sigmoid_kernel_module", "sigmoid_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);

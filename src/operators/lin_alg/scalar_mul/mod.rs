@@ -6,6 +6,9 @@ use crate::{
     UnaryOperator,
 };
 
+#[cfg(test)]
+mod tests;
+
 pub struct ScalarMul {
     device: Device,
     alpha: f32,

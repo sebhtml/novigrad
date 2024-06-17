@@ -1,8 +1,9 @@
 use crate::{
-    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
-    tensor::{Error, Tensor},
-    BinaryOperator, Device, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
+    tensor::{Error, ErrorEnum, Tensor},
+    BinaryOperator, Device, DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes,
+    TensorWithGrad,
 };
 
 pub struct Add {
@@ -27,8 +28,35 @@ impl ExecutableOperator for Add {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];
+        if input_0.len() != input_1.len() {
+            println!("Incompatible sizes");
+            println!("x {}", input_0);
+            println!("y {}", input_1);
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        if input_0.len() != output.len() {
+            println!("Incompatible sizes");
+            println!("x {}", input_0);
+            println!("y {}", output);
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        let device = input_0.device();
         Tensor::copy(input_0, output, device_stream)?;
-        Tensor::add(input_1, output, device_stream)
+
+        let alpha = 1.0;
+
+        let n = input_1.len() as i32;
+        let incx = 1;
+        let incy = 1;
+        device.axpy(
+            n,
+            alpha,
+            input_1.as_ptr(),
+            incx,
+            output.as_mut_ptr(),
+            incy,
+            device_stream,
+        )
     }
 }
 

@@ -240,29 +240,6 @@ impl Tensor {
         )
     }
 
-    pub fn add(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
-        let alpha = 1.0;
-        let device = &x.device;
-        if x.len() != y.len() {
-            println!("Incompatible sizes");
-            println!("x {}", x);
-            println!("y {}", y);
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        let n = x.len() as i32;
-        let incx = 1;
-        let incy = 1;
-        device.axpy(
-            n,
-            alpha,
-            x.as_ptr(),
-            incx,
-            y.as_mut_ptr(),
-            incy,
-            device_stream,
-        )
-    }
-
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {
         let new_len = new_size.iter().fold(1, |acc, value| acc * value);
         if new_len != self.len() {

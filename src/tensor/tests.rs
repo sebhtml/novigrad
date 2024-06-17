@@ -6,7 +6,7 @@ use crate::{
     new_tensor,
     reduce_l2::ReduceL2,
     tensor::{ErrorEnum, Tensor},
-    ClipNorm, Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
+    Add, ClipNorm, Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 #[test]
@@ -239,9 +239,14 @@ fn matrix_addition_result() {
     let rows = rhs.rows();
     let cols = rhs.cols();
     let len = rows * cols;
-    let mut result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
-    Tensor::copy(&rhs, &mut result, &device_stream).unwrap();
-    Tensor::add(&lhs, &mut result, &device_stream).unwrap();
+    let result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
+    Add::execute(
+        &Default::default(),
+        &[&lhs, &rhs],
+        &[&result],
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -350,8 +355,7 @@ fn big_matrix_addition() {
     let m = new_tensor!(device, rows, cols, values).unwrap();
 
     let result = new_tensor!(device, rows, cols, vec![0.0; rows * cols]).unwrap();
-    Tensor::copy(&m, &result, &device_stream).unwrap();
-    Tensor::add(&m, &result, &device_stream).unwrap();
+    Add::execute(&Default::default(), &[&m, &m], &[&result], &device_stream).unwrap();
 }
 
 #[test]

@@ -15,6 +15,7 @@
 - implement Gelu
 
 - move opcode.rs to operators/
+- all methods in Device should take &Tensor, not pointers
 
 ---------------
 

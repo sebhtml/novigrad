@@ -165,7 +165,13 @@ impl DeviceTrait for CpuDevice {
         todo!()
     }
 
-    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+    fn mul(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         if *left.size() != *right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }

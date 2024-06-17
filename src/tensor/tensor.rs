@@ -145,17 +145,6 @@ impl Tensor {
             .set_values(new_values)
     }
 
-    pub fn mul(left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
-        if *left.size() != *right.size() {
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        if *left.size() != *result.size() {
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        let device = left.device.clone();
-        device.mul(left, right, result)
-    }
-
     pub fn is_finite(&self) -> bool {
         let values = self.get_values().unwrap();
         for value in values {

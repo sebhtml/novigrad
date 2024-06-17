@@ -159,7 +159,13 @@ pub trait DeviceTrait {
 
     fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error>;
 
-    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error>;
+    fn mul(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
     fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
@@ -500,8 +506,14 @@ impl DeviceTrait for Device {
         self.device.sum(x, y)
     }
 
-    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
-        self.device.mul(left, right, result)
+    fn mul(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.mul(left, right, result, device_stream)
     }
 
     fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {

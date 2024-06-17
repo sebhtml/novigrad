@@ -1,9 +1,13 @@
 use crate::{
-    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
-    tensor::{Error, Tensor},
-    BinaryOperator, Device, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
+    tensor::{Error, ErrorEnum, Tensor},
+    BinaryOperator, Device, DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes,
+    TensorWithGrad,
 };
+
+#[cfg(test)]
+mod tests;
 
 pub struct Mul {
     device: Device,
@@ -22,12 +26,19 @@ impl ExecutableOperator for Mul {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];
-        Tensor::mul(input_0, input_1, output)
+        let device = input_0.device();
+        if *input_0.size() != *input_1.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        if *input_0.size() != *output.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        device.mul(input_0, input_1, output, device_stream)
     }
 }
 

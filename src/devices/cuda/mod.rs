@@ -372,7 +372,13 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+    fn mul(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let n = left.len();
         let kernel = self.get_func("mul_kernel_module", "mul_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);

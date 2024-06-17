@@ -6,6 +6,9 @@ use crate::{
     DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
+#[cfg(test)]
+mod tests;
+
 pub struct ClipNorm {}
 
 impl ExecutableOperator for ClipNorm {

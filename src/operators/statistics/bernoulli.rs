@@ -1,13 +1,14 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    DeviceTrait,
+    DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 pub struct Bernoulli {}
 
-impl Bernoulli {
-    pub fn execute(
+impl ExecutableOperator for Bernoulli {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,

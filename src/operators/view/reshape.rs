@@ -1,9 +1,9 @@
 use crate::{
     devices::Device,
-    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
-    tensor::{Error, Tensor},
-    OpCode, TensorWithGrad, UnaryOperator,
+    tensor::{Error, ErrorEnum, Tensor},
+    ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 pub struct Reshape {
@@ -20,13 +20,21 @@ impl Reshape {
             output_size,
         }
     }
+}
 
-    pub fn execute(
-        output_size: &[usize],
+impl ExecutableOperator for Reshape {
+    fn execute(
+        attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let output_size = match attributes {
+            OperatorAttributes::Vec(output_size) => output_size,
+            _ => {
+                return Err(error!(ErrorEnum::UnsupportedOperation));
+            }
+        };
         let input = inputs[0];
         let output = outputs[0];
         Tensor::copy(input, output, device_stream)?;
@@ -56,16 +64,19 @@ impl UnaryOperator for Reshape {
         let zero = new_tensor!(self.device, 1, 1, vec![0.0]).unwrap();
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Reshape(self.output_size.clone()),
+            OpCode::Reshape,
+            OperatorAttributes::Vec(self.output_size.clone()),
             &[&inputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
@@ -74,7 +85,8 @@ impl UnaryOperator for Reshape {
 
         if outputs[0].gradient().requires_grad() {
             output.push_instruction(gradient_instruction!(
-                OpCode::Reshape(self.input_size.clone()),
+                OpCode::Reshape,
+                OperatorAttributes::Vec(self.input_size.clone()),
                 &[&inputs[0].gradient()],
                 &[&outputs[0].gradient()],
             ));

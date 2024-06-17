@@ -1,12 +1,14 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
+    ExecutableOperator, OperatorAttributes,
 };
 
 pub struct ClipNorm {}
 
-impl ClipNorm {
-    pub fn execute(
+impl ExecutableOperator for ClipNorm {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,

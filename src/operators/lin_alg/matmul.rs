@@ -2,7 +2,7 @@ use crate::{
     devices::Device,
     error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     tensor::{Error, ErrorEnum, Tensor},
-    BinaryOperator, OpCode, TensorWithGrad,
+    BinaryOperator, OpCode, OperatorAttributes, TensorWithGrad,
 };
 
 pub struct MatMul {
@@ -66,17 +66,20 @@ impl BinaryOperator for MatMul {
         let zero = new_tensor!(&self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
 
         output.push_instruction(inference_instruction!(
-            OpCode::Gemm(false, transb, false),
+            OpCode::Gemm,
+            OperatorAttributes::ThreeBools(false, transb, false),
             &[
                 &inputs[0].tensor(),
                 &inputs[1].tensor(),
@@ -86,7 +89,8 @@ impl BinaryOperator for MatMul {
         ));
         if input_1.gradient().requires_grad() {
             output.push_instruction(gradient_instruction!(
-                OpCode::Gemm(true, false, transb),
+                OpCode::Gemm,
+                OperatorAttributes::ThreeBools(true, false, transb),
                 &[&input_0.tensor(), &output.gradient(), &input_1.gradient(),],
                 &[&input_1.gradient()],
             ));
@@ -94,7 +98,8 @@ impl BinaryOperator for MatMul {
 
         if input_0.gradient().requires_grad() {
             output.push_instruction(gradient_instruction!(
-                OpCode::Gemm(false, !transb, false),
+                OpCode::Gemm,
+                OperatorAttributes::ThreeBools(false, !transb, false),
                 &[&output.gradient(), &input_1.tensor(), &input_0.gradient(),],
                 &[&input_0.gradient()],
             ));

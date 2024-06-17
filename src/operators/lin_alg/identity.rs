@@ -2,7 +2,7 @@ use crate::{
     gradient_instruction, inference_instruction, new_tensor_with_grad,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    DeviceTrait, OpCode, TensorWithGrad, UnaryOperator,
+    DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 pub struct Identity {
@@ -15,8 +15,9 @@ impl Identity {
     }
 }
 
-impl Identity {
-    pub fn execute(
+impl ExecutableOperator for Identity {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,
@@ -47,12 +48,14 @@ impl UnaryOperator for Identity {
             false,
         )?;
         output.push_instruction(inference_instruction!(
-            OpCode::Identity(self.label.clone()),
+            OpCode::Identity,
+            OperatorAttributes::String(self.label.clone()),
             &[&input.tensor()],
             &[&output.tensor()],
         ));
         output.push_instruction(gradient_instruction!(
-            OpCode::Identity("gradient".into()),
+            OpCode::Identity,
+            OperatorAttributes::String("gradient".into()),
             &[&output.gradient()],
             &[&input.gradient()],
         ));

@@ -1,13 +1,14 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    DeviceTrait,
+    DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 pub struct ReduceL2 {}
 
-impl ReduceL2 {
-    pub fn execute(
+impl ExecutableOperator for ReduceL2 {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,

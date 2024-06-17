@@ -2,7 +2,7 @@ use crate::{
     gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, NaryOperator, OpCode, TensorWithGrad,
+    Device, ExecutableOperator, NaryOperator, OpCode, OperatorAttributes, TensorWithGrad,
 };
 
 #[cfg(test)]
@@ -18,8 +18,11 @@ impl Concat {
             device: device.clone(),
         }
     }
+}
 
-    pub fn execute(
+impl ExecutableOperator for Concat {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,
@@ -67,16 +70,19 @@ impl NaryOperator for Concat {
         let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Concat,
+            OperatorAttributes::None,
             &inputs.iter().collect::<Vec<_>>(),
             &[&outputs[0].tensor()],
         ));
@@ -85,6 +91,7 @@ impl NaryOperator for Concat {
         let outputs: Vec<Tensor> = outputs.iter().map(|t| t.gradient().clone()).collect();
         output.push_instruction(gradient_instruction!(
             OpCode::Unconcat,
+            OperatorAttributes::None,
             &[&inputs[0].gradient()],
             &outputs.iter().collect::<Vec<_>>(),
         ));
@@ -94,8 +101,9 @@ impl NaryOperator for Concat {
 
 pub struct Unconcat {}
 
-impl Unconcat {
-    pub fn execute(
+impl ExecutableOperator for Unconcat {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,

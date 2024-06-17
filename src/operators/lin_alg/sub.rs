@@ -1,12 +1,14 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
+    ExecutableOperator, OperatorAttributes,
 };
 
 pub struct Sub {}
 
-impl Sub {
-    pub fn execute(
+impl ExecutableOperator for Sub {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,

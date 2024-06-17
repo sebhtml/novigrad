@@ -6,7 +6,7 @@ use crate::{
     new_tensor,
     reduce_l2::ReduceL2,
     tensor::{ErrorEnum, Tensor},
-    Device, DeviceTrait,
+    Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 #[test]
@@ -119,12 +119,24 @@ fn normalize() {
     let expected_norm = 1.0;
     let actual_norm = new_tensor!(device, 1, 1, vec![0.0]).unwrap();
 
-    ReduceL2::execute(&[&tensor], &[&actual_norm], &device_stream).unwrap();
+    ReduceL2::execute(
+        &OperatorAttributes::None,
+        &[&tensor],
+        &[&actual_norm],
+        &device_stream,
+    )
+    .unwrap();
     assert_ne!(actual_norm.get_values().unwrap()[0], expected_norm);
 
     tensor.clip_norm(&device_stream).unwrap();
 
-    ReduceL2::execute(&[&tensor], &[&actual_norm], &device_stream).unwrap();
+    ReduceL2::execute(
+        &OperatorAttributes::None,
+        &[&tensor],
+        &[&actual_norm],
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(actual_norm.get_values().unwrap()[0], expected_norm);
 }
 

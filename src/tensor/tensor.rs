@@ -8,6 +8,7 @@ use crate::{
     slice::DevSlice,
     tensor::Error,
 };
+use crate::{ExecutableOperator, OperatorAttributes};
 
 use std::sync::{Arc, RwLock};
 use std::{fmt::Display, ops::Deref, vec};
@@ -271,7 +272,12 @@ impl Tensor {
                 self.column,
             )
             .unwrap();
-        ReduceL2::execute(&[&self], &[&l2_norm], device_stream)?;
+        ReduceL2::execute(
+            &OperatorAttributes::None,
+            &[&self],
+            &[&l2_norm],
+            device_stream,
+        )?;
         let l2_norm = l2_norm.get_values()?[0];
         // Can not normalize a vector with no direction.
         if l2_norm == 0.0 {

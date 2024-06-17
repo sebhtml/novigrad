@@ -12,8 +12,9 @@
 
 ---------------
 
-- add interface for ExecutableOperator with fn execute
 - implement Gelu
+
+- move opcode.rs to operators/
 
 ---------------
 

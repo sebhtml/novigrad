@@ -3,7 +3,7 @@ use crate::stream::DeviceStream;
 use crate::{
     gradient_instruction, inference_instruction, tensor::Tensor, DeviceTrait, OpCode, UnaryOperator,
 };
-use crate::{new_tensor, new_tensor_with_grad};
+use crate::{new_tensor, new_tensor_with_grad, ExecutableOperator, OperatorAttributes};
 use crate::{tensor::Error, TensorWithGrad};
 
 pub struct Softmax {
@@ -25,8 +25,11 @@ impl Softmax {
             next_is_cross_entropy_loss: true,
         }
     }
+}
 
-    pub fn execute(
+impl ExecutableOperator for Softmax {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         _device_stream: &DeviceStream,
@@ -58,16 +61,19 @@ impl UnaryOperator for Softmax {
         let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Softmax,
+            OperatorAttributes::None,
             &[&inputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
@@ -75,6 +81,7 @@ impl UnaryOperator for Softmax {
         if self.next_is_cross_entropy_loss {
             output.push_instruction(gradient_instruction!(
                 OpCode::Add,
+                OperatorAttributes::None,
                 &[&output.gradient(), &input.gradient(),],
                 &[&input.gradient()],
             ));
@@ -113,12 +120,14 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
 
         output.push_instruction(gradient_instruction!(
             OpCode::Sub,
+            OperatorAttributes::None,
             &[&ones, input],
             &[&one_minus_output],
         ));
         let layer_f_derivative = new_tensor!(device, rows, cols, vec![0.0; len])?;
         output.push_instruction(gradient_instruction!(
             OpCode::Mul,
+            OperatorAttributes::None,
             &[input, &one_minus_output],
             &[&layer_f_derivative],
         ));
@@ -126,11 +135,13 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
 
         output.push_instruction(gradient_instruction!(
             OpCode::Mul,
+            OperatorAttributes::None,
             &[&layer_f_derivative, input_gradient],
             &[&tmp],
         ));
         output.push_instruction(gradient_instruction!(
             OpCode::Add,
+            OperatorAttributes::None,
             &[&tmp, output_gradient],
             &[output_gradient],
         ));

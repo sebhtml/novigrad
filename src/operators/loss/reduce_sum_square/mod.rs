@@ -3,7 +3,7 @@ use crate::{
     gradient_instruction, loss_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    BinaryOperator, DeviceTrait, OpCode, TensorWithGrad,
+    BinaryOperator, DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
 };
 
 #[cfg(test)]
@@ -19,8 +19,11 @@ impl ReduceSumSquare {
             device: device.clone(),
         }
     }
+}
 
-    pub fn execute(
+impl ExecutableOperator for ReduceSumSquare {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         _device_stream: &DeviceStream,
@@ -53,16 +56,19 @@ impl BinaryOperator for ReduceSumSquare {
         let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
         output.push_instruction(loss_instruction!(
             OpCode::ReduceSumSquare,
+            OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],
         ));
@@ -79,12 +85,14 @@ impl BinaryOperator for ReduceSumSquare {
             let actual = inputs[1];
             output.push_instruction(gradient_instruction!(
                 OpCode::Sub,
+                OperatorAttributes::None,
                 &[expected, actual],
                 &[output_gradient],
             ));
             let minus_two = new_tensor!(self.device, 1, 1, vec![-2.0])?;
             output.push_instruction(gradient_instruction!(
                 OpCode::ScalarMul,
+                OperatorAttributes::None,
                 &[&minus_two, output_gradient],
                 &[output_gradient],
             ));

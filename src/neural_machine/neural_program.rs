@@ -3,7 +3,8 @@ use std::{collections::HashSet, ops::Deref};
 use crate::{
     gradient_instruction, new_tensor_with_grad,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, Instruction, OpCode, OptimizerTrait, TensorWithGrad, UnaryModel,
+    BinaryOperator, Device, Instruction, OpCode, OperatorAttributes, OptimizerTrait,
+    TensorWithGrad, UnaryModel,
 };
 
 pub struct NeuralProgram {
@@ -79,6 +80,7 @@ impl NeuralProgram {
                 for output in outputs {
                     instructions.push(gradient_instruction!(
                         OpCode::ClipNorm,
+                        OperatorAttributes::None,
                         &[output],
                         &[output],
                     ));

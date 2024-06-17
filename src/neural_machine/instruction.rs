@@ -1,7 +1,7 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    OpCode,
+    OpCode, OperatorAttributes,
 };
 use std::{ops::Deref, sync::Arc};
 
@@ -28,6 +28,7 @@ impl Into<String> for Category {
 #[derive(Clone, Debug)]
 pub struct Instruction {
     opcode: OpCode,
+    attributes: OperatorAttributes,
     inputs: Arc<Vec<Tensor>>,
     outputs: Arc<Vec<Tensor>>,
     category: Category,
@@ -42,9 +43,10 @@ pub struct Instruction {
 #[cfg(debug_assertions)]
 #[macro_export]
 macro_rules! instruction {
-    ( $opcode:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
+    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
         crate::Instruction::new(
             $opcode,
+            $attributes,
             $inputs,
             $outputs,
             $category,
@@ -58,42 +60,67 @@ macro_rules! instruction {
 #[cfg(not(debug_assertions))]
 #[macro_export]
 macro_rules! instruction {
-    ( $opcode:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
-        crate::Instruction::new($opcode, $inputs, $outputs, $category)
+    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
+        crate::Instruction::new($opcode, $attributes, $inputs, $outputs, $category)
     };
 }
 
 #[macro_export]
 macro_rules! inference_instruction {
-    ( $opcode:expr, $inputs:expr, $outputs:expr, ) => {
-        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Inference,)
+    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
+        crate::instruction!(
+            $opcode,
+            $attributes,
+            $inputs,
+            $outputs,
+            crate::Category::Inference,
+        )
     };
 }
 
 #[macro_export]
 macro_rules! loss_instruction {
-    ( $opcode:expr, $inputs:expr, $outputs:expr, ) => {
-        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Loss,)
+    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
+        crate::instruction!(
+            $opcode,
+            $attributes,
+            $inputs,
+            $outputs,
+            crate::Category::Loss,
+        )
     };
 }
 
 #[macro_export]
 macro_rules! gradient_instruction {
-    ( $opcode:expr, $inputs:expr, $outputs:expr, ) => {
-        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Gradient,)
+    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
+        crate::instruction!(
+            $opcode,
+            $attributes,
+            $inputs,
+            $outputs,
+            crate::Category::Gradient,
+        )
     };
 }
 
 #[macro_export]
 macro_rules! optimization_instruction {
-    ( $opcode:expr, $inputs:expr, $outputs:expr, ) => {
-        crate::instruction!($opcode, $inputs, $outputs, crate::Category::Optimization,)
+    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
+        crate::instruction!(
+            $opcode,
+            $attributes,
+            $inputs,
+            $outputs,
+            crate::Category::Optimization,
+        )
     };
 }
 
 impl Instruction {
     pub fn new(
         opcode: OpCode,
+        attributes: OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         category: Category,
@@ -114,6 +141,7 @@ impl Instruction {
 
         Self {
             opcode,
+            attributes,
             inputs: inputs.into(),
             outputs: outputs.into(),
             category,
@@ -155,9 +183,11 @@ impl Instruction {
         self.outputs.deref()
     }
     pub fn execute(&self, device_stream: &DeviceStream) -> Result<(), Error> {
+        let attributes = &self.attributes;
         let inputs: Vec<&Tensor> = self.inputs.iter().collect();
         let outputs: Vec<&Tensor> = self.outputs.iter().collect();
-        self.opcode.execute(&inputs, &outputs, device_stream)
+        self.opcode
+            .execute(attributes, &inputs, &outputs, device_stream)
     }
 }
 

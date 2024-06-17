@@ -12,7 +12,11 @@ mod reduce;
 pub use reduce::*;
 pub mod statistics;
 
-use crate::{tensor::Error, TensorWithGrad};
+use crate::{
+    stream::DeviceStream,
+    tensor::{Error, Tensor},
+    TensorWithGrad,
+};
 
 pub trait UnaryOperator {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error>;
@@ -39,4 +43,27 @@ pub trait TernaryOperator {
 /// https://en.wikipedia.org/wiki/Arity
 pub trait NaryOperator {
     fn forward(&self, inputs: &[&TensorWithGrad]) -> Result<TensorWithGrad, Error>;
+}
+
+pub trait ExecutableOperator {
+    fn execute(
+        attributes: &OperatorAttributes,
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
+}
+
+#[derive(Clone, Debug)]
+pub enum OperatorAttributes {
+    None,
+    ThreeBools(bool, bool, bool),
+    String(String),
+    Vec(Vec<usize>),
+}
+
+impl Default for OperatorAttributes {
+    fn default() -> Self {
+        OperatorAttributes::None
+    }
 }

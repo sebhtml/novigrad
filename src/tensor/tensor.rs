@@ -1,5 +1,4 @@
 use crate::devices::slice::DevSliceTrait;
-use crate::reduce_l2::ReduceL2;
 use crate::stream::DeviceStream;
 use crate::tensor::ErrorEnum;
 use crate::{
@@ -8,7 +7,6 @@ use crate::{
     slice::DevSlice,
     tensor::Error,
 };
-use crate::{ExecutableOperator, OperatorAttributes};
 
 use std::sync::{Arc, RwLock};
 use std::{fmt::Display, ops::Deref, vec};
@@ -221,20 +219,6 @@ impl Tensor {
 
     pub fn sub(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
         let alpha = -1.0;
-        Self::a_x_plus_y(alpha, x, y, device_stream)
-    }
-
-    pub fn add(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
-        let alpha = 1.0;
-        Self::a_x_plus_y(alpha, x, y, device_stream)
-    }
-
-    fn a_x_plus_y(
-        alpha: f32,
-        x: &Tensor,
-        y: &Tensor,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
         let device = &x.device;
         if x.len() != y.len() {
             println!("Incompatible sizes");
@@ -256,53 +240,27 @@ impl Tensor {
         )
     }
 
-    pub fn clip_norm(&self, device_stream: &DeviceStream) -> Result<(), Error> {
-        let norm_max = 1.0;
-        let l2_norm = self
-            .device
-            .tensor(
-                1,
-                1,
-                vec![0.0],
-                #[cfg(debug_assertions)]
-                &self.file,
-                #[cfg(debug_assertions)]
-                self.line,
-                #[cfg(debug_assertions)]
-                self.column,
-            )
-            .unwrap();
-        ReduceL2::execute(
-            &OperatorAttributes::None,
-            &[&self],
-            &[&l2_norm],
+    pub fn add(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
+        let alpha = 1.0;
+        let device = &x.device;
+        if x.len() != y.len() {
+            println!("Incompatible sizes");
+            println!("x {}", x);
+            println!("y {}", y);
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        let n = x.len() as i32;
+        let incx = 1;
+        let incy = 1;
+        device.axpy(
+            n,
+            alpha,
+            x.as_ptr(),
+            incx,
+            y.as_mut_ptr(),
+            incy,
             device_stream,
-        )?;
-        let l2_norm = l2_norm.get_values()?[0];
-        // Can not normalize a vector with no direction.
-        if l2_norm == 0.0 {
-            return Ok(());
-        }
-        if l2_norm <= norm_max {
-            return Ok(());
-        }
-        let alpha = 1.0 / l2_norm;
-        let x = self;
-        let device = self.device();
-        let alpha = device
-            .tensor(
-                1,
-                1,
-                vec![alpha],
-                #[cfg(debug_assertions)]
-                &self.file,
-                #[cfg(debug_assertions)]
-                self.line,
-                #[cfg(debug_assertions)]
-                self.column,
-            )
-            .unwrap();
-        device.scalar_mul(&alpha, x)
+        )
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {

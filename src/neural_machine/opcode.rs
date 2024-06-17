@@ -39,6 +39,13 @@ pub enum OpCode {
     /// LayerNormalization
 
     /// Not ONNX-compliant
+    /// Equivalent to:
+    /// ClipNorm(x)
+    ///   norm = ReduceL2(x)
+    ///   if norm != 0
+    ///     alpha = 1.0 / norm
+    ///     x = ScalarMul(alpha, x)
+    ///     return x
     ClipNorm,
 
     /// https://onnx.ai/onnx/operators/onnx__ReduceL2.html

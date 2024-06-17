@@ -6,7 +6,7 @@ use crate::{
     new_tensor,
     reduce_l2::ReduceL2,
     tensor::{ErrorEnum, Tensor},
-    Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
+    ClipNorm, Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 #[test]
@@ -128,7 +128,7 @@ fn normalize() {
     .unwrap();
     assert_ne!(actual_norm.get_values().unwrap()[0], expected_norm);
 
-    tensor.clip_norm(&device_stream).unwrap();
+    ClipNorm::execute(&Default::default(), &[&tensor], &[&tensor], &device_stream).unwrap();
 
     ReduceL2::execute(
         &OperatorAttributes::None,

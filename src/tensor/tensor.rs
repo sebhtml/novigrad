@@ -1,4 +1,5 @@
 use crate::devices::slice::DevSliceTrait;
+use crate::reduce_l2::ReduceL2;
 use crate::stream::DeviceStream;
 use crate::tensor::ErrorEnum;
 use crate::{
@@ -254,14 +255,7 @@ impl Tensor {
         )
     }
 
-    pub fn l2_norm(&self, output: &Tensor) -> Result<(), Error> {
-        let device = self.device();
-        device.dot(self, self, output)?;
-        device.sqrt(output, output)?;
-        Ok(())
-    }
-
-    pub fn clip_norm(&self) -> Result<(), Error> {
+    pub fn clip_norm(&self, device_stream: &DeviceStream) -> Result<(), Error> {
         let norm_max = 1.0;
         let l2_norm = self
             .device
@@ -277,7 +271,7 @@ impl Tensor {
                 self.column,
             )
             .unwrap();
-        self.l2_norm(&l2_norm)?;
+        ReduceL2::execute(&[&self], &[&l2_norm], device_stream)?;
         let l2_norm = l2_norm.get_values()?[0];
         // Can not normalize a vector with no direction.
         if l2_norm == 0.0 {

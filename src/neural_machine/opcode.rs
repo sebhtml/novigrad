@@ -1,6 +1,7 @@
 use crate::{
     clip::Clip,
     identity::Identity,
+    reduce_l2::ReduceL2,
     statistics::bernoulli::Bernoulli,
     stream::DeviceStream,
     tensor::{Error, Tensor},
@@ -38,6 +39,9 @@ pub enum OpCode {
 
     /// Not ONNX-compliant
     ClipNorm,
+
+    /// https://onnx.ai/onnx/operators/onnx__ReduceL2.html
+    ReduceL2,
 
     /// https://onnx.ai/onnx/operators/onnx__Mul.html
     Mul,
@@ -101,6 +105,7 @@ impl Into<String> for OpCode {
             OpCode::ScalarAdd => "ScalarAdd".into(),
             OpCode::Clip => "Clip".into(),
             OpCode::ClipNorm => "ClipNorm".into(),
+            OpCode::ReduceL2 => "ReduceL2".into(),
             OpCode::Softmax => "Softmax".into(),
             OpCode::Sigmoid => "Sigmoid".into(),
             OpCode::Reshape(output_size) => format!("Reshape {:?}", output_size),
@@ -138,6 +143,7 @@ impl OpCode {
             OpCode::ScalarMul => ScalarMul::execute(inputs, outputs, device_stream),
             OpCode::Clip => Clip::execute(inputs, outputs, device_stream),
             OpCode::ClipNorm => ClipNorm::execute(inputs, outputs, device_stream),
+            OpCode::ReduceL2 => ReduceL2::execute(inputs, outputs, device_stream),
             OpCode::Mul => Mul::execute(inputs, outputs, device_stream),
             OpCode::Softmax => Softmax::execute(inputs, outputs, device_stream),
             OpCode::Sub => Sub::execute(inputs, outputs, device_stream),

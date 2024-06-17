@@ -4,6 +4,7 @@ use rand::Rng;
 
 use crate::{
     new_tensor,
+    reduce_l2::ReduceL2,
     tensor::{ErrorEnum, Tensor},
     Device, DeviceTrait,
 };
@@ -103,6 +104,7 @@ fn index() {
 #[test]
 fn normalize() {
     let device = Device::default();
+    let device_stream = device.stream().unwrap();
     let tensor = new_tensor!(
         device,
         1,
@@ -117,12 +119,12 @@ fn normalize() {
     let expected_norm = 1.0;
     let actual_norm = new_tensor!(device, 1, 1, vec![0.0]).unwrap();
 
-    tensor.l2_norm(&actual_norm).unwrap();
+    ReduceL2::execute(&[&tensor], &[&actual_norm], &device_stream).unwrap();
     assert_ne!(actual_norm.get_values().unwrap()[0], expected_norm);
 
-    tensor.clip_norm().unwrap();
+    tensor.clip_norm(&device_stream).unwrap();
 
-    tensor.l2_norm(&actual_norm).unwrap();
+    ReduceL2::execute(&[&tensor], &[&actual_norm], &device_stream).unwrap();
     assert_eq!(actual_norm.get_values().unwrap()[0], expected_norm);
 }
 

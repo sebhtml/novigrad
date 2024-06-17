@@ -1,11 +1,12 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
+    DeviceTrait,
 };
 
-pub struct ClipNorm {}
+pub struct ReduceL2 {}
 
-impl ClipNorm {
+impl ReduceL2 {
     pub fn execute(
         inputs: &[&Tensor],
         outputs: &[&Tensor],
@@ -13,10 +14,9 @@ impl ClipNorm {
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        if input.name() != output.name() {
-            Tensor::copy(input, output, device_stream)?;
-        }
-        output.clip_norm(device_stream)?;
+        let device = input.device();
+        device.dot(input, input, output, device_stream)?;
+        device.sqrt(output, output)?;
         Ok(())
     }
 }

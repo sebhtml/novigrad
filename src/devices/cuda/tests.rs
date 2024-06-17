@@ -262,10 +262,11 @@ fn cuda_dot_kernel() {
 
     let cpu_output = {
         let device = Device::cpu();
+        let stream = device.stream().unwrap();
         let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
         let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
         let output = new_tensor!(device, 1, 1 as usize, vec![0.0]).unwrap();
-        device.dot(&left, &right, &output).unwrap();
+        device.dot(&left, &right, &output, &stream).unwrap();
         output.get_values().unwrap()
     };
 
@@ -311,10 +312,11 @@ fn cuda_dot_kernel_big_vectors() {
 
     let cpu_output = {
         let device = Device::cpu();
+        let stream = device.stream().unwrap();
         let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
         let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
         let output = new_tensor!(device, 1, 1 as usize, vec![0.0]).unwrap();
-        device.dot(&left, &right, &output).unwrap();
+        device.dot(&left, &right, &output, &stream).unwrap();
         output.get_values().unwrap()
     };
 

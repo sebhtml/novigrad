@@ -2,7 +2,7 @@ use crate::{
     gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, OpCode, TensorWithGrad,
+    BinaryOperator, Device, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
 };
 
 pub struct Mul {
@@ -15,8 +15,11 @@ impl Mul {
             device: device.clone(),
         }
     }
+}
 
-    pub fn execute(
+impl ExecutableOperator for Mul {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         _device_stream: &DeviceStream,
@@ -54,16 +57,19 @@ impl BinaryOperator for Mul {
         let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Mul,
+            OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],
         ));
@@ -93,12 +99,14 @@ impl BinaryOperator for Mul {
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
+                    OperatorAttributes::None,
                     &[output_0, input_gradient],
                     &[&tmp],
                 ));
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Add,
+                    OperatorAttributes::None,
                     &[&tmp, output_1_gradient],
                     &[output_1_gradient],
                 ));
@@ -111,12 +119,14 @@ impl BinaryOperator for Mul {
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Mul,
+                    OperatorAttributes::None,
                     &[output_, input_gradient],
                     &[&tmp],
                 ));
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Add,
+                    OperatorAttributes::None,
                     &[&tmp, output_0_gradient],
                     &[output_0_gradient],
                 ));

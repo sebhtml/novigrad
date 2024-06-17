@@ -127,7 +127,13 @@ pub trait DeviceTrait {
     ) -> Result<(), Error>;
 
     /// dot performs the dot product of two vectors.
-    fn dot(&self, left: &Tensor, right: &Tensor, output: &Tensor) -> Result<(), Error>;
+    fn dot(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
     fn clip(
         &self,
@@ -430,14 +436,20 @@ impl DeviceTrait for Device {
         )
     }
 
-    fn dot(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+    fn dot(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         if *left.size() != *right.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         if &result.size() as &[usize] != &[1, 1] {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        self.device.dot(left, right, result)
+        self.device.dot(left, right, result, device_stream)
     }
 
     fn copy(

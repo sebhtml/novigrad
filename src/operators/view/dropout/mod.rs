@@ -1,7 +1,8 @@
 use crate::{
     inference_instruction, new_tensor, new_tensor_with_grad,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, Mul, OpCode, ScalarMul, TensorWithGrad, UnaryOperator,
+    BinaryOperator, Device, Mul, OpCode, OperatorAttributes, ScalarMul, TensorWithGrad,
+    UnaryOperator,
 };
 
 #[cfg(test)]
@@ -46,6 +47,7 @@ impl UnaryOperator for Dropout {
         let mask = &self.mask;
         mask.push_instruction(inference_instruction!(
             OpCode::Bernoulli,
+            OperatorAttributes::None,
             &[probabilities],
             &[&mask.tensor()],
         ));

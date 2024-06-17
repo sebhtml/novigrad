@@ -1,12 +1,14 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
+    ExecutableOperator, OperatorAttributes,
 };
 
 pub struct ClipNorm {}
 
-impl ClipNorm {
-    pub fn execute(
+impl ExecutableOperator for ClipNorm {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,
@@ -16,7 +18,7 @@ impl ClipNorm {
         if input.name() != output.name() {
             Tensor::copy(input, output, device_stream)?;
         }
-        output.clip_norm()?;
+        output.clip_norm(device_stream)?;
         Ok(())
     }
 }

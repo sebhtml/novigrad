@@ -1,4 +1,4 @@
-use crate::new_tensor;
+use crate::{new_tensor, OperatorAttributes};
 use crate::{
     optimization_instruction, tensor::Error, Device, Instruction, OpCode, OptimizerTrait,
     TensorWithGrad,
@@ -61,16 +61,19 @@ impl OptimizerTrait for Adam {
             // m = beta1 * m + (1 - beta1) * g
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
+                OperatorAttributes::None,
                 &[&beta1_tensor, &m],
                 &[&tmp1],
             ));
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
+                OperatorAttributes::None,
                 &[&one_minus_beta1, &g],
                 &[&tmp2],
             ));
             instructions.push(optimization_instruction!(
                 OpCode::Add,
+                OperatorAttributes::None,
                 &[&tmp1, &tmp2],
                 &[&m],
             ));
@@ -79,21 +82,25 @@ impl OptimizerTrait for Adam {
             // v = beta2 * v + (1 - beta2) * g**2
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
+                OperatorAttributes::None,
                 &[&beta2_tensor, &v],
                 &[&tmp1],
             ));
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
+                OperatorAttributes::None,
                 &[&g, &g],
                 &[&tmp2],
             ));
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
+                OperatorAttributes::None,
                 &[&one_minus_beta2, &tmp2],
                 &[&tmp2],
             ));
             instructions.push(optimization_instruction!(
                 OpCode::Add,
+                OperatorAttributes::None,
                 &[&tmp1, &tmp2],
                 &[&v],
             ));
@@ -106,6 +113,7 @@ impl OptimizerTrait for Adam {
             let m_multiplier = new_tensor!(device, 1, 1, vec![1.0 / (1.0 - beta1.powi(t))])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
+                OperatorAttributes::None,
                 &[&m_multiplier, &m],
                 &[&m_hat],
             ));
@@ -114,6 +122,7 @@ impl OptimizerTrait for Adam {
             let v_multiplier = new_tensor!(device, 1, 1, vec![1.0 / (1.0 - beta2.powi(t))])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
+                OperatorAttributes::None,
                 &[&v_multiplier, &v],
                 &[&v_hat],
             ));
@@ -123,17 +132,25 @@ impl OptimizerTrait for Adam {
             // Clip is used to remove negative values in v_hat.
             instructions.push(optimization_instruction!(
                 OpCode::Clip,
+                OperatorAttributes::None,
                 &[&zero, &f32_max, &v_hat],
                 &[&tmp1],
             ));
-            instructions.push(optimization_instruction!(OpCode::Sqrt, &[&tmp1], &[&tmp1],));
+            instructions.push(optimization_instruction!(
+                OpCode::Sqrt,
+                OperatorAttributes::None,
+                &[&tmp1],
+                &[&tmp1],
+            ));
             instructions.push(optimization_instruction!(
                 OpCode::ScalarAdd,
+                OperatorAttributes::None,
                 &[&epsilon_tensor, &tmp1], // TODO use tmp1
                 &[&tmp1],
             ));
             instructions.push(optimization_instruction!(
                 OpCode::Div,
+                OperatorAttributes::None,
                 &[&m_hat, &tmp1],
                 &[&tmp1],
             ));
@@ -142,17 +159,20 @@ impl OptimizerTrait for Adam {
             // It's basically like clipping the gradient.
             instructions.push(optimization_instruction!(
                 OpCode::ClipNorm,
+                OperatorAttributes::None,
                 &[&tmp1],
                 &[&tmp1],
             ));
 
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
+                OperatorAttributes::None,
                 &[&alpha_rate_tensor, &tmp1],
                 &[&tmp1],
             ));
             instructions.push(optimization_instruction!(
                 OpCode::Sub,
+                OperatorAttributes::None,
                 &[&theta, &tmp1],
                 &[&theta],
             ));

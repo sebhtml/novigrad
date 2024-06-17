@@ -3,7 +3,7 @@ use crate::{
     gradient_instruction, loss_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    BinaryOperator, DeviceTrait, OpCode, TensorWithGrad,
+    BinaryOperator, DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
 };
 
 #[derive(Clone)]
@@ -17,8 +17,11 @@ impl SoftmaxCrossEntropyLoss {
             device: device.clone(),
         }
     }
+}
 
-    pub fn execute(
+impl ExecutableOperator for SoftmaxCrossEntropyLoss {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         _device_stream: &DeviceStream,
@@ -51,16 +54,19 @@ impl BinaryOperator for SoftmaxCrossEntropyLoss {
         let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
         output.push_instruction(loss_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
         output.push_instruction(loss_instruction!(
             OpCode::SoftmaxCrossEntropyLoss,
+            OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],
         ));
@@ -83,6 +89,7 @@ impl BinaryOperator for SoftmaxCrossEntropyLoss {
             let actual = inputs[1];
             output.push_instruction(gradient_instruction!(
                 OpCode::Sub,
+                OperatorAttributes::None,
                 &[actual, expected],
                 &[output_gradient],
             ));

@@ -1,13 +1,14 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    DeviceTrait,
+    DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 pub struct ScalarAdd {}
 
-impl ScalarAdd {
-    pub fn execute(
+impl ExecutableOperator for ScalarAdd {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,

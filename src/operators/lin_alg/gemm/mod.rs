@@ -3,7 +3,7 @@ use crate::{
     error,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
-    DeviceTrait,
+    DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 #[cfg(test)]
@@ -14,12 +14,12 @@ impl Gemm {
     pub fn new(_device: &Device) -> Self {
         Self {}
     }
+}
 
+impl ExecutableOperator for Gemm {
     /// C := alpha*op( A )*op( B ) + beta*C,
-    pub fn execute(
-        trans_a: bool,
-        trans_b: bool,
-        trans_result: bool,
+    fn execute(
+        attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,
@@ -33,9 +33,14 @@ impl Gemm {
         let a = input;
         let b = weights;
         let c = biases;
-        let transa = trans_a;
-        let transb = trans_b;
-        let transpose_result = trans_result;
+        let (transa, transb, transpose_result) = match attributes {
+            OperatorAttributes::ThreeBools(transa, transb, transpose_result) => {
+                (*transa, *transb, *transpose_result)
+            }
+            _ => {
+                return Err(error!(ErrorEnum::UnsupportedOperation));
+            }
+        };
         let alpha = 1.0;
         let beta = 1.0;
         Gemm::gemm(
@@ -50,7 +55,9 @@ impl Gemm {
             device_stream,
         )
     }
+}
 
+impl Gemm {
     pub fn gemm(
         transa: bool,
         transb: bool,

@@ -238,7 +238,13 @@ impl DeviceTrait for CudaDev {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn dot(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+    fn dot(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let n = left.len();
         let kernel = self.get_func("dot_kernel_module", "dot_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);

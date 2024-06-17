@@ -77,7 +77,13 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn dot(&self, x: &Tensor, y: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn dot(
+        &self,
+        x: &Tensor,
+        y: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;

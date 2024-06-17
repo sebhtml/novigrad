@@ -4,7 +4,7 @@ use crate::{
     emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, tensor::Error,
     DeviceTrait, TensorWithGrad,
 };
-use crate::{new_tensor, new_tensor_with_grad};
+use crate::{new_tensor, new_tensor_with_grad, ExecutableOperator, OperatorAttributes};
 use crate::{tensor::Tensor, OpCode, UnaryOperator};
 
 pub struct Sigmoid {
@@ -17,8 +17,11 @@ impl Sigmoid {
             device: device.clone(),
         }
     }
+}
 
-    pub fn execute(
+impl ExecutableOperator for Sigmoid {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         _device_stream: &DeviceStream,
@@ -51,16 +54,19 @@ impl UnaryOperator for Sigmoid {
         let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Sigmoid,
+            OperatorAttributes::None,
             &[&inputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));

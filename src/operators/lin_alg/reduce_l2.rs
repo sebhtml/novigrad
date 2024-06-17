@@ -4,9 +4,9 @@ use crate::{
     DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
-pub struct Bernoulli {}
+pub struct ReduceL2 {}
 
-impl ExecutableOperator for Bernoulli {
+impl ExecutableOperator for ReduceL2 {
     fn execute(
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
@@ -16,6 +16,8 @@ impl ExecutableOperator for Bernoulli {
         let input = inputs[0];
         let output = outputs[0];
         let device = input.device();
-        device.bernoulli(input, output, device_stream)
+        device.dot(input, input, output, device_stream)?;
+        device.sqrt(output, output)?;
+        Ok(())
     }
 }

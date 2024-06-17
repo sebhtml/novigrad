@@ -2,7 +2,7 @@ use crate::{
     gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, OpCode, TensorWithGrad,
+    BinaryOperator, Device, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
 };
 
 pub struct Add {
@@ -15,8 +15,11 @@ impl Add {
             device: device.to_owned(),
         }
     }
+}
 
-    pub fn execute(
+impl ExecutableOperator for Add {
+    fn execute(
+        _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device_stream: &DeviceStream,
@@ -55,16 +58,19 @@ impl BinaryOperator for Add {
         let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
+            OperatorAttributes::None,
             &[&zero, &outputs[0].gradient()],
             &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Add,
+            OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],
         ));
@@ -83,6 +89,7 @@ impl BinaryOperator for Add {
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Add,
+                    OperatorAttributes::None,
                     &[input_gradient, output_1_gradient],
                     &[output_1_gradient],
                 ));
@@ -93,6 +100,7 @@ impl BinaryOperator for Add {
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Add,
+                    OperatorAttributes::None,
                     &[input_gradient, output_0_gradient],
                     &[output_0_gradient],
                 ));

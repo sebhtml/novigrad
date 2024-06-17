@@ -4,6 +4,9 @@ use crate::{
     DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
+#[cfg(test)]
+mod tests;
+
 pub struct Transpose {}
 
 impl Default for Transpose {

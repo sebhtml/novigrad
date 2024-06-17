@@ -104,12 +104,16 @@ impl DeviceTrait for CpuDevice {
         &self,
         n: i32,
         x: *const f32,
-        incx: i32,
+        x_offset: i32,
+        x_inc: i32,
         y: *mut f32,
-        incy: i32,
+        y_offset: i32,
+        y_inc: i32,
         _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        unsafe { ffi::cblas_scopy(n, x, incx, y, incy) }
+        let x = x.wrapping_add(x_offset as usize);
+        let y = y.wrapping_add(y_offset as usize);
+        unsafe { ffi::cblas_scopy(n, x, x_inc, y, y_inc) }
         Ok(())
     }
 

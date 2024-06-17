@@ -279,9 +279,11 @@ impl DeviceTrait for CudaDev {
         &self,
         n: i32,
         x: *const f32,
-        incx: i32,
+        x_offset: i32,
+        x_inc: i32,
         y: *mut f32,
-        incy: i32,
+        y_offset: i32,
+        y_inc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
@@ -289,7 +291,9 @@ impl DeviceTrait for CudaDev {
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
         };
-        let status = unsafe { lib().cublasScopy_v2(handle, n, x, incx, y, incy) };
+        let x = x.wrapping_add(x_offset as usize);
+        let y = y.wrapping_add(y_offset as usize);
+        let status = unsafe { lib().cublasScopy_v2(handle, n, x, x_inc, y, y_inc) };
         status
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))

@@ -149,9 +149,11 @@ pub trait DeviceTrait {
         &self,
         n: i32,
         x: *const f32,
-        incx: i32,
+        x_offset: i32,
+        x_inc: i32,
         y: *mut f32,
-        incy: i32,
+        y_offset: i32,
+        y_inc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
@@ -489,12 +491,15 @@ impl DeviceTrait for Device {
         &self,
         n: i32,
         x: *const f32,
-        incx: i32,
+        x_offset: i32,
+        x_inc: i32,
         y: *mut f32,
-        incy: i32,
+        y_offset: i32,
+        y_inc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        self.device.copy(n, x, incx, y, incy, device_stream)
+        self.device
+            .copy(n, x, x_offset, x_inc, y, y_offset, y_inc, device_stream)
     }
 
     fn axpy(

@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{new_tensor, Device, DeviceTrait, Gemm};
+use crate::{new_tensor, transpose::Transpose, Device, DeviceTrait, ExecutableOperator, Gemm};
 
 #[test]
 fn big_matrix_multiplication() {
@@ -53,7 +53,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     )
     .unwrap();
     let lhs = new_tensor!(device, 2, 4, vec![0.0; 8]).unwrap();
-    device.transpose(&lhs2, &lhs, &device_stream).unwrap();
+    Transpose::execute(&Default::default(), &[&lhs2], &[&lhs], &device_stream).unwrap();
 
     let rhs = new_tensor!(
         device,

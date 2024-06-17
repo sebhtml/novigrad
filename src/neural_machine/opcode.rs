@@ -5,6 +5,7 @@ use crate::{
     statistics::bernoulli::Bernoulli,
     stream::DeviceStream,
     tensor::{Error, Tensor},
+    transpose::Transpose,
     Add, ClipNorm, Concat, Div, ExecutableOperator, Gemm, Mul, OperatorAttributes, ReduceSum,
     ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid, Softmax, SoftmaxCrossEntropyLoss,
     Sqrt, Sub, Unconcat,
@@ -47,6 +48,9 @@ pub enum OpCode {
     ///     x = ScalarMul(alpha, x)
     ///     return x
     ClipNorm,
+
+    /// https://onnx.ai/onnx/operators/onnx__Transpose.html
+    Transpose,
 
     /// https://onnx.ai/onnx/operators/onnx__ReduceL2.html
     ReduceL2,
@@ -124,6 +128,7 @@ impl Into<String> for OpCode {
             OpCode::Bernoulli => "Bernoulli".into(),
             OpCode::Div => "Div".into(),
             OpCode::Sqrt => "Sqrt".into(),
+            OpCode::Transpose => "Transpose".into(),
         }
         .into()
     }
@@ -163,6 +168,7 @@ impl OpCode {
             OpCode::Div => Div::execute(attributes, inputs, outputs, device_stream),
             OpCode::Sqrt => Sqrt::execute(attributes, inputs, outputs, device_stream),
             OpCode::ScalarAdd => ScalarAdd::execute(attributes, inputs, outputs, device_stream),
+            OpCode::Transpose => Transpose::execute(attributes, inputs, outputs, device_stream),
         }
     }
 }

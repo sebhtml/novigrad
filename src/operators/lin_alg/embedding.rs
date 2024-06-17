@@ -3,7 +3,8 @@ use crate::{
     new_tensor, new_tensor_with_grad,
     stream::StreamTrait,
     tensor::{Error, Tensor},
-    BinaryOperator, DeviceTrait, MatMul, TensorWithGrad, UnaryOperator,
+    transpose::Transpose,
+    BinaryOperator, DeviceTrait, ExecutableOperator, MatMul, TensorWithGrad, UnaryOperator,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};
 
@@ -22,9 +23,14 @@ impl Embedding {
     ) -> Result<Self, Error> {
         let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim)?;
         let len = embedding_table.len();
-        let mut transposed = new_tensor!(device, embedding_dim, num_embeddings, vec![0.0; len])?;
+        let transposed = new_tensor!(device, embedding_dim, num_embeddings, vec![0.0; len])?;
         let device_stream = device.stream()?;
-        device.transpose(&embedding_table, &mut transposed, &device_stream)?;
+        Transpose::execute(
+            &Default::default(),
+            &[&embedding_table],
+            &[&transposed],
+            &device_stream,
+        )?;
         device_stream.synchronize()?;
         let embedding_table = new_tensor_with_grad!(
             device,

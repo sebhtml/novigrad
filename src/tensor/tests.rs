@@ -3,7 +3,7 @@ use std::vec;
 use crate::{
     new_tensor,
     tensor::{ErrorEnum, Tensor},
-    Device, DeviceTrait,
+    Device, DeviceTrait, ExecutableOperator, ScalarMul,
 };
 
 #[test]
@@ -184,10 +184,15 @@ fn scalar_mul() {
     )
     .unwrap();
 
-    let mut result = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
-    Tensor::copy(&lhs, &mut result, &device_stream).unwrap();
+    let result = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
     let rhs = new_tensor!(device, 1, 1, vec![rhs]).unwrap();
-    device.scalar_mul(&rhs, &mut result).unwrap();
+    ScalarMul::execute(
+        &Default::default(),
+        &[&rhs, &lhs],
+        &[&result],
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(result, expected_result);
 }
 

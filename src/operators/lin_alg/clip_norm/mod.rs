@@ -43,7 +43,7 @@ impl ExecutableOperator for ClipNorm {
         }
         let alpha = 1.0 / l2_norm;
         let alpha = new_tensor!(device, 1, 1, vec![alpha],)?;
-        device.scalar_mul(&alpha, output)?;
+        device.scalar_mul(&alpha, output, device_stream)?;
         Ok(())
     }
 }

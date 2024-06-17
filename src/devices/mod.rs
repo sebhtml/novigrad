@@ -155,7 +155,12 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
-    fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error>;
+    fn scalar_mul(
+        &self,
+        alpha: &Tensor,
+        x: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
     fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error>;
 
@@ -483,8 +488,13 @@ impl DeviceTrait for Device {
         self.device.axpy(n, alpha, x, incx, y, incy, device_stream)
     }
 
-    fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
-        self.device.scalar_mul(alpha, x)
+    fn scalar_mul(
+        &self,
+        alpha: &Tensor,
+        x: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.scalar_mul(alpha, x, device_stream)
     }
 
     fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {

@@ -290,7 +290,12 @@ impl DeviceTrait for CudaDev {
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+    fn scalar_mul(
+        &self,
+        alpha: &Tensor,
+        x: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let n = x.len();
         let alpha = &alpha.device_slice().buffer;
         let x = &x.device_slice().buffer;

@@ -32,7 +32,7 @@ impl ExecutableOperator for ScalarMul {
         let output = outputs[0];
         Tensor::copy(input, output, device_stream)?;
         let device = input.device();
-        device.scalar_mul(alpha, output)
+        device.scalar_mul(alpha, output, device_stream)
     }
 }
 

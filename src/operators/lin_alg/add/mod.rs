@@ -51,15 +51,7 @@ impl ExecutableOperator for Add {
         let n = input_1.len() as i32;
         let incx = 1;
         let incy = 1;
-        device.axpy(
-            n,
-            alpha,
-            input_1.as_ptr(),
-            incx,
-            output.as_mut_ptr(),
-            incy,
-            device_stream,
-        )
+        device.axpy(n, alpha, input_1, incx, output, incy, device_stream)
     }
 }
 

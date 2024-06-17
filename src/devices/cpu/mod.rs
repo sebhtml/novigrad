@@ -37,12 +37,12 @@ impl DeviceTrait for CpuDevice {
         n: i32,
         k: i32,
         alpha: f32,
-        a: *const f32,
+        a: &Tensor,
         lda: i32,
-        b: *const f32,
+        b: &Tensor,
         ldb: i32,
         beta: f32,
-        c: *mut f32,
+        c: &Tensor,
         ldc: i32,
         _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
@@ -56,6 +56,9 @@ impl DeviceTrait for CpuDevice {
             true => Transpose::Ordinary,
         };
 
+        let a = a.as_ptr();
+        let b = b.as_ptr();
+        let c = c.as_mut_ptr();
         unsafe {
             ffi::cblas_sgemm(
                 layout.into(),
@@ -114,12 +117,14 @@ impl DeviceTrait for CpuDevice {
         &self,
         n: i32,
         alpha: f32,
-        x: *const f32,
+        x: &Tensor,
         incx: i32,
-        y: *mut f32,
+        y: &Tensor,
         incy: i32,
         _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let x = x.as_ptr();
+        let y = y.as_mut_ptr();
         unsafe { ffi::cblas_saxpy(n, alpha, x, incx, y, incy) }
         Ok(())
     }

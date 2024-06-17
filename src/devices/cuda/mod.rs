@@ -177,12 +177,12 @@ impl DeviceTrait for CudaDev {
         n: i32,
         k: i32,
         alpha: f32,
-        a: *const f32,
+        a: &Tensor,
         lda: i32,
-        b: *const f32,
+        b: &Tensor,
         ldb: i32,
         beta: f32,
-        c: *mut f32,
+        c: &Tensor,
         ldc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
@@ -206,6 +206,9 @@ impl DeviceTrait for CudaDev {
         let alpha = &alpha;
         let beta = &beta;
 
+        let a = a.as_ptr();
+        let b = b.as_ptr();
+        let c = c.as_mut_ptr();
         let status = unsafe {
             lib().cublasSgemm_v2(
                 handle, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
@@ -220,9 +223,9 @@ impl DeviceTrait for CudaDev {
         &self,
         n: i32,
         alpha: f32,
-        x: *const f32,
+        x: &Tensor,
         incx: i32,
-        y: *mut f32,
+        y: &Tensor,
         incy: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
@@ -232,6 +235,8 @@ impl DeviceTrait for CudaDev {
             return Err(error!(ErrorEnum::UnsupportedOperation));
         };
         let alpha = &alpha as *const f32;
+        let x = x.as_ptr();
+        let y = y.as_mut_ptr();
         let status = unsafe { lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
         status
             .result()

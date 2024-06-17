@@ -1,5 +1,4 @@
 use crate::devices::slice::DevSliceTrait;
-use crate::reduce_l2::ReduceL2;
 use crate::stream::DeviceStream;
 use crate::tensor::ErrorEnum;
 use crate::{
@@ -8,7 +7,6 @@ use crate::{
     slice::DevSlice,
     tensor::Error,
 };
-use crate::{ExecutableOperator, OperatorAttributes};
 
 use std::sync::{Arc, RwLock};
 use std::{fmt::Display, ops::Deref, vec};
@@ -147,17 +145,6 @@ impl Tensor {
             .set_values(new_values)
     }
 
-    pub fn mul(left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
-        if *left.size() != *right.size() {
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        if *left.size() != *result.size() {
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        let device = left.device.clone();
-        device.mul(left, right, result)
-    }
-
     pub fn is_finite(&self) -> bool {
         let values = self.get_values().unwrap();
         for value in values {
@@ -195,7 +182,7 @@ impl Tensor {
         let incy = 1;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
-        device.copy(n, x, incx, y, incy, device_stream)
+        device.copy(n, x, 0, incx, y, 0, incy, device_stream)
     }
 
     pub fn copy_slice(
@@ -210,99 +197,15 @@ impl Tensor {
     ) -> Result<(), Error> {
         let device = &src.device;
         let n = n as i32;
-        let incx = 1;
-        let incy = 1;
-        let x = src.as_ptr().wrapping_add(src_row * src.cols() + src_col);
-        let y = dst
-            .as_mut_ptr()
-            .wrapping_add(dst_row * dst.cols() + dst_col);
-        device.copy(n, x, incx, y, incy, device_stream)
-    }
-
-    pub fn sub(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
-        let alpha = -1.0;
-        Self::a_x_plus_y(alpha, x, y, device_stream)
-    }
-
-    pub fn add(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
-        let alpha = 1.0;
-        Self::a_x_plus_y(alpha, x, y, device_stream)
-    }
-
-    fn a_x_plus_y(
-        alpha: f32,
-        x: &Tensor,
-        y: &Tensor,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        let device = &x.device;
-        if x.len() != y.len() {
-            println!("Incompatible sizes");
-            println!("x {}", x);
-            println!("y {}", y);
-            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
-        }
-        let n = x.len() as i32;
-        let incx = 1;
-        let incy = 1;
-        device.axpy(
-            n,
-            alpha,
-            x.as_ptr(),
-            incx,
-            y.as_mut_ptr(),
-            incy,
-            device_stream,
-        )
-    }
-
-    pub fn clip_norm(&self, device_stream: &DeviceStream) -> Result<(), Error> {
-        let norm_max = 1.0;
-        let l2_norm = self
-            .device
-            .tensor(
-                1,
-                1,
-                vec![0.0],
-                #[cfg(debug_assertions)]
-                &self.file,
-                #[cfg(debug_assertions)]
-                self.line,
-                #[cfg(debug_assertions)]
-                self.column,
-            )
-            .unwrap();
-        ReduceL2::execute(
-            &OperatorAttributes::None,
-            &[&self],
-            &[&l2_norm],
-            device_stream,
-        )?;
-        let l2_norm = l2_norm.get_values()?[0];
-        // Can not normalize a vector with no direction.
-        if l2_norm == 0.0 {
-            return Ok(());
-        }
-        if l2_norm <= norm_max {
-            return Ok(());
-        }
-        let alpha = 1.0 / l2_norm;
-        let x = self;
-        let device = self.device();
-        let alpha = device
-            .tensor(
-                1,
-                1,
-                vec![alpha],
-                #[cfg(debug_assertions)]
-                &self.file,
-                #[cfg(debug_assertions)]
-                self.line,
-                #[cfg(debug_assertions)]
-                self.column,
-            )
-            .unwrap();
-        device.scalar_mul(&alpha, x)
+        let x_inc = 1;
+        let y_inc = 1;
+        let x = src.as_ptr();
+        let x_offset = src_row * src.cols() + src_col;
+        let x_offset = x_offset as i32;
+        let y = dst.as_mut_ptr();
+        let y_offset = dst_row * dst.cols() + dst_col;
+        let y_offset = y_offset as i32;
+        device.copy(n, x, x_offset, x_inc, y, y_offset, y_inc, device_stream)
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {

@@ -1,43 +1,67 @@
 use crate::{
-    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
-    tensor::{Error, Tensor},
-    BinaryOperator, Device, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
+    tensor::{Error, ErrorEnum, Tensor},
+    BinaryOperator, Device, DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes,
+    TensorWithGrad,
 };
 
-pub struct Mul {
+#[cfg(test)]
+mod tests;
+
+pub struct Add {
     device: Device,
 }
 
-impl Mul {
+impl Add {
     pub fn new(device: &Device) -> Self {
         Self {
-            device: device.clone(),
+            device: device.to_owned(),
         }
     }
 }
 
-impl ExecutableOperator for Mul {
+impl ExecutableOperator for Add {
     fn execute(
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];
-        Tensor::mul(input_0, input_1, output)
+        if input_0.len() != input_1.len() {
+            println!("Incompatible sizes");
+            println!("x {}", input_0);
+            println!("y {}", input_1);
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        if input_0.len() != output.len() {
+            println!("Incompatible sizes");
+            println!("x {}", input_0);
+            println!("y {}", output);
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+        let device = input_0.device();
+        Tensor::copy(input_0, output, device_stream)?;
+
+        let alpha = 1.0;
+
+        let n = input_1.len() as i32;
+        let incx = 1;
+        let incy = 1;
+        device.axpy(n, alpha, input_1, incx, output, incy, device_stream)
     }
 }
 
-impl BinaryOperator for Mul {
+impl BinaryOperator for Add {
     fn forward(
         &self,
-        input_0: &TensorWithGrad,
         input_1: &TensorWithGrad,
+        input_2: &TensorWithGrad,
     ) -> Result<TensorWithGrad, Error> {
-        let input_0_t: &Tensor = &input_0.tensor();
+        let input_0_t: &Tensor = &input_1.tensor();
         let input_1_t: &Tensor = &input_1.tensor();
         debug_assert_eq!(*input_0_t.size(), *input_1_t.size());
         let rows = input_0_t.rows();
@@ -48,11 +72,11 @@ impl BinaryOperator for Mul {
             rows,
             cols,
             vec![0.0; len],
-            &[input_0, input_1],
+            &[input_1, input_2],
             true,
             false,
         )?;
-        let inputs = [input_0, input_1];
+        let inputs = [input_1, input_2];
         let outputs = [&output];
         let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
@@ -68,66 +92,39 @@ impl BinaryOperator for Mul {
             &[&outputs[0].gradient()],
         ));
         output.push_instruction(inference_instruction!(
-            OpCode::Mul,
+            OpCode::Add,
             OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],
         ));
 
         {
-            let inputs = [input_0, input_1, &output];
-            let outputs = [input_0, input_1];
+            let inputs = [&output];
+            let outputs = [input_1, input_2];
 
-            let inputs: &[&Tensor] = &[
-                &inputs[0].tensor(),
-                &inputs[1].tensor(),
-                &inputs[2].gradient(),
-            ];
-
+            let inputs = &[&inputs[0].gradient()];
             let outputs = &[&outputs[0].gradient(), &outputs[1].gradient()];
 
-            debug_assert_eq!(outputs.len(), 2);
-            let input_gradient = inputs[2];
-            let rows = input_gradient.rows();
-            let cols = input_gradient.cols();
-            let len = rows * cols;
+            let input_gradient = inputs[0];
 
             if outputs[1].requires_grad() {
                 let output_1_gradient = outputs[1];
-                let output_0 = inputs[0];
-                let tmp = new_tensor!(self.device, rows, cols, vec![0.0; len])?;
-
-                output.push_instruction(gradient_instruction!(
-                    OpCode::Mul,
-                    OperatorAttributes::None,
-                    &[output_0, input_gradient],
-                    &[&tmp],
-                ));
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
-                    &[&tmp, output_1_gradient],
+                    &[input_gradient, output_1_gradient],
                     &[output_1_gradient],
                 ));
             }
 
             if outputs[0].requires_grad() {
                 let output_0_gradient = outputs[0];
-                let output_ = inputs[1];
-                let tmp = new_tensor!(self.device, rows, cols, vec![0.0; len])?;
-
-                output.push_instruction(gradient_instruction!(
-                    OpCode::Mul,
-                    OperatorAttributes::None,
-                    &[output_, input_gradient],
-                    &[&tmp],
-                ));
 
                 output.push_instruction(gradient_instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
-                    &[&tmp, output_0_gradient],
+                    &[input_gradient, output_0_gradient],
                     &[output_0_gradient],
                 ));
             }

@@ -26,13 +26,13 @@ impl ExecutableOperator for ReduceSumSquare {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = outputs[0];
         let device = expected.device();
-        device.reduce_square_sum(expected, actual, loss)
+        device.reduce_square_sum(expected, actual, loss, device_stream)
     }
 }
 

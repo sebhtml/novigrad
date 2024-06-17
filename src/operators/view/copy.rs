@@ -4,9 +4,10 @@ use crate::{
     DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
-pub struct ReduceL2 {}
+pub struct Copy {
+}
 
-impl ExecutableOperator for ReduceL2 {
+impl ExecutableOperator for Copy {
     fn execute(
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
@@ -16,8 +17,13 @@ impl ExecutableOperator for ReduceL2 {
         let input = inputs[0];
         let output = outputs[0];
         let device = input.device();
-        device.dot(input, input, output, device_stream)?;
-        device.sqrt(output, output, device_stream)?;
-        Ok(())
+        device.copy(
+            input.len() as i32,
+            input.as_mut_ptr(),
+            1,
+            output.as_mut_ptr(),
+            1,
+            device_stream,
+        )
     }
 }

@@ -28,8 +28,10 @@ impl ExecutableOperator for Identity {
         device.copy(
             input.len() as i32,
             input.as_mut_ptr(),
+            0,
             1,
             output.as_mut_ptr(),
+            0,
             1,
             device_stream,
         )

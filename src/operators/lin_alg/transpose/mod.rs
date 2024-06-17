@@ -1,12 +1,21 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    ExecutableOperator, OperatorAttributes,
+    DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
-pub struct ClipNorm {}
+#[cfg(test)]
+mod tests;
 
-impl ExecutableOperator for ClipNorm {
+pub struct Transpose {}
+
+impl Default for Transpose {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl ExecutableOperator for Transpose {
     fn execute(
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
@@ -15,10 +24,8 @@ impl ExecutableOperator for ClipNorm {
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        if input.name() != output.name() {
-            Tensor::copy(input, output, device_stream)?;
-        }
-        output.clip_norm(device_stream)?;
+        let device = input.device();
+        device.transpose(input, output, device_stream)?;
         Ok(())
     }
 }

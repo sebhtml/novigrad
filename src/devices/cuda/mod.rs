@@ -177,12 +177,12 @@ impl DeviceTrait for CudaDev {
         n: i32,
         k: i32,
         alpha: f32,
-        a: *const f32,
+        a: &Tensor,
         lda: i32,
-        b: *const f32,
+        b: &Tensor,
         ldb: i32,
         beta: f32,
-        c: *mut f32,
+        c: &Tensor,
         ldc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
@@ -206,6 +206,9 @@ impl DeviceTrait for CudaDev {
         let alpha = &alpha;
         let beta = &beta;
 
+        let a = a.as_ptr();
+        let b = b.as_ptr();
+        let c = c.as_mut_ptr();
         let status = unsafe {
             lib().cublasSgemm_v2(
                 handle, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
@@ -220,9 +223,9 @@ impl DeviceTrait for CudaDev {
         &self,
         n: i32,
         alpha: f32,
-        x: *const f32,
+        x: &Tensor,
         incx: i32,
-        y: *mut f32,
+        y: &Tensor,
         incy: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
@@ -232,6 +235,8 @@ impl DeviceTrait for CudaDev {
             return Err(error!(ErrorEnum::UnsupportedOperation));
         };
         let alpha = &alpha as *const f32;
+        let x = x.as_ptr();
+        let y = y.as_mut_ptr();
         let status = unsafe { lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
         status
             .result()
@@ -274,9 +279,11 @@ impl DeviceTrait for CudaDev {
         &self,
         n: i32,
         x: *const f32,
-        incx: i32,
+        x_offset: i32,
+        x_inc: i32,
         y: *mut f32,
-        incy: i32,
+        y_offset: i32,
+        y_inc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
@@ -284,13 +291,20 @@ impl DeviceTrait for CudaDev {
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
         };
-        let status = unsafe { lib().cublasScopy_v2(handle, n, x, incx, y, incy) };
+        let x = x.wrapping_add(x_offset as usize);
+        let y = y.wrapping_add(y_offset as usize);
+        let status = unsafe { lib().cublasScopy_v2(handle, n, x, x_inc, y, y_inc) };
         status
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
-    fn scalar_mul(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+    fn scalar_mul(
+        &self,
+        alpha: &Tensor,
+        x: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let n = x.len();
         let alpha = &alpha.device_slice().buffer;
         let x = &x.device_slice().buffer;
@@ -333,7 +347,12 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn softmax(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn softmax(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let kernel = self.get_func("softmax_kernel_module", "softmax_kernel")?;
         let rows = input.rows();
         let cols = input.cols();
@@ -372,7 +391,13 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn mul(&self, left: &Tensor, right: &Tensor, result: &Tensor) -> Result<(), Error> {
+    fn mul(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let n = left.len();
         let kernel = self.get_func("mul_kernel_module", "mul_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -398,7 +423,12 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn sigmoid(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn sigmoid(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let kernel = self.get_func("sigmoid_kernel_module", "sigmoid_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -453,7 +483,12 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn sqrt(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let kernel = self.get_func("sqrt_kernel_module", "sqrt_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -518,6 +553,7 @@ impl DeviceTrait for CudaDev {
         expected: &Tensor,
         actual: &Tensor,
         loss: &Tensor,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let n = expected.len();
         let kernel = self.get_func(
@@ -556,6 +592,7 @@ impl DeviceTrait for CudaDev {
         expected: &Tensor,
         actual: &Tensor,
         loss: &Tensor,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         if *expected.size() != *actual.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
@@ -574,7 +611,13 @@ impl DeviceTrait for CudaDev {
         Ok(())
     }
 
-    fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn transpose(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        // TODO implement transpose in CUDA.
         let self_values = input.get_values()?;
         let mut other_values = output.get_values()?;
         let rows = input.rows();

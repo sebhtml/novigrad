@@ -364,10 +364,13 @@ fn cuda_cross_entropy_loss() {
 
     let cpu_output = {
         let device = Device::cpu();
+        let stream = device.stream().unwrap();
         let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
         let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
         let output = new_tensor!(device, 1, 1 as usize, vec![0.0]).unwrap();
-        device.cross_entropy_loss(&left, &right, &output).unwrap();
+        device
+            .cross_entropy_loss(&left, &right, &output, &stream)
+            .unwrap();
         output.get_values().unwrap()
     };
 

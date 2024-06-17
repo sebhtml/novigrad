@@ -17,7 +17,7 @@ impl ExecutableOperator for ReduceL2 {
         let output = outputs[0];
         let device = input.device();
         device.dot(input, input, output, device_stream)?;
-        device.sqrt(output, output)?;
+        device.sqrt(output, output, device_stream)?;
         Ok(())
     }
 }

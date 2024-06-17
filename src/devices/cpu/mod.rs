@@ -234,7 +234,12 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn sqrt(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let rows = input.rows();
         let cols = input.cols();
         let values = input.as_ptr();
@@ -315,6 +320,7 @@ impl DeviceTrait for CpuDevice {
         expected: &Tensor,
         actual: &Tensor,
         loss: &Tensor,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         debug_assert_eq!(*actual.size(), *expected.size());
         let p = expected;
@@ -353,6 +359,7 @@ impl DeviceTrait for CpuDevice {
         expected: &Tensor,
         actual: &Tensor,
         loss: &Tensor,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         if *expected.size() != *actual.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
@@ -373,7 +380,12 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn transpose(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let input_ptr = input.as_ptr();
         let output_ptr = output.as_mut_ptr();
         let rows = input.rows();

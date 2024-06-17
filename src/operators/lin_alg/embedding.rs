@@ -1,6 +1,7 @@
 use crate::{
     devices::Device,
     new_tensor, new_tensor_with_grad,
+    stream::StreamTrait,
     tensor::{Error, Tensor},
     BinaryOperator, DeviceTrait, MatMul, TensorWithGrad, UnaryOperator,
 };
@@ -22,7 +23,9 @@ impl Embedding {
         let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim)?;
         let len = embedding_table.len();
         let mut transposed = new_tensor!(device, embedding_dim, num_embeddings, vec![0.0; len])?;
-        device.transpose(&embedding_table, &mut transposed)?;
+        let device_stream = device.stream()?;
+        device.transpose(&embedding_table, &mut transposed, &device_stream)?;
+        device_stream.synchronize()?;
         let embedding_table = new_tensor_with_grad!(
             device,
             transposed.rows(),

@@ -474,7 +474,12 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn sqrt(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn sqrt(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let kernel = self.get_func("sqrt_kernel_module", "sqrt_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -539,6 +544,7 @@ impl DeviceTrait for CudaDev {
         expected: &Tensor,
         actual: &Tensor,
         loss: &Tensor,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let n = expected.len();
         let kernel = self.get_func(
@@ -577,6 +583,7 @@ impl DeviceTrait for CudaDev {
         expected: &Tensor,
         actual: &Tensor,
         loss: &Tensor,
+        _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         if *expected.size() != *actual.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
@@ -595,7 +602,13 @@ impl DeviceTrait for CudaDev {
         Ok(())
     }
 
-    fn transpose(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn transpose(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        // TODO implement transpose in CUDA.
         let self_values = input.get_values()?;
         let mut other_values = output.get_values()?;
         let rows = input.rows();

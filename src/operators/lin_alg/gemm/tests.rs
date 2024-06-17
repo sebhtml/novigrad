@@ -53,7 +53,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     )
     .unwrap();
     let lhs = new_tensor!(device, 2, 4, vec![0.0; 8]).unwrap();
-    device.transpose(&lhs2, &lhs).unwrap();
+    device.transpose(&lhs2, &lhs, &device_stream).unwrap();
 
     let rhs = new_tensor!(
         device,
@@ -88,7 +88,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     .unwrap();
     let expected_result = new_tensor!(device, 3, 4, vec![0.0; 12]).unwrap();
     device
-        .transpose(&expected_result2, &expected_result)
+        .transpose(&expected_result2, &expected_result, &device_stream)
         .unwrap();
 
     let rows = rhs.cols();
@@ -133,7 +133,7 @@ fn transposed_lhs_matrix_multiplication_result() {
     )
     .unwrap();
     let lhs = new_tensor!(device, 2, 3, vec![0.0; 6]).unwrap();
-    device.transpose(&lhs2, &lhs).unwrap();
+    device.transpose(&lhs2, &lhs, &device_stream).unwrap();
     let rhs = new_tensor!(
         device,
         2,
@@ -283,7 +283,7 @@ fn transposed_rhs_matrix_multiplication_result() {
     )
     .unwrap();
     let rhs = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
-    device.transpose(&rhs2, &rhs).unwrap();
+    device.transpose(&rhs2, &rhs, &device_stream).unwrap();
     let expected_result = new_tensor!(
         device,
         3,
@@ -340,7 +340,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     )
     .unwrap();
     let lhs = new_tensor!(device, 2, 3, vec![0.0; 6]).unwrap();
-    device.transpose(&lhs2, &lhs).unwrap();
+    device.transpose(&lhs2, &lhs, &device_stream).unwrap();
     let rhs2 = new_tensor!(
         device,
         2,
@@ -352,7 +352,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     )
     .unwrap();
     let rhs = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
-    device.transpose(&rhs2, &rhs).unwrap();
+    device.transpose(&rhs2, &rhs, &device_stream).unwrap();
     let expected_result = new_tensor!(
         device,
         3,
@@ -410,7 +410,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     )
     .unwrap();
     let lhs = new_tensor!(device, 2, 4, vec![0.0; 8]).unwrap();
-    device.transpose(&lhs2, &lhs).unwrap();
+    device.transpose(&lhs2, &lhs, &device_stream).unwrap();
 
     let rhs2 = new_tensor!(
         device,
@@ -424,7 +424,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     .unwrap();
 
     let rhs = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
-    device.transpose(&rhs2, &rhs).unwrap();
+    device.transpose(&rhs2, &rhs, &device_stream).unwrap();
 
     let expected_result2 = new_tensor!(
         device,
@@ -448,7 +448,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     .unwrap();
     let expected_result = new_tensor!(device, 3, 4, vec![0.0; 12]).unwrap();
     device
-        .transpose(&expected_result2, &expected_result)
+        .transpose(&expected_result2, &expected_result, &device_stream)
         .unwrap();
 
     let rows = rhs.rows();

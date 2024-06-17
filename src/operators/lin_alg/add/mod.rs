@@ -6,6 +6,9 @@ use crate::{
     TensorWithGrad,
 };
 
+#[cfg(test)]
+mod tests;
+
 pub struct Add {
     device: Device,
 }

@@ -1,3 +1,4 @@
+- all methods in Device should take &Tensor, not pointers
 - use device_stream in all device methods
 - use 16 execution units for cuda too
 
@@ -15,7 +16,6 @@
 - implement Gelu
 
 - move opcode.rs to operators/
-- all methods in Device should take &Tensor, not pointers
 
 ---------------
 

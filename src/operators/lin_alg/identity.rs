@@ -25,16 +25,7 @@ impl ExecutableOperator for Identity {
         let input = inputs[0];
         let output = outputs[0];
         let device = input.device();
-        device.copy(
-            input.len() as i32,
-            input.as_mut_ptr(),
-            0,
-            1,
-            output.as_mut_ptr(),
-            0,
-            1,
-            device_stream,
-        )
+        device.copy(input.len() as i32, input, 0, 1, output, 0, 1, device_stream)
     }
 }
 

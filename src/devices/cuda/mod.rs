@@ -278,10 +278,10 @@ impl DeviceTrait for CudaDev {
     fn copy(
         &self,
         n: i32,
-        x: *const f32,
+        x: &Tensor,
         x_offset: i32,
         x_inc: i32,
-        y: *mut f32,
+        y: &Tensor,
         y_offset: i32,
         y_inc: i32,
         device_stream: &DeviceStream,
@@ -291,7 +291,9 @@ impl DeviceTrait for CudaDev {
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
         };
+        let x = x.as_ptr();
         let x = x.wrapping_add(x_offset as usize);
+        let y = y.as_mut_ptr();
         let y = y.wrapping_add(y_offset as usize);
         let status = unsafe { lib().cublasScopy_v2(handle, n, x, x_inc, y, y_inc) };
         status

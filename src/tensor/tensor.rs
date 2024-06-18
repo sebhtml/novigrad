@@ -180,8 +180,6 @@ impl Tensor {
         let n = x.len() as i32;
         let incx = 1;
         let incy = 1;
-        let x = x.as_ptr();
-        let y = y.as_mut_ptr();
         device.copy(n, x, 0, incx, y, 0, incy, device_stream)
     }
 
@@ -197,15 +195,22 @@ impl Tensor {
     ) -> Result<(), Error> {
         let device = &src.device;
         let n = n as i32;
-        let x_inc = 1;
-        let y_inc = 1;
-        let x = src.as_ptr();
-        let x_offset = src_row * src.cols() + src_col;
-        let x_offset = x_offset as i32;
-        let y = dst.as_mut_ptr();
-        let y_offset = dst_row * dst.cols() + dst_col;
-        let y_offset = y_offset as i32;
-        device.copy(n, x, x_offset, x_inc, y, y_offset, y_inc, device_stream)
+        let src_inc = 1;
+        let dst_inc = 1;
+        let src_offset = src_row * src.cols() + src_col;
+        let src_offset = src_offset as i32;
+        let dst_offset = dst_row * dst.cols() + dst_col;
+        let dst_offset = dst_offset as i32;
+        device.copy(
+            n,
+            src,
+            src_offset,
+            src_inc,
+            dst,
+            dst_offset,
+            dst_inc,
+            device_stream,
+        )
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {

@@ -1,4 +1,3 @@
-- use &Tensor in device copy method
 - don't call Device::copy in Tensor
 - use device_stream in all device methods
 - use 16 execution units for cuda too

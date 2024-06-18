@@ -1,5 +1,4 @@
 use crate::{
-    new_tensor,
     reduce_l2::ReduceL2,
     stream::DeviceStream,
     tensor::{Error, Tensor},

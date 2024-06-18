@@ -16,7 +16,7 @@ use stream::CudaDeviceStream;
 use crate::{
     error,
     slice::DeviceSlice,
-    stream::DeviceStream,
+    stream::{DeviceStream, DeviceStreamEnum},
     tensor::{Error, ErrorEnum, Tensor},
     DeviceTrait, EPSILON,
 };
@@ -47,7 +47,7 @@ impl CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _stream = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let _stream = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             &stream.stream
         } else {
             return Err(error!(ErrorEnum::NvLaunchError));
@@ -231,7 +231,7 @@ impl DeviceTrait for CudaDev {
         ldc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             *stream.cuda_blas.handle()
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
@@ -274,7 +274,7 @@ impl DeviceTrait for CudaDev {
         incy: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             *stream.cuda_blas.handle()
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
@@ -331,7 +331,7 @@ impl DeviceTrait for CudaDev {
         y_inc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             *stream.cuda_blas.handle()
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
@@ -558,7 +558,7 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _stream = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let _stream = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             &stream.stream
         } else {
             return Err(error!(ErrorEnum::NvLaunchError));
@@ -690,7 +690,7 @@ impl DeviceTrait for CudaDev {
         let cfg = LaunchConfig::for_num_elems(n as u32);
         let input = &input.device_slice().buffer;
         let output = &output.device_slice().buffer;
-        let rng_state = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let rng_state = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             &stream.rng_state
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
@@ -709,7 +709,7 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn stream(&self) -> Result<DeviceStream, Error> {
+    fn stream(&self) -> Result<DeviceStreamEnum, Error> {
         match self.dev.fork_default_stream() {
             Ok(stream) => {
                 let rng_state = self
@@ -727,7 +727,7 @@ impl DeviceTrait for CudaDev {
                     rng_state,
                     cuda_blas,
                 };
-                Ok(DeviceStream::CudaDeviceStream(cuda_stream))
+                Ok(DeviceStreamEnum::CudaDeviceStream(cuda_stream))
             }
             Err(_) => Err(error!(ErrorEnum::UnsupportedOperation)),
         }

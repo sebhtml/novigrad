@@ -9,7 +9,7 @@ use crate::{
     stream::{DeviceStream, StreamTrait},
     streams::stream::Stream,
     tensor::{Error, ErrorEnum},
-    Device, DeviceTrait, Instruction,
+    Device, Instruction,
 };
 
 use super::{queue::Queue, Command};

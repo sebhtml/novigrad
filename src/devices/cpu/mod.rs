@@ -6,7 +6,7 @@ extern crate cblas_sys as ffi;
 use crate::{
     error,
     slice::DeviceSlice,
-    stream::DeviceStream,
+    stream::{DeviceStream, DeviceStreamEnum},
     tensor::{Error, ErrorEnum, Tensor},
     EPSILON,
 };
@@ -438,8 +438,8 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn stream(&self) -> Result<DeviceStream, Error> {
-        Ok(DeviceStream::CpuDeviceStream)
+    fn stream(&self) -> Result<DeviceStreamEnum, Error> {
+        Ok(DeviceStreamEnum::CpuDeviceStream)
     }
 
     fn min(

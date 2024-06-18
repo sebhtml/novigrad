@@ -6,7 +6,7 @@ use crate::{
     stream::{DeviceStream, StreamTrait},
     streams::stream::Stream,
     tensor::Error,
-    Device, DeviceTrait, Instruction,
+    Device, Instruction,
 };
 
 use super::{SchedulerTrait, StreamEventHandler};

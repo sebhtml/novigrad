@@ -14,7 +14,7 @@ pub use cpu::*;
 mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
-use stream::DeviceStream;
+use stream::{DeviceStream, DeviceStreamEnum};
 
 use crate::{tensor::Tensor, TensorWithGrad};
 pub mod slice;
@@ -241,7 +241,7 @@ pub trait DeviceTrait {
     /// Allocate a slice on the device.
     fn slice(&self, n: i32) -> Result<DeviceSlice, Error>;
 
-    fn stream(&self) -> Result<DeviceStream, Error>;
+    fn stream(&self) -> Result<DeviceStreamEnum, Error>;
 }
 
 impl Debug for dyn DeviceTrait + Send + Sync {
@@ -459,10 +459,8 @@ impl Device {
             }
         }
     }
-}
 
-impl DeviceTrait for Device {
-    fn gemm(
+    pub fn gemm(
         &self,
         transa: bool,
         transb: bool,
@@ -497,7 +495,7 @@ impl DeviceTrait for Device {
         )
     }
 
-    fn dot(
+    pub fn dot(
         &self,
         left: &Tensor,
         right: &Tensor,
@@ -513,7 +511,7 @@ impl DeviceTrait for Device {
         self.device.dot(left, right, result, device_stream)
     }
 
-    fn copy(
+    pub fn copy(
         &self,
         n: i32,
         x: &Tensor,
@@ -528,7 +526,7 @@ impl DeviceTrait for Device {
             .copy(n, x, x_offset, x_inc, y, y_offset, y_inc, device_stream)
     }
 
-    fn axpy(
+    pub fn axpy(
         &self,
         n: i32,
         alpha: f32,
@@ -541,7 +539,7 @@ impl DeviceTrait for Device {
         self.device.axpy(n, alpha, x, incx, y, incy, device_stream)
     }
 
-    fn scalar_mul(
+    pub fn scalar_mul(
         &self,
         alpha: &Tensor,
         x: &Tensor,
@@ -550,11 +548,11 @@ impl DeviceTrait for Device {
         self.device.scalar_mul(alpha, x, device_stream)
     }
 
-    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+    pub fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         self.device.scalar_add(alpha, x)
     }
 
-    fn softmax(
+    pub fn softmax(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -563,14 +561,14 @@ impl DeviceTrait for Device {
         self.device.softmax(input, output, device_stream)
     }
 
-    fn reduce_sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
+    pub fn reduce_sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
         if &y.size() as &[usize] != &[1, 1] {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         self.device.reduce_sum(x, y)
     }
 
-    fn mul(
+    pub fn mul(
         &self,
         left: &Tensor,
         right: &Tensor,
@@ -580,7 +578,7 @@ impl DeviceTrait for Device {
         self.device.mul(left, right, result, device_stream)
     }
 
-    fn sigmoid(
+    pub fn sigmoid(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -589,7 +587,7 @@ impl DeviceTrait for Device {
         self.device.sigmoid(input, output, device_stream)
     }
 
-    fn sqrt(
+    pub fn sqrt(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -598,7 +596,7 @@ impl DeviceTrait for Device {
         self.device.sqrt(input, output, device_stream)
     }
 
-    fn div(
+    pub fn div(
         &self,
         input1: &Tensor,
         input2: &Tensor,
@@ -608,7 +606,7 @@ impl DeviceTrait for Device {
         self.device.div(input1, input2, output, device_stream)
     }
 
-    fn min(
+    pub fn min(
         &self,
         input1: &Tensor,
         input2: &Tensor,
@@ -618,7 +616,7 @@ impl DeviceTrait for Device {
         self.device.min(input1, input2, output, device_stream)
     }
 
-    fn clip(
+    pub fn clip(
         &self,
         min: &Tensor,
         max: &Tensor,
@@ -629,7 +627,7 @@ impl DeviceTrait for Device {
         self.device.clip(min, max, input, output, device_stream)
     }
 
-    fn cross_entropy_loss(
+    pub fn cross_entropy_loss(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -640,7 +638,7 @@ impl DeviceTrait for Device {
             .cross_entropy_loss(expected, actual, loss, device_stream)
     }
 
-    fn reduce_sum_square(
+    pub fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -651,7 +649,7 @@ impl DeviceTrait for Device {
             .reduce_sum_square(expected, actual, loss, device_stream)
     }
 
-    fn transpose(
+    pub fn transpose(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -660,7 +658,7 @@ impl DeviceTrait for Device {
         self.device.transpose(input, output, device_stream)
     }
 
-    fn bernoulli(
+    pub fn bernoulli(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -669,11 +667,12 @@ impl DeviceTrait for Device {
         self.device.bernoulli(input, output, device_stream)
     }
 
-    fn slice(&self, n: i32) -> Result<DeviceSlice, Error> {
+    pub fn slice(&self, n: i32) -> Result<DeviceSlice, Error> {
         self.device.slice(n)
     }
 
-    fn stream(&self) -> Result<DeviceStream, Error> {
-        self.device.stream()
+    pub fn stream(&self) -> Result<DeviceStream, Error> {
+        let variant = self.device.stream()?;
+        DeviceStream::try_new(self, variant)
     }
 }

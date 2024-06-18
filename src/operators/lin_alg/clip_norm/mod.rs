@@ -24,8 +24,8 @@ impl ExecutableOperator for ClipNorm {
         if input.name() != output.name() {
             device.copy_to(input, output, device_stream)?;
         }
-        let max_alpha = new_tensor!(device, 1, 1, vec![1.0],)?;
-        let l2_norm = new_tensor!(device, 1, 1, vec![0.0],)?;
+        let max_alpha = &device_stream.max_alpha;
+        let l2_norm = &device_stream.l2_norm;
         ReduceL2::execute(
             &OperatorAttributes::None,
             &[&output],
@@ -33,8 +33,8 @@ impl ExecutableOperator for ClipNorm {
             device,
             device_stream,
         )?;
-        let one = new_tensor!(device, 1, 1, vec![1.0],)?;
-        let alpha = new_tensor!(device, 1, 1, vec![0.0],)?;
+        let one = &device_stream.one;
+        let alpha = &device_stream.alpha;
         device.div(&one, &l2_norm, &alpha, device_stream)?;
         device.min(&max_alpha, &alpha, &alpha, device_stream)?;
         device.scalar_mul(&alpha, output, device_stream)?;

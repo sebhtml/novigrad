@@ -1,10 +1,9 @@
 use more_asserts::{assert_ge, assert_le};
 
-use crate::{new_tensor, Device, DeviceTrait};
+use crate::{new_tensor, Device};
 
 #[test]
 fn clip_min() {
-    use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
     let stream = device.stream().unwrap();

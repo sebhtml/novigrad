@@ -401,7 +401,7 @@ impl Device {
                 column,
             )?
         };
-        let tensor = TensorWithGrad::new(self, tensor, gradient, inputs);
+        let tensor = TensorWithGrad::new(tensor, gradient, inputs);
         if optimize {
             self.tensors_to_optimize
                 .write()

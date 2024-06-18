@@ -7,11 +7,15 @@ use crate::{
 
 pub struct Identity {
     label: String,
+    device: Device,
 }
 
 impl Identity {
-    pub fn new(label: String) -> Self {
-        Self { label }
+    pub fn new(label: String, device: &Device) -> Self {
+        Self {
+            label,
+            device: device.clone(),
+        }
     }
 }
 
@@ -32,7 +36,7 @@ impl ExecutableOperator for Identity {
 impl UnaryOperator for Identity {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let output = new_tensor_with_grad!(
-            input.device(),
+            self.device,
             input.tensor().rows(),
             input.tensor().cols(),
             vec![0.0; input.tensor().len()],

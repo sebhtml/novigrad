@@ -8,7 +8,6 @@ use std::{collections::LinkedList, ops::Deref};
 
 #[derive(Clone, Debug)]
 pub struct TensorWithGrad {
-    device: Device,
     inputs: Arc<Vec<TensorWithGrad>>,
     instructions: Arc<RwLock<Vec<Instruction>>>,
     tensor: Arc<RwLock<Tensor>>,
@@ -16,24 +15,14 @@ pub struct TensorWithGrad {
 }
 
 impl TensorWithGrad {
-    pub fn new(
-        device: &Device,
-        tensor: Tensor,
-        gradient: Tensor,
-        inputs: &[&TensorWithGrad],
-    ) -> Self {
+    pub fn new(tensor: Tensor, gradient: Tensor, inputs: &[&TensorWithGrad]) -> Self {
         let inputs: Vec<TensorWithGrad> = inputs.iter().map(|x| (*x).to_owned()).collect();
         Self {
-            device: device.clone(),
             inputs: Arc::new(inputs),
             instructions: Default::default(),
             tensor: Arc::new(RwLock::new(tensor)),
             gradient: Arc::new(RwLock::new(gradient)),
         }
-    }
-
-    pub fn device(&self) -> &Device {
-        &self.device
     }
 
     pub fn push_instruction(&self, instruction: Instruction) {

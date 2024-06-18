@@ -1,2 +1,2 @@
-mod reduce_sum;
-pub use reduce_sum::*;
+pub mod reduce_l2;
+pub mod reduce_sum;

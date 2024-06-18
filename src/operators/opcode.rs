@@ -3,13 +3,14 @@ use crate::{
     clip::Clip,
     identity::Identity,
     reduce_l2::ReduceL2,
+    reduce_sum::ReduceSum,
     statistics::bernoulli::Bernoulli,
     stream::DeviceStream,
     tensor::{Error, Tensor},
     transpose::Transpose,
     Add, ClipNorm, Concat, Device, Div, ExecutableOperator, Gemm, Mul, OperatorAttributes,
-    ReduceSum, ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid, Softmax,
-    SoftmaxCrossEntropyLoss, Sqrt, Sub, Unconcat,
+    ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid, Softmax, SoftmaxCrossEntropyLoss,
+    Sqrt, Sub, Unconcat,
 };
 
 #[derive(Clone, Debug)]

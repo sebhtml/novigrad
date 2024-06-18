@@ -24,6 +24,5 @@ mod sqrt;
 pub use sqrt::*;
 pub mod clip;
 pub mod identity;
-pub mod reduce_l2;
 pub mod row_max;
 pub mod transpose;

@@ -210,7 +210,7 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
-    fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+    fn reduce_sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     /// https://en.wikipedia.org/wiki/Entropy_(information_theory)
@@ -223,7 +223,7 @@ pub trait DeviceTrait {
     ) -> Result<(), Error>;
 
     /// RSS = Σ (y_i - f(x_i))^2
-    fn reduce_square_sum(
+    fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -563,11 +563,11 @@ impl DeviceTrait for Device {
         self.device.softmax(input, output, device_stream)
     }
 
-    fn sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
         if &y.size() as &[usize] != &[1, 1] {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        self.device.sum(x, y)
+        self.device.reduce_sum(x, y)
     }
 
     fn mul(
@@ -640,7 +640,7 @@ impl DeviceTrait for Device {
             .cross_entropy_loss(expected, actual, loss, device_stream)
     }
 
-    fn reduce_square_sum(
+    fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -648,7 +648,7 @@ impl DeviceTrait for Device {
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         self.device
-            .reduce_square_sum(expected, actual, loss, device_stream)
+            .reduce_sum_square(expected, actual, loss, device_stream)
     }
 
     fn transpose(

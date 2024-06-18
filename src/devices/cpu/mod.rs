@@ -182,7 +182,7 @@ impl DeviceTrait for CpuDevice {
         CpuDevice::_softmax(rows, cols, input, output)
     }
 
-    fn sum(&self, _input: &Tensor, _output: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(&self, _input: &Tensor, _output: &Tensor) -> Result<(), Error> {
         todo!()
     }
 
@@ -365,7 +365,7 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn reduce_square_sum(
+    fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,

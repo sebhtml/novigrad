@@ -16,6 +16,6 @@ impl ExecutableOperator for ReduceSum {
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        device.sum(input, output)
+        device.reduce_sum(input, output)
     }
 }

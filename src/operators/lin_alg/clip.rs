@@ -18,7 +18,6 @@ impl ExecutableOperator for Clip {
         let max = inputs[1];
         let input = inputs[2];
         let output = outputs[0];
-        device.clip(min, max, input, output, device_stream)?;
-        Ok(())
+        device.clip(min, max, input, output, device_stream)
     }
 }

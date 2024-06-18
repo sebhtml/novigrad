@@ -420,7 +420,7 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let sum_kernel = self.get_func("sum_kernel_module", "sum_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -631,7 +631,7 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn reduce_square_sum(
+    fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,

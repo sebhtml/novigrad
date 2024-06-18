@@ -27,6 +27,7 @@ impl ExecutableOperator for Reshape {
         attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let output_size = match attributes {
@@ -36,7 +37,6 @@ impl ExecutableOperator for Reshape {
             }
         };
         let input = inputs[0];
-        let device = input.device();
         let output = outputs[0];
         device.copy_to(input, output, device_stream)?;
         output.resize(output_size)

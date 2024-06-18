@@ -1,4 +1,5 @@
 use crate::stream::DeviceStream;
+use crate::Device;
 use crate::{tensor::Error, tensor::Tensor, Category, Instruction};
 use core::fmt::Debug;
 use std::fmt::Display;
@@ -7,6 +8,7 @@ use std::{collections::LinkedList, ops::Deref};
 
 #[derive(Clone, Debug)]
 pub struct TensorWithGrad {
+    device: Device,
     inputs: Arc<Vec<TensorWithGrad>>,
     instructions: Arc<RwLock<Vec<Instruction>>>,
     tensor: Arc<RwLock<Tensor>>,
@@ -14,14 +16,24 @@ pub struct TensorWithGrad {
 }
 
 impl TensorWithGrad {
-    pub fn new(tensor: Tensor, gradient: Tensor, inputs: &[&TensorWithGrad]) -> Self {
+    pub fn new(
+        device: &Device,
+        tensor: Tensor,
+        gradient: Tensor,
+        inputs: &[&TensorWithGrad],
+    ) -> Self {
         let inputs: Vec<TensorWithGrad> = inputs.iter().map(|x| (*x).to_owned()).collect();
         Self {
+            device: device.clone(),
             inputs: Arc::new(inputs),
             instructions: Default::default(),
             tensor: Arc::new(RwLock::new(tensor)),
             gradient: Arc::new(RwLock::new(gradient)),
         }
+    }
+
+    pub fn device(&self) -> &Device {
+        &self.device
     }
 
     pub fn push_instruction(&self, instruction: Instruction) {
@@ -77,16 +89,20 @@ impl TensorWithGrad {
         tape.into_iter().rev().collect()
     }
 
-    pub fn forward(&self, device_stream: &DeviceStream) -> Result<(), Error> {
+    pub fn forward(&self, device: &Device, device_stream: &DeviceStream) -> Result<(), Error> {
         for inst in self.forward_instructions().iter() {
-            inst.execute(device_stream)?;
+            inst.execute(device, device_stream)?;
         }
         Ok(())
     }
 
-    pub fn compute_gradient(&self, device_stream: &DeviceStream) -> Result<(), Error> {
+    pub fn compute_gradient(
+        &self,
+        device: &Device,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         for inst in self.gradient_instructions().iter() {
-            inst.execute(device_stream)?;
+            inst.execute(device, device_stream)?;
         }
         Ok(())
     }

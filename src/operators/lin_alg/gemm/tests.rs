@@ -31,6 +31,7 @@ fn big_matrix_multiplication() {
         beta,
         &mut result,
         false,
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -53,7 +54,14 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     )
     .unwrap();
     let lhs = new_tensor!(device, 2, 4, vec![0.0; 8]).unwrap();
-    Transpose::execute(&Default::default(), &[&lhs2], &[&lhs], &device_stream).unwrap();
+    Transpose::execute(
+        &Default::default(),
+        &[&lhs2],
+        &[&lhs],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
 
     let rhs = new_tensor!(
         device,
@@ -91,6 +99,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
         &Default::default(),
         &[&expected_result2],
         &[&expected_result],
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -110,6 +119,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
         beta,
         &mut result,
         true,
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -136,7 +146,14 @@ fn transposed_lhs_matrix_multiplication_result() {
     )
     .unwrap();
     let lhs = new_tensor!(device, 2, 3, vec![0.0; 6]).unwrap();
-    Transpose::execute(&Default::default(), &[&lhs2], &[&lhs], &device_stream).unwrap();
+    Transpose::execute(
+        &Default::default(),
+        &[&lhs2],
+        &[&lhs],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
     let rhs = new_tensor!(
         device,
         2,
@@ -181,6 +198,7 @@ fn transposed_lhs_matrix_multiplication_result() {
         beta,
         &mut result,
         false,
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -250,6 +268,7 @@ fn matrix_multiplication_result() {
         beta,
         &mut result,
         false,
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -286,7 +305,14 @@ fn transposed_rhs_matrix_multiplication_result() {
     )
     .unwrap();
     let rhs = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
-    Transpose::execute(&Default::default(), &[&rhs2], &[&rhs], &device_stream).unwrap();
+    Transpose::execute(
+        &Default::default(),
+        &[&rhs2],
+        &[&rhs],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
     let expected_result = new_tensor!(
         device,
         3,
@@ -321,6 +347,7 @@ fn transposed_rhs_matrix_multiplication_result() {
         beta,
         &mut result,
         false,
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -343,7 +370,14 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     )
     .unwrap();
     let lhs = new_tensor!(device, 2, 3, vec![0.0; 6]).unwrap();
-    Transpose::execute(&Default::default(), &[&lhs2], &[&lhs], &device_stream).unwrap();
+    Transpose::execute(
+        &Default::default(),
+        &[&lhs2],
+        &[&lhs],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
     let rhs2 = new_tensor!(
         device,
         2,
@@ -355,7 +389,14 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     )
     .unwrap();
     let rhs = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
-    Transpose::execute(&Default::default(), &[&rhs2], &[&rhs], &device_stream).unwrap();
+    Transpose::execute(
+        &Default::default(),
+        &[&rhs2],
+        &[&rhs],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
     let expected_result = new_tensor!(
         device,
         3,
@@ -390,6 +431,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
         beta,
         &mut result,
         false,
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -413,7 +455,14 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     )
     .unwrap();
     let lhs = new_tensor!(device, 2, 4, vec![0.0; 8]).unwrap();
-    Transpose::execute(&Default::default(), &[&lhs2], &[&lhs], &device_stream).unwrap();
+    Transpose::execute(
+        &Default::default(),
+        &[&lhs2],
+        &[&lhs],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
     let rhs2 = new_tensor!(
         device,
         2,
@@ -426,7 +475,14 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     .unwrap();
 
     let rhs = new_tensor!(device, 3, 2, vec![0.0; 6]).unwrap();
-    Transpose::execute(&Default::default(), &[&rhs2], &[&rhs], &device_stream).unwrap();
+    Transpose::execute(
+        &Default::default(),
+        &[&rhs2],
+        &[&rhs],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
 
     let expected_result2 = new_tensor!(
         device,
@@ -453,6 +509,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
         &Default::default(),
         &[&expected_result2],
         &[&expected_result],
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -473,6 +530,7 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
         beta,
         &mut result,
         true,
+        &device,
         &device_stream,
     )
     .unwrap();

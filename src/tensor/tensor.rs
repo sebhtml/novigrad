@@ -8,7 +8,6 @@ use std::{fmt::Display, ops::Deref, vec};
 #[derive(Clone, Debug)]
 pub struct Tensor {
     name: usize,
-    device: Device,
     size: Arc<RwLock<Vec<usize>>>,
     device_slice: Arc<RwLock<DevSlice>>,
     #[cfg(debug_assertions)]
@@ -43,7 +42,6 @@ impl Tensor {
         buffer.set_values(values)?;
         let tensor = Self {
             name,
-            device: device.clone(),
             size: Arc::new(RwLock::new(vec![rows, cols])),
             device_slice: Arc::new(RwLock::new(buffer)),
             #[cfg(debug_assertions)]
@@ -54,10 +52,6 @@ impl Tensor {
             column,
         };
         Ok(tensor)
-    }
-
-    pub fn device(&self) -> &Device {
-        &self.device
     }
 
     pub fn name(&self) -> usize {

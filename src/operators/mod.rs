@@ -15,7 +15,7 @@ pub mod statistics;
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    TensorWithGrad,
+    Device, TensorWithGrad,
 };
 
 pub trait UnaryOperator {
@@ -50,6 +50,7 @@ pub trait ExecutableOperator {
         attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 }

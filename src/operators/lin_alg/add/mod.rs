@@ -26,6 +26,7 @@ impl ExecutableOperator for Add {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input_0 = inputs[0];
@@ -43,7 +44,6 @@ impl ExecutableOperator for Add {
             println!("y {}", output);
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        let device = input_0.device();
         device.copy_to(input_0, output, device_stream)?;
 
         let alpha = 1.0;

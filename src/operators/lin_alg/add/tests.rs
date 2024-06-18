@@ -56,6 +56,7 @@ fn matrix_addition_result() {
         &Default::default(),
         &[&lhs, &rhs],
         &[&result],
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -76,5 +77,12 @@ fn big_matrix_addition() {
     let m = new_tensor!(device, rows, cols, values).unwrap();
 
     let result = new_tensor!(device, rows, cols, vec![0.0; rows * cols]).unwrap();
-    Add::execute(&Default::default(), &[&m, &m], &[&result], &device_stream).unwrap();
+    Add::execute(
+        &Default::default(),
+        &[&m, &m],
+        &[&result],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
 }

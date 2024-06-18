@@ -24,12 +24,12 @@ impl ExecutableOperator for SoftmaxCrossEntropyLoss {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = outputs[0];
-        let device = expected.device();
         device.cross_entropy_loss(expected, actual, loss, device_stream)
     }
 }

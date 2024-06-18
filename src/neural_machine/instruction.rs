@@ -1,7 +1,7 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    OpCode, OperatorAttributes,
+    Device, OpCode, OperatorAttributes,
 };
 use std::{ops::Deref, sync::Arc};
 
@@ -182,12 +182,12 @@ impl Instruction {
     pub fn outputs(&self) -> impl Deref<Target = Vec<Tensor>> + '_ {
         self.outputs.deref()
     }
-    pub fn execute(&self, device_stream: &DeviceStream) -> Result<(), Error> {
+    pub fn execute(&self, device: &Device, device_stream: &DeviceStream) -> Result<(), Error> {
         let attributes = &self.attributes;
         let inputs: Vec<&Tensor> = self.inputs.iter().collect();
         let outputs: Vec<&Tensor> = self.outputs.iter().collect();
         self.opcode
-            .execute(attributes, &inputs, &outputs, device_stream)
+            .execute(attributes, &inputs, &outputs, device, device_stream)
     }
 }
 

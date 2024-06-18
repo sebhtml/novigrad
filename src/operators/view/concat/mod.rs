@@ -26,6 +26,7 @@ impl ExecutableOperator for Concat {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let dst = outputs[0];
@@ -45,6 +46,7 @@ impl ExecutableOperator for Concat {
                     &dst,
                     dst_row,
                     dst_col,
+                    device,
                     device_stream,
                 )?;
             }
@@ -107,6 +109,7 @@ impl ExecutableOperator for Unconcat {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let src = inputs[0];
@@ -126,6 +129,7 @@ impl ExecutableOperator for Unconcat {
                     dst,
                     dst_row,
                     dst_col,
+                    device,
                     device_stream,
                 )?;
             }
@@ -142,9 +146,9 @@ pub fn copy_slice(
     dst: &Tensor,
     dst_row: usize,
     dst_col: usize,
+    device: &Device,
     device_stream: &DeviceStream,
 ) -> Result<(), Error> {
-    let device = src.device();
     let n = n as i32;
     let src_inc = 1;
     let dst_inc = 1;

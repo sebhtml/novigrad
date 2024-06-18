@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{stream::DeviceStream, streams::stream::Stream, tensor::Error, Instruction};
+use crate::{stream::DeviceStream, streams::stream::Stream, tensor::Error, Device, Instruction};
 
 use super::StreamEventHandler;
 
@@ -137,6 +137,7 @@ impl StreamEventHandler for TransactionEmitter {
         streams: &Arc<Vec<Stream>>,
         _instructions: &Arc<Vec<Instruction>>,
         stream: usize,
+        _device: &Device,
         _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let stream_instructions = &streams[stream].instructions;

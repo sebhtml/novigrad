@@ -64,6 +64,7 @@ fn concat() {
         &OperatorAttributes::default(),
         &inputs,
         &outputs,
+        &device,
         &device_stream,
     )
     .unwrap();
@@ -130,7 +131,14 @@ fn unconcat() {
     .unwrap();
 
     let device_stream = device.stream().unwrap();
-    Unconcat::execute(&Default::default(), inputs, outputs, &device_stream).unwrap();
+    Unconcat::execute(
+        &Default::default(),
+        inputs,
+        outputs,
+        &device,
+        &device_stream,
+    )
+    .unwrap();
 
     assert_eq!(output_1.get_values(), expected_output_1.get_values());
     assert_eq!(output_2.get_values(), expected_output_2.get_values());
@@ -174,6 +182,17 @@ fn test_copy_slice() {
     )
     .unwrap();
 
-    copy_slice(from.cols(), &from, 0, 0, &mut actual, 1, 2, &device_stream).unwrap();
+    copy_slice(
+        from.cols(),
+        &from,
+        0,
+        0,
+        &mut actual,
+        1,
+        2,
+        &device,
+        &device_stream,
+    )
+    .unwrap();
     assert_eq!(actual, expected);
 }

@@ -29,6 +29,7 @@ impl Embedding {
             &Default::default(),
             &[&embedding_table],
             &[&transposed],
+            &device,
             &device_stream,
         )?;
         device_stream.synchronize()?;

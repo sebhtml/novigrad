@@ -3,7 +3,7 @@ use crate::{
     reduce_l2::ReduceL2,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    DeviceTrait, ExecutableOperator, OperatorAttributes,
+    Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 #[cfg(test)]
@@ -16,11 +16,11 @@ impl ExecutableOperator for ClipNorm {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        let device = input.device();
         if input.name() != output.name() {
             device.copy_to(input, output, device_stream)?;
         }
@@ -30,6 +30,7 @@ impl ExecutableOperator for ClipNorm {
             &OperatorAttributes::None,
             &[&output],
             &[&l2_norm],
+            device,
             device_stream,
         )?;
         // TODO don't use get_values here.

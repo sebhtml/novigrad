@@ -26,12 +26,12 @@ impl ExecutableOperator for Mul {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input_0 = inputs[0];
         let input_1 = inputs[1];
         let output = outputs[0];
-        let device = input_0.device();
         if *input_0.size() != *input_1.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }

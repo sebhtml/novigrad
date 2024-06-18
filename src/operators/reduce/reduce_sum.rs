@@ -1,7 +1,7 @@
 use crate::{
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    DeviceTrait, ExecutableOperator, OperatorAttributes,
+    Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 pub struct ReduceSum {}
@@ -11,11 +11,11 @@ impl ExecutableOperator for ReduceSum {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        let device = input.device();
         device.sum(input, output)
     }
 }

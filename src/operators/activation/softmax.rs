@@ -32,11 +32,11 @@ impl ExecutableOperator for Softmax {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        let device = input.device();
         device.softmax(input, output, device_stream)
     }
 }

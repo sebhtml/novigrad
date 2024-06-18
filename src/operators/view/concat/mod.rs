@@ -2,7 +2,8 @@ use crate::{
     gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, ExecutableOperator, NaryOperator, OpCode, OperatorAttributes, TensorWithGrad,
+    Device, DeviceTrait, ExecutableOperator, NaryOperator, OpCode, OperatorAttributes,
+    TensorWithGrad,
 };
 
 #[cfg(test)]
@@ -25,6 +26,7 @@ impl ExecutableOperator for Concat {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let dst = outputs[0];
@@ -36,7 +38,7 @@ impl ExecutableOperator for Concat {
             for src_row in 0..input_rows {
                 let dst_row = src_row;
                 let dst_col = input_index * input_cols;
-                Tensor::copy_slice(
+                copy_slice(
                     src.cols(),
                     &src,
                     src_row,
@@ -44,6 +46,7 @@ impl ExecutableOperator for Concat {
                     &dst,
                     dst_row,
                     dst_col,
+                    device,
                     device_stream,
                 )?;
             }
@@ -106,6 +109,7 @@ impl ExecutableOperator for Unconcat {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let src = inputs[0];
@@ -117,7 +121,7 @@ impl ExecutableOperator for Unconcat {
             for dst_row in 0..input_rows {
                 let src_row = dst_row;
                 let src_col = output_index * input_cols;
-                Tensor::copy_slice(
+                copy_slice(
                     dst.cols(),
                     src,
                     src_row,
@@ -125,10 +129,41 @@ impl ExecutableOperator for Unconcat {
                     dst,
                     dst_row,
                     dst_col,
+                    device,
                     device_stream,
                 )?;
             }
         }
         Ok(())
     }
+}
+
+pub fn copy_slice(
+    n: usize,
+    src: &Tensor,
+    src_row: usize,
+    src_col: usize,
+    dst: &Tensor,
+    dst_row: usize,
+    dst_col: usize,
+    device: &Device,
+    device_stream: &DeviceStream,
+) -> Result<(), Error> {
+    let n = n as i32;
+    let src_inc = 1;
+    let dst_inc = 1;
+    let src_offset = src_row * src.cols() + src_col;
+    let src_offset = src_offset as i32;
+    let dst_offset = dst_row * dst.cols() + dst_col;
+    let dst_offset = dst_offset as i32;
+    device.copy(
+        n,
+        src,
+        src_offset,
+        src_inc,
+        dst,
+        dst_offset,
+        dst_inc,
+        device_stream,
+    )
 }

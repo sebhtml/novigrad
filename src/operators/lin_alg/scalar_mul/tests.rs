@@ -42,6 +42,7 @@ fn scalar_mul() {
         &Default::default(),
         &[&rhs, &lhs],
         &[&result],
+        &device,
         &device_stream,
     )
     .unwrap();

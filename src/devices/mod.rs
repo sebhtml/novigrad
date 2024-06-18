@@ -148,10 +148,10 @@ pub trait DeviceTrait {
     fn copy(
         &self,
         n: i32,
-        x: *const f32,
+        x: &Tensor,
         x_offset: i32,
         x_inc: i32,
-        y: *mut f32,
+        y: &Tensor,
         y_offset: i32,
         y_inc: i32,
         device_stream: &DeviceStream,
@@ -271,6 +271,24 @@ impl Device {
             device,
             available_buffers: Default::default(),
         }
+    }
+
+    pub fn copy_to(
+        &self,
+        x: &Tensor,
+        y: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        if x.name() == y.name() {
+            return Ok(());
+        }
+        if x.len() != y.len() {
+            return Err(error!(ErrorEnum::UnsupportedOperation));
+        }
+        let n = x.len() as i32;
+        let (x_offset, x_inc, y_offset, y_inc) = (0, 1, 0, 1);
+        self.device
+            .copy(n, x, x_offset, x_inc, y, y_offset, y_inc, device_stream)
     }
 
     pub fn cpu() -> Self {
@@ -490,10 +508,10 @@ impl DeviceTrait for Device {
     fn copy(
         &self,
         n: i32,
-        x: *const f32,
+        x: &Tensor,
         x_offset: i32,
         x_inc: i32,
-        y: *mut f32,
+        y: &Tensor,
         y_offset: i32,
         y_inc: i32,
         device_stream: &DeviceStream,

@@ -3,12 +3,9 @@ use std::{marker::PhantomData, ops::Deref, sync::Arc};
 use crate::schedulers::SchedulerTrait;
 use crate::stream::StreamTrait;
 use crate::{
-    neural_machine::streams::stream::print_streams,
-    neural_program::NeuralProgram,
-    schedulers::StreamExecutor,
-    stream::DeviceStream,
-    tensor::{Error, Tensor},
-    Category, Device, DeviceTrait, Instruction, TensorWithGrad,
+    neural_machine::streams::stream::print_streams, neural_program::NeuralProgram,
+    schedulers::StreamExecutor, stream::DeviceStream, tensor::Error, Category, Device, DeviceTrait,
+    Instruction, TensorWithGrad,
 };
 
 use super::streams::{
@@ -171,7 +168,8 @@ where
         {
             let example_output = &self.example_output.tensor();
             let expected_output = &expected_output.tensor();
-            Tensor::copy(expected_output, example_output, &self.io_stream)?;
+            self.device
+                .copy_to(expected_output, example_output, &self.io_stream)?;
             self.io_stream.synchronize()?;
         }
 
@@ -211,7 +209,7 @@ where
         {
             let example_input = &self.example_input.tensor();
             let input = &input.tensor();
-            Tensor::copy(input, example_input, &self.io_stream)?;
+            self.device.copy_to(input, example_input, &self.io_stream)?;
             self.io_stream.synchronize()?;
         }
 

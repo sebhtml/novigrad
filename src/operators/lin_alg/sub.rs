@@ -2,7 +2,7 @@ use crate::{
     error,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
-    DeviceTrait, ExecutableOperator, OperatorAttributes,
+    Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
 pub struct Sub {}
@@ -12,6 +12,7 @@ impl ExecutableOperator for Sub {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input_0 = inputs[0];
@@ -29,8 +30,7 @@ impl ExecutableOperator for Sub {
             println!("y {}", output);
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        let device = input_0.device();
-        Tensor::copy(input_0, output, device_stream)?;
+        device.copy_to(input_0, output, device_stream)?;
 
         let alpha = -1.0;
 

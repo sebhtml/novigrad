@@ -2,16 +2,20 @@ use crate::{
     gradient_instruction, inference_instruction, new_tensor_with_grad,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad, UnaryOperator,
+    Device, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 pub struct Identity {
     label: String,
+    device: Device,
 }
 
 impl Identity {
-    pub fn new(label: String) -> Self {
-        Self { label }
+    pub fn new(label: String, device: &Device) -> Self {
+        Self {
+            label,
+            device: device.clone(),
+        }
     }
 }
 
@@ -20,28 +24,19 @@ impl ExecutableOperator for Identity {
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        let device = input.device();
-        device.copy(
-            input.len() as i32,
-            input.as_mut_ptr(),
-            0,
-            1,
-            output.as_mut_ptr(),
-            0,
-            1,
-            device_stream,
-        )
+        device.copy_to(input, output, device_stream)
     }
 }
 
 impl UnaryOperator for Identity {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let output = new_tensor_with_grad!(
-            input.tensor().device(),
+            self.device,
             input.tensor().rows(),
             input.tensor().cols(),
             vec![0.0; input.tensor().len()],

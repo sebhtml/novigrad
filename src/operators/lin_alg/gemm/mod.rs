@@ -22,6 +22,7 @@ impl ExecutableOperator for Gemm {
         attributes: &OperatorAttributes,
         inputs: &[&Tensor],
         outputs: &[&Tensor],
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         debug_assert_eq!(inputs.len(), 3);
@@ -52,6 +53,7 @@ impl ExecutableOperator for Gemm {
             beta,
             c,
             transpose_result,
+            device,
             device_stream,
         )
     }
@@ -67,6 +69,7 @@ impl Gemm {
         beta: f32,
         c: &Tensor,
         transpose_result: bool,
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let op_result = Self::_gemm(
@@ -78,6 +81,7 @@ impl Gemm {
             beta,
             c,
             transpose_result,
+            device,
             device_stream,
         );
         match op_result {
@@ -109,9 +113,9 @@ impl Gemm {
         beta: f32,
         c: &Tensor,
         transpose_result: bool,
+        device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let device = a.device();
         if !transa && !transb && !transpose_result {
             if a.cols() != b.rows() {
                 return Err(error!(ErrorEnum::IncompatibleTensorShapes));

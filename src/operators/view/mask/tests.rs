@@ -19,7 +19,7 @@ fn forward() {
 
     let output = mask.forward(&input).unwrap();
     let device_stream = device.stream().unwrap();
-    output.forward(&device_stream).unwrap();
+    output.forward(&device, &device_stream).unwrap();
 
     let actual: &Tensor = &output.tensor();
 

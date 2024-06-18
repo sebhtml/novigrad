@@ -15,6 +15,7 @@ pub struct GpuStreamScheduler<Handler>
 where
     Handler: StreamEventHandler + Send + Sync,
 {
+    device: Device,
     dependents: Vec<Vec<usize>>,
     initial_pending_dependencies: Vec<usize>,
     current_pending_dependencies: Vec<usize>,
@@ -53,6 +54,7 @@ where
             .collect::<Result<VecDeque<DeviceStream>, _>>()
             .unwrap();
         Self {
+            device: device.clone(),
             dependents,
             initial_pending_dependencies: pending_dependencies,
             current_pending_dependencies: Default::default(),
@@ -111,6 +113,7 @@ where
                         &self.streams,
                         &self.instructions,
                         logical_stream,
+                        &self.device,
                         &physical_stream,
                     )?;
                     self.used_physical_streams

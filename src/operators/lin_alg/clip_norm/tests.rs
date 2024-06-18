@@ -25,17 +25,26 @@ fn normalize() {
         &OperatorAttributes::None,
         &[&tensor],
         &[&actual_norm],
+        &device,
         &device_stream,
     )
     .unwrap();
     assert_ne!(actual_norm.get_values().unwrap()[0], expected_norm);
 
-    ClipNorm::execute(&Default::default(), &[&tensor], &[&tensor], &device_stream).unwrap();
+    ClipNorm::execute(
+        &Default::default(),
+        &[&tensor],
+        &[&tensor],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
 
     ReduceL2::execute(
         &OperatorAttributes::None,
         &[&tensor],
         &[&actual_norm],
+        &device,
         &device_stream,
     )
     .unwrap();

@@ -50,6 +50,7 @@ fn element_wise_mul_result() {
         &Default::default(),
         &[&lhs, &rhs],
         &[&result],
+        &device,
         &device_stream,
     )
     .unwrap();

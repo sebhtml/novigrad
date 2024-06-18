@@ -1,12 +1,6 @@
 use crate::devices::slice::DevSliceTrait;
-use crate::stream::DeviceStream;
 use crate::tensor::ErrorEnum;
-use crate::{
-    devices::{Device, DeviceTrait},
-    error,
-    slice::DevSlice,
-    tensor::Error,
-};
+use crate::{devices::Device, error, slice::DevSlice, tensor::Error};
 
 use std::sync::{Arc, RwLock};
 use std::{fmt::Display, ops::Deref, vec};
@@ -14,7 +8,6 @@ use std::{fmt::Display, ops::Deref, vec};
 #[derive(Clone, Debug)]
 pub struct Tensor {
     name: usize,
-    device: Device,
     size: Arc<RwLock<Vec<usize>>>,
     device_slice: Arc<RwLock<DevSlice>>,
     #[cfg(debug_assertions)]
@@ -49,7 +42,6 @@ impl Tensor {
         buffer.set_values(values)?;
         let tensor = Self {
             name,
-            device: device.clone(),
             size: Arc::new(RwLock::new(vec![rows, cols])),
             device_slice: Arc::new(RwLock::new(buffer)),
             #[cfg(debug_assertions)]
@@ -60,10 +52,6 @@ impl Tensor {
             column,
         };
         Ok(tensor)
-    }
-
-    pub fn device(&self) -> &Device {
-        &self.device
     }
 
     pub fn name(&self) -> usize {
@@ -173,39 +161,6 @@ impl Tensor {
             }
         }
         Ok(false)
-    }
-
-    pub fn copy(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
-        let device = &x.device;
-        let n = x.len() as i32;
-        let incx = 1;
-        let incy = 1;
-        let x = x.as_ptr();
-        let y = y.as_mut_ptr();
-        device.copy(n, x, 0, incx, y, 0, incy, device_stream)
-    }
-
-    pub fn copy_slice(
-        n: usize,
-        src: &Tensor,
-        src_row: usize,
-        src_col: usize,
-        dst: &Tensor,
-        dst_row: usize,
-        dst_col: usize,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        let device = &src.device;
-        let n = n as i32;
-        let x_inc = 1;
-        let y_inc = 1;
-        let x = src.as_ptr();
-        let x_offset = src_row * src.cols() + src_col;
-        let x_offset = x_offset as i32;
-        let y = dst.as_mut_ptr();
-        let y_offset = dst_row * dst.cols() + dst_col;
-        let y_offset = y_offset as i32;
-        device.copy(n, x, x_offset, x_inc, y, y_offset, y_inc, device_stream)
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {

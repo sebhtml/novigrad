@@ -103,15 +103,17 @@ impl DeviceTrait for CpuDevice {
     fn copy(
         &self,
         n: i32,
-        x: *const f32,
+        x: &Tensor,
         x_offset: i32,
         x_inc: i32,
-        y: *mut f32,
+        y: &Tensor,
         y_offset: i32,
         y_inc: i32,
         _device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let x = x.as_ptr();
         let x = x.wrapping_add(x_offset as usize);
+        let y = y.as_mut_ptr();
         let y = y.wrapping_add(y_offset as usize);
         unsafe { ffi::cblas_scopy(n, x, x_inc, y, y_inc) }
         Ok(())

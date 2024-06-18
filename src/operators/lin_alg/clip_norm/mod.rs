@@ -22,7 +22,7 @@ impl ExecutableOperator for ClipNorm {
         let output = outputs[0];
         let device = input.device();
         if input.name() != output.name() {
-            Tensor::copy(input, output, device_stream)?;
+            device.copy_to(input, output, device_stream)?;
         }
         let norm_max = 1.0;
         let l2_norm = new_tensor!(device, 1, 1, vec![0.0],)?;

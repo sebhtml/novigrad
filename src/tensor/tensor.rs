@@ -1,12 +1,6 @@
 use crate::devices::slice::DevSliceTrait;
-use crate::stream::DeviceStream;
 use crate::tensor::ErrorEnum;
-use crate::{
-    devices::{Device, DeviceTrait},
-    error,
-    slice::DevSlice,
-    tensor::Error,
-};
+use crate::{devices::Device, error, slice::DevSlice, tensor::Error};
 
 use std::sync::{Arc, RwLock};
 use std::{fmt::Display, ops::Deref, vec};
@@ -173,44 +167,6 @@ impl Tensor {
             }
         }
         Ok(false)
-    }
-
-    pub fn copy(x: &Tensor, y: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
-        let device = &x.device;
-        let n = x.len() as i32;
-        let incx = 1;
-        let incy = 1;
-        device.copy(n, x, 0, incx, y, 0, incy, device_stream)
-    }
-
-    pub fn copy_slice(
-        n: usize,
-        src: &Tensor,
-        src_row: usize,
-        src_col: usize,
-        dst: &Tensor,
-        dst_row: usize,
-        dst_col: usize,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        let device = &src.device;
-        let n = n as i32;
-        let src_inc = 1;
-        let dst_inc = 1;
-        let src_offset = src_row * src.cols() + src_col;
-        let src_offset = src_offset as i32;
-        let dst_offset = dst_row * dst.cols() + dst_col;
-        let dst_offset = dst_offset as i32;
-        device.copy(
-            n,
-            src,
-            src_offset,
-            src_inc,
-            dst,
-            dst_offset,
-            dst_inc,
-            device_stream,
-        )
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {

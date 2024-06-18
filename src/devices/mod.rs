@@ -273,6 +273,24 @@ impl Device {
         }
     }
 
+    pub fn copy_to(
+        &self,
+        x: &Tensor,
+        y: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        if x.name() == y.name() {
+            return Ok(());
+        }
+        if x.len() != y.len() {
+            return Err(error!(ErrorEnum::UnsupportedOperation));
+        }
+        let n = x.len() as i32;
+        let (x_offset, x_inc, y_offset, y_inc) = (0, 1, 0, 1);
+        self.device
+            .copy(n, x, x_offset, x_inc, y, y_offset, y_inc, device_stream)
+    }
+
     pub fn cpu() -> Self {
         Self::new(Arc::new(CpuDevice::default()))
     }

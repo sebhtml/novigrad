@@ -1,5 +1,6 @@
 use crate::{
-    new_tensor, Concat, Device, DeviceTrait, ExecutableOperator, OperatorAttributes, Unconcat,
+    copy_slice, new_tensor, Concat, Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
+    Unconcat,
 };
 
 #[test]
@@ -134,4 +135,45 @@ fn unconcat() {
     assert_eq!(output_1.get_values(), expected_output_1.get_values());
     assert_eq!(output_2.get_values(), expected_output_2.get_values());
     assert_eq!(output_3.get_values(), expected_output_3.get_values());
+}
+
+#[test]
+fn test_copy_slice() {
+    let device = Device::default();
+    let device_stream = device.stream().unwrap();
+    let from = new_tensor!(
+        device,
+        2,
+        2,
+        vec![
+            11.0, 12.0, //
+            13.0, 14.0, //
+        ],
+    )
+    .unwrap();
+
+    let mut actual = new_tensor!(
+        device,
+        2,
+        4,
+        vec![
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 7.0, 8.0, //
+        ],
+    )
+    .unwrap();
+
+    let expected = new_tensor!(
+        device,
+        2,
+        4,
+        vec![
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 11.0, 12.0, //
+        ],
+    )
+    .unwrap();
+
+    copy_slice(from.cols(), &from, 0, 0, &mut actual, 1, 2, &device_stream).unwrap();
+    assert_eq!(actual, expected);
 }

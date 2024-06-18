@@ -2,7 +2,7 @@ use crate::{
     gradient_instruction, inference_instruction, new_tensor_with_grad,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad, UnaryOperator,
+    ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 pub struct Identity {
@@ -25,7 +25,7 @@ impl ExecutableOperator for Identity {
         let input = inputs[0];
         let output = outputs[0];
         let device = input.device();
-        device.copy(input.len() as i32, input, 0, 1, output, 0, 1, device_stream)
+        device.copy_to(input, output, device_stream)
     }
 }
 

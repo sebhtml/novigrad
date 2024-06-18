@@ -1,6 +1,6 @@
 use more_asserts::{assert_ge, assert_le};
 
-use crate::new_tensor;
+use crate::{new_tensor, Device, DeviceTrait};
 
 #[test]
 fn clip_min() {
@@ -103,4 +103,78 @@ fn bernoulli() {
     assert_le!(30 - diff, ones);
     assert_ge!(70 + diff, zeroes);
     assert_le!(70 - diff, zeroes);
+}
+
+#[test]
+fn test_copy_1() {
+    let device = Device::default();
+    let device_stream = device.stream().unwrap();
+    let mut tensor = new_tensor!(
+        device,
+        3,
+        3,
+        vec![
+            1.0, 2.0, 3.0, //
+            4.0, 5.0, 6.0, //
+            7.0, 8.0, 9.0, //
+        ],
+    )
+    .unwrap();
+
+    let tensor2 = new_tensor!(
+        device,
+        3,
+        3,
+        vec![
+            11.0, 12.0, 13.0, //
+            14.0, 15.0, 16.0, //
+            17.0, 18.0, 19.0, //
+        ],
+    )
+    .unwrap();
+    device
+        .copy(
+            tensor2.len() as i32,
+            &tensor2,
+            0,
+            1,
+            &mut tensor,
+            0,
+            1,
+            &device_stream,
+        )
+        .unwrap();
+    assert_eq!(tensor, tensor2);
+}
+
+#[test]
+fn test_copy_2() {
+    let device = Device::default();
+    let device_stream = device.stream().unwrap();
+    let expected = new_tensor!(
+        device,
+        2,
+        4,
+        vec![
+            1.0, 2.0, 3.0, 4.0, //
+            5.0, 6.0, 7.0, 8.0, //
+        ],
+    )
+    .unwrap();
+
+    let mut actual = new_tensor!(device, 2, 4, vec![0.0; 2 * 4]).unwrap();
+
+    device
+        .copy(
+            expected.len() as i32,
+            &expected,
+            0,
+            1,
+            &mut actual,
+            0,
+            1,
+            &device_stream,
+        )
+        .unwrap();
+    assert_eq!(actual, expected);
 }

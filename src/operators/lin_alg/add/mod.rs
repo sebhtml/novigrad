@@ -44,7 +44,7 @@ impl ExecutableOperator for Add {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         let device = input_0.device();
-        Tensor::copy(input_0, output, device_stream)?;
+        device.copy_to(input_0, output, device_stream)?;
 
         let alpha = 1.0;
 

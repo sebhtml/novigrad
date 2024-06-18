@@ -36,8 +36,9 @@ impl ExecutableOperator for Reshape {
             }
         };
         let input = inputs[0];
+        let device = input.device();
         let output = outputs[0];
-        Tensor::copy(input, output, device_stream)?;
+        device.copy_to(input, output, device_stream)?;
         output.resize(output_size)
     }
 }

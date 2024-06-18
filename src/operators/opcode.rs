@@ -1,4 +1,5 @@
 use crate::{
+    analysis::min::Min,
     clip::Clip,
     identity::Identity,
     reduce_l2::ReduceL2,
@@ -64,6 +65,9 @@ pub enum OpCode {
     /// https://onnx.ai/onnx/operators/onnx__Sqrt.html
     Sqrt,
 
+    /// https://onnx.ai/onnx/operators/onnx__Min.html
+    Min,
+
     /// https://onnx.ai/onnx/operators/onnx__Softmax.html
     Softmax,
 
@@ -113,6 +117,8 @@ impl Into<String> for OpCode {
             OpCode::Add => "Add".into(),
             OpCode::Sub => "Sub".into(),
             OpCode::Mul => "Mul".into(),
+            OpCode::Div => "Div".into(),
+            OpCode::Min => "Min".into(),
             OpCode::ScalarMul => "ScalarMul".into(),
             OpCode::ScalarAdd => "ScalarAdd".into(),
             OpCode::Clip => "Clip".into(),
@@ -126,7 +132,6 @@ impl Into<String> for OpCode {
             OpCode::SoftmaxCrossEntropyLoss => "SoftmaxCrossEntropyLoss".into(),
             OpCode::ReduceSumSquare => "ReduceSumSquare".into(),
             OpCode::Bernoulli => "Bernoulli".into(),
-            OpCode::Div => "Div".into(),
             OpCode::Sqrt => "Sqrt".into(),
             OpCode::Transpose => "Transpose".into(),
         }
@@ -148,45 +153,46 @@ impl OpCode {
             OpCode::Identity => {
                 Identity::execute(attributes, inputs, outputs, device, device_stream)
             }
-            OpCode::ReduceSum => {
-                ReduceSum::execute(attributes, inputs, outputs, device, device_stream)
-            }
             OpCode::Add => Add::execute(attributes, inputs, outputs, device, device_stream),
-            OpCode::ScalarMul => {
-                ScalarMul::execute(attributes, inputs, outputs, device, device_stream)
-            }
-            OpCode::Clip => Clip::execute(attributes, inputs, outputs, device, device_stream),
-            OpCode::ClipNorm => {
-                ClipNorm::execute(attributes, inputs, outputs, device, device_stream)
-            }
-            OpCode::ReduceL2 => {
-                ReduceL2::execute(attributes, inputs, outputs, device, device_stream)
-            }
             OpCode::Mul => Mul::execute(attributes, inputs, outputs, device, device_stream),
-            OpCode::Softmax => Softmax::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::Sub => Sub::execute(attributes, inputs, outputs, device, device_stream),
+            OpCode::Div => Div::execute(attributes, inputs, outputs, device, device_stream),
+            OpCode::Min => Min::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::Reshape => Reshape::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::Concat => Concat::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::Unconcat => {
                 Unconcat::execute(attributes, inputs, outputs, device, device_stream)
             }
             OpCode::Sigmoid => Sigmoid::execute(attributes, inputs, outputs, device, device_stream),
+            OpCode::Softmax => Softmax::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::SoftmaxCrossEntropyLoss => {
                 SoftmaxCrossEntropyLoss::execute(attributes, inputs, outputs, device, device_stream)
             }
             OpCode::ReduceSumSquare => {
                 ReduceSumSquare::execute(attributes, inputs, outputs, device, device_stream)
             }
+            OpCode::ReduceL2 => {
+                ReduceL2::execute(attributes, inputs, outputs, device, device_stream)
+            }
+            OpCode::ReduceSum => {
+                ReduceSum::execute(attributes, inputs, outputs, device, device_stream)
+            }
             OpCode::Bernoulli => {
                 Bernoulli::execute(attributes, inputs, outputs, device, device_stream)
             }
-            OpCode::Div => Div::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::Sqrt => Sqrt::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::ScalarAdd => {
                 ScalarAdd::execute(attributes, inputs, outputs, device, device_stream)
             }
+            OpCode::ScalarMul => {
+                ScalarMul::execute(attributes, inputs, outputs, device, device_stream)
+            }
             OpCode::Transpose => {
                 Transpose::execute(attributes, inputs, outputs, device, device_stream)
+            }
+            OpCode::Clip => Clip::execute(attributes, inputs, outputs, device, device_stream),
+            OpCode::ClipNorm => {
+                ClipNorm::execute(attributes, inputs, outputs, device, device_stream)
             }
         }
     }

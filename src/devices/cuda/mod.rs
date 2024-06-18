@@ -38,6 +38,45 @@ impl CudaDev {
         }
     }
 
+    fn launch_mapping_kernel(
+        &self,
+        module_name: &str,
+        func_name: &str,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let _stream = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+            &stream.stream
+        } else {
+            return Err(error!(ErrorEnum::NvLaunchError));
+        };
+        let n = left.len();
+        let kernel = self.get_func(module_name, func_name)?;
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+
+        let left = &left.device_slice().buffer;
+        let right = &right.device_slice().buffer;
+        let result = &result.device_slice().buffer;
+
+        match (left, right, result) {
+            (
+                DeviceSlice::CudaDevSlice(left),
+                DeviceSlice::CudaDevSlice(right),
+                DeviceSlice::CudaDevSlice(result),
+            ) => {
+                let result =
+                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
+        }
+    }
+
     pub fn try_new(dev: Arc<driver::CudaDevice>) -> Result<Self, Error> {
         let device = CudaDev { dev };
 
@@ -87,6 +126,12 @@ impl CudaDev {
             "div_kernel_module",
             &["div_kernel"],
             "./src/devices/cuda/kernels/div_kernel.cu",
+        )?;
+
+        device.load_module(
+            "min_kernel_module",
+            &["min_kernel"],
+            "./src/devices/cuda/kernels/min_kernel.cu",
         )?;
 
         device.load_module(
@@ -455,34 +500,31 @@ impl DeviceTrait for CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _stream = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
-            &stream.stream
-        } else {
-            return Err(error!(ErrorEnum::NvLaunchError));
-        };
-        let n = left.len();
-        let kernel = self.get_func("div_kernel_module", "div_kernel")?;
-        let cfg = LaunchConfig::for_num_elems(n as u32);
+        self.launch_mapping_kernel(
+            "div_kernel_module",
+            "div_kernel",
+            left,
+            right,
+            result,
+            device_stream,
+        )
+    }
 
-        let left = &left.device_slice().buffer;
-        let right = &right.device_slice().buffer;
-        let result = &result.device_slice().buffer;
-
-        match (left, right, result) {
-            (
-                DeviceSlice::CudaDevSlice(left),
-                DeviceSlice::CudaDevSlice(right),
-                DeviceSlice::CudaDevSlice(result),
-            ) => {
-                let result =
-                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
-                match result {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
-                }
-            }
-            _ => Err(error!(ErrorEnum::NvLaunchError)),
-        }
+    fn min(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.launch_mapping_kernel(
+            "min_kernel_module",
+            "min_kernel",
+            left,
+            right,
+            result,
+            device_stream,
+        )
     }
 
     fn sqrt(

@@ -113,6 +113,14 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
+    fn min(
+        &self,
+        input1: &Tensor,
+        input2: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
+
     /// SAXPY constant times a vector plus a vector.
     /// y = alpha * x + y
     fn axpy(
@@ -598,6 +606,16 @@ impl DeviceTrait for Device {
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         self.device.div(input1, input2, output, device_stream)
+    }
+
+    fn min(
+        &self,
+        input1: &Tensor,
+        input2: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.min(input1, input2, output, device_stream)
     }
 
     fn clip(

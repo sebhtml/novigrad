@@ -441,6 +441,41 @@ impl DeviceTrait for CpuDevice {
     fn stream(&self) -> Result<DeviceStream, Error> {
         Ok(DeviceStream::CpuDeviceStream)
     }
+
+    fn min(
+        &self,
+        input1: &Tensor,
+        input2: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        if *input1.size() != *input2.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+
+        let len = input1.len();
+        debug_assert_eq!(*output.size(), *input1.size());
+
+        let result_ptr = output.as_mut_ptr();
+        let left_ptr = input1.as_ptr();
+        let right_ptr = input2.as_ptr();
+
+        unsafe {
+            let mut index = 0;
+            while index < len {
+                let left_cell = left_ptr.add(index);
+                let right_cell = right_ptr.add(index);
+                let result_cell = result_ptr.add(index);
+                let left = *left_cell;
+                let right = *right_cell;
+                let value = left.min(right);
+                *result_cell = value;
+                index += 1;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl CpuDevice {

@@ -1,9 +1,9 @@
 use crate::{
     gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
-    UnaryOperator,
+    Device, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 #[cfg(test)]

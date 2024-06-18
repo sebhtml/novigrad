@@ -1,7 +1,8 @@
 use crate::{
+    opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, OpCode, OperatorAttributes,
+    Device, OperatorAttributes,
 };
 use std::{ops::Deref, sync::Arc};
 

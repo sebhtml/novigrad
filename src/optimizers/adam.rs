@@ -1,7 +1,7 @@
+use crate::opcode::OpCode;
 use crate::{new_tensor, OperatorAttributes};
 use crate::{
-    optimization_instruction, tensor::Error, Device, Instruction, OpCode, OptimizerTrait,
-    TensorWithGrad,
+    optimization_instruction, tensor::Error, Device, Instruction, OptimizerTrait, TensorWithGrad,
 };
 
 /// Adam: A Method for Stochastic Optimization

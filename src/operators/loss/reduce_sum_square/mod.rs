@@ -1,9 +1,10 @@
 use crate::{
     devices::Device,
     gradient_instruction, loss_instruction, new_tensor, new_tensor_with_grad,
+    opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    BinaryOperator, DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
+    BinaryOperator, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
 };
 
 #[cfg(test)]

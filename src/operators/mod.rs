@@ -10,6 +10,7 @@ mod attention;
 pub use attention::*;
 mod reduce;
 pub use reduce::*;
+pub mod opcode;
 pub mod statistics;
 
 use crate::{

@@ -1,5 +1,5 @@
 use crate::{
-    new_tensor, optimization_instruction, tensor::Error, Device, Instruction, OpCode,
+    new_tensor, opcode::OpCode, optimization_instruction, tensor::Error, Device, Instruction,
     OperatorAttributes, OptimizerTrait, TensorWithGrad,
 };
 

@@ -1,8 +1,9 @@
 use crate::{
     devices::Device,
     error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    opcode::OpCode,
     tensor::{Error, ErrorEnum, Tensor},
-    BinaryOperator, OpCode, OperatorAttributes, TensorWithGrad,
+    BinaryOperator, OperatorAttributes, TensorWithGrad,
 };
 
 pub struct MatMul {

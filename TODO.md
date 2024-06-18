@@ -14,8 +14,6 @@
 
 - implement Gelu
 
-- move opcode.rs to operators/
-
 ---------------
 
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization)

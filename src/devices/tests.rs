@@ -4,10 +4,9 @@ use crate::{new_tensor, Device, DeviceTrait};
 
 #[test]
 fn clip_min() {
-    use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
-    let stream = device.stream().unwrap();
+    let stream = device.new_stream().unwrap();
     let input = new_tensor!(
         device,
         2,
@@ -48,7 +47,7 @@ fn clip_max() {
     use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
-    let stream = device.stream().unwrap();
+    let stream = device.new_stream().unwrap();
     let input = new_tensor!(
         device,
         2,
@@ -91,7 +90,7 @@ fn bernoulli() {
     let device = Device::default();
     let input = new_tensor!(device, 1, 100, vec![0.3; 100]).unwrap();
     let output = new_tensor!(device, 1, 100, vec![0.0; 100]).unwrap();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     device.bernoulli(&input, &output, &device_stream).unwrap();
 
     let values = output.get_values().unwrap();
@@ -108,7 +107,7 @@ fn bernoulli() {
 #[test]
 fn test_copy_1() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let mut tensor = new_tensor!(
         device,
         3,
@@ -150,7 +149,7 @@ fn test_copy_1() {
 #[test]
 fn test_copy_2() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let expected = new_tensor!(
         device,
         2,

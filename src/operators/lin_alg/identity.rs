@@ -1,8 +1,9 @@
 use crate::{
     gradient_instruction, inference_instruction, new_tensor_with_grad,
+    opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad, UnaryOperator,
+    Device, ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 pub struct Identity {

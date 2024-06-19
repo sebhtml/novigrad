@@ -1,11 +1,11 @@
 use rand::Rng;
 
-use crate::{new_tensor, transpose::Transpose, Device, DeviceTrait, ExecutableOperator, Gemm};
+use crate::{new_tensor, transpose::Transpose, Device, ExecutableOperator, Gemm};
 
 #[test]
 fn big_matrix_multiplication() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let rows = 1024;
     let cols = 1024;
     let len = rows * cols;
@@ -40,7 +40,7 @@ fn big_matrix_multiplication() {
 #[test]
 fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let lhs2 = new_tensor!(
         device,
         4,
@@ -129,7 +129,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
 #[test]
 fn transposed_lhs_matrix_multiplication_result() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
@@ -208,7 +208,7 @@ fn transposed_lhs_matrix_multiplication_result() {
 #[test]
 fn matrix_multiplication_result() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
@@ -278,7 +278,7 @@ fn matrix_multiplication_result() {
 #[test]
 fn transposed_rhs_matrix_multiplication_result() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     // Given a left-hand side matrix and and a right-hand side matrix
     // When the multiplication lhs * rhs is done
     // Then the resulting matrix has the correct values
@@ -357,7 +357,7 @@ fn transposed_rhs_matrix_multiplication_result() {
 #[test]
 fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let lhs2 = new_tensor!(
         device,
         3,
@@ -441,7 +441,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
 #[test]
 fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let lhs2 = new_tensor!(
         device,
         4,

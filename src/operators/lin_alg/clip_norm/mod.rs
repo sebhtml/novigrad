@@ -1,5 +1,4 @@
 use crate::{
-    new_tensor,
     reduce_l2::ReduceL2,
     stream::DeviceStream,
     tensor::{Error, Tensor},
@@ -24,8 +23,8 @@ impl ExecutableOperator for ClipNorm {
         if input.name() != output.name() {
             device.copy_to(input, output, device_stream)?;
         }
-        let norm_max = 1.0;
-        let l2_norm = new_tensor!(device, 1, 1, vec![0.0],)?;
+        let max_alpha = &device_stream.max_alpha;
+        let l2_norm = &device_stream.l2_norm;
         ReduceL2::execute(
             &OperatorAttributes::None,
             &[&output],
@@ -33,18 +32,11 @@ impl ExecutableOperator for ClipNorm {
             device,
             device_stream,
         )?;
-        // TODO don't use get_values here.
-        let l2_norm = l2_norm.get_values()?[0];
-        // Can not normalize a vector with no direction.
-        if l2_norm == 0.0 {
-            return Ok(());
-        }
-        if l2_norm <= norm_max {
-            return Ok(());
-        }
-        let alpha = 1.0 / l2_norm;
-        let alpha = new_tensor!(device, 1, 1, vec![alpha],)?;
-        device.scalar_mul(&alpha, output, device_stream)?;
+        let one = &device_stream.one;
+        let alpha = &device_stream.alpha;
+        device.div(one, l2_norm, alpha, device_stream)?;
+        device.min(max_alpha, alpha, alpha, device_stream)?;
+        device.scalar_mul(alpha, output, device_stream)?;
         Ok(())
     }
 }

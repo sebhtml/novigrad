@@ -57,7 +57,7 @@ pub fn load_perceptron(
     device: &Device,
 ) -> Result<ModelDetails<PerceptronModel, ReduceSumSquare, GradientDescent>, Error> {
     let model = PerceptronModel::new(device)?;
-    let examples = load_examples(&device)?;
+    let examples = load_examples(device)?;
     let loss_operator = ReduceSumSquare::new(device);
     let learning_rate = 0.5;
     let optimizer = GradientDescent::new(learning_rate);

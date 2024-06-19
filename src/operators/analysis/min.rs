@@ -4,9 +4,9 @@ use crate::{
     Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
-pub struct Clip {}
+pub struct Min {}
 
-impl ExecutableOperator for Clip {
+impl ExecutableOperator for Min {
     fn execute(
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
@@ -14,10 +14,9 @@ impl ExecutableOperator for Clip {
         device: &Device,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let min = inputs[0];
-        let max = inputs[1];
-        let input = inputs[2];
+        let input_0 = inputs[0];
+        let input_1 = inputs[1];
         let output = outputs[0];
-        device.clip(min, max, input, output, device_stream)
+        device.min(input_0, input_1, output, device_stream)
     }
 }

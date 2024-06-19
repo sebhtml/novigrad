@@ -9,7 +9,7 @@ fn cublas_sgemm_column_major() {
     use crate::Device;
 
     let device = Device::cuda().unwrap();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let (m, n, k) = (2, 4, 3);
     let a = new_tensor!(
         device,
@@ -194,7 +194,7 @@ fn cuda_softmax_kernel() {
     let inp = dev
         .htod_copy(vec![
             //
-            0.2 as f32, 0.3, 0.4, //
+            0.2_f32, 0.3, 0.4, //
             0.4, 0.2, 0.3, //
         ])
         .unwrap();
@@ -242,12 +242,12 @@ fn cuda_dot_kernel() {
     let n = 6;
     let left_data = vec![
         //
-        0.2 as f32, 0.4, 0.6, //
+        0.2_f32, 0.4, 0.6, //
         0.8, 0.2, 0.4, //
     ];
     let right_data = vec![
         //
-        0.5 as f32, 1.0, 0.5, //
+        0.5_f32, 1.0, 0.5, //
         1.0, 4.0, 5.0, //
     ];
     let left = dev.htod_copy(left_data.clone()).unwrap();
@@ -262,10 +262,10 @@ fn cuda_dot_kernel() {
 
     let cpu_output = {
         let device = Device::cpu();
-        let stream = device.stream().unwrap();
+        let stream = device.new_stream().unwrap();
         let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
         let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
-        let output = new_tensor!(device, 1, 1 as usize, vec![0.0]).unwrap();
+        let output = new_tensor!(device, 1, 1_usize, vec![0.0]).unwrap();
         device.dot(&left, &right, &output, &stream).unwrap();
         output.get_values().unwrap()
     };
@@ -312,10 +312,10 @@ fn cuda_dot_kernel_big_vectors() {
 
     let cpu_output = {
         let device = Device::cpu();
-        let stream = device.stream().unwrap();
+        let stream = device.new_stream().unwrap();
         let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
         let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
-        let output = new_tensor!(device, 1, 1 as usize, vec![0.0]).unwrap();
+        let output = new_tensor!(device, 1, 1_usize, vec![0.0]).unwrap();
         device.dot(&left, &right, &output, &stream).unwrap();
         output.get_values().unwrap()
     };
@@ -364,10 +364,10 @@ fn cuda_cross_entropy_loss() {
 
     let cpu_output = {
         let device = Device::cpu();
-        let stream = device.stream().unwrap();
+        let stream = device.new_stream().unwrap();
         let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
         let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
-        let output = new_tensor!(device, 1, 1 as usize, vec![0.0]).unwrap();
+        let output = new_tensor!(device, 1, 1_usize, vec![0.0]).unwrap();
         device
             .cross_entropy_loss(&left, &right, &output, &stream)
             .unwrap();

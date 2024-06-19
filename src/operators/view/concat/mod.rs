@@ -1,9 +1,9 @@
 use crate::{
     gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, DeviceTrait, ExecutableOperator, NaryOperator, OpCode, OperatorAttributes,
-    TensorWithGrad,
+    Device, DeviceTrait, ExecutableOperator, NaryOperator, OperatorAttributes, TensorWithGrad,
 };
 
 #[cfg(test)]
@@ -40,10 +40,10 @@ impl ExecutableOperator for Concat {
                 let dst_col = input_index * input_cols;
                 copy_slice(
                     src.cols(),
-                    &src,
+                    src,
                     src_row,
                     src_col,
-                    &dst,
+                    dst,
                     dst_row,
                     dst_col,
                     device,

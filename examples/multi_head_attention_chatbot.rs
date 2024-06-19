@@ -108,9 +108,9 @@ fn main() -> Result<(), Error> {
         [0..(sequence_length + max_number_of_examples - 1)]
         .to_owned();
 
-    println!("");
+    println!();
     println!("Corpus: {}", corpus);
-    println!("");
+    println!();
 
     for turn in 0..100 {
         println!("Turn: {}", turn);
@@ -131,7 +131,7 @@ fn main() -> Result<(), Error> {
             let end = start + sequence_length;
 
             let input = &corpus[start..end];
-            let input_tokens = tokenizer.encode(&input);
+            let input_tokens = tokenizer.encode(input);
             let input_one_hot = into_one_hot_encoded_rows(&device, &input_tokens, vocab_size)?;
 
             let expected_output = &corpus[start + 1..end + 1];
@@ -152,7 +152,7 @@ fn main() -> Result<(), Error> {
         let start = 0;
         let prompt = &corpus[start..sequence_length];
         println!("Prompt: {}", prompt);
-        let prompt_tokens = tokenizer.encode(&prompt);
+        let prompt_tokens = tokenizer.encode(prompt);
         let max_len = corpus.len();
         let auto_regressive_tokens = auto_regressive_inference(
             &model,
@@ -185,9 +185,9 @@ fn auto_regressive_inference(
     prompt_tokens: &[usize],
     max_len: usize,
 ) -> Result<Vec<usize>, Error> {
-    let mut auto_regressive_tokens = vec![0 as usize; 0];
+    let mut auto_regressive_tokens = vec![0_usize; 0];
     for token in prompt_tokens {
-        auto_regressive_tokens.push(token.clone());
+        auto_regressive_tokens.push(*token);
     }
     let sequence_length = model.input_size()[0];
     let vocab_size = model.input_size()[1];
@@ -195,7 +195,7 @@ fn auto_regressive_inference(
     while auto_regressive_tokens.len() < max_len {
         let input_tokens =
             &auto_regressive_tokens[(auto_regressive_tokens.len() - sequence_length)..];
-        let input_one_hot = into_one_hot_encoded_rows(&device, input_tokens, vocab_size)?;
+        let input_one_hot = into_one_hot_encoded_rows(device, input_tokens, vocab_size)?;
 
         let actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
         let last_row = &actual_output_one_hot.tensor().rows() - 1;

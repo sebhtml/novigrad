@@ -1,7 +1,8 @@
 use crate::{
+    opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, OpCode, OperatorAttributes,
+    Device, OperatorAttributes,
 };
 use std::{ops::Deref, sync::Arc};
 
@@ -13,9 +14,9 @@ pub enum Category {
     Optimization,
 }
 
-impl Into<String> for Category {
-    fn into(self) -> String {
-        match self {
+impl From<Category> for String {
+    fn from(val: Category) -> Self {
+        match val {
             Category::Inference => "Inference",
             Category::Loss => "Loss",
             Category::Gradient => "Gradient",
@@ -44,7 +45,7 @@ pub struct Instruction {
 #[macro_export]
 macro_rules! instruction {
     ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, $category:expr, ) => {
-        crate::Instruction::new(
+        $crate::Instruction::new(
             $opcode,
             $attributes,
             $inputs,
@@ -68,12 +69,12 @@ macro_rules! instruction {
 #[macro_export]
 macro_rules! inference_instruction {
     ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
-        crate::instruction!(
+        $crate::instruction!(
             $opcode,
             $attributes,
             $inputs,
             $outputs,
-            crate::Category::Inference,
+            $crate::Category::Inference,
         )
     };
 }
@@ -81,12 +82,12 @@ macro_rules! inference_instruction {
 #[macro_export]
 macro_rules! loss_instruction {
     ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
-        crate::instruction!(
+        $crate::instruction!(
             $opcode,
             $attributes,
             $inputs,
             $outputs,
-            crate::Category::Loss,
+            $crate::Category::Loss,
         )
     };
 }
@@ -94,12 +95,12 @@ macro_rules! loss_instruction {
 #[macro_export]
 macro_rules! gradient_instruction {
     ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
-        crate::instruction!(
+        $crate::instruction!(
             $opcode,
             $attributes,
             $inputs,
             $outputs,
-            crate::Category::Gradient,
+            $crate::Category::Gradient,
         )
     };
 }
@@ -107,12 +108,12 @@ macro_rules! gradient_instruction {
 #[macro_export]
 macro_rules! optimization_instruction {
     ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
-        crate::instruction!(
+        $crate::instruction!(
             $opcode,
             $attributes,
             $inputs,
             $outputs,
-            crate::Category::Optimization,
+            $crate::Category::Optimization,
         )
     };
 }
@@ -195,12 +196,11 @@ pub fn filter_instructions(
     instructions: Vec<Instruction>,
     filter: Option<Category>,
 ) -> Vec<Instruction> {
-    let instructions = match filter {
+    match filter {
         Some(category) => instructions
             .into_iter()
             .filter(|x| x.category() == category)
             .collect(),
         None => instructions,
-    };
-    instructions
+    }
 }

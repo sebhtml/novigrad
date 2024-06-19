@@ -1,8 +1,9 @@
 use crate::{
     devices::Device,
     error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    opcode::OpCode,
     tensor::{Error, ErrorEnum, Tensor},
-    BinaryOperator, OpCode, OperatorAttributes, TensorWithGrad,
+    BinaryOperator, OperatorAttributes, TensorWithGrad,
 };
 
 pub struct MatMul {
@@ -33,7 +34,7 @@ impl BinaryOperator for MatMul {
         };
         if !compatible {
             println!("Incompatible shapes in matrix multiplication");
-            println!("transa: {}, transb: {}", false, self.transb);
+            println!("transa: false, transb: {}", self.transb);
             println!(
                 "Between A {:?} and B {:?}",
                 *input_0_tensor.size(),

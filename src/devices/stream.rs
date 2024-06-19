@@ -1,9 +1,36 @@
-use crate::tensor::Error;
+use crate::{
+    new_tensor,
+    tensor::{Error, Tensor},
+    Device,
+};
 
 #[cfg(feature = "cuda")]
 use super::cuda::stream::CudaDeviceStream;
 
-pub enum DeviceStream {
+pub struct DeviceStream {
+    pub variant: DeviceStreamEnum,
+    // Working memory of the stream
+    // TODO design a better way to do this as the number of temporary tensors increases.
+    pub max_alpha: Tensor,
+    pub l2_norm: Tensor,
+    pub one: Tensor,
+    pub alpha: Tensor,
+}
+
+impl DeviceStream {
+    pub fn try_new(device: &Device, variant: DeviceStreamEnum) -> Result<Self, Error> {
+        let that = Self {
+            variant,
+            max_alpha: new_tensor!(device, 1, 1, vec![1.0],)?,
+            l2_norm: new_tensor!(device, 1, 1, vec![0.0],)?,
+            one: new_tensor!(device, 1, 1, vec![1.0],)?,
+            alpha: new_tensor!(device, 1, 1, vec![0.0],)?,
+        };
+        Ok(that)
+    }
+}
+
+pub enum DeviceStreamEnum {
     CpuDeviceStream,
     #[cfg(feature = "cuda")]
     CudaDeviceStream(CudaDeviceStream),
@@ -15,10 +42,10 @@ pub trait StreamTrait {
 
 impl StreamTrait for DeviceStream {
     fn synchronize(&self) -> Result<(), Error> {
-        match self {
-            DeviceStream::CpuDeviceStream => Ok(()),
+        match &self.variant {
+            DeviceStreamEnum::CpuDeviceStream => Ok(()),
             #[cfg(feature = "cuda")]
-            DeviceStream::CudaDeviceStream(stream) => stream.synchronize(),
+            DeviceStreamEnum::CudaDeviceStream(stream) => stream.synchronize(),
         }
     }
 }

@@ -36,7 +36,7 @@ fn no_repeated_pairs() {
     let tokens = tokenizer.encode(&text);
     let mut token_pair_counters = HashMap::<(usize, usize), usize>::default();
     for i in 0..tokens.len() - 1 {
-        let pair = (tokens[i + 0], tokens[i + 1]);
+        let pair = (tokens[i], tokens[i + 1]);
         token_pair_counters
             .entry(pair)
             .and_modify(|counter| *counter += 1)

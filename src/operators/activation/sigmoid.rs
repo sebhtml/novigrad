@@ -1,11 +1,12 @@
 use crate::devices::Device;
+use crate::opcode::OpCode;
 use crate::stream::DeviceStream;
 use crate::{
     emit_softmax_and_sigmoid_gradient_instructions, inference_instruction, tensor::Error,
     DeviceTrait, TensorWithGrad,
 };
 use crate::{new_tensor, new_tensor_with_grad, ExecutableOperator, OperatorAttributes};
-use crate::{tensor::Tensor, OpCode, UnaryOperator};
+use crate::{tensor::Tensor, UnaryOperator};
 
 pub struct Sigmoid {
     device: Device,

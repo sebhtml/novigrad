@@ -10,6 +10,8 @@ mod attention;
 pub use attention::*;
 mod reduce;
 pub use reduce::*;
+pub mod analysis;
+pub mod opcode;
 pub mod statistics;
 
 use crate::{
@@ -55,16 +57,11 @@ pub trait ExecutableOperator {
     ) -> Result<(), Error>;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum OperatorAttributes {
+    #[default]
     None,
     ThreeBools(bool, bool, bool),
     String(String),
     Vec(Vec<usize>),
-}
-
-impl Default for OperatorAttributes {
-    fn default() -> Self {
-        OperatorAttributes::None
-    }
 }

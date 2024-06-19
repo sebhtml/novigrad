@@ -1,9 +1,10 @@
 use crate::{
     devices::Device,
     gradient_instruction, loss_instruction, new_tensor, new_tensor_with_grad,
+    opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    BinaryOperator, DeviceTrait, ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad,
+    BinaryOperator, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
 };
 
 #[cfg(test)]
@@ -32,7 +33,7 @@ impl ExecutableOperator for ReduceSumSquare {
         let expected = inputs[0];
         let actual = inputs[1];
         let loss = outputs[0];
-        device.reduce_square_sum(expected, actual, loss, device_stream)
+        device.reduce_sum_square(expected, actual, loss, device_stream)
     }
 }
 

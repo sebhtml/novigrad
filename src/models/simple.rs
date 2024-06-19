@@ -110,7 +110,8 @@ fn load_examples(
         .collect();
 
     let vocab_size = tokenizer.vocab_size();
-    let examples = examples
+
+    examples
         .into_iter()
         .map(|example| {
             let one_hot_encoded_input = into_one_hot_encoded_rows(device, &example.0, vocab_size);
@@ -123,9 +124,7 @@ fn load_examples(
                 Ok(acc)
             }
             _ => Err(error!(ErrorEnum::UnsupportedOperation)),
-        });
-
-    examples
+        })
 }
 
 pub fn load_simple_model(
@@ -133,7 +132,7 @@ pub fn load_simple_model(
 ) -> Result<ModelDetails<SimpleModel, SoftmaxCrossEntropyLoss, GradientDescent>, Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 6;
-    let examples = load_examples(&device, &mut tokenizer)?;
+    let examples = load_examples(device, &mut tokenizer)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.5;

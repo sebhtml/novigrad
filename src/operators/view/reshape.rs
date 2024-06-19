@@ -1,9 +1,10 @@
 use crate::{
     devices::Device,
     error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
-    ExecutableOperator, OpCode, OperatorAttributes, TensorWithGrad, UnaryOperator,
+    ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 pub struct Reshape {

@@ -14,7 +14,7 @@ pub use cpu::*;
 mod cuda;
 #[cfg(feature = "cuda")]
 pub use cuda::*;
-use stream::DeviceStream;
+use stream::{DeviceStream, DeviceStreamEnum};
 
 use crate::{tensor::Tensor, TensorWithGrad};
 pub mod slice;
@@ -113,6 +113,14 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
+    fn min(
+        &self,
+        input1: &Tensor,
+        input2: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
+
     /// SAXPY constant times a vector plus a vector.
     /// y = alpha * x + y
     fn axpy(
@@ -202,7 +210,7 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
-    fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+    fn reduce_sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
 
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     /// https://en.wikipedia.org/wiki/Entropy_(information_theory)
@@ -215,7 +223,7 @@ pub trait DeviceTrait {
     ) -> Result<(), Error>;
 
     /// RSS = Σ (y_i - f(x_i))^2
-    fn reduce_square_sum(
+    fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -233,7 +241,7 @@ pub trait DeviceTrait {
     /// Allocate a slice on the device.
     fn slice(&self, n: i32) -> Result<DeviceSlice, Error>;
 
-    fn stream(&self) -> Result<DeviceStream, Error>;
+    fn stream(&self) -> Result<DeviceStreamEnum, Error>;
 }
 
 impl Debug for dyn DeviceTrait + Send + Sync {
@@ -271,6 +279,11 @@ impl Device {
             device,
             available_buffers: Default::default(),
         }
+    }
+
+    pub fn new_stream(&self) -> Result<DeviceStream, Error> {
+        let variant = self.stream()?;
+        DeviceStream::try_new(self, variant)
     }
 
     pub fn copy_to(
@@ -363,7 +376,7 @@ impl Device {
     ) -> Result<TensorWithGrad, Error> {
         let len = rows * cols;
         let tensor = Self::tensor(
-            &self,
+            self,
             rows,
             cols,
             values,
@@ -376,7 +389,7 @@ impl Device {
         )?;
         let gradient = if requires_grad {
             Self::tensor(
-                &self,
+                self,
                 rows,
                 cols,
                 vec![0.0; len],
@@ -389,7 +402,7 @@ impl Device {
             )?
         } else {
             Self::tensor(
-                &self,
+                self,
                 0,
                 0,
                 vec![],
@@ -437,8 +450,7 @@ impl Device {
             .write()
             .unwrap()
             .get_mut(&len)
-            .map(|x| x.pop_back())
-            .flatten();
+            .and_then(|x| x.pop_back());
         match recycled {
             Some(buffer) => {
                 //println!("Recycled buffer with length {}", len);
@@ -555,11 +567,11 @@ impl DeviceTrait for Device {
         self.device.softmax(input, output, device_stream)
     }
 
-    fn sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
         if &y.size() as &[usize] != &[1, 1] {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        self.device.sum(x, y)
+        self.device.reduce_sum(x, y)
     }
 
     fn mul(
@@ -600,6 +612,16 @@ impl DeviceTrait for Device {
         self.device.div(input1, input2, output, device_stream)
     }
 
+    fn min(
+        &self,
+        input1: &Tensor,
+        input2: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.min(input1, input2, output, device_stream)
+    }
+
     fn clip(
         &self,
         min: &Tensor,
@@ -622,7 +644,7 @@ impl DeviceTrait for Device {
             .cross_entropy_loss(expected, actual, loss, device_stream)
     }
 
-    fn reduce_square_sum(
+    fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -630,7 +652,7 @@ impl DeviceTrait for Device {
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         self.device
-            .reduce_square_sum(expected, actual, loss, device_stream)
+            .reduce_sum_square(expected, actual, loss, device_stream)
     }
 
     fn transpose(
@@ -655,7 +677,7 @@ impl DeviceTrait for Device {
         self.device.slice(n)
     }
 
-    fn stream(&self) -> Result<DeviceStream, Error> {
+    fn stream(&self) -> Result<DeviceStreamEnum, Error> {
         self.device.stream()
     }
 }

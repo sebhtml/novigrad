@@ -46,11 +46,10 @@ impl Controller {
     }
 
     pub fn spawn(mut controller: Self) -> JoinHandle<Self> {
-        let handle = thread::spawn(|| {
+        thread::spawn(|| {
             while controller.step() {}
             controller
-        });
-        handle
+        })
     }
 
     fn maybe_dispatch(&self, stream: usize) {

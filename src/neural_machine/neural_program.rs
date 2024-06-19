@@ -2,9 +2,10 @@ use std::{collections::HashSet, ops::Deref};
 
 use crate::{
     gradient_instruction, new_tensor_with_grad,
+    opcode::OpCode,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, Instruction, OpCode, OperatorAttributes, OptimizerTrait,
-    TensorWithGrad, UnaryModel,
+    BinaryOperator, Device, Instruction, OperatorAttributes, OptimizerTrait, TensorWithGrad,
+    UnaryModel,
 };
 
 pub struct NeuralProgram {

@@ -4,6 +4,9 @@ use crate::{
     Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
 };
 
+#[cfg(test)]
+mod tests;
+
 pub struct Div {}
 
 impl ExecutableOperator for Div {

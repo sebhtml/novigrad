@@ -1,8 +1,8 @@
 use crate::{
     inference_instruction, new_tensor, new_tensor_with_grad,
+    opcode::OpCode,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, Mul, OpCode, OperatorAttributes, ScalarMul, TensorWithGrad,
-    UnaryOperator,
+    BinaryOperator, Device, Mul, OperatorAttributes, ScalarMul, TensorWithGrad, UnaryOperator,
 };
 
 #[cfg(test)]

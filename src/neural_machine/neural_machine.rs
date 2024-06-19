@@ -4,8 +4,8 @@ use crate::schedulers::SchedulerTrait;
 use crate::stream::StreamTrait;
 use crate::{
     neural_machine::streams::stream::print_streams, neural_program::NeuralProgram,
-    schedulers::StreamExecutor, stream::DeviceStream, tensor::Error, Category, Device, DeviceTrait,
-    Instruction, TensorWithGrad,
+    schedulers::StreamExecutor, stream::DeviceStream, tensor::Error, Category, Device, Instruction,
+    TensorWithGrad,
 };
 
 use super::streams::{
@@ -129,7 +129,7 @@ where
 
         let machine = NeuralMachine::<T, Scheduler> {
             device: device.clone(),
-            io_stream: device.stream()?,
+            io_stream: device.new_stream()?,
             example_input,
             example_output,
             machine_output,
@@ -301,7 +301,7 @@ where
     }
 
     fn print_instruction(&self, i: usize, instruction: &Instruction) {
-        let opcode: String = instruction.opcode().clone().into();
+        let opcode: String = instruction.opcode().into();
         let inputs = instruction
             .inputs()
             .iter()
@@ -354,13 +354,13 @@ where
         let minimum_write_before_read_for_new_stream = 4;
         let minimum_dependents_for_stream = 12;
         let minimum_stream_instructions = 32;
-        let streams = make_streams(
+
+        make_streams(
             &simple_instructions,
             minimum_write_before_read_for_new_stream,
             minimum_dependents_for_stream,
             minimum_stream_instructions,
-        );
-        streams
+        )
     }
 }
 

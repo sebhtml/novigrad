@@ -6,7 +6,7 @@ extern crate cblas_sys as ffi;
 use crate::{
     error,
     slice::DeviceSlice,
-    stream::DeviceStream,
+    stream::{DeviceStream, DeviceStreamEnum},
     tensor::{Error, ErrorEnum, Tensor},
     EPSILON,
 };
@@ -19,14 +19,8 @@ extern crate blas_src;
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct CpuDevice {}
-
-impl Default for CpuDevice {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 impl DeviceTrait for CpuDevice {
     fn gemm(
@@ -182,7 +176,7 @@ impl DeviceTrait for CpuDevice {
         CpuDevice::_softmax(rows, cols, input, output)
     }
 
-    fn sum(&self, _input: &Tensor, _output: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(&self, _input: &Tensor, _output: &Tensor) -> Result<(), Error> {
         todo!()
     }
 
@@ -365,7 +359,7 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn reduce_square_sum(
+    fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -438,8 +432,43 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn stream(&self) -> Result<DeviceStream, Error> {
-        Ok(DeviceStream::CpuDeviceStream)
+    fn stream(&self) -> Result<DeviceStreamEnum, Error> {
+        Ok(DeviceStreamEnum::CpuDeviceStream)
+    }
+
+    fn min(
+        &self,
+        input1: &Tensor,
+        input2: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        if *input1.size() != *input2.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+
+        let len = input1.len();
+        debug_assert_eq!(*output.size(), *input1.size());
+
+        let result_ptr = output.as_mut_ptr();
+        let left_ptr = input1.as_ptr();
+        let right_ptr = input2.as_ptr();
+
+        unsafe {
+            let mut index = 0;
+            while index < len {
+                let left_cell = left_ptr.add(index);
+                let right_cell = right_ptr.add(index);
+                let result_cell = result_ptr.add(index);
+                let left = *left_cell;
+                let right = *right_cell;
+                let value = left.min(right);
+                *result_cell = value;
+                index += 1;
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -456,7 +485,7 @@ impl CpuDevice {
         while row < rows {
             // Find max
 
-            let mut max = unsafe { *input.add(row * cols + 0) };
+            let mut max = unsafe { *input.add(row * cols) };
             let mut col = 0;
             while col < cols {
                 let x = unsafe { *input.add(row * cols + col) };
@@ -472,9 +501,9 @@ impl CpuDevice {
             let mut col = 0;
             while col < cols {
                 let x = unsafe { *input.add(row * cols + col) };
-                debug_assert_eq!(false, x.is_nan());
+                debug_assert!(!x.is_nan());
                 let y = E.powf(x - max);
-                debug_assert_eq!(false, y.is_nan(), "x: {}, max: {}, y: {}", x, max, y,);
+                debug_assert!(!y.is_nan(), "x: {}, max: {}, y: {}", x, max, y,);
                 unsafe { *output.add(row * cols + col) = y };
                 sum += y;
                 col += 1;
@@ -484,10 +513,10 @@ impl CpuDevice {
             let mut col = 0;
             while col < cols {
                 let x = unsafe { *output.add(row * cols + col) };
-                debug_assert_eq!(false, x.is_nan());
+                debug_assert!(!x.is_nan());
                 debug_assert_ne!(0.0, sum);
                 let y = x / sum;
-                debug_assert_eq!(false, y.is_nan());
+                debug_assert!(!y.is_nan());
                 unsafe { *output.add(row * cols + col) = y };
                 col += 1;
             }

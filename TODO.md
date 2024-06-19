@@ -14,10 +14,9 @@
 
 - implement Gelu
 
-- move opcode.rs to operators/
-
 ---------------
 
+- remove redundant code in cuda mod.rs using launch_mapping_kernel
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization)
 - implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
 - rename RowMax to ArgMax (https://onnx.ai/onnx/operators/onnx__ArgMax.html)

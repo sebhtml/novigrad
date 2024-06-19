@@ -16,7 +16,7 @@ use stream::CudaDeviceStream;
 use crate::{
     error,
     slice::DeviceSlice,
-    stream::DeviceStream,
+    stream::{DeviceStream, DeviceStreamEnum},
     tensor::{Error, ErrorEnum, Tensor},
     DeviceTrait, EPSILON,
 };
@@ -35,6 +35,45 @@ impl CudaDev {
             Ok(dev) => Self::try_new(dev),
 
             _ => Err(error!(ErrorEnum::UnsupportedOperation)),
+        }
+    }
+
+    fn launch_mapping_kernel(
+        &self,
+        module_name: &str,
+        func_name: &str,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let _stream = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
+            &stream.stream
+        } else {
+            return Err(error!(ErrorEnum::NvLaunchError));
+        };
+        let n = left.len();
+        let kernel = self.get_func(module_name, func_name)?;
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+
+        let left = &left.device_slice().buffer;
+        let right = &right.device_slice().buffer;
+        let result = &result.device_slice().buffer;
+
+        match (left, right, result) {
+            (
+                DeviceSlice::CudaDevSlice(left),
+                DeviceSlice::CudaDevSlice(right),
+                DeviceSlice::CudaDevSlice(result),
+            ) => {
+                let result =
+                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvLaunchError)),
         }
     }
 
@@ -87,6 +126,12 @@ impl CudaDev {
             "div_kernel_module",
             &["div_kernel"],
             "./src/devices/cuda/kernels/div_kernel.cu",
+        )?;
+
+        device.load_module(
+            "min_kernel_module",
+            &["min_kernel"],
+            "./src/devices/cuda/kernels/min_kernel.cu",
         )?;
 
         device.load_module(
@@ -186,7 +231,7 @@ impl DeviceTrait for CudaDev {
         ldc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             *stream.cuda_blas.handle()
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
@@ -229,7 +274,7 @@ impl DeviceTrait for CudaDev {
         incy: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             *stream.cuda_blas.handle()
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
@@ -286,7 +331,7 @@ impl DeviceTrait for CudaDev {
         y_inc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             *stream.cuda_blas.handle()
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
@@ -375,7 +420,7 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
         let sum_kernel = self.get_func("sum_kernel_module", "sum_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -455,34 +500,31 @@ impl DeviceTrait for CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _stream = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
-            &stream.stream
-        } else {
-            return Err(error!(ErrorEnum::NvLaunchError));
-        };
-        let n = left.len();
-        let kernel = self.get_func("div_kernel_module", "div_kernel")?;
-        let cfg = LaunchConfig::for_num_elems(n as u32);
+        self.launch_mapping_kernel(
+            "div_kernel_module",
+            "div_kernel",
+            left,
+            right,
+            result,
+            device_stream,
+        )
+    }
 
-        let left = &left.device_slice().buffer;
-        let right = &right.device_slice().buffer;
-        let result = &result.device_slice().buffer;
-
-        match (left, right, result) {
-            (
-                DeviceSlice::CudaDevSlice(left),
-                DeviceSlice::CudaDevSlice(right),
-                DeviceSlice::CudaDevSlice(result),
-            ) => {
-                let result =
-                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
-                match result {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
-                }
-            }
-            _ => Err(error!(ErrorEnum::NvLaunchError)),
-        }
+    fn min(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.launch_mapping_kernel(
+            "min_kernel_module",
+            "min_kernel",
+            left,
+            right,
+            result,
+            device_stream,
+        )
     }
 
     fn sqrt(
@@ -516,7 +558,7 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _stream = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let _stream = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             &stream.stream
         } else {
             return Err(error!(ErrorEnum::NvLaunchError));
@@ -589,7 +631,7 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn reduce_square_sum(
+    fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -648,7 +690,7 @@ impl DeviceTrait for CudaDev {
         let cfg = LaunchConfig::for_num_elems(n as u32);
         let input = &input.device_slice().buffer;
         let output = &output.device_slice().buffer;
-        let rng_state = if let DeviceStream::CudaDeviceStream(stream) = device_stream {
+        let rng_state = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             &stream.rng_state
         } else {
             return Err(error!(ErrorEnum::UnsupportedOperation));
@@ -667,7 +709,7 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn stream(&self) -> Result<DeviceStream, Error> {
+    fn stream(&self) -> Result<DeviceStreamEnum, Error> {
         match self.dev.fork_default_stream() {
             Ok(stream) => {
                 let rng_state = self
@@ -685,7 +727,7 @@ impl DeviceTrait for CudaDev {
                     rng_state,
                     cuda_blas,
                 };
-                Ok(DeviceStream::CudaDeviceStream(cuda_stream))
+                Ok(DeviceStreamEnum::CudaDeviceStream(cuda_stream))
             }
             Err(_) => Err(error!(ErrorEnum::UnsupportedOperation)),
         }

@@ -1,24 +1,12 @@
 use crate::Instruction;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Dependencies {
     pub write_before_read_dependencies: Vec<usize>,
     pub write_before_write_dependencies: Vec<usize>,
     pub read_before_write_dependencies: Vec<usize>,
     pub all_dependencies: Vec<usize>,
     pub all_dependents: Vec<usize>,
-}
-
-impl Default for Dependencies {
-    fn default() -> Self {
-        Self {
-            write_before_read_dependencies: Default::default(),
-            write_before_write_dependencies: Default::default(),
-            read_before_write_dependencies: Default::default(),
-            all_dependencies: Default::default(),
-            all_dependents: Default::default(),
-        }
-    }
 }
 
 pub fn get_instruction_dependencies(
@@ -38,7 +26,7 @@ pub fn get_instruction_dependencies(
             for j in j_range.rev() {
                 let j_outputs = &instructions[j].1;
 
-                if j_outputs.contains(&i_input) {
+                if j_outputs.contains(i_input) {
                     dependencies[i].write_before_read_dependencies.push(j);
                     break;
                 }
@@ -59,7 +47,7 @@ pub fn get_instruction_dependencies(
             for j in j_range.rev() {
                 let j_outputs = &instructions[j].1;
 
-                if j_outputs.contains(&i_output) {
+                if j_outputs.contains(i_output) {
                     dependencies[i].write_before_write_dependencies.push(j);
                     break;
                 }
@@ -81,7 +69,7 @@ pub fn get_instruction_dependencies(
             for j in j_range.rev() {
                 let j_inputs = &instructions[j].0;
 
-                if j_inputs.contains(&i_output) {
+                if j_inputs.contains(i_output) {
                     dependencies[i].read_before_write_dependencies.push(j);
                     break;
                 }
@@ -90,7 +78,7 @@ pub fn get_instruction_dependencies(
     }
 
     for entry in dependencies.iter_mut() {
-        let mut deps = vec![
+        let mut deps = [
             entry.write_before_read_dependencies.clone(),
             entry.write_before_write_dependencies.clone(),
             entry.read_before_write_dependencies.clone(),

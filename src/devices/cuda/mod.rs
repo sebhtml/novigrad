@@ -73,6 +73,32 @@ impl CudaDev {
         }
     }
 
+    fn launch_unary_kernel(
+        &self,
+        module_name: &str,
+        func_name: &str,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let kernel = self.get_func(module_name, func_name)?;
+        let n = input.len();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        let input = &input.device_slice().buffer;
+        let output = &output.device_slice().buffer;
+        match (input, output) {
+            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
+                let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
+    }
+
     pub fn try_new(dev: Arc<driver::CudaDevice>) -> Result<Self, Error> {
         let device = CudaDev { dev };
 
@@ -472,22 +498,13 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
-        let kernel = self.get_func("sigmoid_kernel_module", "sigmoid_kernel")?;
-        let n = input.len();
-        let cfg = LaunchConfig::for_num_elems(n as u32);
-        let input = &input.device_slice().buffer;
-        let output = &output.device_slice().buffer;
-        match (input, output) {
-            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
-                let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
-                match result {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
-                }
-            }
-            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
-        }
+        self.launch_unary_kernel(
+            "sigmoid_kernel_module",
+            "sigmoid_kernel",
+            input,
+            output,
+            device_stream,
+        )
     }
 
     fn div(
@@ -530,22 +547,13 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
-        let kernel = self.get_func("sqrt_kernel_module", "sqrt_kernel")?;
-        let n = input.len();
-        let cfg = LaunchConfig::for_num_elems(n as u32);
-        let input = &input.device_slice().buffer;
-        let output = &output.device_slice().buffer;
-        match (input, output) {
-            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
-                let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
-                match result {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
-                }
-            }
-            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
-        }
+        self.launch_unary_kernel(
+            "sqrt_kernel_module",
+            "sqrt_kernel",
+            input,
+            output,
+            device_stream,
+        )
     }
 
     fn clip(

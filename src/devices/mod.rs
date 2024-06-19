@@ -172,7 +172,12 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
-    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error>;
+    fn scalar_add(
+        &self,
+        alpha: &Tensor,
+        x: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
     fn mul(
         &self,
@@ -210,7 +215,12 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
-    fn reduce_sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error>;
+    fn reduce_sum(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
 
     /// H(P, Q) = - Σ (P(i) * log(Q(i)))
     /// https://en.wikipedia.org/wiki/Entropy_(information_theory)
@@ -554,8 +564,13 @@ impl DeviceTrait for Device {
         self.device.scalar_mul(alpha, x, device_stream)
     }
 
-    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
-        self.device.scalar_add(alpha, x)
+    fn scalar_add(
+        &self,
+        alpha: &Tensor,
+        x: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.scalar_add(alpha, x, device_stream)
     }
 
     fn softmax(
@@ -567,11 +582,16 @@ impl DeviceTrait for Device {
         self.device.softmax(input, output, device_stream)
     }
 
-    fn reduce_sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(
+        &self,
+        x: &Tensor,
+        y: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         if &y.size() as &[usize] != &[1, 1] {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
-        self.device.reduce_sum(x, y)
+        self.device.reduce_sum(x, y, device_stream)
     }
 
     fn mul(

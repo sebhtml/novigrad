@@ -84,7 +84,7 @@ impl Tensor {
             .read()
             .unwrap()
             .iter()
-            .fold(1, |acc, item| acc * item)
+            .product::<usize>()
     }
 
     pub fn size(&self) -> impl Deref<Target = Vec<usize>> + '_ {
@@ -164,7 +164,7 @@ impl Tensor {
     }
 
     pub fn resize(&self, new_size: &[usize]) -> Result<(), Error> {
-        let new_len = new_size.iter().fold(1, |acc, value| acc * value);
+        let new_len = new_size.iter().product::<usize>();
         if new_len != self.len() {
             return Err(error!(ErrorEnum::UnsupportedOperation));
         }
@@ -184,7 +184,7 @@ impl Display for Tensor {
             self.name(),
             self.size.deref().read().unwrap()
         );
-        _ = write!(f, "\n");
+        _ = writeln!(f);
         #[cfg(debug_assertions)]
         {
             _ = write!(
@@ -193,7 +193,7 @@ impl Display for Tensor {
                 self.file, self.line, self.column,
             );
         }
-        _ = write!(f, "\n");
+        _ = writeln!(f);
         for row in 0..self.rows() {
             for col in 0..self.cols() {
                 let value = self_values[self.index(row, col)];
@@ -203,7 +203,7 @@ impl Display for Tensor {
                     _ = write!(f, " +{:2.8}", value);
                 }
             }
-            _ = write!(f, "\n");
+            _ = writeln!(f);
         }
         Ok(())
     }

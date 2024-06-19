@@ -58,15 +58,13 @@ pub trait ExecutableOperator {
 }
 
 #[derive(Clone, Debug)]
+#[derive(Default)]
 pub enum OperatorAttributes {
+    #[default]
     None,
     ThreeBools(bool, bool, bool),
     String(String),
     Vec(Vec<usize>),
 }
 
-impl Default for OperatorAttributes {
-    fn default() -> Self {
-        OperatorAttributes::None
-    }
-}
+

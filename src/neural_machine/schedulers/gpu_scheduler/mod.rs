@@ -49,7 +49,6 @@ where
         }
 
         let free_device_streams = (0..execution_units_len)
-            .into_iter()
             .map(|_| device.stream())
             .collect::<Result<VecDeque<DeviceStream>, _>>()
             .unwrap();
@@ -101,7 +100,7 @@ where
 {
     fn maybe_launch_device_stream(&mut self) -> Result<bool, Error> {
         // There is a queued logical stream and there is an available physical stream.
-        if self.queued_logical_streams.len() > 0 && self.free_physical_streams.len() > 0 {
+        if !self.queued_logical_streams.is_empty() && !self.free_physical_streams.is_empty() {
             match (
                 self.queued_logical_streams.pop_front(),
                 self.free_physical_streams.pop_front(),
@@ -140,7 +139,7 @@ where
                     }
                 }
                 self.free_physical_streams.push_back(physical_stream);
-                return Ok(true);
+                Ok(true)
             }
             _ => panic!("Not supposed to happen bro"),
         }

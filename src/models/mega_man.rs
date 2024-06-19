@@ -88,7 +88,7 @@ pub fn load_mega_man_model(
     let input_sequence_length = sequence_length;
     let output_sequence_length = 1;
     let examples = load_examples(
-        &device,
+        device,
         file_path,
         max_chars,
         max_number_of_examples,

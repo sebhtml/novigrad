@@ -13,15 +13,15 @@ pub struct Stream {
 impl Display for Stream {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let _ = write!(f, "Stream id: {}", self.id,);
-        let _ = write!(f, "\n");
+        let _ = writeln!(f);
         let _ = write!(f, "dependencies_len: {}", self.dependencies.len(),);
-        let _ = write!(f, "\n");
+        let _ = writeln!(f);
         let _ = write!(f, "dependencies: {:?}", self.dependencies,);
-        let _ = write!(f, "\n");
+        let _ = writeln!(f);
         let _ = write!(f, "instructions_len: {:?}", self.instructions.len(),);
-        let _ = write!(f, "\n");
+        let _ = writeln!(f);
         let _ = write!(f, "instructions: {:?}", self.instructions,);
-        let result = write!(f, "\n");
+        let result = writeln!(f);
         result
     }
 }
@@ -193,7 +193,7 @@ fn assign_instructions_to_streams(
         let mut streams = instruction_dependencies[instruction]
             .all_dependencies
             .iter()
-            .map(|i| instruction_streams[*i].clone())
+            .map(|i| instruction_streams[*i])
             .collect::<Vec<_>>();
         streams.sort();
         streams.dedup();
@@ -215,13 +215,13 @@ fn assign_instructions_to_streams(
     let mut last_added_instruction: Option<usize> = None;
     while let Some(instruction) = instructions_with_no_stream.pop_first() {
         // Reset next_stream if the last added instruction is not the previous one.
-        if last_added_instruction != None && Some(instruction - 1) != last_added_instruction {
+        if last_added_instruction.is_some() && Some(instruction - 1) != last_added_instruction {
             next_stream += 1;
             next_stream_instruction_count = 0;
             last_added_instruction = None;
         }
         if instruction_streams[instruction] == STREAM_NONE
-            && (last_added_instruction == None || Some(instruction - 1) == last_added_instruction)
+            && (last_added_instruction.is_none() || Some(instruction - 1) == last_added_instruction)
         {
             instruction_streams[instruction] = next_stream;
             last_added_instruction = Some(instruction);

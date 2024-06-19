@@ -57,15 +57,15 @@ where
 
     pub fn spawn(mut execution_unit: Self) -> JoinHandle<Result<Self, Error>> {
         let device = execution_unit.device.clone();
-        let handle = thread::spawn(move || {
+        
+        thread::spawn(move || {
             let device_stream = execution_unit
                 .device
                 .stream()
                 .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
             while execution_unit.step(&device, &device_stream)? {}
             Ok(execution_unit)
-        });
-        handle
+        })
     }
 
     fn step(&mut self, device: &Device, device_stream: &DeviceStream) -> Result<bool, Error> {

@@ -109,9 +109,9 @@ pub enum OpCode {
     Unconcat,
 }
 
-impl Into<String> for OpCode {
-    fn into(self) -> String {
-        match self {
+impl From<&OpCode> for String {
+    fn from(value: &OpCode) -> String {
+        match value {
             OpCode::Gemm => "Gemm".to_owned(),
             OpCode::Identity => "Identity".into(),
             OpCode::ReduceSum => "ReduceSum".into(),
@@ -136,7 +136,6 @@ impl Into<String> for OpCode {
             OpCode::Sqrt => "Sqrt".into(),
             OpCode::Transpose => "Transpose".into(),
         }
-        .into()
     }
 }
 

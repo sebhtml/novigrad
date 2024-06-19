@@ -63,6 +63,6 @@ fn evaluate() {
     .unwrap();
     assert_eq!(
         loss.get_values().unwrap()[0],
-        (4.0 - 1.0 as f32).powf(2.0) * 8.0,
+        (4.0 - 1.0_f32).powf(2.0) * 8.0,
     );
 }

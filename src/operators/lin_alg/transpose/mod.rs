@@ -7,13 +7,10 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
+#[derive(Default)]
 pub struct Transpose {}
 
-impl Default for Transpose {
-    fn default() -> Self {
-        Self {}
-    }
-}
+
 
 impl ExecutableOperator for Transpose {
     fn execute(

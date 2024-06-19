@@ -93,7 +93,7 @@ pub fn load_mega_man_attention_model(
     let input_sequence_length = sequence_length;
     let output_sequence_length = sequence_length;
     let examples = load_examples(
-        &device,
+        device,
         file_path,
         max_chars,
         max_number_of_examples,
@@ -133,7 +133,7 @@ pub fn load_mega_man_attention_model(
 }
 
 pub fn get_megaman_attention_instructions(device: &Device) -> Result<Vec<Instruction>, Error> {
-    let details = load_mega_man_attention_model(&device)?;
+    let details = load_mega_man_attention_model(device)?;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;

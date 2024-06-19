@@ -47,6 +47,12 @@ pub struct InstructionEmitter {
     pub executed_instructions: Arc<Mutex<Vec<usize>>>,
 }
 
+impl Default for InstructionEmitter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InstructionEmitter {
     pub fn new() -> Self {
         Self {
@@ -77,6 +83,12 @@ impl StreamEventHandler for InstructionEmitter {
 
 #[derive(Clone)]
 pub struct StreamExecutor {}
+
+impl Default for StreamExecutor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl StreamExecutor {
     pub fn new() -> Self {

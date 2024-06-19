@@ -18,10 +18,10 @@ trait IsPrintable {
 impl IsPrintable for char {
     fn is_printable(&self) -> bool {
         let code = *self as usize;
-        if (code >= 32 && code <= 126) || code == 9 || code == 10 || code == 13 {
+        if (32..=126).contains(&code) || code == 9 || code == 10 || code == 13 {
             return true;
         }
-        return false;
+        false
     }
 }
 
@@ -42,7 +42,7 @@ fn tokens_to_text(
     tokenizer: &mut Option<Tokenizer>,
 ) -> Result<String, Error> {
     let input_text = match tokenizer {
-        Some(tokenizer) => tokenizer.decode(&input_tokens)?,
+        Some(tokenizer) => tokenizer.decode(input_tokens)?,
         None => input_tokens
             .to_vec()
             .iter()

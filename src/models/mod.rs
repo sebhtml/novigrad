@@ -80,7 +80,7 @@ fn load_examples(
     println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
     while i + input_sequence_length < tokens.len() && i < max_number_of_examples {
-        let input_begin = i + 0;
+        let input_begin = i;
         let input_end = input_begin + input_sequence_length;
         let input_tokens = &tokens[input_begin..input_end];
         let one_hot_encoded_tokens = into_one_hot_encoded_rows(device, input_tokens, vocab_size)?;

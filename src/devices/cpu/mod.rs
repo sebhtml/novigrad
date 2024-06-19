@@ -20,13 +20,10 @@ extern crate blas_src;
 mod tests;
 
 #[derive(Debug)]
+#[derive(Default)]
 pub struct CpuDevice {}
 
-impl Default for CpuDevice {
-    fn default() -> Self {
-        Self {}
-    }
-}
+
 
 impl DeviceTrait for CpuDevice {
     fn gemm(
@@ -491,7 +488,7 @@ impl CpuDevice {
         while row < rows {
             // Find max
 
-            let mut max = unsafe { *input.add(row * cols + 0) };
+            let mut max = unsafe { *input.add(row * cols) };
             let mut col = 0;
             while col < cols {
                 let x = unsafe { *input.add(row * cols + col) };
@@ -507,9 +504,9 @@ impl CpuDevice {
             let mut col = 0;
             while col < cols {
                 let x = unsafe { *input.add(row * cols + col) };
-                debug_assert_eq!(false, x.is_nan());
+                debug_assert!(!x.is_nan());
                 let y = E.powf(x - max);
-                debug_assert_eq!(false, y.is_nan(), "x: {}, max: {}, y: {}", x, max, y,);
+                debug_assert!(!y.is_nan(), "x: {}, max: {}, y: {}", x, max, y,);
                 unsafe { *output.add(row * cols + col) = y };
                 sum += y;
                 col += 1;
@@ -519,10 +516,10 @@ impl CpuDevice {
             let mut col = 0;
             while col < cols {
                 let x = unsafe { *output.add(row * cols + col) };
-                debug_assert_eq!(false, x.is_nan());
+                debug_assert!(!x.is_nan());
                 debug_assert_ne!(0.0, sum);
                 let y = x / sum;
-                debug_assert_eq!(false, y.is_nan());
+                debug_assert!(!y.is_nan());
                 unsafe { *output.add(row * cols + col) = y };
                 col += 1;
             }

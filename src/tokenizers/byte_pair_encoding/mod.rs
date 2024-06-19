@@ -5,6 +5,7 @@ use crate::{error, tensor::Error, tensor::ErrorEnum, TokenizerTrait};
 #[cfg(test)]
 mod tests;
 
+#[derive(Default)]
 pub struct BytePairEncoding {
     vocab_size: usize,
     // TODO add maximum vocabulary size.
@@ -14,27 +15,17 @@ pub struct BytePairEncoding {
     token_to_token_pair: HashMap<usize, (usize, usize)>,
 }
 
-impl Default for BytePairEncoding {
-    fn default() -> Self {
-        Self {
-            vocab_size: 0,
-            byte_to_token: Default::default(),
-            token_to_byte: Default::default(),
-            token_pair_to_token: Default::default(),
-            token_to_token_pair: Default::default(),
-        }
-    }
-}
+
 
 fn get_pair(tokens: &[usize], i: usize) -> Option<(usize, usize)> {
     if i + 1 >= tokens.len() {
         return None;
     }
 
-    let token_1 = tokens[i + 0];
+    let token_1 = tokens[i];
     let token_2 = tokens[i + 1];
     let pair = (token_1, token_2);
-    return Some(pair);
+    Some(pair)
 }
 
 impl TokenizerTrait for BytePairEncoding {
@@ -45,7 +36,7 @@ impl TokenizerTrait for BytePairEncoding {
 
         let mut allocate_token = || -> usize {
             let token = next_token;
-            next_token = next_token + 1;
+            next_token += 1;
             token
         };
 
@@ -85,8 +76,7 @@ impl TokenizerTrait for BytePairEncoding {
                 .max();
 
             let expected_pair = max
-                .map(|max| token_pair_counters.iter().find(|item| item.1 == max))
-                .flatten()
+                .and_then(|max| token_pair_counters.iter().find(|item| item.1 == max))
                 .map(|item| item.0);
 
             has_repeated_pair = expected_pair.is_some();
@@ -151,7 +141,7 @@ impl TokenizerTrait for BytePairEncoding {
         // Decode tokens to bytes
         let mut output = vec![];
         for token in tokens2 {
-            let byte = self.token_to_byte.get(&token).unwrap_or(&('?' as u8));
+            let byte = self.token_to_byte.get(&token).unwrap_or(&b'?');
             output.push(*byte);
         }
         String::from_utf8(output).map_err(|_| error!(ErrorEnum::UnsupportedOperation))

@@ -371,7 +371,7 @@ impl Device {
     ) -> Result<TensorWithGrad, Error> {
         let len = rows * cols;
         let tensor = Self::tensor(
-            &self,
+            self,
             rows,
             cols,
             values,
@@ -384,7 +384,7 @@ impl Device {
         )?;
         let gradient = if requires_grad {
             Self::tensor(
-                &self,
+                self,
                 rows,
                 cols,
                 vec![0.0; len],
@@ -397,7 +397,7 @@ impl Device {
             )?
         } else {
             Self::tensor(
-                &self,
+                self,
                 0,
                 0,
                 vec![],
@@ -445,8 +445,7 @@ impl Device {
             .write()
             .unwrap()
             .get_mut(&len)
-            .map(|x| x.pop_back())
-            .flatten();
+            .and_then(|x| x.pop_back());
         match recycled {
             Some(buffer) => {
                 //println!("Recycled buffer with length {}", len);

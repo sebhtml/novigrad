@@ -45,7 +45,8 @@ where
         // For the execution units.
         let execution_units = (0..execution_units_len)
             .map(|ordinal| {
-                let execution_unit = ExecutionUnit::new(
+                
+                ExecutionUnit::new(
                     device,
                     ordinal,
                     &execution_unit_command_queues[ordinal],
@@ -53,8 +54,7 @@ where
                     handler.clone(),
                     streams,
                     instructions,
-                );
-                execution_unit
+                )
             })
             .collect::<Vec<_>>();
 

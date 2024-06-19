@@ -29,7 +29,7 @@ impl Embedding {
             &Default::default(),
             &[&embedding_table],
             &[&transposed],
-            &device,
+            device,
             &device_stream,
         )?;
         device_stream.synchronize()?;
@@ -61,7 +61,7 @@ impl Embedding {
 impl UnaryOperator for Embedding {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         //let input = self.id_entry.forward(input)?;
-        let output = self.matmul.forward(&input, &self.embedding_table)?;
+        let output = self.matmul.forward(input, &self.embedding_table)?;
         //let output = self.id_exit.forward(&output)?;
         Ok(output)
     }

@@ -40,10 +40,10 @@ impl ExecutableOperator for Concat {
                 let dst_col = input_index * input_cols;
                 copy_slice(
                     src.cols(),
-                    &src,
+                    src,
                     src_row,
                     src_col,
-                    &dst,
+                    dst,
                     dst_row,
                     dst_col,
                     device,

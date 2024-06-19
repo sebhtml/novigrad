@@ -332,8 +332,13 @@ impl DeviceTrait for CudaDev {
                 DeviceSlice::CudaDevSlice(right),
                 DeviceSlice::CudaDevSlice(result),
             ) => {
-                let result =
-                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
+                let result = unsafe {
+                    kernel.launch(
+                        //cuda_stream,
+                        cfg,
+                        (left.slice(), right.slice(), result.slice(), n),
+                    )
+                };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
@@ -691,12 +696,12 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let kernel = self.get_func("bernoulli_kernel_module", "bernoulli_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
         let input = &input.device_slice().buffer;
         let output = &output.device_slice().buffer;
-        let _cuda_stream = get_cuda_stream(device_stream)?;
         let rng_state = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             &stream.rng_state
         } else {

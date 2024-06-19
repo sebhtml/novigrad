@@ -719,49 +719,51 @@ impl DeviceTrait for CudaDev {
     }
 
     fn stream(&self) -> Result<DeviceStreamEnum, Error> {
-        match self.dev.fork_default_stream() {
-            Ok(stream) => {
-                let rng_state = self
-                    .dev
-                    .htod_copy(vec![1337])
-                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-                let cuda_blas = CudaBlas::new(self.dev.clone())
-                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-                // TODO uncomment
-                let handle = cuda_blas.handle();
+        let stream = self
+            .dev
+            .fork_default_stream()
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        let rng_state = self
+            .dev
+            .htod_copy(vec![1337])
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        let cuda_blas =
+            CudaBlas::new(self.dev.clone()).map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        // TODO uncomment
+        let handle = cuda_blas.handle();
 
-                // Set NVIDIA CUDA cublas workspace
-                // See https://docs.nvidia.com/cuda/cublas/index.html#cublassetworkspace
-                let workspace_size_in_bytes = 32 * 1024 * 1024;
-                let mut workspace = self
-                    .dev
-                    .alloc_zeros(workspace_size_in_bytes)
-                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-                unsafe {
-                    lib().cublasSetWorkspace_v2(
-                        *handle,
-                        *workspace.device_ptr_mut() as *mut _,
-                        workspace_size_in_bytes,
-                    )
-                }
-                .result()
-                .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-
-                // TODO set CUDA stream
-                //unsafe { cuda_blas.set_stream(Some(&stream)) }
-                //.map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-
-                let cuda_stream = CudaDeviceStream {
-                    device: self.dev.clone(),
-                    stream,
-                    rng_state,
-                    cuda_blas,
-                    workspace,
-                };
-                Ok(DeviceStreamEnum::CudaDeviceStream(cuda_stream))
-            }
-            Err(_) => Err(error!(ErrorEnum::UnsupportedOperation)),
+        // Set NVIDIA CUDA cublas workspace
+        // See https://docs.nvidia.com/cuda/cublas/index.html#cublassetworkspace
+        let workspace_size_in_bytes = 32 * 1024 * 1024;
+        let mut workspace = self
+            .dev
+            .alloc_zeros(workspace_size_in_bytes)
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        unsafe {
+            lib().cublasSetWorkspace_v2(
+                *handle,
+                *workspace.device_ptr_mut() as *mut _,
+                workspace_size_in_bytes,
+            )
         }
+        .result()
+        .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+
+        // TODO set CUDA stream
+        //unsafe { cuda_blas.set_stream(Some(&stream)) }
+        //.map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+
+        // TODO
+        // use cublasSetPointerMode with CUBLAS_POINTER_MODE_DEVICE
+
+        let cuda_stream = CudaDeviceStream {
+            device: self.dev.clone(),
+            stream,
+            rng_state,
+            cuda_blas,
+            workspace,
+        };
+        Ok(DeviceStreamEnum::CudaDeviceStream(cuda_stream))
     }
 }
 

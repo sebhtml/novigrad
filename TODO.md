@@ -1,3 +1,4 @@
+- use cublasSetPointerMode with CUBLAS_POINTER_MODE_DEVICE
 - use device_stream in all device methods
 - use 16 execution units for cuda too
 

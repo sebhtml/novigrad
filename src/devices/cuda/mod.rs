@@ -6,7 +6,7 @@ mod tests;
 
 use cudarc::{
     cublas::{
-        sys::{cublasOperation_t, lib},
+        sys::{cublasHandle_t, cublasOperation_t, cublasPointerMode_t, lib},
         CudaBlas,
     },
     driver::{self, CudaDevice, CudaFunction, CudaStream, DevicePtrMut, LaunchAsync, LaunchConfig},
@@ -253,11 +253,7 @@ impl DeviceTrait for CudaDev {
         ldc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
-            *stream.cuda_blas.handle()
-        } else {
-            return Err(error!(ErrorEnum::UnsupportedOperation));
-        };
+        let handle = get_cublas_handle(device_stream)?;
         let transa = match transa {
             false => cublasOperation_t::CUBLAS_OP_N,
             true => cublasOperation_t::CUBLAS_OP_T,
@@ -295,11 +291,7 @@ impl DeviceTrait for CudaDev {
         incy: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
-            *stream.cuda_blas.handle()
-        } else {
-            return Err(error!(ErrorEnum::UnsupportedOperation));
-        };
+        let handle = get_cublas_handle(device_stream)?;
         let alpha = &alpha as *const f32;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
@@ -357,11 +349,7 @@ impl DeviceTrait for CudaDev {
         y_inc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
-            *stream.cuda_blas.handle()
-        } else {
-            return Err(error!(ErrorEnum::UnsupportedOperation));
-        };
+        let handle = get_cublas_handle(device_stream)?;
         let x = x.as_ptr();
         let x = x.wrapping_add(x_offset as usize);
         let y = y.as_mut_ptr();
@@ -753,8 +741,12 @@ impl DeviceTrait for CudaDev {
         //unsafe { cuda_blas.set_stream(Some(&stream)) }
         //.map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
 
-        // TODO
-        // use cublasSetPointerMode with CUBLAS_POINTER_MODE_DEVICE
+        // Set pointer mode.
+        unsafe {
+            lib().cublasSetPointerMode_v2(*handle, cublasPointerMode_t::CUBLAS_POINTER_MODE_HOST)
+        }
+        .result()
+        .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
 
         let cuda_stream = CudaDeviceStream {
             device: self.dev.clone(),
@@ -772,5 +764,13 @@ fn get_cuda_stream(device_stream: &DeviceStream) -> Result<&CudaStream, Error> {
         Ok(&stream.stream)
     } else {
         Err(error!(ErrorEnum::NvLaunchError))
+    }
+}
+
+fn get_cublas_handle(device_stream: &DeviceStream) -> Result<cublasHandle_t, Error> {
+    if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
+        Ok(*stream.cuda_blas.handle())
+    } else {
+        Err(error!(ErrorEnum::UnsupportedOperation))
     }
 }

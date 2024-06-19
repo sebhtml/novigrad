@@ -281,6 +281,11 @@ impl Device {
         }
     }
 
+    pub fn new_stream(&self) -> Result<DeviceStream, Error> {
+        let variant = self.stream()?;
+        DeviceStream::try_new(self, variant)
+    }
+
     pub fn copy_to(
         &self,
         x: &Tensor,
@@ -458,8 +463,10 @@ impl Device {
             }
         }
     }
+}
 
-    pub fn gemm(
+impl DeviceTrait for Device {
+    fn gemm(
         &self,
         transa: bool,
         transb: bool,
@@ -494,7 +501,7 @@ impl Device {
         )
     }
 
-    pub fn dot(
+    fn dot(
         &self,
         left: &Tensor,
         right: &Tensor,
@@ -510,7 +517,7 @@ impl Device {
         self.device.dot(left, right, result, device_stream)
     }
 
-    pub fn copy(
+    fn copy(
         &self,
         n: i32,
         x: &Tensor,
@@ -525,7 +532,7 @@ impl Device {
             .copy(n, x, x_offset, x_inc, y, y_offset, y_inc, device_stream)
     }
 
-    pub fn axpy(
+    fn axpy(
         &self,
         n: i32,
         alpha: f32,
@@ -538,7 +545,7 @@ impl Device {
         self.device.axpy(n, alpha, x, incx, y, incy, device_stream)
     }
 
-    pub fn scalar_mul(
+    fn scalar_mul(
         &self,
         alpha: &Tensor,
         x: &Tensor,
@@ -547,11 +554,11 @@ impl Device {
         self.device.scalar_mul(alpha, x, device_stream)
     }
 
-    pub fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
         self.device.scalar_add(alpha, x)
     }
 
-    pub fn softmax(
+    fn softmax(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -560,14 +567,14 @@ impl Device {
         self.device.softmax(input, output, device_stream)
     }
 
-    pub fn reduce_sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(&self, x: &Tensor, y: &Tensor) -> Result<(), Error> {
         if &y.size() as &[usize] != &[1, 1] {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
         self.device.reduce_sum(x, y)
     }
 
-    pub fn mul(
+    fn mul(
         &self,
         left: &Tensor,
         right: &Tensor,
@@ -577,7 +584,7 @@ impl Device {
         self.device.mul(left, right, result, device_stream)
     }
 
-    pub fn sigmoid(
+    fn sigmoid(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -586,7 +593,7 @@ impl Device {
         self.device.sigmoid(input, output, device_stream)
     }
 
-    pub fn sqrt(
+    fn sqrt(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -595,7 +602,7 @@ impl Device {
         self.device.sqrt(input, output, device_stream)
     }
 
-    pub fn div(
+    fn div(
         &self,
         input1: &Tensor,
         input2: &Tensor,
@@ -605,7 +612,7 @@ impl Device {
         self.device.div(input1, input2, output, device_stream)
     }
 
-    pub fn min(
+    fn min(
         &self,
         input1: &Tensor,
         input2: &Tensor,
@@ -615,7 +622,7 @@ impl Device {
         self.device.min(input1, input2, output, device_stream)
     }
 
-    pub fn clip(
+    fn clip(
         &self,
         min: &Tensor,
         max: &Tensor,
@@ -626,7 +633,7 @@ impl Device {
         self.device.clip(min, max, input, output, device_stream)
     }
 
-    pub fn cross_entropy_loss(
+    fn cross_entropy_loss(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -637,7 +644,7 @@ impl Device {
             .cross_entropy_loss(expected, actual, loss, device_stream)
     }
 
-    pub fn reduce_sum_square(
+    fn reduce_sum_square(
         &self,
         expected: &Tensor,
         actual: &Tensor,
@@ -648,7 +655,7 @@ impl Device {
             .reduce_sum_square(expected, actual, loss, device_stream)
     }
 
-    pub fn transpose(
+    fn transpose(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -657,7 +664,7 @@ impl Device {
         self.device.transpose(input, output, device_stream)
     }
 
-    pub fn bernoulli(
+    fn bernoulli(
         &self,
         input: &Tensor,
         output: &Tensor,
@@ -666,12 +673,11 @@ impl Device {
         self.device.bernoulli(input, output, device_stream)
     }
 
-    pub fn slice(&self, n: i32) -> Result<DeviceSlice, Error> {
+    fn slice(&self, n: i32) -> Result<DeviceSlice, Error> {
         self.device.slice(n)
     }
 
-    pub fn stream(&self) -> Result<DeviceStream, Error> {
-        let variant = self.device.stream()?;
-        DeviceStream::try_new(self, variant)
+    fn stream(&self) -> Result<DeviceStreamEnum, Error> {
+        self.device.stream()
     }
 }

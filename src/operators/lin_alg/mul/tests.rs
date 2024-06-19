@@ -1,4 +1,4 @@
-use crate::{new_tensor, Device, DeviceTrait, ExecutableOperator, Mul};
+use crate::{new_tensor, Device, ExecutableOperator, Mul};
 
 #[test]
 fn element_wise_mul_result() {
@@ -7,7 +7,7 @@ fn element_wise_mul_result() {
     // Then the resulting matrix has the correct values
 
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let lhs = new_tensor!(
         device,
         3,

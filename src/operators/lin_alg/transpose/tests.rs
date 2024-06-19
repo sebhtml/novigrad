@@ -1,11 +1,11 @@
-use crate::{new_tensor, Device, DeviceTrait, ExecutableOperator};
+use crate::{new_tensor, Device, ExecutableOperator};
 
 use super::Transpose;
 
 #[test]
 fn transpose() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let matrix = new_tensor!(device, 3, 2, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
     let matrix2 = new_tensor!(device, 2, 3, vec![0.0; 6]).unwrap();
     Transpose::execute(

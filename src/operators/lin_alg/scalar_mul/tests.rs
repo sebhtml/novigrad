@@ -1,4 +1,4 @@
-use crate::{new_tensor, Device, DeviceTrait, ExecutableOperator, ScalarMul};
+use crate::{new_tensor, Device, ExecutableOperator, ScalarMul};
 
 #[test]
 fn scalar_mul() {
@@ -7,7 +7,7 @@ fn scalar_mul() {
     // Then the resulting matrix has the correct values
 
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
 
     let lhs = new_tensor!(
         device,

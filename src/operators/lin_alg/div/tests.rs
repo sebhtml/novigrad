@@ -1,9 +1,9 @@
-use crate::{new_tensor, Device, DeviceTrait, Div, ExecutableOperator, OperatorAttributes};
+use crate::{new_tensor, Device, Div, ExecutableOperator, OperatorAttributes};
 
 #[test]
 fn test_div_with_valid_inputs() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let input1 = new_tensor!(
         device,
         1,
@@ -42,7 +42,7 @@ fn test_div_with_valid_inputs() {
 #[test]
 fn test_div_by_0() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let input1 = new_tensor!(
         device,
         1,

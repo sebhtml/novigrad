@@ -49,7 +49,7 @@ where
         }
 
         let free_device_streams = (0..execution_units_len)
-            .map(|_| device.stream())
+            .map(|_| device.new_stream())
             .collect::<Result<VecDeque<DeviceStream>, _>>()
             .unwrap();
         Self {

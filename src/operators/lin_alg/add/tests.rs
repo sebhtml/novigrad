@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{new_tensor, Add, Device, DeviceTrait, ExecutableOperator};
+use crate::{new_tensor, Add, Device, ExecutableOperator};
 
 #[test]
 fn matrix_addition_result() {
@@ -9,7 +9,7 @@ fn matrix_addition_result() {
     // Then the resulting matrix has the correct values
 
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
 
     let lhs = new_tensor!(
         device,
@@ -66,7 +66,7 @@ fn matrix_addition_result() {
 #[test]
 fn big_matrix_addition() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let rows = 1024;
     let cols = 1024;
     let len = rows * cols;

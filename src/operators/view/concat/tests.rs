@@ -1,6 +1,5 @@
 use crate::{
-    copy_slice, new_tensor, Concat, Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
-    Unconcat,
+    copy_slice, new_tensor, Concat, Device, ExecutableOperator, OperatorAttributes, Unconcat,
 };
 
 #[test]
@@ -59,7 +58,7 @@ fn concat() {
 
     let inputs = [&input_1, &input_2, &input_3];
     let outputs = [&output];
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     Concat::execute(
         &OperatorAttributes::default(),
         &inputs,
@@ -130,7 +129,7 @@ fn unconcat() {
     )
     .unwrap();
 
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     Unconcat::execute(
         &Default::default(),
         inputs,
@@ -148,7 +147,7 @@ fn unconcat() {
 #[test]
 fn test_copy_slice() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let from = new_tensor!(
         device,
         2,

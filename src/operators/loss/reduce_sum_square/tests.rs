@@ -1,6 +1,5 @@
 use crate::{
-    new_tensor, new_tensor_with_grad, tensor::Tensor, BinaryOperator, Device, DeviceTrait,
-    ExecutableOperator,
+    new_tensor, new_tensor_with_grad, tensor::Tensor, BinaryOperator, Device, ExecutableOperator,
 };
 
 use super::ReduceSumSquare;
@@ -37,7 +36,7 @@ fn derive() {
     .unwrap();
     let operator = ReduceSumSquare::new(&device);
     let loss = operator.forward(&expected_tensor, &actual_tensor).unwrap();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     loss.forward(&device, &device_stream).unwrap();
     loss.compute_gradient(&device, &device_stream).unwrap();
     let actual_derived_loss: &Tensor = &actual_tensor.gradient();
@@ -47,7 +46,7 @@ fn derive() {
 #[test]
 fn evaluate() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let expected_tensor =
         new_tensor!(device, 1, 8, vec![4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0]).unwrap();
     let actual_tensor =

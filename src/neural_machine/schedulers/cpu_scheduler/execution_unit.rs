@@ -61,7 +61,7 @@ where
         thread::spawn(move || {
             let device_stream = execution_unit
                 .device
-                .stream()
+                .new_stream()
                 .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
             while execution_unit.step(&device, &device_stream)? {}
             Ok(execution_unit)

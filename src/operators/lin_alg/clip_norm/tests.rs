@@ -1,12 +1,11 @@
 use crate::{
-    new_tensor, reduce_l2::ReduceL2, ClipNorm, Device, DeviceTrait, ExecutableOperator,
-    OperatorAttributes,
+    new_tensor, reduce_l2::ReduceL2, ClipNorm, Device, ExecutableOperator, OperatorAttributes,
 };
 
 #[test]
 fn normalize() {
     let device = Device::default();
-    let device_stream = device.stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let tensor = new_tensor!(
         device,
         1,

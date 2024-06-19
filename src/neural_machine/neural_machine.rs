@@ -4,8 +4,8 @@ use crate::schedulers::SchedulerTrait;
 use crate::stream::StreamTrait;
 use crate::{
     neural_machine::streams::stream::print_streams, neural_program::NeuralProgram,
-    schedulers::StreamExecutor, stream::DeviceStream, tensor::Error, Category, Device, DeviceTrait,
-    Instruction, TensorWithGrad,
+    schedulers::StreamExecutor, stream::DeviceStream, tensor::Error, Category, Device, Instruction,
+    TensorWithGrad,
 };
 
 use super::streams::{
@@ -129,7 +129,7 @@ where
 
         let machine = NeuralMachine::<T, Scheduler> {
             device: device.clone(),
-            io_stream: device.stream()?,
+            io_stream: device.new_stream()?,
             example_input,
             example_output,
             machine_output,

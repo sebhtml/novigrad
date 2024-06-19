@@ -4,13 +4,11 @@ use crate::{
     stream::StreamTrait,
     tensor::{Error, Tensor},
     transpose::Transpose,
-    BinaryOperator, DeviceTrait, ExecutableOperator, MatMul, TensorWithGrad, UnaryOperator,
+    BinaryOperator, ExecutableOperator, MatMul, TensorWithGrad, UnaryOperator,
 };
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 pub struct Embedding {
-    //id_entry: Identity,
-    //id_exit: Identity,
     embedding_table: TensorWithGrad,
     matmul: MatMul,
 }
@@ -24,7 +22,7 @@ impl Embedding {
         let embedding_table = get_embedding_table(device, num_embeddings, embedding_dim)?;
         let len = embedding_table.len();
         let transposed = new_tensor!(device, embedding_dim, num_embeddings, vec![0.0; len])?;
-        let device_stream = device.stream()?;
+        let device_stream = device.new_stream()?;
         Transpose::execute(
             &Default::default(),
             &[&embedding_table],

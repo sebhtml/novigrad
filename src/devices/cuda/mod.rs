@@ -38,7 +38,7 @@ impl CudaDev {
         }
     }
 
-    fn launch_mapping_kernel(
+    fn launch_binarykernel(
         &self,
         module_name: &str,
         func_name: &str,
@@ -443,31 +443,16 @@ impl DeviceTrait for CudaDev {
         left: &Tensor,
         right: &Tensor,
         result: &Tensor,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let n = left.len();
-        let kernel = self.get_func("mul_kernel_module", "mul_kernel")?;
-        let cfg = LaunchConfig::for_num_elems(n as u32);
-
-        let left = &left.device_slice().buffer;
-        let right = &right.device_slice().buffer;
-        let result = &result.device_slice().buffer;
-
-        match (left, right, result) {
-            (
-                DeviceSlice::CudaDevSlice(left),
-                DeviceSlice::CudaDevSlice(right),
-                DeviceSlice::CudaDevSlice(result),
-            ) => {
-                let result =
-                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
-                match result {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
-                }
-            }
-            _ => Err(error!(ErrorEnum::NvLaunchError)),
-        }
+        self.launch_binarykernel(
+            "mul_kernel_module",
+            "mul_kernel",
+            left,
+            right,
+            result,
+            device_stream,
+        )
     }
 
     fn sigmoid(
@@ -500,7 +485,7 @@ impl DeviceTrait for CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        self.launch_mapping_kernel(
+        self.launch_binarykernel(
             "div_kernel_module",
             "div_kernel",
             left,
@@ -517,7 +502,7 @@ impl DeviceTrait for CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        self.launch_mapping_kernel(
+        self.launch_binarykernel(
             "min_kernel_module",
             "min_kernel",
             left,

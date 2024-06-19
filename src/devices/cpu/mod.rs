@@ -144,7 +144,12 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+    fn scalar_add(
+        &self,
+        alpha: &Tensor,
+        x: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         let n = x.len();
         let x = x.as_mut_ptr();
         let alpha = alpha.as_ptr();
@@ -176,7 +181,12 @@ impl DeviceTrait for CpuDevice {
         CpuDevice::_softmax(rows, cols, input, output)
     }
 
-    fn reduce_sum(&self, _input: &Tensor, _output: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(
+        &self,
+        _input: &Tensor,
+        _output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
         todo!()
     }
 

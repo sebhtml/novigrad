@@ -12,10 +12,10 @@ impl ExecutableOperator for ReduceSum {
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         device: &Device,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        device.reduce_sum(input, output)
+        device.reduce_sum(input, output, device_stream)
     }
 }

@@ -18,6 +18,6 @@ impl ExecutableOperator for ScalarAdd {
         let input = inputs[1];
         let output = outputs[0];
         device.copy_to(input, output, device_stream)?;
-        device.scalar_add(alpha, output)
+        device.scalar_add(alpha, output, device_stream)
     }
 }

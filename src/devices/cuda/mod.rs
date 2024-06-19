@@ -9,7 +9,7 @@ use cudarc::{
         sys::{cublasOperation_t, lib},
         CudaBlas,
     },
-    driver::{self, CudaDevice, CudaFunction, LaunchAsync, LaunchConfig},
+    driver::{self, CudaDevice, CudaFunction, CudaStream, LaunchAsync, LaunchConfig},
 };
 use stream::CudaDeviceStream;
 
@@ -38,7 +38,7 @@ impl CudaDev {
         }
     }
 
-    fn launch_binarykernel(
+    fn launch_binary_kernel(
         &self,
         module_name: &str,
         func_name: &str,
@@ -47,11 +47,7 @@ impl CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _stream = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
-            &stream.stream
-        } else {
-            return Err(error!(ErrorEnum::NvLaunchError));
-        };
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let n = left.len();
         let kernel = self.get_func(module_name, func_name)?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -293,8 +289,9 @@ impl DeviceTrait for CudaDev {
         left: &Tensor,
         right: &Tensor,
         result: &Tensor,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let n = left.len();
         let kernel = self.get_func("dot_kernel_module", "dot_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -350,8 +347,9 @@ impl DeviceTrait for CudaDev {
         &self,
         alpha: &Tensor,
         x: &Tensor,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let n = x.len();
         let alpha = &alpha.device_slice().buffer;
         let x = &x.device_slice().buffer;
@@ -369,7 +367,13 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn scalar_add(&self, alpha: &Tensor, x: &Tensor) -> Result<(), Error> {
+    fn scalar_add(
+        &self,
+        alpha: &Tensor,
+        x: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let n = x.len();
         let alpha = &alpha.device_slice().buffer;
         let x = &x.device_slice().buffer;
@@ -398,8 +402,9 @@ impl DeviceTrait for CudaDev {
         &self,
         input: &Tensor,
         output: &Tensor,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let kernel = self.get_func("softmax_kernel_module", "softmax_kernel")?;
         let rows = input.rows();
         let cols = input.cols();
@@ -420,7 +425,13 @@ impl DeviceTrait for CudaDev {
         }
     }
 
-    fn reduce_sum(&self, input: &Tensor, output: &Tensor) -> Result<(), Error> {
+    fn reduce_sum(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let sum_kernel = self.get_func("sum_kernel_module", "sum_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -445,7 +456,7 @@ impl DeviceTrait for CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        self.launch_binarykernel(
+        self.launch_binary_kernel(
             "mul_kernel_module",
             "mul_kernel",
             left,
@@ -459,8 +470,9 @@ impl DeviceTrait for CudaDev {
         &self,
         input: &Tensor,
         output: &Tensor,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let kernel = self.get_func("sigmoid_kernel_module", "sigmoid_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -485,7 +497,7 @@ impl DeviceTrait for CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        self.launch_binarykernel(
+        self.launch_binary_kernel(
             "div_kernel_module",
             "div_kernel",
             left,
@@ -502,7 +514,7 @@ impl DeviceTrait for CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        self.launch_binarykernel(
+        self.launch_binary_kernel(
             "min_kernel_module",
             "min_kernel",
             left,
@@ -516,8 +528,9 @@ impl DeviceTrait for CudaDev {
         &self,
         input: &Tensor,
         output: &Tensor,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let kernel = self.get_func("sqrt_kernel_module", "sqrt_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -543,11 +556,7 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _stream = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
-            &stream.stream
-        } else {
-            return Err(error!(ErrorEnum::NvLaunchError));
-        };
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let kernel = self.get_func("clip_kernel_module", "clip_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -582,8 +591,9 @@ impl DeviceTrait for CudaDev {
         expected: &Tensor,
         actual: &Tensor,
         loss: &Tensor,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let n = expected.len();
         let kernel = self.get_func(
             "cross_entropy_loss_kernel_module",
@@ -621,8 +631,10 @@ impl DeviceTrait for CudaDev {
         expected: &Tensor,
         actual: &Tensor,
         loss: &Tensor,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
+        // TODO implement this in CUDA
         if *expected.size() != *actual.size() {
             return Err(error!(ErrorEnum::IncompatibleTensorShapes));
         }
@@ -644,8 +656,9 @@ impl DeviceTrait for CudaDev {
         &self,
         input: &Tensor,
         output: &Tensor,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         // TODO implement transpose in CUDA.
         let self_values = input.get_values()?;
         let mut other_values = output.get_values()?;
@@ -675,6 +688,7 @@ impl DeviceTrait for CudaDev {
         let cfg = LaunchConfig::for_num_elems(n as u32);
         let input = &input.device_slice().buffer;
         let output = &output.device_slice().buffer;
+        let _cuda_stream = get_cuda_stream(device_stream)?;
         let rng_state = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
             &stream.rng_state
         } else {
@@ -703,8 +717,8 @@ impl DeviceTrait for CudaDev {
                     .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
                 let cuda_blas = CudaBlas::new(self.dev.clone())
                     .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+                // TODO uncomment
                 //unsafe { cuda_blas.set_stream(Some(&stream)) }
-                //.unwrap();
                 //.map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
                 let cuda_stream = CudaDeviceStream {
                     device: self.dev.clone(),
@@ -716,5 +730,13 @@ impl DeviceTrait for CudaDev {
             }
             Err(_) => Err(error!(ErrorEnum::UnsupportedOperation)),
         }
+    }
+}
+
+fn get_cuda_stream(device_stream: &DeviceStream) -> Result<&CudaStream, Error> {
+    if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
+        Ok(&stream.stream)
+    } else {
+        Err(error!(ErrorEnum::NvLaunchError))
     }
 }

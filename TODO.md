@@ -1,4 +1,3 @@
-- use cublasSetWorkspace_v2 for cublas handle
 - use device_stream in all device methods
 - use 16 execution units for cuda too
 

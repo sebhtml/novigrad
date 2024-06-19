@@ -9,7 +9,7 @@ use cudarc::{
         sys::{cublasOperation_t, lib},
         CudaBlas,
     },
-    driver::{self, CudaDevice, CudaFunction, CudaStream, LaunchAsync, LaunchConfig},
+    driver::{self, CudaDevice, CudaFunction, CudaStream, DevicePtrMut, LaunchAsync, LaunchConfig},
 };
 use stream::CudaDeviceStream;
 
@@ -276,14 +276,13 @@ impl DeviceTrait for CudaDev {
         let a = a.as_ptr();
         let b = b.as_ptr();
         let c = c.as_mut_ptr();
-        let status = unsafe {
+        unsafe {
             lib().cublasSgemm_v2(
                 handle, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
             )
-        };
-        status
-            .result()
-            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
+        }
+        .result()
+        .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
     fn axpy(
@@ -304,8 +303,7 @@ impl DeviceTrait for CudaDev {
         let alpha = &alpha as *const f32;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
-        let status = unsafe { lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
-        status
+        unsafe { lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) }
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
@@ -368,8 +366,7 @@ impl DeviceTrait for CudaDev {
         let x = x.wrapping_add(x_offset as usize);
         let y = y.as_mut_ptr();
         let y = y.wrapping_add(y_offset as usize);
-        let status = unsafe { lib().cublasScopy_v2(handle, n, x, x_inc, y, y_inc) };
-        status
+        unsafe { lib().cublasScopy_v2(handle, n, x, x_inc, y, y_inc) }
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
@@ -731,13 +728,35 @@ impl DeviceTrait for CudaDev {
                 let cuda_blas = CudaBlas::new(self.dev.clone())
                     .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
                 // TODO uncomment
+                let handle = cuda_blas.handle();
+
+                // Set NVIDIA CUDA cublas workspace
+                // See https://docs.nvidia.com/cuda/cublas/index.html#cublassetworkspace
+                let workspace_size_in_bytes = 32 * 1024 * 1024;
+                let mut workspace = self
+                    .dev
+                    .alloc_zeros(workspace_size_in_bytes)
+                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+                unsafe {
+                    lib().cublasSetWorkspace_v2(
+                        *handle,
+                        *workspace.device_ptr_mut() as *mut _,
+                        workspace_size_in_bytes,
+                    )
+                }
+                .result()
+                .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+
+                // TODO set CUDA stream
                 //unsafe { cuda_blas.set_stream(Some(&stream)) }
                 //.map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+
                 let cuda_stream = CudaDeviceStream {
                     device: self.dev.clone(),
                     stream,
                     rng_state,
                     cuda_blas,
+                    workspace,
                 };
                 Ok(DeviceStreamEnum::CudaDeviceStream(cuda_stream))
             }

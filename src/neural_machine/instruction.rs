@@ -196,7 +196,6 @@ pub fn filter_instructions(
     instructions: Vec<Instruction>,
     filter: Option<Category>,
 ) -> Vec<Instruction> {
-    
     match filter {
         Some(category) => instructions
             .into_iter()

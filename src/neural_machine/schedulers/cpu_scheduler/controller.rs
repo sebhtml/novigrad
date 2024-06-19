@@ -46,7 +46,6 @@ impl Controller {
     }
 
     pub fn spawn(mut controller: Self) -> JoinHandle<Self> {
-        
         thread::spawn(|| {
             while controller.step() {}
             controller

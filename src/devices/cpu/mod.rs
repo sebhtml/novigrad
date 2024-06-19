@@ -19,11 +19,8 @@ extern crate blas_src;
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CpuDevice {}
-
-
 
 impl DeviceTrait for CpuDevice {
     fn gemm(

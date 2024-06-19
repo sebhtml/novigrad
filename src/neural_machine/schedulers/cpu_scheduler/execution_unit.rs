@@ -57,7 +57,7 @@ where
 
     pub fn spawn(mut execution_unit: Self) -> JoinHandle<Result<Self, Error>> {
         let device = execution_unit.device.clone();
-        
+
         thread::spawn(move || {
             let device_stream = execution_unit
                 .device

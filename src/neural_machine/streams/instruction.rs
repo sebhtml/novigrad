@@ -1,7 +1,6 @@
 use crate::Instruction;
 
-#[derive(Clone, Debug)]
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Dependencies {
     pub write_before_read_dependencies: Vec<usize>,
     pub write_before_write_dependencies: Vec<usize>,
@@ -9,8 +8,6 @@ pub struct Dependencies {
     pub all_dependencies: Vec<usize>,
     pub all_dependents: Vec<usize>,
 }
-
-
 
 pub fn get_instruction_dependencies(
     instructions: &[(Vec<usize>, Vec<usize>)],
@@ -81,9 +78,11 @@ pub fn get_instruction_dependencies(
     }
 
     for entry in dependencies.iter_mut() {
-        let mut deps = [entry.write_before_read_dependencies.clone(),
+        let mut deps = [
+            entry.write_before_read_dependencies.clone(),
             entry.write_before_write_dependencies.clone(),
-            entry.read_before_write_dependencies.clone()]
+            entry.read_before_write_dependencies.clone(),
+        ]
         .concat();
         deps.sort();
         deps.dedup();

@@ -110,7 +110,6 @@ fn load_examples(
         .collect();
 
     let vocab_size = tokenizer.vocab_size();
-    
 
     examples
         .into_iter()

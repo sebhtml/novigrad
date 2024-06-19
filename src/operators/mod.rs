@@ -57,8 +57,7 @@ pub trait ExecutableOperator {
     ) -> Result<(), Error>;
 }
 
-#[derive(Clone, Debug)]
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub enum OperatorAttributes {
     #[default]
     None,
@@ -66,5 +65,3 @@ pub enum OperatorAttributes {
     String(String),
     Vec(Vec<usize>),
 }
-
-

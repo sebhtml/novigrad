@@ -354,7 +354,7 @@ where
         let minimum_write_before_read_for_new_stream = 4;
         let minimum_dependents_for_stream = 12;
         let minimum_stream_instructions = 32;
-        
+
         make_streams(
             &simple_instructions,
             minimum_write_before_read_for_new_stream,

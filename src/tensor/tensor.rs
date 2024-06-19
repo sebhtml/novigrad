@@ -79,12 +79,7 @@ impl Tensor {
     }
 
     pub fn len(&self) -> usize {
-        self.size
-            .deref()
-            .read()
-            .unwrap()
-            .iter()
-            .product::<usize>()
+        self.size.deref().read().unwrap().iter().product::<usize>()
     }
 
     pub fn size(&self) -> impl Deref<Target = Vec<usize>> + '_ {

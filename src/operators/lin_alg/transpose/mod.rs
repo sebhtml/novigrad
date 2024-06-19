@@ -10,8 +10,6 @@ mod tests;
 #[derive(Default)]
 pub struct Transpose {}
 
-
-
 impl ExecutableOperator for Transpose {
     fn execute(
         _attributes: &OperatorAttributes,

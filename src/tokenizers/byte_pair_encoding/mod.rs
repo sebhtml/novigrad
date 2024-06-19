@@ -15,8 +15,6 @@ pub struct BytePairEncoding {
     token_to_token_pair: HashMap<usize, (usize, usize)>,
 }
 
-
-
 fn get_pair(tokens: &[usize], i: usize) -> Option<(usize, usize)> {
     if i + 1 >= tokens.len() {
         return None;

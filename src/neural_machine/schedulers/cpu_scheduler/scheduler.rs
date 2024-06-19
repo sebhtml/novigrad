@@ -45,7 +45,6 @@ where
         // For the execution units.
         let execution_units = (0..execution_units_len)
             .map(|ordinal| {
-                
                 ExecutionUnit::new(
                     device,
                     ordinal,

@@ -24,8 +24,8 @@ where
     streams: Arc<Vec<Stream>>,
     instructions: Arc<Vec<Instruction>>,
     queued_logical_streams: VecDeque<usize>,
-    free_physical_streams: VecDeque<DeviceStream>,
-    used_physical_streams: VecDeque<(usize, DeviceStream)>,
+    free_device_streams: VecDeque<DeviceStream>,
+    used_device_streams: VecDeque<(usize, DeviceStream)>,
 }
 
 impl<Handler> SchedulerTrait<Handler> for GpuStreamScheduler<Handler>
@@ -62,8 +62,8 @@ where
             streams: streams.clone(),
             instructions: instructions.clone(),
             queued_logical_streams: Default::default(),
-            free_physical_streams: free_device_streams,
-            used_physical_streams: Default::default(),
+            free_device_streams: free_device_streams,
+            used_device_streams: Default::default(),
         }
     }
 
@@ -88,7 +88,7 @@ where
 
         // While any logical stream has not completed its execution.
         while self.completed_logical_streams != self.dependents.len() {
-            let _ = self.wait_for_physical_stream().unwrap();
+            let _ = self.wait_for_device_stream().unwrap();
             let _ = self.maybe_launch_device_stream().unwrap();
         }
     }
@@ -100,12 +100,13 @@ where
 {
     fn maybe_launch_device_stream(&mut self) -> Result<bool, Error> {
         // There is a queued logical stream and there is an available physical stream.
-        if !self.queued_logical_streams.is_empty() && !self.free_physical_streams.is_empty() {
+        if !self.queued_logical_streams.is_empty() && !self.free_device_streams.is_empty() {
             match (
                 self.queued_logical_streams.pop_front(),
-                self.free_physical_streams.pop_front(),
+                self.free_device_streams.pop_front(),
             ) {
-                (Some(logical_stream), Some(physical_stream)) => {
+                (Some(logical_stream), Some(device_stream)) => {
+                    device_stream.wait_for_default()?;
                     // The launch of a kernel on a GPU stream is asynchronous from the
                     // perspective of the host.
                     self.handler.on_execute(
@@ -113,10 +114,10 @@ where
                         &self.instructions,
                         logical_stream,
                         &self.device,
-                        &physical_stream,
+                        &device_stream,
                     )?;
-                    self.used_physical_streams
-                        .push_back((logical_stream, physical_stream));
+                    self.used_device_streams
+                        .push_back((logical_stream, device_stream));
                     return Ok(true);
                 }
                 _ => panic!("Not supposed to happen"),
@@ -125,10 +126,10 @@ where
         Ok(false)
     }
 
-    fn wait_for_physical_stream(&mut self) -> Result<bool, Error> {
-        match self.used_physical_streams.pop_front() {
-            Some((logical_stream, physical_stream)) => {
-                physical_stream.synchronize()?;
+    fn wait_for_device_stream(&mut self) -> Result<bool, Error> {
+        match self.used_device_streams.pop_front() {
+            Some((logical_stream, device_stream)) => {
+                device_stream.wait_for()?;
                 self.completed_logical_streams += 1;
                 let dependents = &self.dependents[logical_stream];
                 for dependent in dependents.iter() {
@@ -138,7 +139,7 @@ where
                         self.queued_logical_streams.push_back(*dependent);
                     }
                 }
-                self.free_physical_streams.push_back(physical_stream);
+                self.free_device_streams.push_back(device_stream);
                 Ok(true)
             }
             _ => panic!("Not supposed to happen bro"),

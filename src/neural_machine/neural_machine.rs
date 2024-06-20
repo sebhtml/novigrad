@@ -170,7 +170,7 @@ where
             let expected_output = &expected_output.tensor();
             self.device
                 .copy_to(expected_output, example_output, &self.io_stream)?;
-            self.io_stream.synchronize()?;
+            self.io_stream.wait_for()?;
         }
 
         self.forward(&Category::Loss)?;
@@ -210,7 +210,7 @@ where
             let example_input = &self.example_input.tensor();
             let input = &input.tensor();
             self.device.copy_to(input, example_input, &self.io_stream)?;
-            self.io_stream.synchronize()?;
+            self.io_stream.wait_for()?;
         }
 
         self.forward(&Category::Inference)?;

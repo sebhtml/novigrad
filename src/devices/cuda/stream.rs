@@ -20,7 +20,12 @@ pub struct CudaDeviceStream {
 }
 
 impl StreamTrait for CudaDeviceStream {
-    fn synchronize(&self) -> Result<(), crate::tensor::Error> {
+    fn wait_for_default(&self) -> Result<(), Error> {
+        self.stream
+            .wait_for_default()
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
+    }
+    fn wait_for(&self) -> Result<(), crate::tensor::Error> {
         self.device
             .wait_for(&self.stream)
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))

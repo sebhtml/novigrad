@@ -37,15 +37,23 @@ pub enum DeviceStreamEnum {
 }
 
 pub trait StreamTrait {
-    fn synchronize(&self) -> Result<(), Error>;
+    fn wait_for_default(&self) -> Result<(), Error>;
+    fn wait_for(&self) -> Result<(), Error>;
 }
 
 impl StreamTrait for DeviceStream {
-    fn synchronize(&self) -> Result<(), Error> {
+    fn wait_for_default(&self) -> Result<(), Error> {
         match &self.variant {
             DeviceStreamEnum::CpuDeviceStream => Ok(()),
             #[cfg(feature = "cuda")]
-            DeviceStreamEnum::CudaDeviceStream(stream) => stream.synchronize(),
+            DeviceStreamEnum::CudaDeviceStream(stream) => stream.wait_for_default(),
+        }
+    }
+    fn wait_for(&self) -> Result<(), Error> {
+        match &self.variant {
+            DeviceStreamEnum::CpuDeviceStream => Ok(()),
+            #[cfg(feature = "cuda")]
+            DeviceStreamEnum::CudaDeviceStream(stream) => stream.wait_for(),
         }
     }
 }

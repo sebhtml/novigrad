@@ -30,7 +30,7 @@ impl Embedding {
             device,
             &device_stream,
         )?;
-        device_stream.synchronize()?;
+        device_stream.wait_for()?;
         let embedding_table = new_tensor_with_grad!(
             device,
             transposed.rows(),

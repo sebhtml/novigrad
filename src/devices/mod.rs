@@ -1,7 +1,11 @@
 mod cpu;
 use crate::{error, tensor::Error, tensor::ErrorEnum};
 use std::{
-    collections::{HashMap, LinkedList}, fmt, mem::swap, ops::Deref, sync::{Arc, RwLock}
+    collections::{HashMap, LinkedList},
+    fmt,
+    mem::swap,
+    ops::Deref,
+    sync::{Arc, RwLock},
 };
 #[cfg(test)]
 mod tests;

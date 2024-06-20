@@ -11,6 +11,9 @@ use crate::{
 
 use super::{SchedulerTrait, StreamEventHandler};
 
+/// See https://forums.developer.nvidia.com/t/how-many-streams-maximum-number-of-streams/6571/3
+/// See https://www.nvidia.com/en-us/geforce/news/ultimate-guide-to-4060/
+/// See https://people.maths.ox.ac.uk/gilesm/cuda/lecs/lecs.pdf
 pub struct GpuStreamScheduler<Handler>
 where
     Handler: StreamEventHandler + Send + Sync,
@@ -39,7 +42,6 @@ where
         handler: &Handler,
         instructions: &std::sync::Arc<Vec<Instruction>>,
     ) -> Self {
-        println!("GPU Scheduler maximum_device_streams: {maximum_device_streams}");
         let pending_dependencies = streams.iter().map(|x| x.dependencies.len()).collect();
         let mut dependents = vec![vec![]; streams.len()];
         for (dependent, dependencies) in streams.iter().map(|x| &x.dependencies).enumerate() {

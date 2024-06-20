@@ -158,11 +158,16 @@ pub fn train_model<T>(
     let model = details.model;
     let loss_operator = details.loss_operator;
     let mut tokenizer = details.tokenizer;
+    let maximum_device_streams = 16;
     let device = details.device;
     let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
     let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
-    let mut neural_machine = NeuralMachine::<T, DefaultStreamScheduler>::try_new(&device, program)?;
+    let mut neural_machine = NeuralMachine::<T, DefaultStreamScheduler>::try_new(
+        &device,
+        program,
+        maximum_device_streams,
+    )?;
 
     let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
     let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();

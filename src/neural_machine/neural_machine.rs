@@ -43,7 +43,11 @@ impl<T, Scheduler> NeuralMachine<T, Scheduler>
 where
     Scheduler: SchedulerTrait<StreamExecutor>,
 {
-    pub fn try_new(device: &Device, program: NeuralProgram) -> Result<Self, Error> {
+    pub fn try_new(
+        device: &Device,
+        program: NeuralProgram,
+        maximum_device_streams: usize,
+    ) -> Result<Self, Error> {
         let all_instructions = program.instructions;
         let inference_instructions = all_instructions
             .clone()
@@ -72,12 +76,6 @@ where
             .filter(|i| i.category() == Category::Optimization)
             .collect();
         let optimization_instructions = Arc::new(optimization_instructions);
-
-        #[cfg(feature = "cuda")]
-        // TODO we need CUDA streams exposed by DeviceTrait to bump this to 16.
-        let maximum_device_streams = 1;
-        #[cfg(not(feature = "cuda"))]
-        let maximum_device_streams = 16;
 
         let example_input = program.example_input;
         let example_output = program.example_output;
@@ -196,6 +194,7 @@ where
             Category::Optimization => &mut self.optimization_scheduler,
         };
         scheduler.execute();
+        self.io_stream.wait_for_default()?;
         Ok(())
     }
 

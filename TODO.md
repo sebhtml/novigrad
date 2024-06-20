@@ -18,7 +18,7 @@
 == Story: Arc prize ==
 
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
-- Implement Rotary Transformer idea for the Arc prize challenge
+- Implement Transformer idea for the Arc prize challenge
 - implement Gelu
 
 == Story: AMD ROCm with HIP ==

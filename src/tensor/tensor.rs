@@ -2,10 +2,11 @@ use crate::devices::slice::DevSliceTrait;
 use crate::tensor::ErrorEnum;
 use crate::{devices::Device, error, slice::DevSlice, tensor::Error};
 
+use std::fmt;
 use std::sync::{Arc, RwLock};
 use std::{fmt::Display, ops::Deref, vec};
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Tensor {
     name: usize,
     size: Arc<RwLock<Vec<usize>>>,
@@ -16,6 +17,15 @@ pub struct Tensor {
     line: u32,
     #[cfg(debug_assertions)]
     column: u32,
+}
+
+impl fmt::Debug for Tensor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "Tensor")?;
+        writeln!(f, "name: {}", self.name)?;
+        writeln!(f, "size: {:?}", self.size.deref().read().unwrap())?;
+        writeln!(f, "slice: {:?}", self.get_values())
+    }
 }
 
 impl PartialEq for Tensor {

@@ -19,7 +19,8 @@ dependencies = []
 
 [tasks.test-with-cuda]
 command = "cargo"
-args = ["test", "--release", "--no-default-features", "--features", "cuda"]
+# In NeuralMachine, we use 16 device streams. so 4 * 64 = 64. If we use more, we get a panic.
+args = ["test", "--release", "--no-default-features", "--features", "cuda", "--", "--test-threads", "4"]
 dependencies = []
 
 [tasks.my-flow]

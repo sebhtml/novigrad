@@ -86,6 +86,7 @@ fn main() -> Result<(), Error> {
     let device = Device::default();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
+    let maximum_device_streams = 16;
     let vocab_size = tokenizer.vocab_size();
     let model = ChatbotModel::new(&device, sequence_length, vocab_size)?;
     let vocab_size = tokenizer.vocab_size();
@@ -93,8 +94,12 @@ fn main() -> Result<(), Error> {
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
-    let mut neural_machine =
-        NeuralMachine::<f32, DefaultStreamScheduler>::try_new(&device, program).unwrap();
+    let mut neural_machine = NeuralMachine::<f32, DefaultStreamScheduler>::try_new(
+        &device,
+        program,
+        maximum_device_streams,
+    )
+    .unwrap();
 
     println!("-------------------------------------------------------------------");
     println!("This is a Novigrad-powered chatbot");
@@ -102,7 +107,7 @@ fn main() -> Result<(), Error> {
     println!("The chatbot knows nothing and will learn as you interact with it. (TODO)");
     println!("-------------------------------------------------------------------");
 
-    let max_number_of_examples = 20;
+    let max_number_of_examples = 40;
     // From https://en.wikipedia.org/wiki/Geoffrey_Hinton
     let corpus = read_to_string("data/Geoffrey_Hinton.txt").unwrap()
         [0..(sequence_length + max_number_of_examples - 1)]
@@ -112,7 +117,7 @@ fn main() -> Result<(), Error> {
     println!("Corpus: {}", corpus);
     println!();
 
-    for turn in 0..100 {
+    for turn in 0..1000 {
         println!("Turn: {}", turn);
 
         // Learn things
@@ -151,7 +156,7 @@ fn main() -> Result<(), Error> {
 
         let start = 0;
         let prompt = &corpus[start..sequence_length];
-        println!("Prompt: {}", prompt);
+        println!("Prompt:  {}", prompt);
         let prompt_tokens = tokenizer.encode(prompt);
         let max_len = corpus.len();
         let auto_regressive_tokens = auto_regressive_inference(

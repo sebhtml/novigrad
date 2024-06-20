@@ -38,13 +38,13 @@ where
         minimum_stream_instructions,
     );
     let actual_streams = Arc::new(actual_streams);
-    let execution_units_len = 32;
+    let maximum_device_streams = 32;
     let actual_transactions = simulate_execution_and_collect_transactions::<Scheduler>(
         &device,
         &actual_streams,
         &instructions,
         &simple_instructions,
-        execution_units_len,
+        maximum_device_streams,
     );
     let actual_read_write_pairs =
         get_operand_transaction_pairs(&access, &prior_access, &actual_transactions);
@@ -75,13 +75,13 @@ where
         minimum_stream_instructions,
     );
     let actual_streams = Arc::new(actual_streams);
-    let execution_units_len = 32;
+    let maximum_device_streams = 32;
 
     let executed_instructions = simulate_execution_and_collect_instructions::<Scheduler>(
         &device,
         &actual_streams,
         &instructions,
-        execution_units_len,
+        maximum_device_streams,
     );
 
     // Same length
@@ -117,12 +117,12 @@ where
         minimum_stream_instructions,
     );
     let streams = Arc::new(streams);
-    let execution_units_len = 32;
+    let maximum_device_streams = 32;
 
     let handler = InstructionEmitter::new();
     let mut scheduler = Scheduler::new(
         &device,
-        execution_units_len,
+        maximum_device_streams,
         &streams,
         &handler,
         &instructions,

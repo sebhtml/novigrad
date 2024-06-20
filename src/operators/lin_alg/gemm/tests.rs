@@ -1,6 +1,8 @@
 use rand::Rng;
 
-use crate::{new_tensor, transpose::Transpose, Device, ExecutableOperator, Gemm};
+use crate::{
+    new_tensor, stream::StreamTrait, transpose::Transpose, Device, ExecutableOperator, Gemm,
+};
 
 #[test]
 fn big_matrix_multiplication() {
@@ -35,6 +37,7 @@ fn big_matrix_multiplication() {
         &device_stream,
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
 }
 
 #[test]
@@ -123,6 +126,7 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
         &device_stream,
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -202,6 +206,7 @@ fn transposed_lhs_matrix_multiplication_result() {
         &device_stream,
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -272,6 +277,7 @@ fn matrix_multiplication_result() {
         &device_stream,
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -351,6 +357,7 @@ fn transposed_rhs_matrix_multiplication_result() {
         &device_stream,
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -435,6 +442,7 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
         &device_stream,
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(result, expected_result);
 }
 
@@ -534,5 +542,6 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
         &device_stream,
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(result, expected_result);
 }

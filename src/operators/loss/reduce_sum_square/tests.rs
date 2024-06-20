@@ -1,5 +1,6 @@
 use crate::{
-    new_tensor, new_tensor_with_grad, tensor::Tensor, BinaryOperator, Device, ExecutableOperator,
+    new_tensor, new_tensor_with_grad, stream::StreamTrait, tensor::Tensor, BinaryOperator, Device,
+    ExecutableOperator,
 };
 
 use super::ReduceSumSquare;
@@ -40,6 +41,7 @@ fn derive() {
     loss.forward(&device, &device_stream).unwrap();
     loss.compute_gradient(&device, &device_stream).unwrap();
     let actual_derived_loss: &Tensor = &actual_tensor.gradient();
+    device_stream.wait_for().unwrap();
     assert_eq!(actual_derived_loss, &expected_derived_loss);
 }
 

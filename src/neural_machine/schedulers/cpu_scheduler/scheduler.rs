@@ -28,7 +28,7 @@ where
 {
     fn new(
         device: &Device,
-        execution_units_len: usize,
+        maximum_device_streams: usize,
         streams: &Arc<Vec<Stream>>,
         handler: &Handler,
         instructions: &Arc<Vec<Instruction>>,
@@ -38,12 +38,12 @@ where
         // Various command queues.
         let scheduler_command_queue = Arc::new(Queue::default());
         let controller_command_queue = Arc::new(Queue::default());
-        let execution_unit_command_queues = (0..execution_units_len)
+        let execution_unit_command_queues = (0..maximum_device_streams)
             .map(|_| Arc::new(Queue::<Command>::default()))
             .collect::<Vec<_>>();
 
         // For the execution units.
-        let execution_units = (0..execution_units_len)
+        let execution_units = (0..maximum_device_streams)
             .map(|ordinal| {
                 ExecutionUnit::new(
                     device,
@@ -63,7 +63,7 @@ where
             &scheduler_command_queue,
             &controller_command_queue,
             &execution_unit_command_queues,
-            execution_units_len,
+            maximum_device_streams,
         );
         Self {
             scheduler_command_queue,

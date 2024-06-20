@@ -1,17 +1,34 @@
-== Transformer ==
+== Story: Transformer ==
 
 - add Standardize
 - implement LayerNormalization which is Standardize + ScalarMul + Add
 - implement LayerNorm
 - implement Transformer
 
----------------
+== Story: Eliminate pthread_rwlock_unlock ==
 
+- use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
+- remove all calls to set_values
+- rewrite ResidualSumOfSquares using CUDA
+- implement Transpose with CUDA
+- investigate performance issue with tons of call to pthread_rwlock_unlock
+- maybe the pthread lock is caused by checking if the loss is 0
+- don't break during training when loss reaches 0.0
+
+== Story: Arc prize ==
+
+- Make sure that backward instruction add on top of existing gradients (no overwrite)
+- Implement Rotary Transformer idea for the Arc prize challenge
 - implement Gelu
 
+== Story: AMD ROCm with HIP ==
+
+- Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
+
+== Backlog ==
+
 ---------------
 
-- remove redundant code in cuda mod.rs using launch_mapping_kernel
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization)
 - implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
 - rename RowMax to ArgMax (https://onnx.ai/onnx/operators/onnx__ArgMax.html)
@@ -19,15 +36,10 @@
 
 ---------------
 
-- move copy from tensor.rs to identity.rs
 - increase examples in mega_man_attention from 10 to 100
 
 ---------------
 
-- investigate performance issue with tons of call to pthread_rwlock_unlock
-- maybe the pthread lock is caused by checking if the loss is 0
-
-- use a different RNG state seed for each device stream
 - improve Bernoulli CUDA kernel by using other shift values for halt the indices
 
 - add Tensor categories
@@ -36,29 +48,18 @@
 
 ---------------
 - TODO adam t should be in 0..num_iterations
-- don't break during training when loss reaches 0.0
-
-- use Attributes for Gemm, see https://onnx.ai/onnx/intro/concepts.html
-- remove all calls to set_values
-- rewrite ResidualSumOfSquares using CUDA
 
 - device interface use <T>
 - Implement code with f16
 
 ---------------------
 
-- make sure that all OpCode have >= 2 inputs
 - implement Conv2D
 
 == Performance ==
 
 - simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
 
-== AMD ==
-
-- Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html
-
-- Make sure that backward instruction add on top of existing gradients (no overwrite)
 
 == Other things ==
 

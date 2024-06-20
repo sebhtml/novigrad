@@ -1,10 +1,7 @@
 mod cpu;
 use crate::{error, tensor::Error, tensor::ErrorEnum};
 use std::{
-    collections::{HashMap, LinkedList},
-    mem::swap,
-    ops::Deref,
-    sync::{Arc, RwLock},
+    collections::{HashMap, LinkedList}, fmt, mem::swap, ops::Deref, sync::{Arc, RwLock}
 };
 #[cfg(test)]
 mod tests;
@@ -260,7 +257,7 @@ impl Debug for dyn DeviceTrait + Send + Sync {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Device {
     next_name: Arc<RwLock<usize>>,
     used: Arc<RwLock<usize>>,
@@ -276,6 +273,12 @@ impl Default for Device {
         return Self::cuda().unwrap();
         #[cfg(not(feature = "cuda"))]
         return Self::cpu();
+    }
+}
+
+impl fmt::Debug for Device {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Device")
     }
 }
 

@@ -15,7 +15,7 @@ pub struct Controller {
     controller_command_queue: Arc<Queue<Command>>,
     execution_unit_command_queues: Vec<Arc<Queue<Command>>>,
     completed_streams: usize,
-    execution_units_len: usize,
+    maximum_device_streams: usize,
 }
 
 impl Controller {
@@ -24,7 +24,7 @@ impl Controller {
         scheduler_command_queue: &Arc<Queue<Command>>,
         controller_command_queue: &Arc<Queue<Command>>,
         execution_unit_command_queues: &Vec<Arc<Queue<Command>>>,
-        execution_units_len: usize,
+        maximum_device_streams: usize,
     ) -> Self {
         let pending_dependencies = streams.iter().map(|x| x.dependencies.len()).collect();
         let mut dependents = vec![vec![]; streams.len()];
@@ -41,7 +41,7 @@ impl Controller {
             controller_command_queue: controller_command_queue.clone(),
             execution_unit_command_queues: execution_unit_command_queues.clone(),
             completed_streams: 0,
-            execution_units_len,
+            maximum_device_streams,
         }
     }
 
@@ -55,7 +55,7 @@ impl Controller {
     fn maybe_dispatch(&self, stream: usize) {
         let pending_dependencies = self.current_pending_dependencies[stream];
         if pending_dependencies == 0 {
-            let ordinal = stream % self.execution_units_len;
+            let ordinal = stream % self.maximum_device_streams;
             self.execution_unit_command_queues[ordinal]
                 .push_back(Command::WorkUnitDispatch(stream));
         }
@@ -85,7 +85,7 @@ impl Controller {
                 }
             }
             Some(Command::Stop) => {
-                for ordinal in 0..self.execution_units_len {
+                for ordinal in 0..self.maximum_device_streams {
                     self.execution_unit_command_queues[ordinal].push_back(Command::Stop);
                 }
                 return false;

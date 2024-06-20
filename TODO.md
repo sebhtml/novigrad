@@ -1,7 +1,3 @@
-- use 16 execution units for cuda too
-
----------------
-
 == Transformer ==
 
 - add Standardize

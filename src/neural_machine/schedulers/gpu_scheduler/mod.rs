@@ -34,12 +34,12 @@ where
 {
     fn new(
         device: &Device,
-        execution_units_len: usize,
+        maximum_device_streams: usize,
         streams: &std::sync::Arc<Vec<Stream>>,
         handler: &Handler,
         instructions: &std::sync::Arc<Vec<Instruction>>,
     ) -> Self {
-        println!("GPU Scheduler execution_units_len: {execution_units_len}");
+        println!("GPU Scheduler maximum_device_streams: {maximum_device_streams}");
         let pending_dependencies = streams.iter().map(|x| x.dependencies.len()).collect();
         let mut dependents = vec![vec![]; streams.len()];
         for (dependent, dependencies) in streams.iter().map(|x| &x.dependencies).enumerate() {
@@ -48,7 +48,7 @@ where
             }
         }
 
-        let free_device_streams = (0..execution_units_len)
+        let free_device_streams = (0..maximum_device_streams)
             .map(|_| device.new_stream())
             .collect::<Result<VecDeque<DeviceStream>, _>>()
             .unwrap();

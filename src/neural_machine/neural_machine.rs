@@ -75,9 +75,9 @@ where
 
         #[cfg(feature = "cuda")]
         // TODO we need CUDA streams exposed by DeviceTrait to bump this to 16.
-        let execution_units_len = 1;
+        let maximum_device_streams = 1;
         #[cfg(not(feature = "cuda"))]
-        let execution_units_len = 16;
+        let maximum_device_streams = 16;
 
         let example_input = program.example_input;
         let example_output = program.example_output;
@@ -96,28 +96,28 @@ where
         let handler = StreamExecutor::new();
         let mut inference_scheduler = Scheduler::new(
             device,
-            execution_units_len,
+            maximum_device_streams,
             &inference_streams,
             &handler,
             &inference_instructions,
         );
         let mut loss_scheduler = Scheduler::new(
             device,
-            execution_units_len,
+            maximum_device_streams,
             &loss_streams,
             &handler,
             &loss_instructions,
         );
         let mut gradient_scheduler = Scheduler::new(
             device,
-            execution_units_len,
+            maximum_device_streams,
             &gradient_streams,
             &handler,
             &gradient_instructions,
         );
         let mut optimization_scheduler = Scheduler::new(
             device,
-            execution_units_len,
+            maximum_device_streams,
             &optimization_streams,
             &handler,
             &optimization_instructions,

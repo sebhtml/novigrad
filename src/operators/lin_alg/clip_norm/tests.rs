@@ -1,5 +1,6 @@
 use crate::{
-    new_tensor, reduce_l2::ReduceL2, ClipNorm, Device, ExecutableOperator, OperatorAttributes,
+    new_tensor, reduce_l2::ReduceL2, stream::StreamTrait, ClipNorm, Device, ExecutableOperator,
+    OperatorAttributes,
 };
 
 #[test]
@@ -28,6 +29,7 @@ fn normalize() {
         &device_stream,
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_ne!(actual_norm.get_values().unwrap()[0], expected_norm);
 
     ClipNorm::execute(
@@ -47,5 +49,6 @@ fn normalize() {
         &device_stream,
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(actual_norm.get_values().unwrap()[0], expected_norm);
 }

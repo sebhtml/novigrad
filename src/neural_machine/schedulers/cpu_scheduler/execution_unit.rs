@@ -77,6 +77,7 @@ where
             }
             Some(Command::WorkUnitDispatch(stream)) => {
                 // Call handler to execute the instructions for that stream.
+                device_stream.wait_for_default()?;
                 self.handler
                     .on_execute(
                         &self.streams,
@@ -90,7 +91,7 @@ where
                 self.controller_command_queue
                     .push_back(Command::WorkUnitCompletion(stream));
                 self.completed_items += 1;
-                device_stream.synchronize()?;
+                device_stream.wait_for()?;
             }
             _ => {}
         }

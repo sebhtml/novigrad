@@ -6,10 +6,10 @@ mod tests;
 
 use cudarc::{
     cublas::{
-        sys::{cublasOperation_t, lib},
+        sys::{cublasHandle_t, cublasOperation_t, cublasPointerMode_t, lib},
         CudaBlas,
     },
-    driver::{self, CudaDevice, CudaFunction, CudaStream, LaunchAsync, LaunchConfig},
+    driver::{self, CudaDevice, CudaFunction, CudaStream, DevicePtrMut, LaunchAsync, LaunchConfig},
 };
 use stream::CudaDeviceStream;
 
@@ -47,7 +47,7 @@ impl CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let n = left.len();
         let kernel = self.get_func(module_name, func_name)?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -62,8 +62,13 @@ impl CudaDev {
                 DeviceSlice::CudaDevSlice(right),
                 DeviceSlice::CudaDevSlice(result),
             ) => {
-                let result =
-                    unsafe { kernel.launch(cfg, (left.slice(), right.slice(), result.slice(), n)) };
+                let result = unsafe {
+                    kernel.launch_on_stream(
+                        cuda_stream,
+                        cfg,
+                        (left.slice(), right.slice(), result.slice(), n),
+                    )
+                };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
@@ -81,7 +86,7 @@ impl CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let kernel = self.get_func(module_name, func_name)?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -89,7 +94,9 @@ impl CudaDev {
         let output = &output.device_slice().buffer;
         match (input, output) {
             (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
-                let result = unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n)) };
+                let result = unsafe {
+                    kernel.launch_on_stream(cuda_stream, cfg, (input.slice(), output.slice(), n))
+                };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
@@ -253,11 +260,7 @@ impl DeviceTrait for CudaDev {
         ldc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
-            *stream.cuda_blas.handle()
-        } else {
-            return Err(error!(ErrorEnum::UnsupportedOperation));
-        };
+        let handle = get_cublas_handle(device_stream)?;
         let transa = match transa {
             false => cublasOperation_t::CUBLAS_OP_N,
             true => cublasOperation_t::CUBLAS_OP_T,
@@ -276,14 +279,13 @@ impl DeviceTrait for CudaDev {
         let a = a.as_ptr();
         let b = b.as_ptr();
         let c = c.as_mut_ptr();
-        let status = unsafe {
+        unsafe {
             lib().cublasSgemm_v2(
                 handle, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
             )
-        };
-        status
-            .result()
-            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
+        }
+        .result()
+        .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
     fn axpy(
@@ -296,16 +298,11 @@ impl DeviceTrait for CudaDev {
         incy: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
-            *stream.cuda_blas.handle()
-        } else {
-            return Err(error!(ErrorEnum::UnsupportedOperation));
-        };
+        let handle = get_cublas_handle(device_stream)?;
         let alpha = &alpha as *const f32;
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
-        let status = unsafe { lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) };
-        status
+        unsafe { lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) }
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
@@ -317,7 +314,7 @@ impl DeviceTrait for CudaDev {
         result: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let n = left.len();
         let kernel = self.get_func("dot_kernel_module", "dot_kernel")?;
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -333,8 +330,8 @@ impl DeviceTrait for CudaDev {
                 DeviceSlice::CudaDevSlice(result),
             ) => {
                 let result = unsafe {
-                    kernel.launch(
-                        //cuda_stream,
+                    kernel.launch_on_stream(
+                        cuda_stream,
                         cfg,
                         (left.slice(), right.slice(), result.slice(), n),
                     )
@@ -359,17 +356,12 @@ impl DeviceTrait for CudaDev {
         y_inc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
-            *stream.cuda_blas.handle()
-        } else {
-            return Err(error!(ErrorEnum::UnsupportedOperation));
-        };
+        let handle = get_cublas_handle(device_stream)?;
         let x = x.as_ptr();
         let x = x.wrapping_add(x_offset as usize);
         let y = y.as_mut_ptr();
         let y = y.wrapping_add(y_offset as usize);
-        let status = unsafe { lib().cublasScopy_v2(handle, n, x, x_inc, y, y_inc) };
-        status
+        unsafe { lib().cublasScopy_v2(handle, n, x, x_inc, y, y_inc) }
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
@@ -380,7 +372,7 @@ impl DeviceTrait for CudaDev {
         x: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let n = x.len();
         let alpha = &alpha.device_slice().buffer;
         let x = &x.device_slice().buffer;
@@ -388,7 +380,9 @@ impl DeviceTrait for CudaDev {
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
             (DeviceSlice::CudaDevSlice(alpha), DeviceSlice::CudaDevSlice(x)) => {
-                let result = unsafe { kernel.launch(cfg, (n, x.slice(), alpha.slice())) };
+                let result = unsafe {
+                    kernel.launch_on_stream(cuda_stream, cfg, (n, x.slice(), alpha.slice()))
+                };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
@@ -404,7 +398,7 @@ impl DeviceTrait for CudaDev {
         x: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let n = x.len();
         let alpha = &alpha.device_slice().buffer;
         let x = &x.device_slice().buffer;
@@ -412,7 +406,9 @@ impl DeviceTrait for CudaDev {
         let cfg = LaunchConfig::for_num_elems(n as u32);
         match (alpha, x) {
             (DeviceSlice::CudaDevSlice(alpha), DeviceSlice::CudaDevSlice(x)) => {
-                let result = unsafe { kernel.launch(cfg, (n, x.slice(), alpha.slice())) };
+                let result = unsafe {
+                    kernel.launch_on_stream(cuda_stream, cfg, (n, x.slice(), alpha.slice()))
+                };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
@@ -435,7 +431,7 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let kernel = self.get_func("softmax_kernel_module", "softmax_kernel")?;
         let rows = input.rows();
         let cols = input.cols();
@@ -445,8 +441,13 @@ impl DeviceTrait for CudaDev {
         let output = &output.device_slice().buffer;
         match (input, output) {
             (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
-                let result =
-                    unsafe { kernel.launch(cfg, (input.slice(), output.slice(), rows, cols)) };
+                let result = unsafe {
+                    kernel.launch_on_stream(
+                        cuda_stream,
+                        cfg,
+                        (input.slice(), output.slice(), rows, cols),
+                    )
+                };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
@@ -462,7 +463,7 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let sum_kernel = self.get_func("sum_kernel_module", "sum_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -470,7 +471,13 @@ impl DeviceTrait for CudaDev {
         let output = &output.device_slice().buffer;
         match (input, output) {
             (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
-                let result = unsafe { sum_kernel.launch(cfg, (input.slice(), n, output.slice())) };
+                let result = unsafe {
+                    sum_kernel.launch_on_stream(
+                        cuda_stream,
+                        cfg,
+                        (input.slice(), n, output.slice()),
+                    )
+                };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
@@ -569,7 +576,7 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let kernel = self.get_func("clip_kernel_module", "clip_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -585,7 +592,8 @@ impl DeviceTrait for CudaDev {
                 DeviceSlice::CudaDevSlice(output),
             ) => {
                 let result = unsafe {
-                    kernel.launch(
+                    kernel.launch_on_stream(
+                        cuda_stream,
                         cfg,
                         (min.slice(), max.slice(), input.slice(), output.slice(), n),
                     )
@@ -606,7 +614,7 @@ impl DeviceTrait for CudaDev {
         loss: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let n = expected.len();
         let kernel = self.get_func(
             "cross_entropy_loss_kernel_module",
@@ -625,7 +633,8 @@ impl DeviceTrait for CudaDev {
                 DeviceSlice::CudaDevSlice(loss),
             ) => {
                 let result = unsafe {
-                    kernel.launch(
+                    kernel.launch_on_stream(
+                        cuda_stream,
                         cfg,
                         (expected.slice(), actual.slice(), loss.slice(), n, EPSILON),
                     )
@@ -696,7 +705,7 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let _cuda_stream = get_cuda_stream(device_stream)?;
+        let cuda_stream = get_cuda_stream(device_stream)?;
         let kernel = self.get_func("bernoulli_kernel_module", "bernoulli_kernel")?;
         let n = input.len();
         let cfg = LaunchConfig::for_num_elems(n as u32);
@@ -710,8 +719,13 @@ impl DeviceTrait for CudaDev {
         match (input, output) {
             (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
                 let rng_state = rng_state;
-                let result =
-                    unsafe { kernel.launch(cfg, (input.slice(), output.slice(), n, rng_state)) };
+                let result = unsafe {
+                    kernel.launch_on_stream(
+                        cuda_stream,
+                        cfg,
+                        (input.slice(), output.slice(), n, rng_state),
+                    )
+                };
                 match result {
                     Ok(_) => Ok(()),
                     Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
@@ -722,27 +736,54 @@ impl DeviceTrait for CudaDev {
     }
 
     fn stream(&self) -> Result<DeviceStreamEnum, Error> {
-        match self.dev.fork_default_stream() {
-            Ok(stream) => {
-                let rng_state = self
-                    .dev
-                    .htod_copy(vec![1337])
-                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-                let cuda_blas = CudaBlas::new(self.dev.clone())
-                    .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-                // TODO uncomment
-                //unsafe { cuda_blas.set_stream(Some(&stream)) }
-                //.map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
-                let cuda_stream = CudaDeviceStream {
-                    device: self.dev.clone(),
-                    stream,
-                    rng_state,
-                    cuda_blas,
-                };
-                Ok(DeviceStreamEnum::CudaDeviceStream(cuda_stream))
-            }
-            Err(_) => Err(error!(ErrorEnum::UnsupportedOperation)),
+        let stream = self
+            .dev
+            .fork_default_stream()
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        let rng_state = self
+            .dev
+            .htod_copy(vec![1337])
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        let cuda_blas =
+            CudaBlas::new(self.dev.clone()).map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        // TODO uncomment
+        let handle = cuda_blas.handle();
+
+        // Set NVIDIA CUDA cublas workspace
+        // See https://docs.nvidia.com/cuda/cublas/index.html#cublassetworkspace
+        let workspace_size_in_bytes = 32 * 1024 * 1024;
+        let mut workspace = self
+            .dev
+            .alloc_zeros(workspace_size_in_bytes)
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        unsafe {
+            lib().cublasSetWorkspace_v2(
+                *handle,
+                *workspace.device_ptr_mut() as *mut _,
+                workspace_size_in_bytes,
+            )
         }
+        .result()
+        .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+
+        unsafe { cuda_blas.set_stream(Some(&stream)) }
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+
+        // Set pointer mode.
+        unsafe {
+            lib().cublasSetPointerMode_v2(*handle, cublasPointerMode_t::CUBLAS_POINTER_MODE_HOST)
+        }
+        .result()
+        .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+
+        let cuda_stream = CudaDeviceStream {
+            device: self.dev.clone(),
+            stream,
+            rng_state,
+            cuda_blas,
+            workspace,
+        };
+        Ok(DeviceStreamEnum::CudaDeviceStream(cuda_stream))
     }
 }
 
@@ -751,5 +792,13 @@ fn get_cuda_stream(device_stream: &DeviceStream) -> Result<&CudaStream, Error> {
         Ok(&stream.stream)
     } else {
         Err(error!(ErrorEnum::NvLaunchError))
+    }
+}
+
+fn get_cublas_handle(device_stream: &DeviceStream) -> Result<cublasHandle_t, Error> {
+    if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
+        Ok(*stream.cuda_blas.handle())
+    } else {
+        Err(error!(ErrorEnum::UnsupportedOperation))
     }
 }

@@ -181,6 +181,48 @@ impl DeviceTrait for CpuDevice {
         CpuDevice::_softmax(rows, cols, input, output)
     }
 
+    fn standardization(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let n = input.len();
+        let input = input.as_ptr();
+        let output = output.as_mut_ptr();
+
+        // Compute mean
+        let mut sum = 0.0;
+        for i in 0..n {
+            let x = unsafe { *input.add(i) };
+            sum += x;
+        }
+
+        let mean = sum / (n as f32);
+
+        // Compute standard deviation
+        let mut sum_of_diffs = 0.0;
+        for i in 0..n {
+            let x = unsafe { *input.add(i) };
+            let diff = x - mean;
+            sum_of_diffs += diff.powi(2);
+        }
+
+        let stddev = (sum_of_diffs / (n as f32)).sqrt();
+
+        // Calculate standardized values
+        for i in 0..n {
+            let x = unsafe { *input.add(i) };
+            debug_assert!(!x.is_nan());
+            debug_assert_ne!(0.0, sum);
+            let y = (x - mean) / (stddev + EPSILON);
+            debug_assert!(!y.is_nan());
+            unsafe { *output.add(i) = y };
+        }
+
+        Ok(())
+    }
+
     fn reduce_sum(
         &self,
         _input: &Tensor,

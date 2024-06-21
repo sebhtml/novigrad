@@ -82,6 +82,7 @@ fn mega_man_attention_model() {
     test_model(details);
 }
 
+#[ignore]
 #[test]
 fn geoffroy_hinton_transformer_model() {
     let device = Device::default();

@@ -195,6 +195,13 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
+    fn standardization(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
+
     fn sigmoid(
         &self,
         input: &Tensor,
@@ -706,5 +713,14 @@ impl DeviceTrait for Device {
 
     fn stream(&self) -> Result<DeviceStreamEnum, Error> {
         self.device.stream()
+    }
+
+    fn standardization(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.standardization(input, output, device_stream)
     }
 }

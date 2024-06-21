@@ -106,6 +106,40 @@ impl CudaDev {
         }
     }
 
+    fn launch_axis_kernel(
+        &self,
+        module_name: &str,
+        func_name: &str,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let cuda_stream = get_cuda_stream(device_stream)?;
+        let kernel = self.get_func(module_name, func_name)?;
+        let rows = input.rows();
+        let cols = input.cols();
+        let n = input.len();
+        let cfg = LaunchConfig::for_num_elems(n as u32);
+        let input = &input.device_slice().buffer;
+        let output = &output.device_slice().buffer;
+        match (input, output) {
+            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
+                let result = unsafe {
+                    kernel.launch_on_stream(
+                        cuda_stream,
+                        cfg,
+                        (input.slice(), output.slice(), rows, cols),
+                    )
+                };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+                }
+            }
+            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
+        }
+    }
+
     pub fn try_new(dev: Arc<driver::CudaDevice>) -> Result<Self, Error> {
         let device = CudaDev { dev };
 
@@ -191,6 +225,12 @@ impl CudaDev {
             "softmax_kernel_module",
             &["softmax_kernel"],
             "./src/devices/cuda/kernels/softmax_kernel.cu",
+        )?;
+
+        device.load_module(
+            "standardization_kernel_module",
+            &["standardization_kernel"],
+            "./src/devices/cuda/kernels/standardization_kernel.cu",
         )?;
 
         Ok(device)
@@ -431,30 +471,28 @@ impl DeviceTrait for CudaDev {
         output: &Tensor,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let cuda_stream = get_cuda_stream(device_stream)?;
-        let kernel = self.get_func("softmax_kernel_module", "softmax_kernel")?;
-        let rows = input.rows();
-        let cols = input.cols();
-        let n = input.len();
-        let cfg = LaunchConfig::for_num_elems(n as u32);
-        let input = &input.device_slice().buffer;
-        let output = &output.device_slice().buffer;
-        match (input, output) {
-            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
-                let result = unsafe {
-                    kernel.launch_on_stream(
-                        cuda_stream,
-                        cfg,
-                        (input.slice(), output.slice(), rows, cols),
-                    )
-                };
-                match result {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
-                }
-            }
-            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
-        }
+        self.launch_axis_kernel(
+            "softmax_kernel_module",
+            "softmax_kernel",
+            input,
+            output,
+            device_stream,
+        )
+    }
+
+    fn standardization(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.launch_axis_kernel(
+            "standardization_kernel_module",
+            "standardization_kernel",
+            input,
+            output,
+            device_stream,
+        )
     }
 
     fn reduce_sum(

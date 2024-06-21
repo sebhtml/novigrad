@@ -177,3 +177,58 @@ fn test_copy_2() {
         .unwrap();
     assert_eq!(actual, expected);
 }
+
+#[ignore]
+#[test]
+fn standardization() {
+    use crate::devices::DeviceTrait;
+    use crate::Device;
+    use meansd::MeanSD;
+    use rand_distr::{Distribution, Normal};
+    let device = Device::default();
+    let normal = Normal::new(20.0, 3.0).unwrap();
+    let sample = |_| normal.sample(&mut rand::thread_rng());
+    let n = 100;
+    let input_values = (0..n).map(sample).collect::<Vec<_>>();
+    let input = new_tensor!(device, 1, n, input_values.clone()).unwrap();
+    let output = new_tensor!(device, 1, n, vec![0.0; n]).unwrap();
+    let device_stream = device.new_stream().unwrap();
+    device
+        .standardization(&input, &output, &device_stream)
+        .unwrap();
+
+    // Compute expected.
+    let mut expected_meansd = MeanSD::default();
+
+    for x in input_values.clone() {
+        expected_meansd.update(x as f64);
+    }
+    let mean = expected_meansd.mean();
+    let stddev = expected_meansd.sstdev();
+
+    let expected_values = input_values
+        .iter()
+        .map(|x| (x - mean as f32) / (stddev as f32))
+        .collect::<Vec<_>>();
+    let mut expected_meansd = MeanSD::default();
+
+    for x in expected_values {
+        expected_meansd.update(x as f64);
+    }
+
+    let mut actual_meansd = MeanSD::default();
+
+    let values = output.get_values().unwrap();
+    for x in values {
+        actual_meansd.update(x as f64);
+    }
+
+    assert_eq!(expected_meansd.size(), actual_meansd.size());
+    let abs_mean_diff = (expected_meansd.mean() - actual_meansd.mean()).abs();
+    assert_le!(abs_mean_diff, 0.00001);
+    let abs_stddev_diff = (expected_meansd.sstdev() - actual_meansd.sstdev()).abs();
+    // In the paper https://arxiv.org/pdf/1607.06450, they divide by H.
+    // In meansd::MeanSD, they divide by (H - 1).
+    // This explains the difference.
+    assert_le!(abs_stddev_diff, 0.006);
+}

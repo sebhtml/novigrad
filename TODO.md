@@ -1,5 +1,6 @@
 == Story: Transformer ==
 
+- implement standardization in CUDA
 - implement LayerNormalization https://arxiv.org/pdf/1607.06450
 - use Transformer in chatbot
 

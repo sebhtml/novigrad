@@ -2,7 +2,7 @@ use super::load_examples;
 use crate::neural_program::NeuralProgram;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
-    Adam, Device, Dropout, Instruction, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss,
+    Adam, Device, Instruction, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss,
     TernaryOperator, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
@@ -11,7 +11,6 @@ pub struct MegaManAttentionModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,
-    dropout: Dropout,
     multi_head_attention: MultiHeadAttention,
     linear: Linear,
     softmax: Softmax,
@@ -21,13 +20,9 @@ impl UnaryModel for MegaManAttentionModel {}
 
 impl MegaManAttentionModel {
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
-        // see https://github.com/karpathy/minGPT
-        let _batch_size = 1;
         let n_embd = 768;
         let num_heads = 12;
-        let _n_layer = 1;
-        let dropout_probability = 0.1;
-        let _block_size = 2048;
+        let dropout_probability = 0.0;
 
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
         let causal_mask = true;
@@ -48,12 +43,10 @@ impl MegaManAttentionModel {
             sequence_length,
         )?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
-        let dropout = Dropout::try_new(device, sequence_length, n_embd, dropout_probability)?;
         let model = Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![sequence_length, vocab_size],
             embedding,
-            dropout,
             multi_head_attention,
             linear,
             softmax,
@@ -65,8 +58,9 @@ impl MegaManAttentionModel {
 impl UnaryOperator for MegaManAttentionModel {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let embedding = self.embedding.forward(input)?;
-        let x = self.dropout.forward(&embedding)?;
-        let attentions = self.multi_head_attention.forward(&x, &x, &x)?;
+        let attentions = self
+            .multi_head_attention
+            .forward(&embedding, &embedding, &embedding)?;
         let linear = self.linear.forward(&attentions)?;
         let softmax = self.softmax.forward(&linear)?;
         Ok(softmax)
@@ -90,7 +84,7 @@ pub fn load_mega_man_attention_model(
     let max_chars = None;
     let max_number_of_examples = 10;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
-    let sequence_length = 64;
+    let sequence_length = 32;
 
     let input_sequence_length = sequence_length;
     let output_sequence_length = sequence_length;
@@ -128,7 +122,7 @@ pub fn load_mega_man_attention_model(
         },
         final_metrics: Metrics {
             total_loss: 350.0,
-            total_perplexity: 11.0,
+            total_perplexity: 13.0,
         },
     };
     Ok(details)

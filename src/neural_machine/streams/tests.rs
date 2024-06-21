@@ -45,7 +45,7 @@ fn the_instructions_length_is_correct() {
     let device = Device::default();
     let instructions = get_megaman_attention_instructions(&device).unwrap();
     let simple_instructions = make_simple_instructions(&instructions);
-    assert_eq!(2648, instructions.len());
+    assert_eq!(2479, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_dependents_for_stream = 12;
     let minimum_stream_instructions = 32;
@@ -60,7 +60,7 @@ fn the_instructions_length_is_correct() {
         .map(|i| i.instructions.deref().clone())
         .collect::<Vec<Vec<usize>>>()
         .concat();
-    assert_eq!(2648, actual_instructions.len());
+    assert_eq!(2479, actual_instructions.len());
 }
 
 #[test]
@@ -79,7 +79,7 @@ fn the_streams_length_are_correct() {
     );
     print_streams("test", &streams);
     assert_eq!(
-        108,
+        93,
         streams.iter().filter(|x| x.instructions.len() > 0).count()
     );
 }

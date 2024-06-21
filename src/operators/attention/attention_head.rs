@@ -3,6 +3,9 @@ use crate::{
     UnaryOperator, WeightsInitialization,
 };
 
+/// See:
+/// Attention Is All You Need
+/// https://arxiv.org/abs/1706.03762
 pub struct AttentionHead {
     q: Linear,
     k: Linear,

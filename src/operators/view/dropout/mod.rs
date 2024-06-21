@@ -8,6 +8,9 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
+/// See:
+/// Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+/// https://www.jmlr.org/papers/v15/srivastava14a.html
 pub struct Dropout {
     probabilities: Tensor,
     mask: TensorWithGrad,

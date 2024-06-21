@@ -1,9 +1,7 @@
 == Story: Transformer ==
 
-- add Standardize
-- implement LayerNormalization which is Standardize + ScalarMul + Add
-- implement LayerNorm
-- implement Transformer
+- implement LayerNormalization https://arxiv.org/pdf/1607.06450
+- use Transformer in chatbot
 
 == Story: Eliminate pthread_rwlock_unlock ==
 

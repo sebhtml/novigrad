@@ -28,7 +28,7 @@ impl ChatbotModel {
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
         let n_embd = 768;
         let num_heads = 12;
-        let dropout_probability = 0.01;
+        let dropout_probability = 0.1;
 
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
         let multi_head_attention = MultiHeadAttention::try_new(

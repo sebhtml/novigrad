@@ -4,7 +4,7 @@ use crate::{
     identity::Identity,
     reduce_l2::ReduceL2,
     reduce_sum::ReduceSum,
-    statistics::bernoulli::Bernoulli,
+    statistics::{bernoulli::Bernoulli, standardization::Standardization},
     stream::DeviceStream,
     tensor::{Error, Tensor},
     transpose::Transpose,
@@ -50,6 +50,10 @@ pub enum OpCode {
     ///     x = ScalarMul(alpha, x)
     ///     return x
     ClipNorm,
+
+    /// Not ONNX-compliant
+    /// First stage of https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
+    Standardization,
 
     /// https://onnx.ai/onnx/operators/onnx__Transpose.html
     Transpose,
@@ -125,6 +129,7 @@ impl From<&OpCode> for String {
             OpCode::Clip => "Clip".into(),
             OpCode::ClipNorm => "ClipNorm".into(),
             OpCode::ReduceL2 => "ReduceL2".into(),
+            OpCode::Standardization => "Standardization".into(),
             OpCode::Softmax => "Softmax".into(),
             OpCode::Sigmoid => "Sigmoid".into(),
             OpCode::Reshape => "Reshape".into(),
@@ -164,6 +169,9 @@ impl OpCode {
                 Unconcat::execute(attributes, inputs, outputs, device, device_stream)
             }
             OpCode::Sigmoid => Sigmoid::execute(attributes, inputs, outputs, device, device_stream),
+            OpCode::Standardization => {
+                Standardization::execute(attributes, inputs, outputs, device, device_stream)
+            }
             OpCode::Softmax => Softmax::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::SoftmaxCrossEntropyLoss => {
                 SoftmaxCrossEntropyLoss::execute(attributes, inputs, outputs, device, device_stream)

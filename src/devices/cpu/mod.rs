@@ -181,6 +181,60 @@ impl DeviceTrait for CpuDevice {
         CpuDevice::_softmax(rows, cols, input, output)
     }
 
+    fn standardization(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let rows = input.rows() as i32;
+        let cols = input.cols() as i32;
+        let rows = rows as usize;
+        let cols = cols as usize;
+        let input = input.as_ptr();
+        let output = output.as_mut_ptr();
+        let mut row = 0;
+        while row < rows {
+            // Compute mean
+
+            let mut sum = 0.0;
+            let mut col = 0;
+            while col < cols {
+                let x = unsafe { *input.add(row * cols + col) };
+                sum += x;
+                col += 1;
+            }
+
+            let mean = sum / cols as f32;
+
+            let mut sum = 0.0;
+            let mut col = 0;
+            while col < cols {
+                let x = unsafe { *input.add(row * cols + col) };
+                debug_assert!(!x.is_nan());
+                sum += (x - mean).powi(2);
+                col += 1;
+            }
+
+            let stddev = (sum / cols as f32).sqrt();
+
+            // Standardize elements.
+            let mut col = 0;
+            while col < cols {
+                let x = unsafe { *input.add(row * cols + col) };
+                debug_assert!(!x.is_nan());
+                debug_assert_ne!(0.0, sum);
+                let y = (x - mean) / (stddev + EPSILON);
+                debug_assert!(!y.is_nan());
+                unsafe { *output.add(row * cols + col) = y };
+                col += 1;
+            }
+            row += 1;
+        }
+
+        Ok(())
+    }
+
     fn reduce_sum(
         &self,
         _input: &Tensor,

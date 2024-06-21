@@ -1,5 +1,7 @@
 == Story: Transformer ==
 
+- implement standardization in CUDA
+- allow one of the token to be different among the 10 in mega_man_attention_model test
 - implement LayerNormalization https://arxiv.org/pdf/1607.06450
 - use Transformer in chatbot
 
@@ -18,6 +20,11 @@
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 - Implement Transformer idea for the Arc prize challenge
 - implement Gelu
+
+== Clean-up ==
+
+- move ./src/devices/cuda/tests.rs tests that are not related to cuda to ./src/devices/tests.rs
+- move ./src/devices/cpu/tests.rs tests that are not related to cpu to ./src/devices/tests.rs
 
 == Story: AMD ROCm with HIP ==
 

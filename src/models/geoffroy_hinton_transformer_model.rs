@@ -1,37 +1,35 @@
 use super::load_examples;
 use crate::neural_program::NeuralProgram;
+use crate::transformer::Transformer;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
-    Adam, Device, Dropout, Instruction, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss,
-    TernaryOperator, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
+    Adam, Device, Dropout, Instruction, Metrics, SoftmaxCrossEntropyLoss, Tokenizer,
+    TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
-pub struct MegaManAttentionModel {
+pub struct GeoffroyHintonTransformerModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,
     dropout: Dropout,
-    multi_head_attention: MultiHeadAttention,
+    transformer: Transformer,
     linear: Linear,
     softmax: Softmax,
 }
 
-impl UnaryModel for MegaManAttentionModel {}
+impl UnaryModel for GeoffroyHintonTransformerModel {}
 
-impl MegaManAttentionModel {
+impl GeoffroyHintonTransformerModel {
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
-        // see https://github.com/karpathy/minGPT
-        let _batch_size = 1;
         let n_embd = 768;
         let num_heads = 12;
-        let _n_layer = 1;
         let dropout_probability = 0.1;
-        let _block_size = 2048;
 
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
+        let dropout = Dropout::try_new(device, sequence_length, n_embd, dropout_probability)?;
         let causal_mask = true;
-        let multi_head_attention = MultiHeadAttention::try_new(
+        let transformer = Transformer::try_new(
             device,
             sequence_length,
             n_embd,
@@ -48,13 +46,13 @@ impl MegaManAttentionModel {
             sequence_length,
         )?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
-        let dropout = Dropout::try_new(device, sequence_length, n_embd, dropout_probability)?;
+
         let model = Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![sequence_length, vocab_size],
             embedding,
             dropout,
-            multi_head_attention,
+            transformer,
             linear,
             softmax,
         };
@@ -62,18 +60,18 @@ impl MegaManAttentionModel {
     }
 }
 
-impl UnaryOperator for MegaManAttentionModel {
+impl UnaryOperator for GeoffroyHintonTransformerModel {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let embedding = self.embedding.forward(input)?;
-        let x = self.dropout.forward(&embedding)?;
-        let attentions = self.multi_head_attention.forward(&x, &x, &x)?;
-        let linear = self.linear.forward(&attentions)?;
+        let dropout = self.dropout.forward(&embedding)?;
+        let transformed = self.transformer.forward(&dropout)?;
+        let linear = self.linear.forward(&transformed)?;
         let softmax = self.softmax.forward(&linear)?;
         Ok(softmax)
     }
 }
 
-impl Model for MegaManAttentionModel {
+impl Model for GeoffroyHintonTransformerModel {
     fn input_size(&self) -> Vec<usize> {
         self.input_shape.clone()
     }
@@ -83,12 +81,12 @@ impl Model for MegaManAttentionModel {
     }
 }
 
-pub fn load_mega_man_attention_model(
+pub fn load_geoffroy_hinton_transformer_model(
     device: &Device,
-) -> Result<ModelDetails<MegaManAttentionModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
-    let file_path = "data/Mega_Man.txt";
+) -> Result<ModelDetails<GeoffroyHintonTransformerModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
+    let file_path = "data/Geoffrey_Hinton.txt";
     let max_chars = None;
-    let max_number_of_examples = 10;
+    let max_number_of_examples = 16;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 64;
 
@@ -105,7 +103,7 @@ pub fn load_mega_man_attention_model(
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let model = MegaManAttentionModel::new(device, sequence_length, vocab_size)?;
+    let model = GeoffroyHintonTransformerModel::new(device, sequence_length, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
@@ -128,14 +126,14 @@ pub fn load_mega_man_attention_model(
         },
         final_metrics: Metrics {
             total_loss: 350.0,
-            total_perplexity: 11.0,
+            total_perplexity: 17.0,
         },
     };
     Ok(details)
 }
 
 pub fn get_megaman_attention_instructions(device: &Device) -> Result<Vec<Instruction>, Error> {
-    let details = load_mega_man_attention_model(device)?;
+    let details = load_geoffroy_hinton_transformer_model(device)?;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;

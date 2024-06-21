@@ -5,6 +5,9 @@ use crate::{
     UnaryOperator, WeightsInitialization,
 };
 
+/// See:
+/// Attention Is All You Need
+/// https://arxiv.org/abs/1706.03762
 pub struct MultiHeadAttention {
     attention_heads: Vec<AttentionHead>,
     concat: Concat,
@@ -16,7 +19,7 @@ impl MultiHeadAttention {
         device: &Device,
         rows: usize,
         cols: usize,
-        mask: bool,
+        causal_mask: bool,
         num_heads: usize,
         dropout_probability: f32,
     ) -> Result<Self, Error> {
@@ -31,7 +34,7 @@ impl MultiHeadAttention {
                 rows,
                 cols,
                 head_cols,
-                mask,
+                causal_mask,
                 dropout_probability,
             )?);
         }

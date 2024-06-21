@@ -1,6 +1,7 @@
 mod model;
 pub use model::*;
 use more_asserts::debug_assert_lt;
+pub mod geoffroy_hinton_transformer_model;
 pub mod mega_man;
 pub mod mega_man_attention;
 pub mod perceptron;

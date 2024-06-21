@@ -4,3 +4,4 @@ mod attention_head;
 pub use attention_head::*;
 mod multi_head_attention;
 pub use multi_head_attention::*;
+pub mod transformer;

@@ -21,6 +21,11 @@
 - Implement Transformer idea for the Arc prize challenge
 - implement Gelu
 
+== Clean-up ==
+
+- move ./src/devices/cuda/tests.rs tests that are not related to cuda to ./src/devices/tests.rs
+- move ./src/devices/cpu/tests.rs tests that are not related to cpu to ./src/devices/tests.rs
+
 == Story: AMD ROCm with HIP ==
 
 - Add support AMD GPUs (ROCm/rocBLAS) -> https://docs.rs/simt_rocblas_sys/latest/simt_rocblas_sys/struct.rocblas.html

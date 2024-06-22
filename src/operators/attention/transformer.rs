@@ -1,5 +1,5 @@
 use crate::{
-    statistics::standardization::Standardization, tensor::Error, Add, BinaryOperator, Device,
+    statistics::layer_norm::LayerNormalization, tensor::Error, Add, BinaryOperator, Device,
     Dropout, MultiHeadAttention, TensorWithGrad, TernaryOperator, UnaryOperator,
 };
 
@@ -10,7 +10,7 @@ pub struct Transformer {
     multi_head_attention: MultiHeadAttention,
     dropout: Dropout,
     add: Add,
-    standardization: Standardization,
+    layer_norm: LayerNormalization,
 }
 
 impl Transformer {
@@ -32,13 +32,13 @@ impl Transformer {
         )?;
         let dropout = Dropout::try_new(device, rows, cols, dropout_probability)?;
         let add = Add::new(device);
-        let standardization = Standardization::new(device);
+        let layer_norm = LayerNormalization::try_new(device, rows, cols)?;
 
         let transformer = Self {
             multi_head_attention,
             dropout,
             add,
-            standardization,
+            layer_norm,
         };
         Ok(transformer)
     }
@@ -49,7 +49,7 @@ impl UnaryOperator for Transformer {
         let attended = self.multi_head_attention.forward(&input, &input, &input)?;
         let with_dropout = self.dropout.forward(&attended)?;
         let residual = self.add.forward(&with_dropout, &input)?;
-        let standardized = self.standardization.forward(&residual)?;
-        Ok(standardized)
+        let normalized = self.layer_norm.forward(&residual)?;
+        Ok(normalized)
     }
 }

@@ -1,6 +1,5 @@
 == Story: Transformer ==
 
-- implement standardization in CUDA
 - allow one of the token to be different among the 10 in mega_man_attention_model test
 - implement LayerNormalization https://arxiv.org/pdf/1607.06450
 - use Transformer in chatbot

@@ -1,7 +1,7 @@
 use cudarc::driver::LaunchAsync;
 use more_asserts::assert_ge;
 
-use crate::{new_tensor, EPSILON};
+use crate::{new_tensor, stream::StreamTrait, EPSILON};
 
 #[test]
 fn cublas_sgemm_column_major() {
@@ -70,7 +70,7 @@ fn cublas_sgemm_column_major() {
             &device_stream,
         )
         .unwrap();
-
+    device_stream.wait_for().unwrap();
     let values = c.get_values().unwrap();
 
     assert_eq!(
@@ -364,13 +364,14 @@ fn cuda_cross_entropy_loss() {
 
     let cpu_output = {
         let device = Device::cpu();
-        let stream = device.new_stream().unwrap();
+        let device_stream = device.new_stream().unwrap();
         let left = new_tensor!(device, 1, n as usize, left_data).unwrap();
         let right = new_tensor!(device, 1, n as usize, right_data).unwrap();
         let output = new_tensor!(device, 1, 1_usize, vec![0.0]).unwrap();
         device
-            .cross_entropy_loss(&left, &right, &output, &stream)
+            .cross_entropy_loss(&left, &right, &output, &device_stream)
             .unwrap();
+        device_stream.wait_for().unwrap();
         output.get_values().unwrap()
     };
 

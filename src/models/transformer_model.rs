@@ -118,7 +118,7 @@ pub fn load_transformer_model(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: true,
+        clipped_gradient_norm: false,
         initial_metrics: Metrics {
             total_loss: 4000.0,
             total_perplexity: 5.0,

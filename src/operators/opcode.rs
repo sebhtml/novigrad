@@ -1,7 +1,7 @@
 use crate::{
     analysis::min::Min,
     clip::Clip,
-    gelu::Gelu,
+    gelu::{Gelu, GeluDerivative},
     identity::Identity,
     reduce_l2::ReduceL2,
     reduce_sum::ReduceSum,
@@ -93,6 +93,7 @@ pub enum OpCode {
     Bernoulli,
 
     Gelu,
+    GeluDerivative,
 
     /// TODO
     /// https://onnx.ai/onnx/operators/onnx__Conv.html
@@ -125,6 +126,7 @@ impl From<&OpCode> for String {
             OpCode::Softmax => "Softmax".into(),
             OpCode::Sigmoid => "Sigmoid".into(),
             OpCode::Gelu => "Gelu".into(),
+            OpCode::GeluDerivative => "GeluDerivative".into(),
             OpCode::Reshape => "Reshape".into(),
             OpCode::Concat => "Concat".into(),
             OpCode::Unconcat => "Unconcat".into(),
@@ -163,6 +165,9 @@ impl OpCode {
             }
             OpCode::Sigmoid => Sigmoid::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::Gelu => Gelu::execute(attributes, inputs, outputs, device, device_stream),
+            OpCode::GeluDerivative => {
+                GeluDerivative::execute(attributes, inputs, outputs, device, device_stream)
+            }
             OpCode::Standardization => {
                 Standardization::execute(attributes, inputs, outputs, device, device_stream)
             }

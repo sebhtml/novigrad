@@ -641,16 +641,16 @@ impl CpuDevice {
     }
 }
 
-fn sigmoid(x: f32) -> f32 {
+pub fn sigmoid(x: f32) -> f32 {
     1.0 / (1.0 + E.powf(-x))
 }
 
-fn gelu(x: f32) -> f32 {
+pub fn gelu(x: f32) -> f32 {
     // GELU(x) ≈ 0.5 * x * (1 + tanh(x * sqrt(2 / 5)))
     0.5 * x * (1.0 + (x * (2.0 / 5.0 as f32).sqrt()).tanh())
 }
 
-fn gelu_derivative(x: f32) -> f32 {
+pub fn gelu_derivative(x: f32) -> f32 {
     // GELU'(x) ≈ 0.5 * (1 + (4 * x) / (5 * (1 + tanh^2(sqrt(2/5) * x))))
     0.5 * (1.0 + (4.0 * x) / (5.0 * (1.0 + ((2.0 / 5.0 as f32).sqrt() * x).tanh().powi(2))))
 }

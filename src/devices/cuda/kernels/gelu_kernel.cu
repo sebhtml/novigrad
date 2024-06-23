@@ -7,5 +7,5 @@ extern "C" __global__ void gelu_kernel(float *input, float *output, int n)
     }
     // GELU(x) ≈ 0.5 * x * (1 + tanh(x * sqrt(2 / 5)))
     float x = input[i];
-    output[i] = 0.5 * x * (1.0 + tanf(x * sqrt(2.0 / 5.0)));
+    output[i] = 0.5 * x * (1.0 + tanh(x * sqrt(2.0 / 5.0)));
 }

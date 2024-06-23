@@ -1,6 +1,6 @@
 use crate::{
-    statistics::layer_norm::LayerNormalization, tensor::Error, Add, BinaryOperator, Device,
-    Dropout, Linear, MultiHeadAttention, Sigmoid, TensorWithGrad, TernaryOperator, UnaryOperator,
+    gelu::Gelu, statistics::layer_norm::LayerNormalization, tensor::Error, Add, BinaryOperator,
+    Device, Dropout, Linear, MultiHeadAttention, TensorWithGrad, TernaryOperator, UnaryOperator,
     WeightsInitialization,
 };
 
@@ -18,7 +18,7 @@ pub struct Transformer {
     layer_norm_2: LayerNormalization,
     add: Add,
     linear_1: Linear,
-    sigmoid: Sigmoid,
+    gelu: Gelu,
     linear_2: Linear,
     dropout_2: Dropout,
 }
@@ -46,7 +46,7 @@ impl Transformer {
         let layer_norm_2 = LayerNormalization::try_new(device, rows, cols)?;
 
         let linear_1 = Linear::new(device, cols, cols, WeightsInitialization::Kaiming, rows)?;
-        let sigmoid = Sigmoid::new(device);
+        let gelu = Gelu::new(device);
         let linear_2 = Linear::new(device, cols, cols, WeightsInitialization::Kaiming, rows)?;
         let dropout_2 = Dropout::try_new(device, rows, cols, dropout_probability)?;
 
@@ -57,7 +57,7 @@ impl Transformer {
             layer_norm_2,
             add,
             linear_1,
-            sigmoid,
+            gelu,
             linear_2,
             dropout_2,
         };
@@ -77,7 +77,8 @@ impl UnaryOperator for Transformer {
         let residual_1 = self.add.forward(&with_dropout_1, &input)?;
         let normalized_output = self.layer_norm_2.forward(&residual_1)?;
         let lin_1 = self.linear_1.forward(&normalized_output)?;
-        let activated = self.sigmoid.forward(&lin_1)?;
+        //let activated = self.sigmoid.forward(&lin_1)?;
+        let activated = self.gelu.forward(&lin_1)?;
         let lin_2 = self.linear_2.forward(&activated)?;
         let with_dropout_2 = self.dropout_2.forward(&lin_2)?;
         let residual_2 = self.add.forward(&with_dropout_2, &normalized_output)?;

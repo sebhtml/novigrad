@@ -33,7 +33,7 @@ impl ExecutableOperator for Gelu {
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
-        device.sigmoid(input, output, device_stream)
+        device.gelu(input, output, device_stream)
     }
 }
 
@@ -53,35 +53,66 @@ impl UnaryOperator for Gelu {
             false
         )?;
 
-        let inputs = [input];
-        let outputs = [&output];
         let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
-            &[&zero, &outputs[0].tensor()],
-            &[&outputs[0].tensor()],
+            &[&zero, &output.tensor()],
+            &[&output.tensor()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
-            &[&zero, &outputs[0].gradient()],
-            &[&outputs[0].gradient()],
+            &[&zero, &output.gradient()],
+            &[&output.gradient()],
         ));
         output.push_instruction(inference_instruction!(
             OpCode::Gelu,
             OperatorAttributes::None,
-            &[&inputs[0].tensor()],
-            &[&outputs[0].tensor()],
+            &[&input.tensor()],
+            &[&output.tensor()],
         ));
 
-        output.push_instruction(gradient_instruction!(
-            OpCode::Gelu,
-            OperatorAttributes::None,
-            &[&inputs[0].tensor()],
-            &[&outputs[0].tensor()],
-        ));
+        if input.gradient().requires_grad() {
+            let device = &self.device;
+            let layer_f_derivative = new_tensor!(device, rows, cols, vec![0.0; len])?;
+            output.push_instruction(gradient_instruction!(
+                OpCode::GeluDerivative,
+                OperatorAttributes::None,
+                &[&input.tensor()],
+                &[&layer_f_derivative],
+            ));
+            let tmp = new_tensor!(device, rows, cols, vec![0.0; len])?;
+            output.push_instruction(gradient_instruction!(
+                OpCode::Mul,
+                OperatorAttributes::None,
+                &[&output.gradient(), &layer_f_derivative],
+                &[&tmp],
+            ));
+            output.push_instruction(gradient_instruction!(
+                OpCode::Add,
+                OperatorAttributes::None,
+                &[&tmp, &input.gradient()],
+                &[&input.gradient()],
+            ));
+        }
 
         Ok(output)
+    }
+}
+
+pub struct GeluDerivative {}
+
+impl ExecutableOperator for GeluDerivative {
+    fn execute(
+        _attributes: &OperatorAttributes,
+        inputs: &[&Tensor],
+        outputs: &[&Tensor],
+        device: &Device,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let input = inputs[0];
+        let output = outputs[0];
+        device.gelu_derivative(input, output, device_stream)
     }
 }

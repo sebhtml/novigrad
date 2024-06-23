@@ -150,7 +150,7 @@ pub fn load_simple_model(
         progress: 100,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: 1.0,
+        clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 5.0,
             total_perplexity: 200.0,

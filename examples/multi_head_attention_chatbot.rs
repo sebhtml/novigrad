@@ -92,8 +92,15 @@ fn main() -> Result<(), Error> {
     let vocab_size = tokenizer.vocab_size();
     let loss_operator = SoftmaxCrossEntropyLoss::new(&device);
     let learning_rate = 0.05;
+    let clipped_gradient_norm = true;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
-    let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
+    let program = NeuralProgram::try_new(
+        &device,
+        &model,
+        &loss_operator,
+        &optimizer,
+        clipped_gradient_norm,
+    )?;
     let mut neural_machine = NeuralMachine::<f32, DefaultStreamScheduler>::try_new(
         &device,
         program,

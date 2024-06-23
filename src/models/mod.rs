@@ -25,7 +25,7 @@ where
     pub optimizer: Optimizer,
     pub learning_rate: f32,
     pub shuffle_examples: bool,
-    pub clipped_gradient_norm: f32,
+    pub clipped_gradient_norm: bool,
     pub epochs: usize,
     pub progress: usize,
     pub initial_metrics: Metrics,

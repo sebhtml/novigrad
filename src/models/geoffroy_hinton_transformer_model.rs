@@ -1,10 +1,9 @@
 use super::load_examples;
-use crate::neural_program::NeuralProgram;
 use crate::transformer::Transformer;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
-    Adam, Device, Dropout, Instruction, Metrics, SoftmaxCrossEntropyLoss, Tokenizer,
-    TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
+    Adam, Device, Dropout, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait, UnaryModel,
+    UnaryOperator, WeightsInitialization,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
@@ -119,7 +118,7 @@ pub fn load_geoffroy_hinton_transformer_model(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: 1.0,
+        clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 4000.0,
             total_perplexity: 5.0,
@@ -130,14 +129,4 @@ pub fn load_geoffroy_hinton_transformer_model(
         },
     };
     Ok(details)
-}
-
-pub fn get_megaman_attention_instructions(device: &Device) -> Result<Vec<Instruction>, Error> {
-    let details = load_geoffroy_hinton_transformer_model(device)?;
-    let model = details.model;
-    let loss_operator = details.loss_operator;
-    let optimizer = details.optimizer;
-    let program = NeuralProgram::try_new(device, &model, &loss_operator, &optimizer)?;
-    let instructions = program.instructions;
-    Ok(instructions)
 }

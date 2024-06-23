@@ -115,7 +115,7 @@ pub fn load_mega_man_attention_model(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: 1.0,
+        clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 4000.0,
             total_perplexity: 5.0,
@@ -133,7 +133,14 @@ pub fn get_megaman_attention_instructions(device: &Device) -> Result<Vec<Instruc
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;
-    let program = NeuralProgram::try_new(device, &model, &loss_operator, &optimizer)?;
+    let clipped_gradient_norm = true;
+    let program = NeuralProgram::try_new(
+        device,
+        &model,
+        &loss_operator,
+        &optimizer,
+        clipped_gradient_norm,
+    )?;
     let instructions = program.instructions;
     Ok(instructions)
 }

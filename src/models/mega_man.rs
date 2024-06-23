@@ -112,7 +112,7 @@ pub fn load_mega_man_model(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: 1.0,
+        clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 50.0,
             total_perplexity: 2500.0,

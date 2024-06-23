@@ -1,7 +1,6 @@
 == Story: Transformer ==
 
 - allow one of the token to be different among the 10 in mega_man_attention_model test
-- use Transformer in chatbot
 
 == Story: Eliminate pthread_rwlock_unlock ==
 

@@ -15,12 +15,16 @@ use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 /// See
 /// Attention Is All You Need
 /// https://arxiv.org/pdf/1706.03762
+///
+/// See
+/// OpenAI GPT 1
+/// https://huggingface.co/openai-community/openai-gpt
 pub struct TransformerModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,
     dropout: Dropout,
-    transformer: Transformer,
+    transformers: Vec<Transformer>,
     layer_norm: LayerNormalization,
     linear: Linear,
     softmax: Softmax,
@@ -29,7 +33,12 @@ pub struct TransformerModel {
 impl UnaryModel for TransformerModel {}
 
 impl TransformerModel {
-    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
+    pub fn new(
+        device: &Device,
+        layers: usize,
+        sequence_length: usize,
+        vocab_size: usize,
+    ) -> Result<Self, Error> {
         let n_embd = 768;
         let num_heads = 12;
         let dropout_probability = 0.1;
@@ -37,15 +46,19 @@ impl TransformerModel {
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
         let dropout = Dropout::try_new(device, sequence_length, n_embd, dropout_probability)?;
         let causal_mask = true;
-        let transformer = Transformer::try_new(
-            device,
-            sequence_length,
-            n_embd,
-            causal_mask,
-            num_heads,
-            dropout_probability,
-        )
-        .unwrap();
+        let transformers = (0..layers)
+            .map(|_| {
+                Transformer::try_new(
+                    device,
+                    sequence_length,
+                    n_embd,
+                    causal_mask,
+                    num_heads,
+                    dropout_probability,
+                )
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
         let layer_norm = LayerNormalization::try_new(device, sequence_length, n_embd)?;
         let linear = Linear::new(
             device,
@@ -61,7 +74,7 @@ impl TransformerModel {
             output_shape: vec![sequence_length, vocab_size],
             embedding,
             dropout,
-            transformer,
+            transformers,
             layer_norm,
             linear,
             softmax,
@@ -74,7 +87,16 @@ impl UnaryOperator for TransformerModel {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let embedding = self.embedding.forward(input)?;
         let dropout = self.dropout.forward(&embedding)?;
-        let transformed = self.transformer.forward(&dropout)?;
+        let mut transformed_outputs = vec![];
+        for (layer, transformer) in self.transformers.iter().enumerate() {
+            let input = match layer {
+                0 => &dropout,
+                _ => &transformed_outputs[layer - 1],
+            };
+            let transformed = transformer.forward(&input)?;
+            transformed_outputs.push(transformed);
+        }
+        let transformed = &transformed_outputs[transformed_outputs.len() - 1];
         let normalized_output = self.layer_norm.forward(&transformed)?;
         let linear = self.linear.forward(&normalized_output)?;
         let softmax = self.softmax.forward(&linear)?;
@@ -114,7 +136,8 @@ pub fn load_transformer_model(
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let model = TransformerModel::new(device, sequence_length, vocab_size)?;
+    let layers = 1;
+    let model = TransformerModel::new(device, layers, sequence_length, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;

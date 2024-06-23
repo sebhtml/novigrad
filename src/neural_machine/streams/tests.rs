@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::{
     filter_instructions,
-    mega_man_attention::get_megaman_attention_instructions,
+    multi_head_attention_model::get_multi_head_attention_model_instructions,
     neural_machine::streams::{
         instruction::{make_simple_instructions, print_instructions},
         stream::{make_streams, print_streams},
@@ -18,7 +18,7 @@ use test_case::test_case;
 #[test_case(Some(Category::Optimization) ; "optimization filter")]
 fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
     let device = Device::default();
-    let instructions = get_megaman_attention_instructions(&device).unwrap();
+    let instructions = get_multi_head_attention_model_instructions(&device).unwrap();
     let instructions = filter_instructions(instructions, filter);
     let simple_instructions = make_simple_instructions(&instructions);
     let expected_instructions = (0..instructions.len()).collect::<Vec<_>>();
@@ -43,7 +43,7 @@ fn each_instruction_is_executed_exactly_once(filter: Option<Category>) {
 #[test]
 fn the_instructions_length_is_correct() {
     let device = Device::default();
-    let instructions = get_megaman_attention_instructions(&device).unwrap();
+    let instructions = get_multi_head_attention_model_instructions(&device).unwrap();
     let simple_instructions = make_simple_instructions(&instructions);
     assert_eq!(2479, instructions.len());
     let minimum_write_before_read_for_new_stream = 4;
@@ -66,7 +66,7 @@ fn the_instructions_length_is_correct() {
 #[test]
 fn the_streams_length_are_correct() {
     let device = Device::default();
-    let instructions = get_megaman_attention_instructions(&device).unwrap();
+    let instructions = get_multi_head_attention_model_instructions(&device).unwrap();
     let simple_instructions = make_simple_instructions(&instructions);
     let minimum_write_before_read_for_new_stream = 4;
     let minimum_dependents_for_stream = 12;

@@ -3,97 +3,33 @@ use novigrad::{
     neural_program::NeuralProgram,
     schedulers::DefaultStreamScheduler,
     tensor::{Error, ErrorEnum, Tensor},
-    Adam, Device, Embedding, Linear, Model, MultiHeadAttention, NeuralMachine, Softmax,
-    SoftmaxCrossEntropyLoss, TensorWithGrad, TernaryOperator, Tokenizer, TokenizerTrait,
-    UnaryModel, UnaryOperator, WeightsInitialization,
+    transformer_model::TransformerModel,
+    Adam, Device, NeuralMachine, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait, UnaryModel,
 };
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 use std::{fs::read_to_string, io};
-
-struct ChatbotModel {
-    input_shape: Vec<usize>,
-    output_shape: Vec<usize>,
-    embedding: Embedding,
-    multi_head_attention: MultiHeadAttention,
-    linear: Linear,
-    softmax: Softmax,
-}
-
-impl UnaryModel for ChatbotModel {}
-
-impl ChatbotModel {
-    /// Attention Is All You Need
-    /// https://arxiv.org/abs/1706.03762
-    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
-        let n_embd = 768;
-        let num_heads = 12;
-        let dropout_probability = 0.1;
-
-        let embedding = Embedding::new(device, vocab_size, n_embd)?;
-        let multi_head_attention = MultiHeadAttention::try_new(
-            device,
-            sequence_length,
-            n_embd,
-            true,
-            num_heads,
-            dropout_probability,
-        )
-        .unwrap();
-        let linear = Linear::new(
-            device,
-            vocab_size,
-            n_embd,
-            WeightsInitialization::Kaiming,
-            sequence_length,
-        )?;
-        let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
-
-        let model = Self {
-            input_shape: vec![sequence_length, vocab_size],
-            output_shape: vec![sequence_length, vocab_size],
-            embedding,
-            multi_head_attention,
-            linear,
-            softmax,
-        };
-        Ok(model)
-    }
-}
-
-impl UnaryOperator for ChatbotModel {
-    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
-        let embedding = self.embedding.forward(input)?;
-        let attentions = self
-            .multi_head_attention
-            .forward(&embedding, &embedding, &embedding)?;
-        let linear = self.linear.forward(&attentions)?;
-        let softmax = self.softmax.forward(&linear)?;
-        Ok(softmax)
-    }
-}
-
-impl Model for ChatbotModel {
-    fn input_size(&self) -> Vec<usize> {
-        self.input_shape.clone()
-    }
-    fn output_size(&self) -> Vec<usize> {
-        self.output_shape.clone()
-    }
-}
 
 fn main() -> Result<(), Error> {
     let device = Device::default();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
     let maximum_device_streams = 16;
+    let layers = 1;
     let vocab_size = tokenizer.vocab_size();
-    let model = ChatbotModel::new(&device, sequence_length, vocab_size)?;
+    let model = TransformerModel::new(&device, layers, sequence_length, vocab_size)?;
     let vocab_size = tokenizer.vocab_size();
     let loss_operator = SoftmaxCrossEntropyLoss::new(&device);
     let learning_rate = 0.05;
+    let clipped_gradient_norm = true;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
-    let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
+    let program = NeuralProgram::try_new(
+        &device,
+        &model,
+        &loss_operator,
+        &optimizer,
+        clipped_gradient_norm,
+    )?;
     let mut neural_machine = NeuralMachine::<f32, DefaultStreamScheduler>::try_new(
         &device,
         program,

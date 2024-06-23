@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    mega_man_attention::get_megaman_attention_instructions,
+    multi_head_attention_model::get_multi_head_attention_model_instructions,
     schedulers::simulate_execution_and_collect_instructions,
     streams::{instruction::make_simple_instructions, stream::make_streams},
     Device,
@@ -20,7 +20,7 @@ where
     Scheduler: SchedulerTrait<TransactionEmitter>,
 {
     let device = Device::default();
-    let instructions = get_megaman_attention_instructions(&device).unwrap();
+    let instructions = get_multi_head_attention_model_instructions(&device).unwrap();
     let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
     let simple_instructions = Arc::new(simple_instructions);
@@ -60,7 +60,7 @@ where
     Scheduler: SchedulerTrait<InstructionEmitter>,
 {
     let device = Device::default();
-    let instructions = get_megaman_attention_instructions(&device).unwrap();
+    let instructions = get_multi_head_attention_model_instructions(&device).unwrap();
     let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
     let simple_instructions = Arc::new(simple_instructions);
@@ -102,7 +102,7 @@ where
     Scheduler: SchedulerTrait<InstructionEmitter>,
 {
     let device = Device::default();
-    let instructions = get_megaman_attention_instructions(&device).unwrap();
+    let instructions = get_multi_head_attention_model_instructions(&device).unwrap();
     let instructions = Arc::new(instructions);
     let simple_instructions = make_simple_instructions(&instructions);
     let simple_instructions = Arc::new(simple_instructions);

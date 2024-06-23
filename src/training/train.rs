@@ -160,9 +160,16 @@ pub fn train_model<T>(
     let mut tokenizer = details.tokenizer;
     let maximum_device_streams = 16;
     let device = details.device;
+    let clipped_gradient_norm = details.clipped_gradient_norm;
     let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
-    let program = NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer)?;
+    let program = NeuralProgram::try_new(
+        &device,
+        &model,
+        &loss_operator,
+        &optimizer,
+        clipped_gradient_norm,
+    )?;
     let mut neural_machine = NeuralMachine::<T, DefaultStreamScheduler>::try_new(
         &device,
         program,

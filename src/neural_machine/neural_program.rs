@@ -22,6 +22,7 @@ impl NeuralProgram {
         model: &impl UnaryModel,
         loss_operator: &impl BinaryOperator,
         optimizer: &impl OptimizerTrait,
+        clipped_gradient_norm: bool,
     ) -> Result<NeuralProgram, Error> {
         // input
         let input_shape = model.input_size();
@@ -78,13 +79,15 @@ impl NeuralProgram {
 
                 instructions.push(instruction);
 
-                for output in outputs {
-                    instructions.push(gradient_instruction!(
-                        OpCode::ClipNorm,
-                        OperatorAttributes::None,
-                        &[output],
-                        &[output],
-                    ));
+                if clipped_gradient_norm {
+                    for output in outputs {
+                        instructions.push(gradient_instruction!(
+                            OpCode::ClipNorm,
+                            OperatorAttributes::None,
+                            &[output],
+                            &[output],
+                        ));
+                    }
                 }
             }
             processed_backward_tensors.insert(tensor_name);

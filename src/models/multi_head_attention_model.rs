@@ -7,7 +7,7 @@ use crate::{
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
-pub struct MegaManAttentionModel {
+pub struct MultiHeadAttentionModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,
@@ -16,9 +16,9 @@ pub struct MegaManAttentionModel {
     softmax: Softmax,
 }
 
-impl UnaryModel for MegaManAttentionModel {}
+impl UnaryModel for MultiHeadAttentionModel {}
 
-impl MegaManAttentionModel {
+impl MultiHeadAttentionModel {
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
         let n_embd = 768;
         let num_heads = 12;
@@ -55,7 +55,7 @@ impl MegaManAttentionModel {
     }
 }
 
-impl UnaryOperator for MegaManAttentionModel {
+impl UnaryOperator for MultiHeadAttentionModel {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let embedding = self.embedding.forward(input)?;
         let attentions = self
@@ -67,7 +67,7 @@ impl UnaryOperator for MegaManAttentionModel {
     }
 }
 
-impl Model for MegaManAttentionModel {
+impl Model for MultiHeadAttentionModel {
     fn input_size(&self) -> Vec<usize> {
         self.input_shape.clone()
     }
@@ -77,9 +77,9 @@ impl Model for MegaManAttentionModel {
     }
 }
 
-pub fn load_mega_man_attention_model(
+pub fn load_multi_head_attention_model(
     device: &Device,
-) -> Result<ModelDetails<MegaManAttentionModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
+) -> Result<ModelDetails<MultiHeadAttentionModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -99,7 +99,7 @@ pub fn load_mega_man_attention_model(
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let model = MegaManAttentionModel::new(device, sequence_length, vocab_size)?;
+    let model = MultiHeadAttentionModel::new(device, sequence_length, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
@@ -115,7 +115,7 @@ pub fn load_mega_man_attention_model(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: 1.0,
+        clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 4000.0,
             total_perplexity: 5.0,
@@ -128,12 +128,21 @@ pub fn load_mega_man_attention_model(
     Ok(details)
 }
 
-pub fn get_megaman_attention_instructions(device: &Device) -> Result<Vec<Instruction>, Error> {
-    let details = load_mega_man_attention_model(device)?;
+pub fn get_multi_head_attention_model_instructions(
+    device: &Device,
+) -> Result<Vec<Instruction>, Error> {
+    let details = load_multi_head_attention_model(device)?;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;
-    let program = NeuralProgram::try_new(device, &model, &loss_operator, &optimizer)?;
+    let clipped_gradient_norm = true;
+    let program = NeuralProgram::try_new(
+        device,
+        &model,
+        &loss_operator,
+        &optimizer,
+        clipped_gradient_norm,
+    )?;
     let instructions = program.instructions;
     Ok(instructions)
 }

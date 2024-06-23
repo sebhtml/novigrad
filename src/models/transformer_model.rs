@@ -1,27 +1,44 @@
 use super::load_examples;
-use crate::neural_program::NeuralProgram;
+use crate::statistics::layer_norm::LayerNormalization;
 use crate::transformer::Transformer;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
-    Adam, Device, Dropout, Instruction, Metrics, SoftmaxCrossEntropyLoss, Tokenizer,
-    TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
+    Adam, Device, Dropout, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait, UnaryModel,
+    UnaryOperator, WeightsInitialization,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
-pub struct GeoffroyHintonTransformerModel {
+/// See
+/// Full GPT Architecture
+/// https://en.wikipedia.org/wiki/GPT-1#/media/File:Full_GPT_architecture.svg
+///
+/// See
+/// Attention Is All You Need
+/// https://arxiv.org/pdf/1706.03762
+///
+/// See
+/// OpenAI GPT 1
+/// https://huggingface.co/openai-community/openai-gpt
+pub struct TransformerModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,
     dropout: Dropout,
-    transformer: Transformer,
+    transformers: Vec<Transformer>,
+    layer_norm: LayerNormalization,
     linear: Linear,
     softmax: Softmax,
 }
 
-impl UnaryModel for GeoffroyHintonTransformerModel {}
+impl UnaryModel for TransformerModel {}
 
-impl GeoffroyHintonTransformerModel {
-    pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
+impl TransformerModel {
+    pub fn new(
+        device: &Device,
+        layers: usize,
+        sequence_length: usize,
+        vocab_size: usize,
+    ) -> Result<Self, Error> {
         let n_embd = 768;
         let num_heads = 12;
         let dropout_probability = 0.1;
@@ -29,15 +46,20 @@ impl GeoffroyHintonTransformerModel {
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
         let dropout = Dropout::try_new(device, sequence_length, n_embd, dropout_probability)?;
         let causal_mask = true;
-        let transformer = Transformer::try_new(
-            device,
-            sequence_length,
-            n_embd,
-            causal_mask,
-            num_heads,
-            dropout_probability,
-        )
-        .unwrap();
+        let transformers = (0..layers)
+            .map(|_| {
+                Transformer::try_new(
+                    device,
+                    sequence_length,
+                    n_embd,
+                    causal_mask,
+                    num_heads,
+                    dropout_probability,
+                )
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let layer_norm = LayerNormalization::try_new(device, sequence_length, n_embd)?;
         let linear = Linear::new(
             device,
             vocab_size,
@@ -52,7 +74,8 @@ impl GeoffroyHintonTransformerModel {
             output_shape: vec![sequence_length, vocab_size],
             embedding,
             dropout,
-            transformer,
+            transformers,
+            layer_norm,
             linear,
             softmax,
         };
@@ -60,18 +83,28 @@ impl GeoffroyHintonTransformerModel {
     }
 }
 
-impl UnaryOperator for GeoffroyHintonTransformerModel {
+impl UnaryOperator for TransformerModel {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let embedding = self.embedding.forward(input)?;
         let dropout = self.dropout.forward(&embedding)?;
-        let transformed = self.transformer.forward(&dropout)?;
-        let linear = self.linear.forward(&transformed)?;
+        let mut transformed_outputs = vec![];
+        for (layer, transformer) in self.transformers.iter().enumerate() {
+            let input = match layer {
+                0 => &dropout,
+                _ => &transformed_outputs[layer - 1],
+            };
+            let transformed = transformer.forward(&input)?;
+            transformed_outputs.push(transformed);
+        }
+        let transformed = &transformed_outputs[transformed_outputs.len() - 1];
+        let normalized_output = self.layer_norm.forward(&transformed)?;
+        let linear = self.linear.forward(&normalized_output)?;
         let softmax = self.softmax.forward(&linear)?;
         Ok(softmax)
     }
 }
 
-impl Model for GeoffroyHintonTransformerModel {
+impl Model for TransformerModel {
     fn input_size(&self) -> Vec<usize> {
         self.input_shape.clone()
     }
@@ -81,9 +114,9 @@ impl Model for GeoffroyHintonTransformerModel {
     }
 }
 
-pub fn load_geoffroy_hinton_transformer_model(
+pub fn load_transformer_model(
     device: &Device,
-) -> Result<ModelDetails<GeoffroyHintonTransformerModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
+) -> Result<ModelDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
     let file_path = "data/Geoffrey_Hinton.txt";
     let max_chars = None;
     let max_number_of_examples = 16;
@@ -103,7 +136,8 @@ pub fn load_geoffroy_hinton_transformer_model(
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let model = GeoffroyHintonTransformerModel::new(device, sequence_length, vocab_size)?;
+    let layers = 1;
+    let model = TransformerModel::new(device, layers, sequence_length, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
@@ -119,25 +153,15 @@ pub fn load_geoffroy_hinton_transformer_model(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: 1.0,
+        clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 4000.0,
             total_perplexity: 5.0,
         },
         final_metrics: Metrics {
             total_loss: 350.0,
-            total_perplexity: 17.0,
+            total_perplexity: 20.0,
         },
     };
     Ok(details)
-}
-
-pub fn get_megaman_attention_instructions(device: &Device) -> Result<Vec<Instruction>, Error> {
-    let details = load_geoffroy_hinton_transformer_model(device)?;
-    let model = details.model;
-    let loss_operator = details.loss_operator;
-    let optimizer = details.optimizer;
-    let program = NeuralProgram::try_new(device, &model, &loss_operator, &optimizer)?;
-    let instructions = program.instructions;
-    Ok(instructions)
 }

@@ -209,6 +209,20 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
+    fn gelu(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
+
+    fn gelu_derivative(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
+
     fn bernoulli(
         &self,
         input: &Tensor,
@@ -625,6 +639,24 @@ impl DeviceTrait for Device {
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         self.device.sigmoid(input, output, device_stream)
+    }
+
+    fn gelu(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.gelu(input, output, device_stream)
+    }
+
+    fn gelu_derivative(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.gelu_derivative(input, output, device_stream)
     }
 
     fn sqrt(

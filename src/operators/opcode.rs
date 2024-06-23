@@ -1,6 +1,7 @@
 use crate::{
     analysis::min::Min,
     clip::Clip,
+    gelu::Gelu,
     identity::Identity,
     reduce_l2::ReduceL2,
     reduce_sum::ReduceSum,
@@ -91,13 +92,7 @@ pub enum OpCode {
     /// https://onnx.ai/onnx/operators/onnx__Bernoulli.html
     Bernoulli,
 
-    /// TODO
-    /// https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
-    /// LayerNormalization
-
-    /// TODO
-    /// https://onnx.ai/onnx/operators/onnx__Gelu.html
-    /// Gelu,
+    Gelu,
 
     /// TODO
     /// https://onnx.ai/onnx/operators/onnx__Conv.html
@@ -129,6 +124,7 @@ impl From<&OpCode> for String {
             OpCode::Standardization => "Standardization".into(),
             OpCode::Softmax => "Softmax".into(),
             OpCode::Sigmoid => "Sigmoid".into(),
+            OpCode::Gelu => "Gelu".into(),
             OpCode::Reshape => "Reshape".into(),
             OpCode::Concat => "Concat".into(),
             OpCode::Unconcat => "Unconcat".into(),
@@ -166,6 +162,7 @@ impl OpCode {
                 Unconcat::execute(attributes, inputs, outputs, device, device_stream)
             }
             OpCode::Sigmoid => Sigmoid::execute(attributes, inputs, outputs, device, device_stream),
+            OpCode::Gelu => Gelu::execute(attributes, inputs, outputs, device, device_stream),
             OpCode::Standardization => {
                 Standardization::execute(attributes, inputs, outputs, device, device_stream)
             }

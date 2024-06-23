@@ -204,6 +204,18 @@ impl CudaDev {
         )?;
 
         device.load_module(
+            "gelu_kernel_module",
+            &["gelu_kernel"],
+            "./src/devices/cuda/kernels/gelu_kernel.cu",
+        )?;
+
+        device.load_module(
+            "gelu_derivative_kernel_module",
+            &["gelu_derivative_kernel"],
+            "./src/devices/cuda/kernels/gelu_kernel.cu",
+        )?;
+
+        device.load_module(
             "bernoulli_kernel_module",
             &["bernoulli_kernel"],
             "./src/devices/cuda/kernels/bernoulli_kernel.cu",
@@ -551,6 +563,36 @@ impl DeviceTrait for CudaDev {
         self.launch_unary_kernel(
             "sigmoid_kernel_module",
             "sigmoid_kernel",
+            input,
+            output,
+            device_stream,
+        )
+    }
+
+    fn gelu(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.launch_unary_kernel(
+            "gelu_kernel_module",
+            "gelu_kernel",
+            input,
+            output,
+            device_stream,
+        )
+    }
+
+    fn gelu_derivative(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.launch_unary_kernel(
+            "gelu_derivative_kernel_module",
+            "gelu_derivative_kernel",
             input,
             output,
             device_stream,

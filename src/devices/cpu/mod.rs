@@ -534,6 +534,56 @@ impl DeviceTrait for CpuDevice {
 
         Ok(())
     }
+
+    fn gelu(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let rows = input.rows();
+        let cols = input.cols();
+        let values = input.as_ptr();
+        let result_values = output.as_mut_ptr();
+        let mut row = 0;
+        while row < rows {
+            let mut col = 0;
+            while col < cols {
+                let x = unsafe { values.add(input.index(row, col)) };
+                let y = gelu(unsafe { *x });
+                unsafe { *result_values.add(output.index(row, col)) = y };
+                col += 1;
+            }
+            row += 1;
+        }
+
+        Ok(())
+    }
+
+    fn gelu_derivative(
+        &self,
+        input: &Tensor,
+        output: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        let rows = input.rows();
+        let cols = input.cols();
+        let values = input.as_ptr();
+        let result_values = output.as_mut_ptr();
+        let mut row = 0;
+        while row < rows {
+            let mut col = 0;
+            while col < cols {
+                let x = unsafe { values.add(input.index(row, col)) };
+                let y = gelu_derivative(unsafe { *x });
+                unsafe { *result_values.add(output.index(row, col)) = y };
+                col += 1;
+            }
+            row += 1;
+        }
+
+        Ok(())
+    }
 }
 
 impl CpuDevice {
@@ -593,4 +643,14 @@ impl CpuDevice {
 
 fn sigmoid(x: f32) -> f32 {
     1.0 / (1.0 + E.powf(-x))
+}
+
+fn gelu(x: f32) -> f32 {
+    // GELU(x) ≈ 0.5 * x * (1 + tanh(x * sqrt(2 / 5)))
+    0.5 * x * (1.0 + (x * (2.0 / 5.0 as f32).sqrt()).tanh())
+}
+
+fn gelu_derivative(x: f32) -> f32 {
+    // GELU'(x) ≈ 0.5 * (1 + (4 * x) / (5 * (1 + tanh^2(sqrt(2/5) * x))))
+    0.5 * (1.0 + (4.0 * x) / (5.0 * (1.0 + ((2.0 / 5.0 as f32).sqrt() * x).tanh().powi(2))))
 }

@@ -1,28 +1,26 @@
-
-
-- allow one of the token to be different among the 10 in mega_man_attention_model test
-
 == Story: Eliminate pthread_rwlock_unlock ==
 
+- allow one of the token to be different among the 10 in mega_man_attention_model test
+- use GeluDerivative in Gelu
+- use Gelu in Transformer
+- use 4 layers instead of 1 in chat bot
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
-- remove all calls to set_values
-- rewrite ResidualSumOfSquares using CUDA
-- implement Transpose with CUDA
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 - maybe the pthread lock is caused by checking if the loss is 0
 - don't break during training when loss reaches 0.0
 
 == Story: Arc prize ==
 
-- implement Gelu and use it in Transformer
-    - https://onnx.ai/onnx/operators/onnx__Gelu.html
-    - https://arxiv.org/pdf/1606.08415
-- left-right residual connections
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
-- Implement Transformer idea for the Arc prize challenge
+- Implement Transformer idea for the Arc prize challenge (left-to-right residual connections)
 
 == Clean-up ==
 
+- remove all calls to set_values
+- rewrite ResidualSumOfSquares using CUDA
+- implement Transpose with CUDA
+
+- refactor gelu, sigmoid, gelu_derivative in cpu module
 - move ./src/devices/cuda/tests.rs tests that are not related to cuda to ./src/devices/tests.rs
 - move ./src/devices/cpu/tests.rs tests that are not related to cpu to ./src/devices/tests.rs
 

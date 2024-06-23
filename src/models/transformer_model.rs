@@ -1,4 +1,5 @@
 use super::load_examples;
+use crate::statistics::layer_norm::LayerNormalization;
 use crate::transformer::Transformer;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
@@ -7,12 +8,20 @@ use crate::{
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
+/// See
+/// Full GPT Architecture
+/// https://en.wikipedia.org/wiki/GPT-1#/media/File:Full_GPT_architecture.svg
+///
+/// See
+/// Attention Is All You Need
+/// https://arxiv.org/pdf/1706.03762
 pub struct TransformerModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,
     dropout: Dropout,
     transformer: Transformer,
+    layer_norm: LayerNormalization,
     linear: Linear,
     softmax: Softmax,
 }
@@ -37,6 +46,7 @@ impl TransformerModel {
             dropout_probability,
         )
         .unwrap();
+        let layer_norm = LayerNormalization::try_new(device, sequence_length, n_embd)?;
         let linear = Linear::new(
             device,
             vocab_size,
@@ -52,6 +62,7 @@ impl TransformerModel {
             embedding,
             dropout,
             transformer,
+            layer_norm,
             linear,
             softmax,
         };
@@ -64,7 +75,8 @@ impl UnaryOperator for TransformerModel {
         let embedding = self.embedding.forward(input)?;
         let dropout = self.dropout.forward(&embedding)?;
         let transformed = self.transformer.forward(&dropout)?;
-        let linear = self.linear.forward(&transformed)?;
+        let normalized_output = self.layer_norm.forward(&transformed)?;
+        let linear = self.linear.forward(&normalized_output)?;
         let softmax = self.softmax.forward(&linear)?;
         Ok(softmax)
     }
@@ -118,7 +130,7 @@ pub fn load_transformer_model(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: false,
+        clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 4000.0,
             total_perplexity: 5.0,

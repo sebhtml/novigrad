@@ -47,7 +47,11 @@ impl Transformer {
 impl UnaryOperator for Transformer {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let normalized_input = self.layer_norm.forward(&input)?;
-        let attended = self.multi_head_attention.forward(&normalized_input, &normalized_input, &normalized_input)?;
+        let attended = self.multi_head_attention.forward(
+            &normalized_input,
+            &normalized_input,
+            &normalized_input,
+        )?;
         let with_dropout = self.dropout.forward(&attended)?;
         let residual = self.add.forward(&with_dropout, &input)?;
         let normalized_output = self.layer_norm.forward(&residual)?;

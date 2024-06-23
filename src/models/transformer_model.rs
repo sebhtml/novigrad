@@ -162,6 +162,7 @@ pub fn load_transformer_model(
             total_loss: 350.0,
             total_perplexity: 20.0,
         },
+        maximum_incorrect_argmaxes: 0,
     };
     Ok(details)
 }

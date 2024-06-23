@@ -159,6 +159,7 @@ pub fn load_simple_model(
             total_loss: 0.0,
             total_perplexity: 2.0,
         },
+        maximum_incorrect_argmaxes: 0,
     };
     Ok(details)
 }

@@ -30,6 +30,7 @@ where
     pub progress: usize,
     pub initial_metrics: Metrics,
     pub final_metrics: Metrics,
+    pub maximum_incorrect_argmaxes: usize,
 }
 
 pub fn into_one_hot_encoded_rows(

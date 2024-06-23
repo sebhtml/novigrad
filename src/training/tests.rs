@@ -18,6 +18,7 @@ fn test_model(details: ModelDetails<impl UnaryModel, impl BinaryOperator, impl O
     let expected_final_total_loss_max = details.final_metrics.total_loss;
     let expected_initial_total_perplexity_min = details.initial_metrics.total_perplexity;
     let expected_final_total_perplexity_max = details.final_metrics.total_perplexity;
+    let maximum_incorrect_argmaxes = details.maximum_incorrect_argmaxes;
     let training_output = train_model::<f32>(details).unwrap();
 
     // Verify total loss
@@ -42,16 +43,16 @@ fn test_model(details: ModelDetails<impl UnaryModel, impl BinaryOperator, impl O
         training_output.final_metrics.total_perplexity
     );
 
+    let mut incorrect_argmaxes = 0;
     // Verify argmaxes
     for i in 0..training_output.expected_argmax_values.len() {
         let expected = training_output.actual_argmax_values[i];
         let actual = training_output.expected_argmax_values[i];
-        assert_eq!(
-            expected, actual,
-            "example: {}, expected_argmax: {}, actual_argmax: {}",
-            i, expected, actual,
-        );
+        if expected != actual {
+            incorrect_argmaxes += 1;
+        }
     }
+    assert_le!(incorrect_argmaxes, maximum_incorrect_argmaxes);
 }
 
 #[test]

@@ -121,6 +121,7 @@ pub fn load_mega_man_model(
             total_loss: 0.0,
             total_perplexity: 11.0,
         },
+        maximum_incorrect_argmaxes: 0,
     };
     Ok(details)
 }

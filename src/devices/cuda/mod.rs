@@ -212,7 +212,7 @@ impl CudaDev {
         device.load_module(
             "gelu_derivative_kernel_module",
             &["gelu_derivative_kernel"],
-            "./src/devices/cuda/kernels/gelu_kernel.cu",
+            "./src/devices/cuda/kernels/gelu_derivative_kernel.cu",
         )?;
 
         device.load_module(

@@ -1,12 +1,12 @@
 use more_asserts::assert_ge;
 use more_asserts::assert_le;
 
-use crate::geoffroy_hinton_transformer_model::load_geoffroy_hinton_transformer_model;
 use crate::mega_man::load_mega_man_model;
-use crate::mega_man_attention::load_mega_man_attention_model;
+use crate::multi_head_attention_model::load_multi_head_attention_model;
 use crate::perceptron::load_perceptron;
 use crate::simple::load_simple_model;
 use crate::train_model;
+use crate::transformer_model::load_transformer_model;
 use crate::BinaryOperator;
 use crate::Device;
 use crate::ModelDetails;
@@ -76,15 +76,15 @@ fn mega_man_model() {
 }
 
 #[test]
-fn mega_man_attention_model() {
+fn multi_head_attention_model() {
     let device = Device::default();
-    let details = load_mega_man_attention_model(&device).unwrap();
+    let details = load_multi_head_attention_model(&device).unwrap();
     test_model(details);
 }
 
 #[test]
-fn geoffroy_hinton_transformer_model() {
+fn transformer_model() {
     let device = Device::default();
-    let details = load_geoffroy_hinton_transformer_model(&device).unwrap();
+    let details = load_transformer_model(&device).unwrap();
     test_model(details);
 }

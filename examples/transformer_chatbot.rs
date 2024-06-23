@@ -1,10 +1,9 @@
 use novigrad::{
-    error,
-    geoffroy_hinton_transformer_model::GeoffroyHintonTransformerModel,
-    get_row_argmax, into_one_hot_encoded_rows,
+    error, get_row_argmax, into_one_hot_encoded_rows,
     neural_program::NeuralProgram,
     schedulers::DefaultStreamScheduler,
     tensor::{Error, ErrorEnum, Tensor},
+    transformer_model::TransformerModel,
     Adam, Device, NeuralMachine, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait, UnaryModel,
 };
 use rand::prelude::SliceRandom;
@@ -17,7 +16,7 @@ fn main() -> Result<(), Error> {
     let sequence_length = 32;
     let maximum_device_streams = 16;
     let vocab_size = tokenizer.vocab_size();
-    let model = GeoffroyHintonTransformerModel::new(&device, sequence_length, vocab_size)?;
+    let model = TransformerModel::new(&device, sequence_length, vocab_size)?;
     let vocab_size = tokenizer.vocab_size();
     let loss_operator = SoftmaxCrossEntropyLoss::new(&device);
     let learning_rate = 0.05;

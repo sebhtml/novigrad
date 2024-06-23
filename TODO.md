@@ -1,4 +1,4 @@
-== Story: Transformer ==
+
 
 - allow one of the token to be different among the 10 in mega_man_attention_model test
 
@@ -14,10 +14,12 @@
 
 == Story: Arc prize ==
 
+- implement Gelu and use it in Transformer
+    - https://onnx.ai/onnx/operators/onnx__Gelu.html
+    - https://arxiv.org/pdf/1606.08415
 - left-right residual connections
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 - Implement Transformer idea for the Arc prize challenge
-- implement Gelu
 
 == Clean-up ==
 

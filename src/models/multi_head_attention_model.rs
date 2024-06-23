@@ -1,34 +1,32 @@
 use super::load_examples;
-use crate::transformer::Transformer;
+use crate::neural_program::NeuralProgram;
 use crate::{tensor::Error, ModelDetails};
 use crate::{
-    Adam, Device, Dropout, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait, UnaryModel,
-    UnaryOperator, WeightsInitialization,
+    Adam, Device, Instruction, Metrics, MultiHeadAttention, SoftmaxCrossEntropyLoss,
+    TernaryOperator, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator, WeightsInitialization,
 };
 use crate::{Embedding, Linear, Model, Softmax, TensorWithGrad};
 
-pub struct GeoffroyHintonTransformerModel {
+pub struct MultiHeadAttentionModel {
     input_shape: Vec<usize>,
     output_shape: Vec<usize>,
     embedding: Embedding,
-    dropout: Dropout,
-    transformer: Transformer,
+    multi_head_attention: MultiHeadAttention,
     linear: Linear,
     softmax: Softmax,
 }
 
-impl UnaryModel for GeoffroyHintonTransformerModel {}
+impl UnaryModel for MultiHeadAttentionModel {}
 
-impl GeoffroyHintonTransformerModel {
+impl MultiHeadAttentionModel {
     pub fn new(device: &Device, sequence_length: usize, vocab_size: usize) -> Result<Self, Error> {
         let n_embd = 768;
         let num_heads = 12;
-        let dropout_probability = 0.1;
+        let dropout_probability = 0.0;
 
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
-        let dropout = Dropout::try_new(device, sequence_length, n_embd, dropout_probability)?;
         let causal_mask = true;
-        let transformer = Transformer::try_new(
+        let multi_head_attention = MultiHeadAttention::try_new(
             device,
             sequence_length,
             n_embd,
@@ -45,13 +43,11 @@ impl GeoffroyHintonTransformerModel {
             sequence_length,
         )?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
-
         let model = Self {
             input_shape: vec![sequence_length, vocab_size],
             output_shape: vec![sequence_length, vocab_size],
             embedding,
-            dropout,
-            transformer,
+            multi_head_attention,
             linear,
             softmax,
         };
@@ -59,18 +55,19 @@ impl GeoffroyHintonTransformerModel {
     }
 }
 
-impl UnaryOperator for GeoffroyHintonTransformerModel {
+impl UnaryOperator for MultiHeadAttentionModel {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
         let embedding = self.embedding.forward(input)?;
-        let dropout = self.dropout.forward(&embedding)?;
-        let transformed = self.transformer.forward(&dropout)?;
-        let linear = self.linear.forward(&transformed)?;
+        let attentions = self
+            .multi_head_attention
+            .forward(&embedding, &embedding, &embedding)?;
+        let linear = self.linear.forward(&attentions)?;
         let softmax = self.softmax.forward(&linear)?;
         Ok(softmax)
     }
 }
 
-impl Model for GeoffroyHintonTransformerModel {
+impl Model for MultiHeadAttentionModel {
     fn input_size(&self) -> Vec<usize> {
         self.input_shape.clone()
     }
@@ -80,14 +77,14 @@ impl Model for GeoffroyHintonTransformerModel {
     }
 }
 
-pub fn load_geoffroy_hinton_transformer_model(
+pub fn load_multi_head_attention_model(
     device: &Device,
-) -> Result<ModelDetails<GeoffroyHintonTransformerModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
-    let file_path = "data/Geoffrey_Hinton.txt";
+) -> Result<ModelDetails<MultiHeadAttentionModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
+    let file_path = "data/Mega_Man.txt";
     let max_chars = None;
-    let max_number_of_examples = 16;
+    let max_number_of_examples = 10;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
-    let sequence_length = 64;
+    let sequence_length = 32;
 
     let input_sequence_length = sequence_length;
     let output_sequence_length = sequence_length;
@@ -102,7 +99,7 @@ pub fn load_geoffroy_hinton_transformer_model(
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let model = GeoffroyHintonTransformerModel::new(device, sequence_length, vocab_size)?;
+    let model = MultiHeadAttentionModel::new(device, sequence_length, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
@@ -125,8 +122,27 @@ pub fn load_geoffroy_hinton_transformer_model(
         },
         final_metrics: Metrics {
             total_loss: 350.0,
-            total_perplexity: 17.0,
+            total_perplexity: 13.0,
         },
     };
     Ok(details)
+}
+
+pub fn get_multi_head_attention_model_instructions(
+    device: &Device,
+) -> Result<Vec<Instruction>, Error> {
+    let details = load_multi_head_attention_model(device)?;
+    let model = details.model;
+    let loss_operator = details.loss_operator;
+    let optimizer = details.optimizer;
+    let clipped_gradient_norm = true;
+    let program = NeuralProgram::try_new(
+        device,
+        &model,
+        &loss_operator,
+        &optimizer,
+        clipped_gradient_norm,
+    )?;
+    let instructions = program.instructions;
+    Ok(instructions)
 }

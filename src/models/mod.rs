@@ -1,11 +1,11 @@
 mod model;
 pub use model::*;
 use more_asserts::debug_assert_lt;
-pub mod geoffroy_hinton_transformer_model;
 pub mod mega_man;
-pub mod mega_man_attention;
+pub mod multi_head_attention_model;
 pub mod perceptron;
 pub mod simple;
+pub mod transformer_model;
 use crate::{error, new_tensor, new_tensor_with_grad, BinaryOperator, Metrics, OptimizerTrait};
 use std::fs;
 

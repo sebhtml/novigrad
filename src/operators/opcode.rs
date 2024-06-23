@@ -38,9 +38,6 @@ pub enum OpCode {
     /// https://onnx.ai/onnx/operators/onnx__Clip.html
     Clip,
 
-    /// https://onnx.ai/onnx/operators/onnx__LayerNormalization.html
-    /// LayerNormalization
-
     /// Not ONNX-compliant
     /// Equivalent to:
     /// ClipNorm(x)

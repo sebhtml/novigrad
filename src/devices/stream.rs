@@ -15,6 +15,7 @@ pub struct DeviceStream {
     pub l2_norm: Tensor,
     pub one: Tensor,
     pub alpha: Tensor,
+    pub zero: Tensor,
 }
 
 impl DeviceStream {
@@ -25,6 +26,7 @@ impl DeviceStream {
             l2_norm: new_tensor!(device, 1, 1, vec![0.0],)?,
             one: new_tensor!(device, 1, 1, vec![1.0],)?,
             alpha: new_tensor!(device, 1, 1, vec![0.0],)?,
+            zero: new_tensor!(device, 1, 1, vec![0.0],)?,
         };
         Ok(that)
     }

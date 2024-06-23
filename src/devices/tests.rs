@@ -8,7 +8,7 @@ use crate::{new_tensor, stream::StreamTrait, Device, DeviceTrait};
 fn clip_min() {
     use crate::Device;
     let device = Device::default();
-    let stream = device.new_stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let input = new_tensor!(
         device,
         2,
@@ -27,7 +27,9 @@ fn clip_min() {
 
     let max = new_tensor!(device, 1, 1, vec![f32::INFINITY]).unwrap();
 
-    device.clip(&min, &max, &input, &output, &stream).unwrap();
+    device
+        .clip(&min, &max, &input, &output, &device_stream)
+        .unwrap();
 
     let expected = new_tensor!(
         device,
@@ -41,6 +43,7 @@ fn clip_min() {
         ],
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(expected.get_values(), output.get_values(),);
 }
 
@@ -49,7 +52,7 @@ fn clip_max() {
     use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
-    let stream = device.new_stream().unwrap();
+    let device_stream = device.new_stream().unwrap();
     let input = new_tensor!(
         device,
         2,
@@ -68,7 +71,9 @@ fn clip_max() {
 
     let max = new_tensor!(device, 1, 1, vec![2.0]).unwrap();
 
-    device.clip(&min, &max, &input, &output, &stream).unwrap();
+    device
+        .clip(&min, &max, &input, &output, &device_stream)
+        .unwrap();
 
     let expected = new_tensor!(
         device,
@@ -82,6 +87,7 @@ fn clip_max() {
         ],
     )
     .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(expected.get_values(), output.get_values(),);
 }
 
@@ -94,7 +100,7 @@ fn bernoulli() {
     let output = new_tensor!(device, 1, 100, vec![0.0; 100]).unwrap();
     let device_stream = device.new_stream().unwrap();
     device.bernoulli(&input, &output, &device_stream).unwrap();
-
+    device_stream.wait_for().unwrap();
     let values = output.get_values().unwrap();
     let ones = values.iter().filter(|x| **x == 1.0).count();
     let zeroes = values.iter().filter(|x| **x == 0.0).count();
@@ -145,6 +151,7 @@ fn test_copy_1() {
             &device_stream,
         )
         .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(tensor, tensor2);
 }
 
@@ -177,6 +184,7 @@ fn test_copy_2() {
             &device_stream,
         )
         .unwrap();
+    device_stream.wait_for().unwrap();
     assert_eq!(actual, expected);
 }
 
@@ -251,6 +259,7 @@ fn standardization_output_data_with_mean_0_and_stddev_1_not_for_all_neurons() {
     device
         .standardization(&input_2_neurons, &output_2_neurons, &device_stream)
         .unwrap();
+    device_stream.wait_for().unwrap();
     let elements_2_neurons = output_2_neurons.get_values().unwrap();
 
     // Same input but with 1 neuron instead of 2 neurons.

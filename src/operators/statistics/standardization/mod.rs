@@ -1,10 +1,60 @@
 use crate::{
+    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
+    Device, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
-pub struct Standardization {}
+pub struct Standardization {
+    device: Device,
+}
+
+impl Standardization {
+    pub fn new(device: &Device) -> Self {
+        Self {
+            device: device.clone(),
+        }
+    }
+}
+
+impl UnaryOperator for Standardization {
+    fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
+        let input_t: &Tensor = &input.tensor();
+        let rows = input_t.rows();
+        let cols = input_t.cols();
+        let len = rows * cols;
+        let output = new_tensor_with_grad!(
+            self.device,
+            rows,
+            cols,
+            vec![0.0; len],
+            &[input],
+            true,
+            false
+        )?;
+        let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
+        output.push_instruction(inference_instruction!(
+            OpCode::ScalarMul,
+            OperatorAttributes::None,
+            &[&zero, &output.gradient()],
+            &[&output.gradient()],
+        ));
+        output.push_instruction(inference_instruction!(
+            OpCode::Standardization,
+            OperatorAttributes::None,
+            &[&input.tensor()],
+            &[&output.tensor()],
+        ));
+        output.push_instruction(gradient_instruction!(
+            OpCode::Add,
+            OperatorAttributes::None,
+            &[&output.gradient(), &input.gradient(),],
+            &[&input.gradient()],
+        ));
+        Ok(output)
+    }
+}
 
 impl ExecutableOperator for Standardization {
     fn execute(

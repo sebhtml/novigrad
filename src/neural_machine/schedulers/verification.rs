@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    multi_head_attention_model::get_multi_head_attention_model_instructions,
+    datasets::mega_man_multi_head_attention::get_multi_head_attention_model_instructions,
     schedulers::simulate_execution_and_collect_instructions,
     streams::{instruction::make_simple_instructions, stream::make_streams},
     Device,

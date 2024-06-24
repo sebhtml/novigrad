@@ -12,5 +12,6 @@ pub use tokenizers::*;
 mod neural_machine;
 pub use neural_machine::*;
 pub use optimizers::*;
+pub mod datasets;
 mod optimizers;
 const EPSILON: f32 = 1e-8;

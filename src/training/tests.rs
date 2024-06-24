@@ -1,19 +1,19 @@
 use more_asserts::assert_ge;
 use more_asserts::assert_le;
 
-use crate::mega_man::load_mega_man_model;
-use crate::multi_head_attention_model::load_multi_head_attention_model;
-use crate::perceptron::load_perceptron;
-use crate::simple::load_simple_model;
+use crate::datasets::addition::load_addition_dataset;
+use crate::datasets::geoffroy_hinton::load_geoffroy_hinton_dataset;
+use crate::datasets::mega_man_linear::load_mega_man_linear_dataset;
+use crate::datasets::mega_man_multi_head_attention::load_mega_man_attention_dataset;
+use crate::datasets::simple::load_simple_dataset;
+use crate::datasets::DatasetDetails;
 use crate::train_model;
-use crate::transformer_model::load_transformer_model;
 use crate::BinaryOperator;
 use crate::Device;
-use crate::ModelDetails;
 use crate::OptimizerTrait;
 use crate::UnaryModel;
 
-fn test_model(details: ModelDetails<impl UnaryModel, impl BinaryOperator, impl OptimizerTrait>) {
+fn test_model(details: DatasetDetails<impl UnaryModel, impl BinaryOperator, impl OptimizerTrait>) {
     let expected_initial_total_loss_min = details.initial_metrics.total_loss;
     let expected_final_total_loss_max = details.final_metrics.total_loss;
     let expected_initial_total_perplexity_min = details.initial_metrics.total_perplexity;
@@ -56,36 +56,36 @@ fn test_model(details: ModelDetails<impl UnaryModel, impl BinaryOperator, impl O
 }
 
 #[test]
-fn perceptron_model() {
+fn addition_with_perceptron() {
     let device = Device::default();
-    let details = load_perceptron(&device).unwrap();
+    let details = load_addition_dataset(&device).unwrap();
     test_model(details);
 }
 
 #[test]
-fn simple_model() {
+fn simple() {
     let device = Device::default();
-    let details = load_simple_model(&device).unwrap();
+    let details = load_simple_dataset(&device).unwrap();
     test_model(details);
 }
 
 #[test]
-fn mega_man_model() {
+fn mega_man_with_linear() {
     let device = Device::default();
-    let details = load_mega_man_model(&device).unwrap();
+    let details = load_mega_man_linear_dataset(&device).unwrap();
     test_model(details);
 }
 
 #[test]
-fn multi_head_attention_model() {
+fn mega_man_with_attention() {
     let device = Device::default();
-    let details = load_multi_head_attention_model(&device).unwrap();
+    let details = load_mega_man_attention_dataset(&device).unwrap();
     test_model(details);
 }
 
 #[test]
-fn transformer_model() {
+fn geoffroy_hinton_with_transformer() {
     let device = Device::default();
-    let details = load_transformer_model(&device).unwrap();
+    let details = load_geoffroy_hinton_dataset(&device).unwrap();
     test_model(details);
 }

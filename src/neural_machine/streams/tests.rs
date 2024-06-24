@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use crate::{
+    datasets::mega_man_multi_head_attention::get_multi_head_attention_model_instructions,
     filter_instructions,
-    multi_head_attention_model::get_multi_head_attention_model_instructions,
     neural_machine::streams::{
         instruction::{make_simple_instructions, print_instructions},
         stream::{make_streams, print_streams},

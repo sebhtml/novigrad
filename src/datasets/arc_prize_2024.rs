@@ -65,7 +65,8 @@ pub fn load_arc_dataset(
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let layers = 1;
-    let model = TransformerModel::new(device, layers, sequence_length, vocab_size)?;
+    let causal_mask = false;
+    let model = TransformerModel::new(device, layers, sequence_length, vocab_size, causal_mask)?;
     let details = DatasetDetails {
         device: device.clone(),
         tokenizer: None,

@@ -28,7 +28,8 @@ pub fn load_geoffroy_hinton_dataset(
 
     let vocab_size = tokenizer.vocab_size();
     let layers = 2;
-    let model = TransformerModel::new(device, layers, sequence_length, vocab_size)?;
+    let causal_mask = true;
+    let model = TransformerModel::new(device, layers, sequence_length, vocab_size, causal_mask)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
@@ -53,7 +54,7 @@ pub fn load_geoffroy_hinton_dataset(
             total_loss: 350.0,
             total_perplexity: 20.0,
         },
-        maximum_incorrect_argmaxes: 2,
+        maximum_incorrect_argmaxes: 0,
     };
     Ok(details)
 }

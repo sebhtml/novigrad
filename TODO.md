@@ -1,7 +1,6 @@
 == Story: Eliminate pthread_rwlock_unlock ==
 
-- mask with 0 instead of -inf
-- turn off causal mask in arc prize
+- add 2 modes in train.rs to display a Tensor: NextTokenPrediction or Board
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 - maybe the pthread lock is caused by checking if the loss is 0

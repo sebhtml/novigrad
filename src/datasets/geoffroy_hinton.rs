@@ -1,13 +1,16 @@
 use crate::{
-    tensor::Error, transformer_model::TransformerModel, Adam, Device, Metrics,
-    SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
+    display::NextTokenPredictionPrinter, tensor::Error, transformer_model::TransformerModel, Adam,
+    Device, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
 
 use super::{load_examples, DatasetDetails};
 
 pub fn load_geoffroy_hinton_dataset(
     device: &Device,
-) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
+) -> Result<
+    DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam, NextTokenPredictionPrinter>,
+    Error,
+> {
     let file_path = "data/Geoffrey_Hinton.txt";
     let max_chars = None;
     let max_number_of_examples = 16;
@@ -55,6 +58,7 @@ pub fn load_geoffroy_hinton_dataset(
             total_perplexity: 20.0,
         },
         maximum_incorrect_argmaxes: 0,
+        printer: NextTokenPredictionPrinter::default(),
     };
     Ok(details)
 }

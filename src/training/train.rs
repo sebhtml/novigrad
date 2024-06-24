@@ -4,103 +4,13 @@ use std::time::SystemTime;
 
 use crate::{
     datasets::DatasetDetails,
+    display::TensorPrinter,
     neural_program::NeuralProgram,
     perplexity::get_perplexity,
     schedulers::DefaultStreamScheduler,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, NeuralMachine, OptimizerTrait, TensorWithGrad, Tokenizer,
-    TokenizerTrait, UnaryModel,
+    BinaryOperator, Device, NeuralMachine, OptimizerTrait, TensorWithGrad, Tokenizer, UnaryModel,
 };
-
-trait IsPrintable {
-    fn is_printable(&self) -> bool;
-}
-
-impl IsPrintable for char {
-    fn is_printable(&self) -> bool {
-        let code = *self as usize;
-        if (32..=126).contains(&code) || code == 9 || code == 10 || code == 13 {
-            return true;
-        }
-        false
-    }
-}
-
-fn as_printable(output: String, replacement: char) -> String {
-    let mut printable: String = String::new();
-    for char in output.as_str().chars() {
-        if char.is_printable() {
-            printable += String::from(char).as_str();
-        } else {
-            printable += String::from(replacement).as_str();
-        }
-    }
-    printable
-}
-
-fn tokens_to_text(
-    input_tokens: &[usize],
-    tokenizer: &mut Option<Tokenizer>,
-) -> Result<String, Error> {
-    let input_text = match tokenizer {
-        Some(tokenizer) => tokenizer.decode(input_tokens)?,
-        None => input_tokens
-            .to_vec()
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<_>>()
-            .join(", "),
-    };
-    Ok(input_text)
-}
-
-pub fn print_expected_output_and_actual_output(
-    epoch: usize,
-    tokenizer: &mut Option<Tokenizer>,
-    example: usize,
-    input: &Tensor,
-    expected_output: &Tensor,
-    actual_output: &Tensor,
-    expected_output_token: usize,
-    actual_output_token: usize,
-    loss: f32,
-    perplexity: f32,
-) -> Result<(), Error> {
-    let input_tokens = get_row_argmaxes(input)?;
-
-    println!("----");
-    println!("Epoch {} Example {}", epoch, example);
-
-    println!(
-        "  input_text: {}",
-        tokens_to_text(&input_tokens, tokenizer)?
-    );
-
-    println!(
-        "  expected_output_text: {}",
-        tokens_to_text(&[expected_output_token], tokenizer)?
-    );
-
-    let actual_output_text: String = tokens_to_text(&[actual_output_token], tokenizer)?;
-
-    println!(
-        "  actual_output_text: {}",
-        as_printable(actual_output_text, '?'),
-    );
-
-    println!("  input_tokens: {:?}", &input_tokens);
-    println!(
-        "  epoch: {}, example: {}, loss: {}, perplexity: {}, expected_output_token: {}, actual_output_token: {}",
-        epoch, example, loss, perplexity, expected_output_token, actual_output_token
-    );
-
-    if expected_output.cols() < 10 {
-        println!("expected_output {}", expected_output);
-        println!("actual_output {}", actual_output);
-    }
-
-    Ok(())
-}
 
 fn print_device_mem_info(device: &Device) -> Result<(), Error> {
     let mem_info = &device.get_memory_info()?;
@@ -145,7 +55,12 @@ pub struct NeuralMachineTestOutput {
 }
 
 pub fn train_model<T>(
-    details: DatasetDetails<impl UnaryModel, impl BinaryOperator, impl OptimizerTrait>,
+    details: DatasetDetails<
+        impl UnaryModel,
+        impl BinaryOperator,
+        impl OptimizerTrait,
+        impl TensorPrinter,
+    >,
 ) -> Result<NeuralMachineTestOutput, Error> {
     let mut initial_metrics = Metrics {
         total_loss: f32::NAN,
@@ -164,6 +79,8 @@ pub fn train_model<T>(
     let clipped_gradient_norm = details.clipped_gradient_norm;
     let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
+    let printer = details.printer;
+
     let program = NeuralProgram::try_new(
         &device,
         &model,
@@ -183,7 +100,14 @@ pub fn train_model<T>(
     let epochs = details.epochs;
     let progress = details.progress;
 
-    let (_, _) = print_results(0, &mut neural_machine, &mut tokenizer, &inputs, &outputs)?;
+    let (_, _) = print_results(
+        0,
+        &mut neural_machine,
+        &mut tokenizer,
+        &printer,
+        &inputs,
+        &outputs,
+    )?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
@@ -205,6 +129,7 @@ pub fn train_model<T>(
         epochs,
         &mut neural_machine,
         &mut tokenizer,
+        &printer,
         &inputs,
         &outputs,
     )?;
@@ -222,6 +147,7 @@ fn print_results<T>(
     epoch: usize,
     neural_machine: &mut NeuralMachine<T, DefaultStreamScheduler>,
     tokenizer: &mut Option<Tokenizer>,
+    printer: &impl TensorPrinter,
     inputs: &[TensorWithGrad],
     outputs: &[TensorWithGrad],
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {
@@ -250,17 +176,17 @@ fn print_results<T>(
         let actual_argmax = actual_output_argmaxes[last_row].to_owned();
         actual_argmax_values.push(actual_argmax);
 
-        print_expected_output_and_actual_output(
-            epoch,
+        println!("----");
+        println!(
+            "  epoch: {}, example: {}, loss: {}, perplexity: {}, ",
+            epoch, i, loss, perplexity,
+        );
+
+        printer.print_expected_output_and_actual_output(
             tokenizer,
-            i,
             &input.tensor(),
             expected_output,
             actual_output,
-            expected_argmax,
-            actual_argmax,
-            loss,
-            perplexity,
         )?;
     }
 

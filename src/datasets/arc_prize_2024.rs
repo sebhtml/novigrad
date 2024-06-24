@@ -3,6 +3,7 @@ use std::fs;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    display::BoardPrinter,
     error,
     tensor::{Error, ErrorEnum},
     transformer_model::TransformerModel,
@@ -56,7 +57,7 @@ fn load_examples(
 
 pub fn load_arc_dataset(
     device: &Device,
-) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
+) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam, BoardPrinter>, Error> {
     let vocab_size = 10;
     let sequence_length = 7 * 7;
     let examples = load_examples(device, vocab_size)?;
@@ -88,6 +89,7 @@ pub fn load_arc_dataset(
             total_perplexity: 2.0,
         },
         maximum_incorrect_argmaxes: 0,
+        printer: BoardPrinter::default(),
     };
     Ok(details)
 }

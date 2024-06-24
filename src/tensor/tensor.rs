@@ -190,6 +190,7 @@ impl Display for Tensor {
             self.size.deref().read().unwrap()
         );
         _ = writeln!(f);
+
         #[cfg(debug_assertions)]
         {
             _ = write!(
@@ -197,8 +198,8 @@ impl Display for Tensor {
                 "Tensor file: {}, line: {}, column: {}",
                 self.file, self.line, self.column,
             );
+            _ = writeln!(f);
         }
-        _ = writeln!(f);
         for row in 0..self.rows() {
             for col in 0..self.cols() {
                 let value = self_values[self.index(row, col)];
@@ -210,6 +211,7 @@ impl Display for Tensor {
             }
             _ = writeln!(f);
         }
+
         Ok(())
     }
 }

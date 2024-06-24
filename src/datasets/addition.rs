@@ -1,6 +1,6 @@
 use crate::{
-    new_tensor_with_grad, perceptron::PerceptronModel, tensor::Error, Device, GradientDescent,
-    Metrics, ReduceSumSquare, TensorWithGrad,
+    display::RawPrinter, new_tensor_with_grad, perceptron::PerceptronModel, tensor::Error, Device,
+    GradientDescent, Metrics, ReduceSumSquare, TensorWithGrad,
 };
 
 use super::DatasetDetails;
@@ -27,7 +27,7 @@ fn load_examples(device: &Device) -> Result<Vec<(TensorWithGrad, TensorWithGrad)
 
 pub fn load_addition_dataset(
     device: &Device,
-) -> Result<DatasetDetails<PerceptronModel, ReduceSumSquare, GradientDescent>, Error> {
+) -> Result<DatasetDetails<PerceptronModel, ReduceSumSquare, GradientDescent, RawPrinter>, Error> {
     let model = PerceptronModel::new(device)?;
     let examples = load_examples(device)?;
     let loss_operator = ReduceSumSquare::new(device);
@@ -54,6 +54,7 @@ pub fn load_addition_dataset(
             total_perplexity: 1.0,
         },
         maximum_incorrect_argmaxes: 0,
+        printer: RawPrinter::default(),
     };
     Ok(details)
 }

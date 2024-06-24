@@ -3,6 +3,7 @@ use std::fs;
 use more_asserts::debug_assert_lt;
 
 use crate::{
+    display::TensorPrinter,
     error, new_tensor, new_tensor_with_grad,
     tensor::{Error, ErrorEnum},
     BinaryOperator, Device, Metrics, OptimizerTrait, TensorWithGrad, Tokenizer, TokenizerTrait,
@@ -16,11 +17,12 @@ pub mod mega_man_linear;
 pub mod mega_man_multi_head_attention;
 pub mod simple;
 
-pub struct DatasetDetails<Model, LossOperator, Optimizer>
+pub struct DatasetDetails<Model, LossOperator, Optimizer, Printer>
 where
     Model: UnaryModel,
     LossOperator: BinaryOperator,
     Optimizer: OptimizerTrait,
+    Printer: TensorPrinter,
 {
     pub device: Device,
     pub tokenizer: Option<Tokenizer>,
@@ -36,6 +38,7 @@ where
     pub initial_metrics: Metrics,
     pub final_metrics: Metrics,
     pub maximum_incorrect_argmaxes: usize,
+    pub printer: Printer,
 }
 
 pub fn into_one_hot_encoded_rows(

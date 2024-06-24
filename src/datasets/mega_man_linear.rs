@@ -1,13 +1,21 @@
 use crate::{
-    mega_man::MegaManModel, tensor::Error, Device, GradientDescent, Metrics,
-    SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
+    display::NextTokenPredictionPrinter, mega_man::MegaManModel, tensor::Error, Device,
+    GradientDescent, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
 
 use super::{load_examples, DatasetDetails};
 
 pub fn load_mega_man_linear_dataset(
     device: &Device,
-) -> Result<DatasetDetails<MegaManModel, SoftmaxCrossEntropyLoss, GradientDescent>, Error> {
+) -> Result<
+    DatasetDetails<
+        MegaManModel,
+        SoftmaxCrossEntropyLoss,
+        GradientDescent,
+        NextTokenPredictionPrinter,
+    >,
+    Error,
+> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -50,6 +58,7 @@ pub fn load_mega_man_linear_dataset(
             total_perplexity: 11.0,
         },
         maximum_incorrect_argmaxes: 0,
+        printer: NextTokenPredictionPrinter::default(),
     };
     Ok(details)
 }

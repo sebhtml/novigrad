@@ -70,7 +70,7 @@ pub fn train_model<T>(
         total_loss: f32::NAN,
         total_perplexity: f32::NAN,
     };
-    let examples = &details.examples;
+    let train_examples = &details.train_examples;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let maximum_device_streams = 16;
@@ -93,17 +93,23 @@ pub fn train_model<T>(
         maximum_device_streams,
     )?;
 
-    let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
-    let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
+    let train_inputs: Vec<_> = train_examples.iter().map(|x| x.clone().0).collect();
+    let train_outputs: Vec<_> = train_examples.iter().map(|x| x.clone().1).collect();
 
     let epochs = details.epochs;
     let progress = details.progress;
 
-    let (_, _) = print_results(0, &mut neural_machine, &mut printer, &inputs, &outputs)?;
+    let (_, _) = print_results(
+        0,
+        &mut neural_machine,
+        &mut printer,
+        &train_inputs,
+        &train_outputs,
+    )?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
-            let metrics = total_metrics(&mut neural_machine, &inputs, &outputs)?;
+            let metrics = total_metrics(&mut neural_machine, &train_inputs, &train_outputs)?;
             print_metrics(epoch, &metrics, &previous_metrics)?;
             print_device_mem_info(&device)?;
             if epoch == 0 {
@@ -111,14 +117,24 @@ pub fn train_model<T>(
             }
             previous_metrics = metrics.clone();
         }
-        train(&mut neural_machine, shuffle_examples, &inputs, &outputs)?;
+        train(
+            &mut neural_machine,
+            shuffle_examples,
+            &train_inputs,
+            &train_outputs,
+        )?;
     }
-    let final_metrics = total_metrics(&mut neural_machine, &inputs, &outputs)?;
+    let final_metrics = total_metrics(&mut neural_machine, &train_inputs, &train_outputs)?;
     print_metrics(epochs, &final_metrics, &previous_metrics)?;
     print_device_mem_info(&device)?;
 
-    let (expected_argmax_values, actual_argmax_values) =
-        print_results(epochs, &mut neural_machine, &mut printer, &inputs, &outputs)?;
+    let (expected_argmax_values, actual_argmax_values) = print_results(
+        epochs,
+        &mut neural_machine,
+        &mut printer,
+        &train_inputs,
+        &train_outputs,
+    )?;
 
     let output = NeuralMachineTestOutput {
         initial_metrics,
@@ -126,6 +142,20 @@ pub fn train_model<T>(
         expected_argmax_values,
         actual_argmax_values,
     };
+
+    // Test on test examples.
+    let test_examples = details.test_examples;
+    for (test_number, (test_input, test_output)) in test_examples.iter().enumerate() {
+        let actual_output = neural_machine.infer(&test_input)?;
+        let loss = neural_machine.loss(&test_output)?;
+        println!("test example {test_number}  loss {loss}");
+        printer.print_expected_output_and_actual_output(
+            &test_input.tensor(),
+            &test_output.tensor(),
+            &actual_output.tensor(),
+        )?;
+    }
+
     Ok(output)
 }
 
@@ -163,7 +193,7 @@ fn print_results<T>(
 
         println!("----");
         println!(
-            "  epoch: {}, example: {}, loss: {}, perplexity: {}, ",
+            "  epoch: {}, example: {}, loss: {}, next_token_perplexity: {}, ",
             epoch, i, loss, perplexity,
         );
 

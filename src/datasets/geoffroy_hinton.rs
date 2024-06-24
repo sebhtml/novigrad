@@ -39,7 +39,8 @@ pub fn load_geoffroy_hinton_dataset(
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let details = DatasetDetails {
         device: device.clone(),
-        examples,
+        train_examples: examples,
+        test_examples: vec![],
         model,
         loss_operator,
         optimizer,

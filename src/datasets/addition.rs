@@ -35,7 +35,8 @@ pub fn load_addition_dataset(
     let optimizer = GradientDescent::new(learning_rate);
     let details = DatasetDetails {
         device: device.clone(),
-        examples,
+        train_examples: examples,
+        test_examples: vec![],
         model,
         loss_operator,
         optimizer,

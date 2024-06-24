@@ -25,7 +25,8 @@ where
     Printer: TensorPrinter,
 {
     pub device: Device,
-    pub examples: Vec<(TensorWithGrad, TensorWithGrad)>,
+    pub train_examples: Vec<(TensorWithGrad, TensorWithGrad)>,
+    pub test_examples: Vec<(TensorWithGrad, TensorWithGrad)>,
     pub model: Model,
     pub loss_operator: LossOperator,
     pub optimizer: Optimizer,

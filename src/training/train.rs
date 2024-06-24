@@ -194,10 +194,6 @@ pub fn train_model<T>(
                 initial_metrics = metrics.clone();
             }
             previous_metrics = metrics.clone();
-
-            if metrics.total_loss == 0.0 {
-                break;
-            }
         }
         train(&mut neural_machine, shuffle_examples, &inputs, &outputs)?;
     }

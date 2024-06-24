@@ -16,7 +16,7 @@ fn main() -> Result<(), Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
     let maximum_device_streams = 16;
-    let layers = 1;
+    let layers = 2;
     let vocab_size = tokenizer.vocab_size();
     let model = TransformerModel::new(&device, layers, sequence_length, vocab_size)?;
     let vocab_size = tokenizer.vocab_size();

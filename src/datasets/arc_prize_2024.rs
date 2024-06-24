@@ -3,7 +3,10 @@ use std::fs;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    error, tensor::{Error, ErrorEnum}, transformer_model::TransformerModel, Adam, Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad
+    error,
+    tensor::{Error, ErrorEnum},
+    transformer_model::TransformerModel,
+    Adam, Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad,
 };
 
 use super::{into_one_hot_encoded_rows, DatasetDetails};
@@ -26,12 +29,15 @@ fn load_examples(
     let file_path = "/home/sebhtml/projects/ARC-AGI/data/training/3aa6fb7a.json";
     let data = fs::read_to_string(file_path).unwrap();
     let p: Problem = serde_json::from_str(&data).unwrap();
-    let examples = p.train.iter().map(|e| {
-        let input = e.input.concat();
-        let output = e.output.concat();
-        (input, output)
-    })
-    .collect::<Vec<_>>();
+    let examples = p
+        .train
+        .iter()
+        .map(|e| {
+            let input = e.input.concat();
+            let output = e.output.concat();
+            (input, output)
+        })
+        .collect::<Vec<_>>();
     examples
         .into_iter()
         .map(|example| {
@@ -53,7 +59,7 @@ pub fn load_arc_dataset(
 ) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
     let vocab_size = 10;
     let sequence_length = 7 * 7;
-    let examples = load_examples(device, vocab_size,)?;
+    let examples = load_examples(device, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;

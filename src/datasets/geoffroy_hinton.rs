@@ -27,7 +27,7 @@ pub fn load_geoffroy_hinton_dataset(
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let layers = 1;
+    let layers = 2;
     let model = TransformerModel::new(device, layers, sequence_length, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);

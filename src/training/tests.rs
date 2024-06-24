@@ -24,8 +24,8 @@ fn test_model(
 ) {
     let expected_initial_total_loss_min = details.initial_metrics.total_loss;
     let expected_final_total_loss_max = details.final_metrics.total_loss;
-    let expected_initial_total_perplexity_min = details.initial_metrics.total_perplexity;
-    let expected_final_total_perplexity_max = details.final_metrics.total_perplexity;
+    let expected_initial_total_perplexity_min = details.initial_metrics.total_next_token_perplexity;
+    let expected_final_total_perplexity_max = details.final_metrics.total_next_token_perplexity;
     let maximum_incorrect_argmaxes = details.maximum_incorrect_argmaxes;
     let training_output = train_model::<f32>(details).unwrap();
 
@@ -43,12 +43,12 @@ fn test_model(
     if !expected_initial_total_perplexity_min.is_nan() {
         assert_le!(
             expected_initial_total_perplexity_min,
-            training_output.initial_metrics.total_perplexity
+            training_output.initial_metrics.total_next_token_perplexity
         );
     }
     assert_ge!(
         expected_final_total_perplexity_max,
-        training_output.final_metrics.total_perplexity
+        training_output.final_metrics.total_next_token_perplexity
     );
 
     let mut incorrect_argmaxes = 0;

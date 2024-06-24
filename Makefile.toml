@@ -19,9 +19,9 @@ dependencies = []
 
 [tasks.test-with-cuda]
 command = "cargo"
-# In NeuralMachine, we use 16 device streams. so we use 2 test threads. If we use more, we get a panic.
+# In NeuralMachine, we use 16 device streams. so we use 1 test threads. If we use more, we get a panic.
 # It's because a NVIDIA GeForce RTX 4060 has 8 GB VRAM.
-args = ["test", "--release", "--no-default-features", "--features", "cuda", "--", "--test-threads", "2"]
+args = ["test", "--release", "--no-default-features", "--features", "cuda", "--", "--test-threads", "1"]
 dependencies = []
 
 [tasks.my-flow]

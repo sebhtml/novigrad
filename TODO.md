@@ -1,10 +1,8 @@
-== Story: Eliminate pthread_rwlock_unlock ==
+== Story: Arc prize ==
 
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 - maybe the pthread lock is caused by checking if the loss is 0
-
-== Story: Arc prize ==
 
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 - Implement Transformer idea for the Arc prize challenge (left-to-right residual connections)

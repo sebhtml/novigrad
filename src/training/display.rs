@@ -1,5 +1,6 @@
 use crate::{
     get_row_argmaxes,
+    perplexity::get_perplexity,
     tensor::{Error, Tensor},
     Tokenizer, TokenizerTrait,
 };
@@ -38,6 +39,8 @@ impl TensorPrinter for NextTokenPredictionPrinter {
         let actual_output_argmaxes = get_row_argmaxes(actual_output)?;
         let actual_output_token = actual_output_argmaxes[last_row].to_owned();
 
+        let next_token_perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
+
         let tokenizer: &mut Tokenizer = &mut self.tokenizer;
         println!(
             "  input_text: {}",
@@ -62,6 +65,8 @@ impl TensorPrinter for NextTokenPredictionPrinter {
             println!("expected_output {}", expected_output);
             println!("actual_output {}", actual_output);
         }
+
+        println!("next_token_perplexity: {}", next_token_perplexity);
 
         Ok(())
     }

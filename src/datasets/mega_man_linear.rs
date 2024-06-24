@@ -51,11 +51,11 @@ pub fn load_mega_man_linear_dataset(
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 50.0,
-            total_perplexity: 2500.0,
+            total_next_token_perplexity: 2500.0,
         },
         final_metrics: Metrics {
             total_loss: 0.0,
-            total_perplexity: 11.0,
+            total_next_token_perplexity: 11.0,
         },
         maximum_incorrect_argmaxes: 0,
         printer: NextTokenPredictionPrinter::new(tokenizer),

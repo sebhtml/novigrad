@@ -55,11 +55,11 @@ pub fn load_mega_man_attention_dataset(
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 4000.0,
-            total_perplexity: 5.0,
+            total_next_token_perplexity: 5.0,
         },
         final_metrics: Metrics {
             total_loss: 350.0,
-            total_perplexity: 13.0,
+            total_next_token_perplexity: 13.0,
         },
         maximum_incorrect_argmaxes: 2,
         printer: NextTokenPredictionPrinter::new(tokenizer),

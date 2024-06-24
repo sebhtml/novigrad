@@ -47,11 +47,11 @@ pub fn load_addition_dataset(
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 0.1,
-            total_perplexity: f32::NAN,
+            total_next_token_perplexity: f32::NAN,
         },
         final_metrics: Metrics {
             total_loss: 15.0,
-            total_perplexity: 1.0,
+            total_next_token_perplexity: 1.0,
         },
         maximum_incorrect_argmaxes: 0,
         printer: RawPrinter::default(),

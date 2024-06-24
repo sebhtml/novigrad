@@ -75,11 +75,11 @@ pub fn load_simple_dataset(
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 5.0,
-            total_perplexity: 200.0,
+            total_next_token_perplexity: 200.0,
         },
         final_metrics: Metrics {
             total_loss: 0.0,
-            total_perplexity: 2.0,
+            total_next_token_perplexity: 2.0,
         },
         maximum_incorrect_argmaxes: 0,
         printer: NextTokenPredictionPrinter::new(tokenizer),

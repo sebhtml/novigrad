@@ -24,7 +24,7 @@ fn print_device_mem_info(device: &Device) -> Result<(), Error> {
 #[derive(Clone)]
 pub struct Metrics {
     pub total_loss: f32,
-    pub total_perplexity: f32,
+    pub total_next_token_perplexity: f32,
 }
 
 fn print_metrics(epoch: usize, metrics: &Metrics, previous_metrics: &Metrics) -> Result<(), Error> {
@@ -36,13 +36,14 @@ fn print_metrics(epoch: usize, metrics: &Metrics, previous_metrics: &Metrics) ->
         "Epoch {} total_loss {}, change: {}",
         epoch, total_loss, total_loss_change
     );
-    let total_perplexity = metrics.total_perplexity;
-    let previous_total_perplexity = previous_metrics.total_perplexity;
-    let total_perplexity_change =
-        (total_perplexity - previous_total_perplexity) / previous_total_perplexity;
+    let total_next_token_perplexity = metrics.total_next_token_perplexity;
+    let previous_total_next_token_perplexity = previous_metrics.total_next_token_perplexity;
+    let total_next_token_perplexity_change = (total_next_token_perplexity
+        - previous_total_next_token_perplexity)
+        / previous_total_next_token_perplexity;
     println!(
-        "Epoch {} total_perplexity {}, change: {}",
-        epoch, total_perplexity, total_perplexity_change
+        "Epoch {} total_next_token_perplexity {}, change: {}",
+        epoch, total_next_token_perplexity, total_next_token_perplexity_change
     );
     Ok(())
 }
@@ -64,11 +65,11 @@ pub fn train_model<T>(
 ) -> Result<NeuralMachineTestOutput, Error> {
     let mut initial_metrics = Metrics {
         total_loss: f32::NAN,
-        total_perplexity: f32::NAN,
+        total_next_token_perplexity: f32::NAN,
     };
     let mut previous_metrics = Metrics {
         total_loss: f32::NAN,
-        total_perplexity: f32::NAN,
+        total_next_token_perplexity: f32::NAN,
     };
     let train_examples = &details.train_examples;
     let model = details.model;
@@ -148,7 +149,10 @@ pub fn train_model<T>(
     for (test_number, (test_input, test_output)) in test_examples.iter().enumerate() {
         let actual_output = neural_machine.infer(&test_input)?;
         let loss = neural_machine.loss(&test_output)?;
-        println!("test example {test_number}  loss {loss}");
+        let loss: &Tensor = &loss.tensor();
+        let loss: f32 = loss.try_into()?;
+        println!("test example: {},  loss: {}", test_number, loss,);
+
         printer.print_expected_output_and_actual_output(
             &test_input.tensor(),
             &test_output.tensor(),
@@ -180,7 +184,6 @@ fn print_results<T>(
         let loss: f32 = loss.try_into()?;
 
         let actual_output = &actual_output.tensor();
-        let perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
 
         let expected_output = &outputs[i].tensor();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
@@ -192,10 +195,7 @@ fn print_results<T>(
         actual_argmax_values.push(actual_argmax);
 
         println!("----");
-        println!(
-            "  epoch: {}, example: {}, loss: {}, next_token_perplexity: {}, ",
-            epoch, i, loss, perplexity,
-        );
+        println!("  epoch: {}, example: {}, loss: {}", epoch, i, loss,);
 
         printer.print_expected_output_and_actual_output(
             &input.tensor(),
@@ -261,7 +261,7 @@ pub fn total_metrics<T>(
     outputs: &[TensorWithGrad],
 ) -> Result<Metrics, Error> {
     let mut total_loss = 0.0;
-    let mut total_perplexity = 0.0;
+    let mut total_next_token_perplexity = 0.0;
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
         let actual_output = neural_machine.infer(&inputs[i])?;
@@ -275,12 +275,12 @@ pub fn total_metrics<T>(
         // Perplexity
         let actual_output = &actual_output.tensor();
         let perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
-        total_perplexity += perplexity;
+        total_next_token_perplexity += perplexity;
     }
 
     let metrics = Metrics {
         total_loss,
-        total_perplexity,
+        total_next_token_perplexity,
     };
     Ok(metrics)
 }

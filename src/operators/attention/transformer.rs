@@ -77,7 +77,6 @@ impl UnaryOperator for Transformer {
         let residual_1 = self.add.forward(&with_dropout_1, &input)?;
         let normalized_output = self.layer_norm_2.forward(&residual_1)?;
         let lin_1 = self.linear_1.forward(&normalized_output)?;
-        //let activated = self.sigmoid.forward(&lin_1)?;
         let activated = self.gelu.forward(&lin_1)?;
         let lin_2 = self.linear_2.forward(&activated)?;
         let with_dropout_2 = self.dropout_2.forward(&lin_2)?;

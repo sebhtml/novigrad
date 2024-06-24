@@ -39,7 +39,6 @@ pub fn load_geoffroy_hinton_dataset(
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer: Some(tokenizer),
         examples,
         model,
         loss_operator,
@@ -58,7 +57,7 @@ pub fn load_geoffroy_hinton_dataset(
             total_perplexity: 20.0,
         },
         maximum_incorrect_argmaxes: 0,
-        printer: NextTokenPredictionPrinter::default(),
+        printer: NextTokenPredictionPrinter::new(tokenizer),
     };
     Ok(details)
 }

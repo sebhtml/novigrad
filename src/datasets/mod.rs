@@ -25,7 +25,6 @@ where
     Printer: TensorPrinter,
 {
     pub device: Device,
-    pub tokenizer: Option<Tokenizer>,
     pub examples: Vec<(TensorWithGrad, TensorWithGrad)>,
     pub model: Model,
     pub loss_operator: LossOperator,

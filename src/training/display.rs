@@ -6,26 +6,26 @@ use crate::{
 
 pub trait TensorPrinter {
     fn print_expected_output_and_actual_output(
-        &self,
-        tokenizer: &mut Option<Tokenizer>,
+        &mut self,
         input: &Tensor,
         expected_output: &Tensor,
         actual_output: &Tensor,
     ) -> Result<(), Error>;
 }
 
-pub struct NextTokenPredictionPrinter {}
+pub struct NextTokenPredictionPrinter {
+    tokenizer: Tokenizer,
+}
 
-impl Default for NextTokenPredictionPrinter {
-    fn default() -> Self {
-        Self {}
+impl NextTokenPredictionPrinter {
+    pub fn new(tokenizer: Tokenizer) -> Self {
+        Self { tokenizer }
     }
 }
 
 impl TensorPrinter for NextTokenPredictionPrinter {
     fn print_expected_output_and_actual_output(
-        &self,
-        tokenizer: &mut Option<Tokenizer>,
+        &mut self,
         input: &Tensor,
         expected_output: &Tensor,
         actual_output: &Tensor,
@@ -38,6 +38,7 @@ impl TensorPrinter for NextTokenPredictionPrinter {
         let actual_output_argmaxes = get_row_argmaxes(actual_output)?;
         let actual_output_token = actual_output_argmaxes[last_row].to_owned();
 
+        let tokenizer: &mut Tokenizer = &mut self.tokenizer;
         println!(
             "  input_text: {}",
             tokens_to_text(&input_tokens, tokenizer)?
@@ -66,19 +67,8 @@ impl TensorPrinter for NextTokenPredictionPrinter {
     }
 }
 
-fn tokens_to_text(
-    input_tokens: &[usize],
-    tokenizer: &mut Option<Tokenizer>,
-) -> Result<String, Error> {
-    let input_text = match tokenizer {
-        Some(tokenizer) => tokenizer.decode(input_tokens)?,
-        None => input_tokens
-            .to_vec()
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<_>>()
-            .join(", "),
-    };
+fn tokens_to_text(input_tokens: &[usize], tokenizer: &mut Tokenizer) -> Result<String, Error> {
+    let input_text = tokenizer.decode(input_tokens)?;
     Ok(input_text)
 }
 
@@ -118,8 +108,7 @@ impl Default for RawPrinter {
 
 impl TensorPrinter for RawPrinter {
     fn print_expected_output_and_actual_output(
-        &self,
-        _tokenizer: &mut Option<Tokenizer>,
+        &mut self,
         input: &Tensor,
         expected_output: &Tensor,
         actual_output: &Tensor,
@@ -147,8 +136,7 @@ impl Default for BoardPrinter {
 
 impl TensorPrinter for BoardPrinter {
     fn print_expected_output_and_actual_output(
-        &self,
-        _tokenizer: &mut Option<Tokenizer>,
+        &mut self,
         input: &Tensor,
         expected_output: &Tensor,
         actual_output: &Tensor,

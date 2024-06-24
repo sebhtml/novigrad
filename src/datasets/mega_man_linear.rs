@@ -39,7 +39,6 @@ pub fn load_mega_man_linear_dataset(
     let optimizer = GradientDescent::new(learning_rate);
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer: Some(tokenizer),
         examples,
         model,
         loss_operator,
@@ -58,7 +57,7 @@ pub fn load_mega_man_linear_dataset(
             total_perplexity: 11.0,
         },
         maximum_incorrect_argmaxes: 0,
-        printer: NextTokenPredictionPrinter::default(),
+        printer: NextTokenPredictionPrinter::new(tokenizer),
     };
     Ok(details)
 }

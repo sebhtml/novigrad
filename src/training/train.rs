@@ -9,7 +9,7 @@ use crate::{
     perplexity::get_perplexity,
     schedulers::DefaultStreamScheduler,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, NeuralMachine, OptimizerTrait, TensorWithGrad, Tokenizer, UnaryModel,
+    BinaryOperator, Device, NeuralMachine, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
 
 fn print_device_mem_info(device: &Device) -> Result<(), Error> {
@@ -73,13 +73,12 @@ pub fn train_model<T>(
     let examples = &details.examples;
     let model = details.model;
     let loss_operator = details.loss_operator;
-    let mut tokenizer = details.tokenizer;
     let maximum_device_streams = 16;
     let device = details.device;
     let clipped_gradient_norm = details.clipped_gradient_norm;
     let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
-    let printer = details.printer;
+    let mut printer = details.printer;
 
     let program = NeuralProgram::try_new(
         &device,
@@ -100,14 +99,7 @@ pub fn train_model<T>(
     let epochs = details.epochs;
     let progress = details.progress;
 
-    let (_, _) = print_results(
-        0,
-        &mut neural_machine,
-        &mut tokenizer,
-        &printer,
-        &inputs,
-        &outputs,
-    )?;
+    let (_, _) = print_results(0, &mut neural_machine, &mut printer, &inputs, &outputs)?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
@@ -125,14 +117,8 @@ pub fn train_model<T>(
     print_metrics(epochs, &final_metrics, &previous_metrics)?;
     print_device_mem_info(&device)?;
 
-    let (expected_argmax_values, actual_argmax_values) = print_results(
-        epochs,
-        &mut neural_machine,
-        &mut tokenizer,
-        &printer,
-        &inputs,
-        &outputs,
-    )?;
+    let (expected_argmax_values, actual_argmax_values) =
+        print_results(epochs, &mut neural_machine, &mut printer, &inputs, &outputs)?;
 
     let output = NeuralMachineTestOutput {
         initial_metrics,
@@ -146,8 +132,7 @@ pub fn train_model<T>(
 fn print_results<T>(
     epoch: usize,
     neural_machine: &mut NeuralMachine<T, DefaultStreamScheduler>,
-    tokenizer: &mut Option<Tokenizer>,
-    printer: &impl TensorPrinter,
+    printer: &mut impl TensorPrinter,
     inputs: &[TensorWithGrad],
     outputs: &[TensorWithGrad],
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {
@@ -183,7 +168,6 @@ fn print_results<T>(
         );
 
         printer.print_expected_output_and_actual_output(
-            tokenizer,
             &input.tensor(),
             expected_output,
             actual_output,

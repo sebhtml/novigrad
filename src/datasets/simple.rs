@@ -63,7 +63,6 @@ pub fn load_simple_dataset(
     let optimizer = GradientDescent::new(learning_rate);
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer: Some(tokenizer),
         examples,
         model,
         loss_operator,
@@ -82,7 +81,7 @@ pub fn load_simple_dataset(
             total_perplexity: 2.0,
         },
         maximum_incorrect_argmaxes: 0,
-        printer: NextTokenPredictionPrinter::default(),
+        printer: NextTokenPredictionPrinter::new(tokenizer),
     };
     Ok(details)
 }

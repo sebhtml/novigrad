@@ -70,7 +70,6 @@ pub fn load_arc_dataset(
     let model = TransformerModel::new(device, layers, sequence_length, vocab_size, causal_mask)?;
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer: None,
         examples,
         model,
         loss_operator,

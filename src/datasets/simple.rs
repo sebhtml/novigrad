@@ -1,4 +1,5 @@
 use crate::{
+    display::NextTokenPredictionPrinter,
     error,
     simple::SimpleModel,
     tensor::{Error, ErrorEnum},
@@ -42,7 +43,15 @@ fn load_examples(
 
 pub fn load_simple_dataset(
     device: &Device,
-) -> Result<DatasetDetails<SimpleModel, SoftmaxCrossEntropyLoss, GradientDescent>, Error> {
+) -> Result<
+    DatasetDetails<
+        SimpleModel,
+        SoftmaxCrossEntropyLoss,
+        GradientDescent,
+        NextTokenPredictionPrinter,
+    >,
+    Error,
+> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 6;
     let examples = load_examples(device, &mut tokenizer)?;
@@ -54,8 +63,8 @@ pub fn load_simple_dataset(
     let optimizer = GradientDescent::new(learning_rate);
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer: Some(tokenizer),
-        examples,
+        train_examples: examples,
+        test_examples: vec![],
         model,
         loss_operator,
         optimizer,
@@ -66,13 +75,14 @@ pub fn load_simple_dataset(
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 5.0,
-            total_perplexity: 200.0,
+            total_next_token_perplexity: 200.0,
         },
         final_metrics: Metrics {
             total_loss: 0.0,
-            total_perplexity: 2.0,
+            total_next_token_perplexity: 2.0,
         },
         maximum_incorrect_argmaxes: 0,
+        printer: NextTokenPredictionPrinter::new(tokenizer),
     };
     Ok(details)
 }

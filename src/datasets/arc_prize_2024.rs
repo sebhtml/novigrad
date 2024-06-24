@@ -1,9 +1,14 @@
+use core::panic;
 use std::fs;
 
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    error, tensor::{Error, ErrorEnum}, transformer_model::TransformerModel, Adam, Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad
+    display::BoardPrinter,
+    error,
+    tensor::{Error, ErrorEnum},
+    transformer_model::TransformerModel,
+    Adam, Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad,
 };
 
 use super::{into_one_hot_encoded_rows, DatasetDetails};
@@ -11,6 +16,7 @@ use super::{into_one_hot_encoded_rows, DatasetDetails};
 #[derive(Serialize, Deserialize)]
 struct Problem {
     pub train: Vec<Example>,
+    pub test: Vec<Example>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -20,18 +26,29 @@ struct Example {
 }
 
 fn load_examples(
+    training_or_evaluation: &str,
+    problem_id: &str,
+    train_or_test: &str,
     device: &Device,
     vocab_size: usize,
 ) -> Result<Vec<(TensorWithGrad, TensorWithGrad)>, Error> {
-    let file_path = "/home/sebhtml/projects/ARC-AGI/data/training/3aa6fb7a.json";
+    let file_path =
+        format!("/home/sebhtml/projects/ARC-AGI/data/{training_or_evaluation}/{problem_id}.json");
     let data = fs::read_to_string(file_path).unwrap();
     let p: Problem = serde_json::from_str(&data).unwrap();
-    let examples = p.train.iter().map(|e| {
-        let input = e.input.concat();
-        let output = e.output.concat();
-        (input, output)
-    })
-    .collect::<Vec<_>>();
+    let examples = match train_or_test {
+        "train" => p.train,
+        "test" => p.test,
+        _ => panic!(),
+    };
+    let examples = examples
+        .iter()
+        .map(|e| {
+            let input = e.input.concat();
+            let output = e.output.concat();
+            (input, output)
+        })
+        .collect::<Vec<_>>();
     examples
         .into_iter()
         .map(|example| {
@@ -50,20 +67,22 @@ fn load_examples(
 
 pub fn load_arc_dataset(
     device: &Device,
-) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
+) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam, BoardPrinter>, Error> {
     let vocab_size = 10;
     let sequence_length = 7 * 7;
-    let examples = load_examples(device, vocab_size,)?;
+    let training_examples = load_examples("training", "3aa6fb7a", "train", device, vocab_size)?;
+    let test_examples = load_examples("training", "3aa6fb7a", "test", device, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let layers = 1;
-    let model = TransformerModel::new(device, layers, sequence_length, vocab_size)?;
+    let causal_mask = false;
+    let model = TransformerModel::new(device, layers, sequence_length, vocab_size, causal_mask)?;
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer: None,
-        examples,
+        train_examples: training_examples,
+        test_examples,
         model,
         loss_operator,
         optimizer,
@@ -74,13 +93,14 @@ pub fn load_arc_dataset(
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 5.0,
-            total_perplexity: 200.0,
+            total_next_token_perplexity: 200.0,
         },
         final_metrics: Metrics {
             total_loss: 0.0,
-            total_perplexity: 2.0,
+            total_next_token_perplexity: 2.0,
         },
         maximum_incorrect_argmaxes: 0,
+        printer: BoardPrinter::default(),
     };
     Ok(details)
 }

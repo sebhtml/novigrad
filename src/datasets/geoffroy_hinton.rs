@@ -1,13 +1,16 @@
 use crate::{
-    tensor::Error, transformer_model::TransformerModel, Adam, Device, Metrics,
-    SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
+    display::NextTokenPredictionPrinter, tensor::Error, transformer_model::TransformerModel, Adam,
+    Device, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
 
 use super::{load_examples, DatasetDetails};
 
 pub fn load_geoffroy_hinton_dataset(
     device: &Device,
-) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
+) -> Result<
+    DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam, NextTokenPredictionPrinter>,
+    Error,
+> {
     let file_path = "data/Geoffrey_Hinton.txt";
     let max_chars = None;
     let max_number_of_examples = 16;
@@ -27,16 +30,17 @@ pub fn load_geoffroy_hinton_dataset(
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let layers = 1;
-    let model = TransformerModel::new(device, layers, sequence_length, vocab_size)?;
+    let layers = 2;
+    let causal_mask = true;
+    let model = TransformerModel::new(device, layers, sequence_length, vocab_size, causal_mask)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer: Some(tokenizer),
-        examples,
+        train_examples: examples,
+        test_examples: vec![],
         model,
         loss_operator,
         optimizer,
@@ -47,13 +51,14 @@ pub fn load_geoffroy_hinton_dataset(
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 4000.0,
-            total_perplexity: 5.0,
+            total_next_token_perplexity: 5.0,
         },
         final_metrics: Metrics {
             total_loss: 350.0,
-            total_perplexity: 20.0,
+            total_next_token_perplexity: 20.0,
         },
         maximum_incorrect_argmaxes: 0,
+        printer: NextTokenPredictionPrinter::new(tokenizer),
     };
     Ok(details)
 }

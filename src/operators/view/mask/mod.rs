@@ -21,7 +21,8 @@ impl Mask {
         let mut values = vec![1.0; len];
         for row in 0..mask_rows {
             for col in 0..mask_cols {
-                if row <= col {
+                // Mask positions that are in the future.
+                if col > row {
                     let index = Tensor::get_index(&[mask_rows, mask_cols], row, col);
                     values[index] = 0.0;
                 }

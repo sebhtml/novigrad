@@ -1,14 +1,22 @@
 use crate::{
-    multi_head_attention_model::MultiHeadAttentionModel, neural_program::NeuralProgram,
-    tensor::Error, Adam, Device, Instruction, Metrics, SoftmaxCrossEntropyLoss, Tokenizer,
-    TokenizerTrait,
+    display::NextTokenPredictionPrinter, multi_head_attention_model::MultiHeadAttentionModel,
+    neural_program::NeuralProgram, tensor::Error, Adam, Device, Instruction, Metrics,
+    SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
 
 use super::{load_examples, DatasetDetails};
 
 pub fn load_mega_man_attention_dataset(
     device: &Device,
-) -> Result<DatasetDetails<MultiHeadAttentionModel, SoftmaxCrossEntropyLoss, Adam>, Error> {
+) -> Result<
+    DatasetDetails<
+        MultiHeadAttentionModel,
+        SoftmaxCrossEntropyLoss,
+        Adam,
+        NextTokenPredictionPrinter,
+    >,
+    Error,
+> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -35,8 +43,8 @@ pub fn load_mega_man_attention_dataset(
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer: Some(tokenizer),
-        examples,
+        train_examples: examples,
+        test_examples: vec![],
         model,
         loss_operator,
         optimizer,
@@ -47,13 +55,14 @@ pub fn load_mega_man_attention_dataset(
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 4000.0,
-            total_perplexity: 5.0,
+            total_next_token_perplexity: 5.0,
         },
         final_metrics: Metrics {
             total_loss: 350.0,
-            total_perplexity: 13.0,
+            total_next_token_perplexity: 13.0,
         },
         maximum_incorrect_argmaxes: 2,
+        printer: NextTokenPredictionPrinter::new(tokenizer),
     };
     Ok(details)
 }

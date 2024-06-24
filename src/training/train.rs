@@ -4,103 +4,13 @@ use std::time::SystemTime;
 
 use crate::{
     datasets::DatasetDetails,
+    display::TensorPrinter,
     neural_program::NeuralProgram,
     perplexity::get_perplexity,
     schedulers::DefaultStreamScheduler,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, NeuralMachine, OptimizerTrait, TensorWithGrad, Tokenizer,
-    TokenizerTrait, UnaryModel,
+    BinaryOperator, Device, NeuralMachine, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
-
-trait IsPrintable {
-    fn is_printable(&self) -> bool;
-}
-
-impl IsPrintable for char {
-    fn is_printable(&self) -> bool {
-        let code = *self as usize;
-        if (32..=126).contains(&code) || code == 9 || code == 10 || code == 13 {
-            return true;
-        }
-        false
-    }
-}
-
-fn as_printable(output: String, replacement: char) -> String {
-    let mut printable: String = String::new();
-    for char in output.as_str().chars() {
-        if char.is_printable() {
-            printable += String::from(char).as_str();
-        } else {
-            printable += String::from(replacement).as_str();
-        }
-    }
-    printable
-}
-
-fn tokens_to_text(
-    input_tokens: &[usize],
-    tokenizer: &mut Option<Tokenizer>,
-) -> Result<String, Error> {
-    let input_text = match tokenizer {
-        Some(tokenizer) => tokenizer.decode(input_tokens)?,
-        None => input_tokens
-            .to_vec()
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<_>>()
-            .join(", "),
-    };
-    Ok(input_text)
-}
-
-pub fn print_expected_output_and_actual_output(
-    epoch: usize,
-    tokenizer: &mut Option<Tokenizer>,
-    example: usize,
-    input: &Tensor,
-    expected_output: &Tensor,
-    actual_output: &Tensor,
-    expected_output_token: usize,
-    actual_output_token: usize,
-    loss: f32,
-    perplexity: f32,
-) -> Result<(), Error> {
-    let input_tokens = get_row_argmaxes(input)?;
-
-    println!("----");
-    println!("Epoch {} Example {}", epoch, example);
-
-    println!(
-        "  input_text: {}",
-        tokens_to_text(&input_tokens, tokenizer)?
-    );
-
-    println!(
-        "  expected_output_text: {}",
-        tokens_to_text(&[expected_output_token], tokenizer)?
-    );
-
-    let actual_output_text: String = tokens_to_text(&[actual_output_token], tokenizer)?;
-
-    println!(
-        "  actual_output_text: {}",
-        as_printable(actual_output_text, '?'),
-    );
-
-    println!("  input_tokens: {:?}", &input_tokens);
-    println!(
-        "  epoch: {}, example: {}, loss: {}, perplexity: {}, expected_output_token: {}, actual_output_token: {}",
-        epoch, example, loss, perplexity, expected_output_token, actual_output_token
-    );
-
-    if expected_output.cols() < 10 {
-        println!("expected_output {}", expected_output);
-        println!("actual_output {}", actual_output);
-    }
-
-    Ok(())
-}
 
 fn print_device_mem_info(device: &Device) -> Result<(), Error> {
     let mem_info = &device.get_memory_info()?;
@@ -114,7 +24,7 @@ fn print_device_mem_info(device: &Device) -> Result<(), Error> {
 #[derive(Clone)]
 pub struct Metrics {
     pub total_loss: f32,
-    pub total_perplexity: f32,
+    pub total_next_token_perplexity: f32,
 }
 
 fn print_metrics(epoch: usize, metrics: &Metrics, previous_metrics: &Metrics) -> Result<(), Error> {
@@ -126,13 +36,14 @@ fn print_metrics(epoch: usize, metrics: &Metrics, previous_metrics: &Metrics) ->
         "Epoch {} total_loss {}, change: {}",
         epoch, total_loss, total_loss_change
     );
-    let total_perplexity = metrics.total_perplexity;
-    let previous_total_perplexity = previous_metrics.total_perplexity;
-    let total_perplexity_change =
-        (total_perplexity - previous_total_perplexity) / previous_total_perplexity;
+    let total_next_token_perplexity = metrics.total_next_token_perplexity;
+    let previous_total_next_token_perplexity = previous_metrics.total_next_token_perplexity;
+    let total_next_token_perplexity_change = (total_next_token_perplexity
+        - previous_total_next_token_perplexity)
+        / previous_total_next_token_perplexity;
     println!(
-        "Epoch {} total_perplexity {}, change: {}",
-        epoch, total_perplexity, total_perplexity_change
+        "Epoch {} total_next_token_perplexity {}, change: {}",
+        epoch, total_next_token_perplexity, total_next_token_perplexity_change
     );
     Ok(())
 }
@@ -145,25 +56,31 @@ pub struct NeuralMachineTestOutput {
 }
 
 pub fn train_model<T>(
-    details: DatasetDetails<impl UnaryModel, impl BinaryOperator, impl OptimizerTrait>,
+    details: DatasetDetails<
+        impl UnaryModel,
+        impl BinaryOperator,
+        impl OptimizerTrait,
+        impl TensorPrinter,
+    >,
 ) -> Result<NeuralMachineTestOutput, Error> {
     let mut initial_metrics = Metrics {
         total_loss: f32::NAN,
-        total_perplexity: f32::NAN,
+        total_next_token_perplexity: f32::NAN,
     };
     let mut previous_metrics = Metrics {
         total_loss: f32::NAN,
-        total_perplexity: f32::NAN,
+        total_next_token_perplexity: f32::NAN,
     };
-    let examples = &details.examples;
+    let train_examples = &details.train_examples;
     let model = details.model;
     let loss_operator = details.loss_operator;
-    let mut tokenizer = details.tokenizer;
     let maximum_device_streams = 16;
     let device = details.device;
     let clipped_gradient_norm = details.clipped_gradient_norm;
     let shuffle_examples = details.shuffle_examples;
     let optimizer = details.optimizer;
+    let mut printer = details.printer;
+
     let program = NeuralProgram::try_new(
         &device,
         &model,
@@ -177,40 +94,47 @@ pub fn train_model<T>(
         maximum_device_streams,
     )?;
 
-    let inputs: Vec<_> = examples.iter().map(|x| x.clone().0).collect();
-    let outputs: Vec<_> = examples.iter().map(|x| x.clone().1).collect();
+    let train_inputs: Vec<_> = train_examples.iter().map(|x| x.clone().0).collect();
+    let train_outputs: Vec<_> = train_examples.iter().map(|x| x.clone().1).collect();
 
     let epochs = details.epochs;
     let progress = details.progress;
 
-    let (_, _) = print_results(0, &mut neural_machine, &mut tokenizer, &inputs, &outputs)?;
+    let (_, _) = print_results(
+        0,
+        &mut neural_machine,
+        &mut printer,
+        &train_inputs,
+        &train_outputs,
+    )?;
 
     for epoch in 0..epochs {
         if epoch % progress == 0 {
-            let metrics = total_metrics(&mut neural_machine, &inputs, &outputs)?;
+            let metrics = total_metrics(&mut neural_machine, &train_inputs, &train_outputs)?;
             print_metrics(epoch, &metrics, &previous_metrics)?;
             print_device_mem_info(&device)?;
             if epoch == 0 {
                 initial_metrics = metrics.clone();
             }
             previous_metrics = metrics.clone();
-
-            if metrics.total_loss == 0.0 {
-                break;
-            }
         }
-        train(&mut neural_machine, shuffle_examples, &inputs, &outputs)?;
+        train(
+            &mut neural_machine,
+            shuffle_examples,
+            &train_inputs,
+            &train_outputs,
+        )?;
     }
-    let final_metrics = total_metrics(&mut neural_machine, &inputs, &outputs)?;
+    let final_metrics = total_metrics(&mut neural_machine, &train_inputs, &train_outputs)?;
     print_metrics(epochs, &final_metrics, &previous_metrics)?;
     print_device_mem_info(&device)?;
 
     let (expected_argmax_values, actual_argmax_values) = print_results(
         epochs,
         &mut neural_machine,
-        &mut tokenizer,
-        &inputs,
-        &outputs,
+        &mut printer,
+        &train_inputs,
+        &train_outputs,
     )?;
 
     let output = NeuralMachineTestOutput {
@@ -219,13 +143,30 @@ pub fn train_model<T>(
         expected_argmax_values,
         actual_argmax_values,
     };
+
+    // Test on test examples.
+    let test_examples = details.test_examples;
+    for (test_number, (test_input, test_output)) in test_examples.iter().enumerate() {
+        let actual_output = neural_machine.infer(&test_input)?;
+        let loss = neural_machine.loss(&test_output)?;
+        let loss: &Tensor = &loss.tensor();
+        let loss: f32 = loss.try_into()?;
+        println!("test example: {},  loss: {}", test_number, loss,);
+
+        printer.print_expected_output_and_actual_output(
+            &test_input.tensor(),
+            &test_output.tensor(),
+            &actual_output.tensor(),
+        )?;
+    }
+
     Ok(output)
 }
 
 fn print_results<T>(
     epoch: usize,
     neural_machine: &mut NeuralMachine<T, DefaultStreamScheduler>,
-    tokenizer: &mut Option<Tokenizer>,
+    printer: &mut impl TensorPrinter,
     inputs: &[TensorWithGrad],
     outputs: &[TensorWithGrad],
 ) -> Result<(Vec<usize>, Vec<usize>), Error> {
@@ -243,7 +184,6 @@ fn print_results<T>(
         let loss: f32 = loss.try_into()?;
 
         let actual_output = &actual_output.tensor();
-        let perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
 
         let expected_output = &outputs[i].tensor();
         let expected_output_argmaxes = get_row_argmaxes(expected_output)?;
@@ -254,17 +194,13 @@ fn print_results<T>(
         let actual_argmax = actual_output_argmaxes[last_row].to_owned();
         actual_argmax_values.push(actual_argmax);
 
-        print_expected_output_and_actual_output(
-            epoch,
-            tokenizer,
-            i,
+        println!("----");
+        println!("  epoch: {}, example: {}, loss: {}", epoch, i, loss,);
+
+        printer.print_expected_output_and_actual_output(
             &input.tensor(),
             expected_output,
             actual_output,
-            expected_argmax,
-            actual_argmax,
-            loss,
-            perplexity,
         )?;
     }
 
@@ -325,7 +261,7 @@ pub fn total_metrics<T>(
     outputs: &[TensorWithGrad],
 ) -> Result<Metrics, Error> {
     let mut total_loss = 0.0;
-    let mut total_perplexity = 0.0;
+    let mut total_next_token_perplexity = 0.0;
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
         let actual_output = neural_machine.infer(&inputs[i])?;
@@ -339,12 +275,12 @@ pub fn total_metrics<T>(
         // Perplexity
         let actual_output = &actual_output.tensor();
         let perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
-        total_perplexity += perplexity;
+        total_next_token_perplexity += perplexity;
     }
 
     let metrics = Metrics {
         total_loss,
-        total_perplexity,
+        total_next_token_perplexity,
     };
     Ok(metrics)
 }

@@ -34,6 +34,7 @@ impl TransformerModel {
         layers: usize,
         sequence_length: usize,
         vocab_size: usize,
+        causal_mask: bool,
     ) -> Result<Self, Error> {
         let n_embd = 768;
         let num_heads = 12;
@@ -41,7 +42,6 @@ impl TransformerModel {
 
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
         let dropout = Dropout::try_new(device, sequence_length, n_embd, dropout_probability)?;
-        let causal_mask = true;
         let transformers = (0..layers)
             .map(|_| {
                 Transformer::try_new(

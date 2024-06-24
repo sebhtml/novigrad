@@ -1,13 +1,21 @@
 use crate::{
-    mega_man::MegaManModel, tensor::Error, Device, GradientDescent, Metrics,
-    SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
+    display::NextTokenPredictionPrinter, mega_man::MegaManModel, tensor::Error, Device,
+    GradientDescent, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
 
 use super::{load_examples, DatasetDetails};
 
 pub fn load_mega_man_linear_dataset(
     device: &Device,
-) -> Result<DatasetDetails<MegaManModel, SoftmaxCrossEntropyLoss, GradientDescent>, Error> {
+) -> Result<
+    DatasetDetails<
+        MegaManModel,
+        SoftmaxCrossEntropyLoss,
+        GradientDescent,
+        NextTokenPredictionPrinter,
+    >,
+    Error,
+> {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 10;
@@ -31,8 +39,8 @@ pub fn load_mega_man_linear_dataset(
     let optimizer = GradientDescent::new(learning_rate);
     let details = DatasetDetails {
         device: device.clone(),
-        tokenizer: Some(tokenizer),
-        examples,
+        train_examples: examples,
+        test_examples: vec![],
         model,
         loss_operator,
         optimizer,
@@ -43,13 +51,14 @@ pub fn load_mega_man_linear_dataset(
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
             total_loss: 50.0,
-            total_perplexity: 2500.0,
+            total_next_token_perplexity: 2500.0,
         },
         final_metrics: Metrics {
             total_loss: 0.0,
-            total_perplexity: 11.0,
+            total_next_token_perplexity: 11.0,
         },
         maximum_incorrect_argmaxes: 0,
+        printer: NextTokenPredictionPrinter::new(tokenizer),
     };
     Ok(details)
 }

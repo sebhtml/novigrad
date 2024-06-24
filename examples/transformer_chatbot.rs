@@ -16,9 +16,10 @@ fn main() -> Result<(), Error> {
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
     let maximum_device_streams = 16;
-    let layers = 1;
+    let layers = 2;
     let vocab_size = tokenizer.vocab_size();
-    let model = TransformerModel::new(&device, layers, sequence_length, vocab_size)?;
+    let causal_mask = true;
+    let model = TransformerModel::new(&device, layers, sequence_length, vocab_size, causal_mask)?;
     let vocab_size = tokenizer.vocab_size();
     let loss_operator = SoftmaxCrossEntropyLoss::new(&device);
     let learning_rate = 0.05;

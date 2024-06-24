@@ -3,11 +3,12 @@ use rand::thread_rng;
 use std::time::SystemTime;
 
 use crate::{
+    datasets::DatasetDetails,
     neural_program::NeuralProgram,
     perplexity::get_perplexity,
     schedulers::DefaultStreamScheduler,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, ModelDetails, NeuralMachine, OptimizerTrait, TensorWithGrad, Tokenizer,
+    BinaryOperator, Device, NeuralMachine, OptimizerTrait, TensorWithGrad, Tokenizer,
     TokenizerTrait, UnaryModel,
 };
 
@@ -144,7 +145,7 @@ pub struct NeuralMachineTestOutput {
 }
 
 pub fn train_model<T>(
-    details: ModelDetails<impl UnaryModel, impl BinaryOperator, impl OptimizerTrait>,
+    details: DatasetDetails<impl UnaryModel, impl BinaryOperator, impl OptimizerTrait>,
 ) -> Result<NeuralMachineTestOutput, Error> {
     let mut initial_metrics = Metrics {
         total_loss: f32::NAN,

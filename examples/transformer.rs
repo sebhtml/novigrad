@@ -1,7 +1,7 @@
-use novigrad::{train_model, transformer_model::load_transformer_model, Device};
+use novigrad::{datasets::geoffroy_hinton::load_geoffroy_hinton_dataset, train_model, Device};
 
 fn main() {
     let device = Device::default();
-    let details = load_transformer_model(&device).unwrap();
+    let details = load_geoffroy_hinton_dataset(&device).unwrap();
     train_model::<f32>(details).unwrap();
 }

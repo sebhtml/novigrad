@@ -1,4 +1,4 @@
-use super::load_examples;
+use crate::datasets::load_examples;
 use crate::statistics::layer_norm::LayerNormalization;
 use crate::transformer::Transformer;
 use crate::{tensor::Error, ModelDetails};

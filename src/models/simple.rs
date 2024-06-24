@@ -1,7 +1,7 @@
+use crate::datasets::into_one_hot_encoded_rows;
 use crate::{
-    error, into_one_hot_encoded_rows, tensor::Error, tensor::ErrorEnum, Device, GradientDescent,
-    Metrics, ModelDetails, SoftmaxCrossEntropyLoss, TensorWithGrad, Tokenizer, TokenizerTrait,
-    UnaryModel, UnaryOperator,
+    error, tensor::Error, tensor::ErrorEnum, Device, GradientDescent, Metrics, ModelDetails,
+    SoftmaxCrossEntropyLoss, TensorWithGrad, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,
 };
 use crate::{Embedding, Linear, Model, Reshape, Sigmoid, Softmax, WeightsInitialization};
 

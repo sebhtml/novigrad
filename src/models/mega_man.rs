@@ -1,4 +1,4 @@
-use super::load_examples;
+use crate::datasets::load_examples;
 use crate::{
     new_tensor_with_grad, BinaryOperator, Device, GradientDescent, Metrics,
     SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait, UnaryModel, UnaryOperator,

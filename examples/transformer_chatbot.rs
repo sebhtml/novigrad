@@ -1,5 +1,6 @@
 use novigrad::{
-    error, get_row_argmax, into_one_hot_encoded_rows,
+    datasets::into_one_hot_encoded_rows,
+    error, get_row_argmax,
     neural_program::NeuralProgram,
     schedulers::DefaultStreamScheduler,
     tensor::{Error, ErrorEnum, Tensor},

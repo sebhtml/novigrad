@@ -1,4 +1,4 @@
-use super::load_examples;
+use crate::datasets::load_examples;
 use crate::neural_program::NeuralProgram;
 use crate::{tensor::Error, ModelDetails};
 use crate::{

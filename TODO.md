@@ -1,5 +1,6 @@
 == Story: Arc prize ==
 
+- adam t should be in 0..num_iterations
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 - maybe the pthread lock is caused by checking if the loss is 0
@@ -43,7 +44,6 @@
 - use Category::Parameter to determine parameters
 
 ---------------
-- TODO adam t should be in 0..num_iterations
 
 - device interface use <T>
 - Implement code with f16
@@ -67,7 +67,7 @@
 
 == Refactoring ==
 
-- merge the many load_examples functions
+- merge the many load_examples / generate_examples functions
 
 == Fixes ==
 

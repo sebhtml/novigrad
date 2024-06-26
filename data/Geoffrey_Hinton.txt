@@ -1,1 +1,3 @@
+[example]
 Geoffrey Everest Hinton CC FRS FRSC[12] (born 6 December 1947) is a British-Canadian computer scientist and cognitive psychologist, most noted for his work on artificial neural networks. From 2013 to 2023, he divided his time working for Google (Google Brain) and the University of Toronto, before publicly announcing his departure from Google in May 2023, citing concerns about the risks of artificial intelligence (AI) technology.[13] In 2017, he co-founded and became the chief scientific advisor of the Vector Institute in Toronto.[14][15] 
+[/example]

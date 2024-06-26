@@ -15,10 +15,10 @@ pub fn load_geoffroy_hinton_dataset(
     let max_chars = None;
     let max_number_of_examples = 16;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
-    let sequence_length = 64;
+    let context_length = 64;
 
-    let input_sequence_length = sequence_length;
-    let output_sequence_length = sequence_length;
+    let input_sequence_length = context_length;
+    let output_sequence_length = context_length;
     let examples = load_examples(
         device,
         file_path,
@@ -32,7 +32,19 @@ pub fn load_geoffroy_hinton_dataset(
     let vocab_size = tokenizer.vocab_size();
     let layers = 2;
     let causal_mask = true;
-    let model = TransformerModel::new(device, layers, sequence_length, vocab_size, causal_mask)?;
+    let num_heads = 12;
+    let dropout_probability = 0.1;
+    let n_embd = 768;
+    let model = TransformerModel::new(
+        device,
+        layers,
+        num_heads,
+        dropout_probability,
+        n_embd,
+        context_length,
+        vocab_size,
+        causal_mask,
+    )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;

@@ -76,9 +76,21 @@ pub fn load_arc_dataset(
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
-    let layers = 1;
+    let layers = 2;
+    let num_heads = 12;
+    let dropout_probability = 0.1;
+    let n_embd = 768;
     let causal_mask = false;
-    let model = TransformerModel::new(device, layers, sequence_length, vocab_size, causal_mask)?;
+    let model = TransformerModel::new(
+        device,
+        layers,
+        num_heads,
+        dropout_probability,
+        n_embd,
+        sequence_length,
+        vocab_size,
+        causal_mask,
+    )?;
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: training_examples,

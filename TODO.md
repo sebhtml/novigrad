@@ -1,5 +1,9 @@
 == Story: Arc prize ==
 
+- increase examples in transformer test from 10 to 100
+- the transformer model does not work probably because of buggy residual links
+- the transformer model does not work with layers=2 probably because ClipNorm causes a vanishing gradient
+- adam t should be in 0..num_iterations
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 - maybe the pthread lock is caused by checking if the loss is 0
@@ -32,10 +36,6 @@
 
 ---------------
 
-- increase examples in mega_man_attention from 10 to 100
-
----------------
-
 - improve Bernoulli CUDA kernel by using other shift values for halt the indices
 
 - add Tensor categories
@@ -43,7 +43,6 @@
 - use Category::Parameter to determine parameters
 
 ---------------
-- TODO adam t should be in 0..num_iterations
 
 - device interface use <T>
 - Implement code with f16
@@ -67,7 +66,7 @@
 
 == Refactoring ==
 
-- merge the many load_examples functions
+- merge the many load_examples / generate_examples functions
 
 == Fixes ==
 

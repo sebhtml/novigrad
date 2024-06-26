@@ -6,7 +6,7 @@ use novigrad::{
     tensor::{Error, ErrorEnum, Tensor},
     transformer_model::TransformerModel,
     Adam, Device, NeuralMachine, SoftmaxCrossEntropyLoss, TensorWithGrad, Tokenizer,
-    TokenizerTrait, UnaryModel,
+    TokenizerTrait,
 };
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
@@ -15,9 +15,9 @@ use std::{fs::read_to_string, io};
 fn main() -> Result<(), Error> {
     let device = Device::default();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
-    let context_length = 256;
-    let _padding_token = 0;
-    let layers = 2;
+    let context_length = 32; //256;
+    let padding_token = 0;
+    let layers = 1;
     let num_heads = 12;
     let dropout_probability = 0.1;
     let n_embd = 768;
@@ -87,33 +87,40 @@ fn main() -> Result<(), Error> {
         println!("examples: {}", indices.len());
         for i in indices.iter() {
             let (input_one_hot, expected_output_one_hot) = &train_examples[*i];
-            let _actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
+            let actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
             let loss = neural_machine.loss(&expected_output_one_hot)?;
             let loss: &Tensor = &loss.tensor();
             let loss: f32 = loss.try_into()?;
-            println!("i {} loss {}", i, loss);
+            let expected_next_token =
+                get_row_argmax(&expected_output_one_hot.tensor(), context_length - 1)?;
+            let actual_next_token =
+                get_row_argmax(&actual_output_one_hot.tensor(), context_length - 1)?;
+            println!(
+                "example: {}, loss {}, expected_next_token: {}, actual_next_token: {}",
+                i, loss, expected_next_token, actual_next_token
+            );
             total_loss += loss;
             neural_machine.compute_gradient()?;
             neural_machine.optimize()?;
         }
         println!("Loss: {}", total_loss);
 
-        /*
-        let prompt = &train_corpus[0..64];
+        let prompt = &train_corpus[0..25];
         println!("Prompt:  {}", prompt);
         let prompt_tokens = tokenizer.encode(prompt);
-        let max_len = train_corpus.len();
+        let max_len = 60;
         let auto_regressive_tokens = auto_regressive_inference(
-            &model,
             &mut neural_machine,
             &device,
             &prompt_tokens,
+            context_length,
+            vocab_size,
             max_len,
+            padding_token,
         )?;
         let actual_output = tokenizer.decode(&auto_regressive_tokens)?;
 
         println!("Chatbot: {}", actual_output);
-         */
     }
 
     Ok(())
@@ -135,24 +142,22 @@ fn _read_prompt() -> Result<String, Error> {
 }
 
 fn auto_regressive_inference(
-    model: &impl UnaryModel,
     neural_machine: &mut NeuralMachine<f32, DefaultStreamScheduler>,
     device: &Device,
     prompt_tokens: &[usize],
+    context_length: usize,
+    vocab_size: usize,
     max_len: usize,
+    padding_token: usize,
 ) -> Result<Vec<usize>, Error> {
-    let mut auto_regressive_tokens = vec![0_usize; 0];
-    for token in prompt_tokens {
-        auto_regressive_tokens.push(*token);
-    }
-    let context_length = model.input_size()[0];
-    let vocab_size = model.input_size()[1];
+    let mut auto_regressive_tokens = prompt_tokens.to_owned();
+
     // TODO implement another stopping criterion.
     while auto_regressive_tokens.len() < max_len {
         let input_tokens = if auto_regressive_tokens.len() <= context_length {
             vec![
                 auto_regressive_tokens.clone(),
-                vec![0; context_length - auto_regressive_tokens.len()],
+                vec![padding_token; context_length - auto_regressive_tokens.len()],
             ]
             .concat()
         } else {
@@ -168,6 +173,7 @@ fn auto_regressive_inference(
             context_length - 1
         };
         let predicted_next_token = get_row_argmax(&actual_output_one_hot.tensor(), last_row)?;
+        println!("predicted next token: {}", predicted_next_token);
         auto_regressive_tokens.push(predicted_next_token);
     }
     Ok(auto_regressive_tokens)
@@ -217,6 +223,8 @@ fn generate_examples(
         let output_tokens = &tokens[i + 1..i + context_length + 1];
         let output_one_hot = into_one_hot_encoded_rows(&device, &output_tokens, vocab_size)?;
 
+        //println!("in {:?}", input_tokens);
+        //println!("out {:?}", output_tokens);
         examples.push((input_one_hot, output_one_hot));
     }
     Ok(examples)

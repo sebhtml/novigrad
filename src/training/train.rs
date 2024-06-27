@@ -294,7 +294,7 @@ fn train_with_one_example<T>(
     let _loss = neural_machine.loss(output)?;
     neural_machine.compute_gradient()?;
     neural_machine.optimize()?;
-
+    neural_machine.zero_grad()?;
     Ok(())
 }
 

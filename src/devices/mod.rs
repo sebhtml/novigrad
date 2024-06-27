@@ -287,6 +287,7 @@ pub struct Device {
     next_name: Arc<RwLock<usize>>,
     used: Arc<RwLock<usize>>,
     tensors: Arc<RwLock<Vec<Tensor>>>,
+    tensors_with_grad: Arc<RwLock<Vec<TensorWithGrad>>>,
     tensors_to_optimize: Arc<RwLock<Vec<TensorWithGrad>>>,
     device: Arc<dyn DeviceTrait + Send + Sync>,
     available_buffers: Arc<RwLock<HashMap<usize, LinkedList<DevSlice>>>>,
@@ -313,6 +314,7 @@ impl Device {
             next_name: Default::default(),
             used: Default::default(),
             tensors: Default::default(),
+            tensors_with_grad: Default::default(),
             tensors_to_optimize: Default::default(),
             device,
             available_buffers: Default::default(),
@@ -453,6 +455,9 @@ impl Device {
             )?
         };
         let tensor = TensorWithGrad::new(tensor, gradient, inputs);
+        if requires_grad {
+            self.tensors_with_grad.write().unwrap().push(tensor.clone())
+        }
         if optimize {
             self.tensors_to_optimize
                 .write()
@@ -476,6 +481,10 @@ impl Device {
 
     pub fn tensors(&self) -> impl Deref<Target = Vec<Tensor>> + '_ {
         self.tensors.read().unwrap()
+    }
+
+    pub fn tensors_with_grad(&self) -> impl Deref<Target = Vec<TensorWithGrad>> + '_ {
+        self.tensors_with_grad.read().unwrap()
     }
 
     pub fn tensors_to_optimize(&self) -> impl Deref<Target = Vec<TensorWithGrad>> + '_ {

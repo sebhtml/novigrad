@@ -56,19 +56,7 @@ impl UnaryOperator for ScalarMul {
         )?;
         let inputs = [input];
         let outputs = [&output];
-        let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
-        output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul,
-            OperatorAttributes::None,
-            &[&zero, &outputs[0].tensor()],
-            &[&outputs[0].tensor()],
-        ));
-        output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul,
-            OperatorAttributes::None,
-            &[&zero, &outputs[0].gradient()],
-            &[&outputs[0].gradient()],
-        ));
+
         let alpha = new_tensor!(self.device, 1, 1, vec![self.alpha])?;
         output.push_instruction(inference_instruction!(
             OpCode::ScalarMul,

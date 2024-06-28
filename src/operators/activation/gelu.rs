@@ -53,19 +53,6 @@ impl UnaryOperator for Gelu {
             false
         )?;
 
-        let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
-        output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul,
-            OperatorAttributes::None,
-            &[&zero, &output.tensor()],
-            &[&output.tensor()],
-        ));
-        output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul,
-            OperatorAttributes::None,
-            &[&zero, &output.gradient()],
-            &[&output.gradient()],
-        ));
         output.push_instruction(inference_instruction!(
             OpCode::Gelu,
             OperatorAttributes::None,

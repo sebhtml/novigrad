@@ -1,11 +1,11 @@
 use std::{collections::HashSet, ops::Deref};
 
 use crate::{
-    gradient_instruction, new_tensor_with_grad,
+    gradient_instruction, instruction, new_tensor, new_tensor_with_grad,
     opcode::OpCode,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, Instruction, OperatorAttributes, OptimizerTrait, TensorWithGrad,
-    UnaryModel,
+    BinaryOperator, Category, Device, Instruction, OperatorAttributes, OptimizerTrait,
+    TensorWithGrad, UnaryModel,
 };
 
 pub struct NeuralProgram {
@@ -93,9 +93,22 @@ impl NeuralProgram {
             processed_backward_tensors.insert(tensor_name);
         }
 
-        let tensors = device.tensors_to_optimize();
-        let mut optimizer_instructions = optimizer.optimize(device, &tensors)?;
+        let tensors_to_optimize = device.tensors_to_optimize();
+        let mut optimizer_instructions = optimizer.optimize(device, &tensors_to_optimize)?;
         instructions.append(&mut optimizer_instructions);
+
+        let zero = new_tensor!(device, 1, 1, vec![0.0])?;
+        let tensors_with_grad = device.tensors_with_grad();
+        for tensor in tensors_with_grad.iter() {
+            let inst = instruction!(
+                OpCode::ScalarMul,
+                OperatorAttributes::None,
+                &[&zero, &tensor.gradient()],
+                &[&tensor.gradient()],
+                Category::ZeroGrad,
+            );
+            instructions.push(inst);
+        }
 
         let program = NeuralProgram {
             example_input,

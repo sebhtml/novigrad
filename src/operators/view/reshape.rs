@@ -1,6 +1,6 @@
 use crate::{
     devices::Device,
-    error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    error, gradient_instruction, inference_instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
@@ -63,19 +63,7 @@ impl UnaryOperator for Reshape {
         .unwrap();
         let inputs = [input];
         let outputs = [&output];
-        let zero = new_tensor!(self.device, 1, 1, vec![0.0]).unwrap();
-        output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul,
-            OperatorAttributes::None,
-            &[&zero, &outputs[0].tensor()],
-            &[&outputs[0].tensor()],
-        ));
-        output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul,
-            OperatorAttributes::None,
-            &[&zero, &outputs[0].gradient()],
-            &[&outputs[0].gradient()],
-        ));
+
         output.push_instruction(inference_instruction!(
             OpCode::Reshape,
             OperatorAttributes::Vec(self.output_size.clone()),

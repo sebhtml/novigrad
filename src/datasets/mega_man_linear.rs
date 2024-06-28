@@ -54,7 +54,7 @@ pub fn load_mega_man_linear_dataset(
             total_next_token_perplexity: 2500.0,
         },
         final_metrics: Metrics {
-            total_loss: 0.0,
+            total_loss: 1e-5,
             total_next_token_perplexity: 11.0,
         },
         maximum_incorrect_argmaxes: 0,

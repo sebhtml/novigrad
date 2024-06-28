@@ -1,5 +1,5 @@
 use crate::{
-    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    gradient_instruction, inference_instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
@@ -33,13 +33,6 @@ impl UnaryOperator for Standardization {
             true,
             false
         )?;
-        let zero = new_tensor!(self.device, 1, 1, vec![0.0])?;
-        output.push_instruction(inference_instruction!(
-            OpCode::ScalarMul,
-            OperatorAttributes::None,
-            &[&zero, &output.gradient()],
-            &[&output.gradient()],
-        ));
         output.push_instruction(inference_instruction!(
             OpCode::Standardization,
             OperatorAttributes::None,

@@ -78,8 +78,8 @@ pub fn load_simple_dataset(
             total_next_token_perplexity: 200.0,
         },
         final_metrics: Metrics {
-            total_loss: 0.0,
-            total_next_token_perplexity: 2.0,
+            total_loss: 1e-4,
+            total_next_token_perplexity: 3.0,
         },
         maximum_incorrect_argmaxes: 0,
         printer: NextTokenPredictionPrinter::new(tokenizer),

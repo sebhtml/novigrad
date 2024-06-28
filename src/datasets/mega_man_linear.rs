@@ -59,6 +59,7 @@ pub fn load_mega_man_linear_dataset(
         },
         maximum_incorrect_argmaxes: 0,
         printer: NextTokenPredictionPrinter::new(tokenizer),
+        batch_size: 1,
     };
     Ok(details)
 }

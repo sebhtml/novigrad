@@ -67,15 +67,17 @@ impl UnaryOperator for Softmax {
             &[&outputs[0].tensor()],
         ));
 
-        if self.next_is_cross_entropy_loss {
-            output.push_instruction(gradient_instruction!(
-                OpCode::Add,
-                OperatorAttributes::None,
-                &[&output.gradient(), &input.gradient(),],
-                &[&input.gradient()],
-            ));
-        } else {
-            emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output)?;
+        if input.gradient().requires_grad() {
+            if self.next_is_cross_entropy_loss {
+                output.push_instruction(gradient_instruction!(
+                    OpCode::Add,
+                    OperatorAttributes::None,
+                    &[&output.gradient(), &input.gradient(),],
+                    &[&input.gradient()],
+                ));
+            } else {
+                emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output)?;
+            }
         }
 
         Ok(output)

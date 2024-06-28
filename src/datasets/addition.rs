@@ -55,6 +55,7 @@ pub fn load_addition_dataset(
         },
         maximum_incorrect_argmaxes: 0,
         printer: RawPrinter::default(),
+        batch_size: 1,
     };
     Ok(details)
 }

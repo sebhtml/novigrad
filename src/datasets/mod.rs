@@ -30,6 +30,7 @@ where
     pub model: Model,
     pub loss_operator: LossOperator,
     pub optimizer: Optimizer,
+    pub batch_size: usize,
     pub learning_rate: f32,
     pub shuffle_examples: bool,
     pub clipped_gradient_norm: bool,

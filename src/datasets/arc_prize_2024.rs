@@ -113,6 +113,7 @@ pub fn load_arc_dataset(
         },
         maximum_incorrect_argmaxes: 0,
         printer: BoardPrinter::default(),
+        batch_size: 1,
     };
     Ok(details)
 }

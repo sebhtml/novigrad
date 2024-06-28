@@ -28,7 +28,7 @@ impl Mask {
                 }
             }
         }
-        let mask = new_tensor_with_grad!(device, mask_rows, mask_cols, values, &[], true, true)?;
+        let mask = new_tensor_with_grad!(device, mask_rows, mask_cols, values, &[], false, false)?;
 
         let mul = Mul::new(device);
         let mask = Self { mask, mul };

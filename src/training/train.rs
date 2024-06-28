@@ -1,8 +1,7 @@
-use rand::seq::SliceRandom;
-use rand::thread_rng;
 use std::time::SystemTime;
 
 use crate::{
+    batch::make_batches,
     datasets::DatasetDetails,
     display::TensorPrinter,
     neural_program::NeuralProgram,
@@ -78,6 +77,7 @@ pub fn train_model<T>(
     let device = details.device;
     let clipped_gradient_norm = details.clipped_gradient_norm;
     let shuffle_examples = details.shuffle_examples;
+    let batch_size = details.batch_size;
     let optimizer = details.optimizer;
     let mut printer = details.printer;
 
@@ -108,7 +108,10 @@ pub fn train_model<T>(
         &train_outputs,
     )?;
 
+    let indices = (0..train_examples.len()).collect::<Vec<_>>();
+
     for epoch in 0..epochs {
+        let batches = make_batches(&indices, shuffle_examples, batch_size);
         if epoch % progress == 0 {
             let metrics = total_metrics(&mut neural_machine, &train_inputs, &train_outputs)?;
             print_metrics(epoch, &metrics, &previous_metrics)?;
@@ -118,12 +121,7 @@ pub fn train_model<T>(
             }
             previous_metrics = metrics.clone();
         }
-        train(
-            &mut neural_machine,
-            shuffle_examples,
-            &train_inputs,
-            &train_outputs,
-        )?;
+        train_on_batches(&mut neural_machine, &batches, &train_inputs, &train_outputs)?;
     }
     let final_metrics = total_metrics(&mut neural_machine, &train_inputs, &train_outputs)?;
     print_metrics(epochs, &final_metrics, &previous_metrics)?;
@@ -239,19 +237,24 @@ pub fn get_row_argmax(tensor: &Tensor, row: usize) -> Result<usize, Error> {
     Ok(argmax_col)
 }
 
-pub fn train<T>(
+pub fn train_on_batches<T>(
     neural_machine: &mut NeuralMachine<T, DefaultStreamScheduler>,
-    shuffle_examples: bool,
+    batches: &[Vec<usize>],
     inputs: &Vec<TensorWithGrad>,
     outputs: &Vec<TensorWithGrad>,
 ) -> Result<(), Error> {
-    let mut indices: Vec<usize> = (0..inputs.len()).collect();
-    if shuffle_examples {
-        indices.shuffle(&mut thread_rng());
+    for batch in batches {
+        for i in batch.iter() {
+            let input = &inputs[*i];
+            let output = &outputs[*i];
+            let _output = neural_machine.infer(input)?;
+            let _loss = neural_machine.loss(output)?;
+            neural_machine.compute_gradient()?;
+        }
+        neural_machine.optimize()?;
+        neural_machine.zero_grad()?;
     }
-    for i in indices.into_iter() {
-        train_with_one_example(neural_machine, &inputs[i], &outputs[i])?;
-    }
+
     Ok(())
 }
 
@@ -283,19 +286,6 @@ pub fn total_metrics<T>(
         total_next_token_perplexity,
     };
     Ok(metrics)
-}
-
-fn train_with_one_example<T>(
-    neural_machine: &mut NeuralMachine<T, DefaultStreamScheduler>,
-    input: &TensorWithGrad,
-    output: &TensorWithGrad,
-) -> Result<(), Error> {
-    let _output = neural_machine.infer(input)?;
-    let _loss = neural_machine.loss(output)?;
-    neural_machine.compute_gradient()?;
-    neural_machine.optimize()?;
-    neural_machine.zero_grad()?;
-    Ok(())
 }
 
 pub fn time_it<F: Fn() -> T, T>(text: &str, f: F) -> T {

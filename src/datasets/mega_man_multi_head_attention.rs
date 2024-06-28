@@ -63,6 +63,7 @@ pub fn load_mega_man_attention_dataset(
         },
         maximum_incorrect_argmaxes: 2,
         printer: NextTokenPredictionPrinter::new(tokenizer),
+        batch_size: 1,
     };
     Ok(details)
 }

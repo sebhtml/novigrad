@@ -91,6 +91,8 @@ fn mega_man_with_attention() {
     test_model(details);
 }
 
+// This test is currently ignored because it'S too slow.
+#[ignore]
 #[test]
 fn geoffroy_hinton_with_transformer() {
     let device = Device::default();

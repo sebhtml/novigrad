@@ -1,6 +1,6 @@
 use crate::{
-    display::NextTokenPredictionPrinter, tensor::Error, transformer_model::TransformerModel, Adam,
-    Device, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
+    display::NextTokenPredictionPrinter, tensor::Error, transformer_model::TransformerModel,
+    Device, GradientDescent, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
 
 use super::{load_examples, DatasetDetails};
@@ -8,12 +8,17 @@ use super::{load_examples, DatasetDetails};
 pub fn load_geoffroy_hinton_dataset(
     device: &Device,
 ) -> Result<
-    DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam, NextTokenPredictionPrinter>,
+    DatasetDetails<
+        TransformerModel,
+        SoftmaxCrossEntropyLoss,
+        GradientDescent,
+        NextTokenPredictionPrinter,
+    >,
     Error,
 > {
     let file_path = "data/Geoffrey_Hinton.txt";
     let max_chars = None;
-    let max_number_of_examples = 16;
+    let max_number_of_examples = 30;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let context_length = 64;
 
@@ -47,8 +52,9 @@ pub fn load_geoffroy_hinton_dataset(
     )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let learning_rate = 0.05;
-    let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
+    let learning_rate = 0.2;
+    //let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
+    let optimizer = GradientDescent::new(learning_rate);
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,
@@ -71,6 +77,7 @@ pub fn load_geoffroy_hinton_dataset(
         },
         maximum_incorrect_argmaxes: 0,
         printer: NextTokenPredictionPrinter::new(tokenizer),
+        batch_size: 8,
     };
     Ok(details)
 }

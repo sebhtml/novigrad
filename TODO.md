@@ -1,15 +1,19 @@
 == Story: Arc prize ==
 
+- increase batch_size for mega_man_with_linear
+- honour requires_grad() when updating gradients
+- Make sure that backward instruction add on top of existing gradients (no overwrite)
 - increase examples in transformer test from 10 to 100
-- the transformer model does not work probably because of buggy residual links
 - the transformer model does not work with layers=2 probably because ClipNorm causes a vanishing gradient
-- adam t should be in 0..num_iterations
+
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
+
+- Implement Transformer idea for the Arc prize challenge (left-to-right residual connections)
+
+- adam t should be in 0..num_iterations
+
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 - maybe the pthread lock is caused by checking if the loss is 0
-
-- Make sure that backward instruction add on top of existing gradients (no overwrite)
-- Implement Transformer idea for the Arc prize challenge (left-to-right residual connections)
 
 == Clean-up ==
 

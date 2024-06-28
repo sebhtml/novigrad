@@ -91,7 +91,7 @@ fn mega_man_with_attention() {
     test_model(details);
 }
 
-// This test is currently ignored because it'S too slow.
+// This test is currently ignored because it's too slow.
 #[ignore]
 #[test]
 fn geoffroy_hinton_with_transformer() {

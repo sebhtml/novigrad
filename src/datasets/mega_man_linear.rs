@@ -18,7 +18,7 @@ pub fn load_mega_man_linear_dataset(
 > {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
-    let max_number_of_examples = 10;
+    let max_number_of_examples = 1000;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
     let input_sequence_length = sequence_length;
@@ -50,16 +50,16 @@ pub fn load_mega_man_linear_dataset(
         shuffle_examples: true,
         clipped_gradient_norm: true,
         initial_metrics: Metrics {
-            total_loss: 50.0,
-            total_next_token_perplexity: 2500.0,
+            total_loss: 5500.0,
+            total_next_token_perplexity: 250000.0,
         },
         final_metrics: Metrics {
-            total_loss: 1e-5,
-            total_next_token_perplexity: 11.0,
+            total_loss: 40.0,
+            total_next_token_perplexity: 1010.0,
         },
         maximum_incorrect_argmaxes: 0,
         printer: NextTokenPredictionPrinter::new(tokenizer),
-        batch_size: 1,
+        batch_size: 64,
     };
     Ok(details)
 }

@@ -4,7 +4,7 @@ use more_asserts::assert_le;
 use crate::datasets::addition::load_addition_dataset;
 use crate::datasets::geoffroy_hinton::load_geoffroy_hinton_dataset;
 use crate::datasets::mega_man_linear::load_mega_man_linear_dataset;
-use crate::datasets::mega_man_multi_head_attention::load_mega_man_attention_dataset;
+use crate::datasets::mega_man_multi_head_attention::load_mega_man_multi_head_attention_dataset;
 use crate::datasets::simple::load_simple_dataset;
 use crate::datasets::DatasetDetails;
 use crate::display::TensorPrinter;
@@ -78,16 +78,16 @@ fn simple() {
 }
 
 #[test]
-fn mega_man_with_linear() {
+fn mega_man_linear() {
     let device = Device::default();
     let details = load_mega_man_linear_dataset(&device).unwrap();
     test_model(details);
 }
 
 #[test]
-fn mega_man_with_attention() {
+fn mega_man_multi_head_attention() {
     let device = Device::default();
-    let details = load_mega_man_attention_dataset(&device).unwrap();
+    let details = load_mega_man_multi_head_attention_dataset(&device).unwrap();
     test_model(details);
 }
 

@@ -6,7 +6,7 @@ use crate::{
 
 use super::{load_examples, DatasetDetails};
 
-pub fn load_mega_man_attention_dataset(
+pub fn load_mega_man_multi_head_attention_dataset(
     device: &Device,
 ) -> Result<
     DatasetDetails<
@@ -19,7 +19,7 @@ pub fn load_mega_man_attention_dataset(
 > {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
-    let max_number_of_examples = 10;
+    let max_number_of_examples = 100;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
 
@@ -71,7 +71,7 @@ pub fn load_mega_man_attention_dataset(
 pub fn get_multi_head_attention_model_instructions(
     device: &Device,
 ) -> Result<Vec<Instruction>, Error> {
-    let details = load_mega_man_attention_dataset(device)?;
+    let details = load_mega_man_multi_head_attention_dataset(device)?;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;

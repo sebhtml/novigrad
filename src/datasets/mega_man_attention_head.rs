@@ -1,25 +1,19 @@
 use crate::{
-    display::NextTokenPredictionPrinter, multi_head_attention_model::MultiHeadAttentionModel,
-    neural_program::NeuralProgram, tensor::Error, Adam, Device, Instruction, Metrics,
-    SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
+    attention_head_model::AttentionHeadModel, display::NextTokenPredictionPrinter, tensor::Error,
+    Adam, Device, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
 
 use super::{load_examples, DatasetDetails};
 
-pub fn load_mega_man_multi_head_attention_dataset(
+pub fn load_mega_man_attention_head_dataset(
     device: &Device,
 ) -> Result<
-    DatasetDetails<
-        MultiHeadAttentionModel,
-        SoftmaxCrossEntropyLoss,
-        Adam,
-        NextTokenPredictionPrinter,
-    >,
+    DatasetDetails<AttentionHeadModel, SoftmaxCrossEntropyLoss, Adam, NextTokenPredictionPrinter>,
     Error,
 > {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
-    let max_number_of_examples = 100;
+    let max_number_of_examples = 4;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
 
@@ -36,7 +30,17 @@ pub fn load_mega_man_multi_head_attention_dataset(
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let model = MultiHeadAttentionModel::new(device, sequence_length, vocab_size)?;
+    let n_embd = 768;
+    let causal_mask = false;
+    let dropout_probability = 0.0;
+    let model = AttentionHeadModel::new(
+        device,
+        sequence_length,
+        vocab_size,
+        n_embd,
+        causal_mask,
+        dropout_probability,
+    )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
@@ -66,23 +70,4 @@ pub fn load_mega_man_multi_head_attention_dataset(
         batch_size: 1,
     };
     Ok(details)
-}
-
-pub fn get_multi_head_attention_model_instructions(
-    device: &Device,
-) -> Result<Vec<Instruction>, Error> {
-    let details = load_mega_man_multi_head_attention_dataset(device)?;
-    let model = details.model;
-    let loss_operator = details.loss_operator;
-    let optimizer = details.optimizer;
-    let clipped_gradient_norm = true;
-    let program = NeuralProgram::try_new(
-        device,
-        &model,
-        &loss_operator,
-        &optimizer,
-        clipped_gradient_norm,
-    )?;
-    let instructions = program.instructions;
-    Ok(instructions)
 }

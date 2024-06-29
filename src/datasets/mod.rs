@@ -13,6 +13,7 @@ use crate::{
 pub mod addition;
 pub mod arc_prize_2024;
 pub mod geoffroy_hinton;
+pub mod mega_man_attention_head;
 pub mod mega_man_linear;
 pub mod mega_man_multi_head_attention;
 pub mod simple;

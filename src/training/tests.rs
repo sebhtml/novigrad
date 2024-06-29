@@ -3,6 +3,7 @@ use more_asserts::assert_le;
 
 use crate::datasets::addition::load_addition_dataset;
 use crate::datasets::geoffroy_hinton::load_geoffroy_hinton_dataset;
+use crate::datasets::mega_man_attention_head::load_mega_man_attention_head_dataset;
 use crate::datasets::mega_man_linear::load_mega_man_linear_dataset;
 use crate::datasets::mega_man_multi_head_attention::load_mega_man_multi_head_attention_dataset;
 use crate::datasets::simple::load_simple_dataset;
@@ -81,6 +82,13 @@ fn simple() {
 fn mega_man_linear() {
     let device = Device::default();
     let details = load_mega_man_linear_dataset(&device).unwrap();
+    test_model(details);
+}
+
+#[test]
+fn mega_man_attention_head() {
+    let device = Device::default();
+    let details = load_mega_man_attention_head_dataset(&device).unwrap();
     test_model(details);
 }
 

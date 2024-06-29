@@ -85,12 +85,10 @@ pub fn load_examples(
     if let Some(max_chars) = max_chars {
         text = text[0..max_chars].to_owned();
     }
-    println!("[load_megaman_examples] loaded {} bytes", text.len());
     let tokens: Vec<usize> = tokenizer.encode(&text);
     let vocab_size = tokenizer.vocab_size();
-    println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
-    while i + input_sequence_length < tokens.len() && i < max_number_of_examples {
+    while i + input_sequence_length < tokens.len() && examples.len() < max_number_of_examples {
         let input_begin = i;
         let input_end = input_begin + input_sequence_length;
         let input_tokens = &tokens[input_begin..input_end];

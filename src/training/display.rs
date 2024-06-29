@@ -60,13 +60,19 @@ impl TensorPrinter for NextTokenPredictionPrinter {
             as_printable(actual_output_text, '?'),
         );
         println!("  actual_output_token: {}", actual_output_token);
+        println!("  next_token_perplexity: {}", next_token_perplexity);
+
+        let next_token_correctness = if expected_output_token == actual_output_token {
+            1
+        } else {
+            0
+        };
+        println!("  next_token_correctness: {}", next_token_correctness);
 
         if expected_output.cols() < 10 {
             println!("expected_output {}", expected_output);
             println!("actual_output {}", actual_output);
         }
-
-        println!("next_token_perplexity: {}", next_token_perplexity);
 
         Ok(())
     }

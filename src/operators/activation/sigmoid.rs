@@ -50,13 +50,11 @@ impl UnaryOperator for Sigmoid {
             false
         )?;
 
-        let inputs = [input];
-        let outputs = [&output];
         output.push_instruction(inference_instruction!(
             OpCode::Sigmoid,
             OperatorAttributes::None,
-            &[&inputs[0].tensor()],
-            &[&outputs[0].tensor()],
+            &[&input.tensor()],
+            &[&output.tensor()],
         ));
 
         emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output)?;

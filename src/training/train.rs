@@ -75,7 +75,7 @@ pub fn train_model<T>(
     let loss_operator = details.loss_operator;
     let maximum_device_streams = 16;
     let device = details.device;
-    let clipped_gradient_norm = details.clipped_gradient_norm;
+    let clipped_gradient_norm = details.clip_gradient_norm;
     let shuffle_examples = details.shuffle_examples;
     let batch_size = details.batch_size;
     let optimizer = details.optimizer;

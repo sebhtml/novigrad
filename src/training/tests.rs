@@ -23,11 +23,12 @@ fn test_model(
         impl TensorPrinter,
     >,
 ) {
-    let expected_initial_total_loss_min = details.initial_metrics.total_loss;
-    let expected_final_total_loss_max = details.final_metrics.total_loss;
-    let expected_initial_total_perplexity_min = details.initial_metrics.total_next_token_perplexity;
-    let expected_final_total_perplexity_max = details.final_metrics.total_next_token_perplexity;
-    let maximum_incorrect_argmaxes = details.maximum_incorrect_argmaxes;
+    let expected_initial_total_loss_min = details.initial_metrics_min.total_loss;
+    let expected_final_total_loss_max = details.final_metrics_max.total_loss;
+    let expected_initial_total_perplexity_min =
+        details.initial_metrics_min.total_next_token_perplexity;
+    let expected_final_total_perplexity_max = details.final_metrics_max.total_next_token_perplexity;
+    let maximum_incorrect_argmaxes = details.maximum_incorrect_predicted_next_tokens;
     let training_output = train_model::<f32>(details).unwrap();
 
     // Verify total loss
@@ -39,6 +40,13 @@ fn test_model(
         expected_final_total_loss_max,
         training_output.final_metrics.total_loss
     );
+
+    if !expected_initial_total_perplexity_min.is_nan() {
+        assert_le!(
+            expected_initial_total_perplexity_min,
+            training_output.initial_metrics.total_next_token_perplexity
+        );
+    }
 
     assert_ge!(
         expected_final_total_perplexity_max,

@@ -34,12 +34,12 @@ where
     pub batch_size: usize,
     pub learning_rate: f32,
     pub shuffle_examples: bool,
-    pub clipped_gradient_norm: bool,
+    pub clip_gradient_norm: bool,
     pub epochs: usize,
     pub progress: usize,
-    pub initial_metrics: Metrics,
-    pub final_metrics: Metrics,
-    pub maximum_incorrect_argmaxes: usize,
+    pub initial_metrics_min: Metrics,
+    pub final_metrics_max: Metrics,
+    pub maximum_incorrect_predicted_next_tokens: usize,
     pub printer: Printer,
 }
 

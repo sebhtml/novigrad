@@ -48,16 +48,16 @@ pub fn load_mega_man_linear_dataset(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: true,
-        initial_metrics: Metrics {
+        clip_gradient_norm: true,
+        initial_metrics_min: Metrics {
             total_loss: 5500.0,
             total_next_token_perplexity: 250000.0,
         },
-        final_metrics: Metrics {
+        final_metrics_max: Metrics {
             total_loss: 40.0,
             total_next_token_perplexity: 1010.0,
         },
-        maximum_incorrect_argmaxes: 0,
+        maximum_incorrect_predicted_next_tokens: 10,
         printer: NextTokenPredictionPrinter::new(tokenizer),
         batch_size: 64,
     };

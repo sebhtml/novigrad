@@ -66,18 +66,18 @@ pub fn load_geoffroy_hinton_dataset(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: true,
-        initial_metrics: Metrics {
+        clip_gradient_norm: true,
+        initial_metrics_min: Metrics {
             total_loss: 4000.0,
             total_next_token_perplexity: 5.0,
         },
-        final_metrics: Metrics {
+        final_metrics_max: Metrics {
             total_loss: 350.0,
             total_next_token_perplexity: 20.0,
         },
-        maximum_incorrect_argmaxes: 0,
+        maximum_incorrect_predicted_next_tokens: 2,
         printer: NextTokenPredictionPrinter::new(tokenizer),
-        batch_size: 8,
+        batch_size: 1,
     };
     Ok(details)
 }

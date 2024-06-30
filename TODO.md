@@ -1,7 +1,7 @@
 == Story: Arc prize ==
 
-- zero parameters grads at the end of Optimization instructions
-- zero internal grads at the beginning of Gradient instructions
+- rename geoffroy_hinton to mega_man_transformer in datasets and examples
+- rename addition to addition_perceptron in datasets and examples
 - increase examples in transformer test from 10 to 100
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization)
 - the transformer model does not work with layers=2 probably because ClipNorm causes a vanishing gradient

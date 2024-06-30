@@ -12,7 +12,6 @@ pub enum Category {
     Loss,
     Gradient,
     Optimization,
-    ZeroGrad,
 }
 
 impl From<Category> for String {
@@ -22,7 +21,6 @@ impl From<Category> for String {
             Category::Loss => "Loss",
             Category::Gradient => "Gradient",
             Category::Optimization => "Optimization",
-            Category::ZeroGrad => "ZeroGrad",
         }
         .into()
     }

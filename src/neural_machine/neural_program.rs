@@ -105,7 +105,7 @@ impl NeuralProgram {
                 OperatorAttributes::None,
                 &[&zero, &tensor.gradient()],
                 &[&tensor.gradient()],
-                Category::ZeroGrad,
+                Category::Optimization,
             );
             instructions.push(inst);
         }

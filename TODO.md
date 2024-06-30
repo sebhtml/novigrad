@@ -1,8 +1,14 @@
-== Story: Arc prize ==
+== Story: batching ==
 
+- clear internal tensor gradients before gradient instructions
+- clear only parameter tensor gradients after optimization instructions
 - rename geoffroy_hinton to mega_man_transformer in datasets and examples
 - rename addition to addition_perceptron in datasets and examples
+- don't ignore test mega_man_transformer
 - increase examples in transformer test from 10 to 100
+
+== Story: Arc prize ==
+
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization)
 - the transformer model does not work with layers=2 probably because ClipNorm causes a vanishing gradient
 

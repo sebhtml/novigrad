@@ -36,9 +36,6 @@ where
     optimization_instructions: Arc<Vec<Instruction>>,
     optimization_streams: Arc<Vec<Stream>>,
     optimization_scheduler: Scheduler,
-    zero_grad_instructions: Arc<Vec<Instruction>>,
-    zero_grad_streams: Arc<Vec<Stream>>,
-    zero_grad_scheduler: Scheduler,
     phantom_data: PhantomData<T>,
 }
 
@@ -80,13 +77,6 @@ where
             .collect();
         let optimization_instructions = Arc::new(optimization_instructions);
 
-        let zero_grad_instructions = all_instructions
-            .clone()
-            .into_iter()
-            .filter(|i| i.category() == Category::ZeroGrad)
-            .collect();
-        let zero_grad_instructions = Arc::new(zero_grad_instructions);
-
         let example_input = program.example_input;
         let example_output = program.example_output;
         let machine_output = program.machine_output;
@@ -100,8 +90,6 @@ where
         let gradient_streams = Arc::new(gradient_streams);
         let optimization_streams = Self::assign_streams(&example_input, &optimization_instructions);
         let optimization_streams = Arc::new(optimization_streams);
-        let zero_grad_streams = Self::assign_streams(&example_input, &zero_grad_instructions);
-        let zero_grad_streams = Arc::new(zero_grad_streams);
 
         let handler = StreamExecutor::new();
         let mut inference_scheduler = Scheduler::new(
@@ -132,18 +120,11 @@ where
             &handler,
             &optimization_instructions,
         );
-        let mut zero_grad_scheduler = Scheduler::new(
-            device,
-            maximum_device_streams,
-            &zero_grad_streams,
-            &handler,
-            &zero_grad_instructions,
-        );
+
         inference_scheduler.start();
         loss_scheduler.start();
         gradient_scheduler.start();
         optimization_scheduler.start();
-        zero_grad_scheduler.start();
 
         let machine = NeuralMachine::<T, Scheduler> {
             device: device.clone(),
@@ -164,9 +145,6 @@ where
             optimization_instructions,
             optimization_streams,
             optimization_scheduler,
-            zero_grad_instructions,
-            zero_grad_streams,
-            zero_grad_scheduler,
             phantom_data: Default::default(),
         };
 
@@ -181,7 +159,6 @@ where
             Category::Loss => self.loss_instructions.clone(),
             Category::Gradient => self.gradient_instructions.clone(),
             Category::Optimization => self.optimization_instructions.clone(),
-            Category::ZeroGrad => self.zero_grad_instructions.clone(),
         }
     }
 
@@ -210,18 +187,12 @@ where
         Ok(())
     }
 
-    pub fn zero_grad(&mut self) -> Result<(), Error> {
-        self.forward(&Category::ZeroGrad)?;
-        Ok(())
-    }
-
     fn forward_with_streams(&mut self, category: &Category) -> Result<(), Error> {
         let scheduler = match category {
             Category::Inference => &mut self.inference_scheduler,
             Category::Loss => &mut self.loss_scheduler,
             Category::Gradient => &mut self.gradient_scheduler,
             Category::Optimization => &mut self.optimization_scheduler,
-            Category::ZeroGrad => &mut self.zero_grad_scheduler,
         };
         scheduler.execute();
         self.io_stream.wait_for_default()?;
@@ -278,8 +249,7 @@ where
         let total_instructions = self.inference_instructions.len()
             + self.loss_instructions.len()
             + self.gradient_instructions.len()
-            + self.optimization_instructions.len()
-            + self.zero_grad_instructions.len();
+            + self.optimization_instructions.len();
         println!("Instructions: {}", total_instructions);
         println!(
             "Inference Instructions: {}",
@@ -294,17 +264,6 @@ where
             "Optimization Instructions: {}",
             self.optimization_instructions.len()
         );
-        println!(
-            "ZeroGrad Instructions: {}",
-            self.zero_grad_instructions.len()
-        );
-
-        /*
-        println!("Tensors");
-        for tensor in self.device.tensors().iter() {
-            println!("{}", tensor);
-        }
-         */
 
         println!("------------------------------");
         for (i, instruction) in self.inference_instructions.iter().enumerate() {
@@ -322,17 +281,13 @@ where
         for (i, instruction) in self.optimization_instructions.iter().enumerate() {
             self.print_instruction(i, instruction);
         }
-        println!("------------------------------");
-        for (i, instruction) in self.zero_grad_instructions.iter().enumerate() {
-            self.print_instruction(i, instruction);
-        }
+
         println!("------------------------------");
 
         print_streams("Inference", &self.inference_streams);
         print_streams("Loss", &self.loss_streams);
         print_streams("Gradient", &self.gradient_streams);
         print_streams("Optimization", &self.optimization_streams);
-        print_streams("ZeroGrad", &self.zero_grad_streams);
     }
 
     fn tensor_name(name: usize) -> String {

@@ -252,7 +252,6 @@ pub fn train_on_batches<T>(
             neural_machine.compute_gradient()?;
         }
         neural_machine.optimize()?;
-        neural_machine.zero_grad()?;
     }
 
     Ok(())

@@ -58,7 +58,7 @@ pub fn load_mega_man_multi_head_attention_dataset(
             total_next_token_perplexity: 100.0,
         },
         final_metrics_max: Metrics {
-            total_loss: 2500.0,
+            total_loss: 7000.0,
             total_next_token_perplexity: 120.0,
         },
         maximum_incorrect_predicted_next_tokens: 30,

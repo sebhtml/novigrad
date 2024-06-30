@@ -108,7 +108,6 @@ fn main() -> Result<(), Error> {
                 neural_machine.compute_gradient()?;
             }
             neural_machine.optimize()?;
-            neural_machine.zero_grad()?;
         }
         println!("Loss: {}", total_loss);
 

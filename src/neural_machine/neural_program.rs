@@ -93,8 +93,8 @@ impl NeuralProgram {
             processed_backward_tensors.insert(tensor_name);
         }
 
-        let tensors_to_optimize = device.tensors_to_optimize();
-        let mut optimizer_instructions = optimizer.optimize(device, &tensors_to_optimize)?;
+        let parameter_tensors = device.parameter_tensors();
+        let mut optimizer_instructions = optimizer.optimize(device, &parameter_tensors)?;
         instructions.append(&mut optimizer_instructions);
 
         let zero = new_tensor!(device, 1, 1, vec![0.0])?;

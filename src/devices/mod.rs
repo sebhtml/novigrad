@@ -288,7 +288,7 @@ pub struct Device {
     used: Arc<RwLock<usize>>,
     tensors: Arc<RwLock<Vec<Tensor>>>,
     tensors_with_grad: Arc<RwLock<Vec<TensorWithGrad>>>,
-    tensors_to_optimize: Arc<RwLock<Vec<TensorWithGrad>>>,
+    parameter_tensors: Arc<RwLock<Vec<TensorWithGrad>>>,
     device: Arc<dyn DeviceTrait + Send + Sync>,
     available_buffers: Arc<RwLock<HashMap<usize, LinkedList<DevSlice>>>>,
 }
@@ -315,7 +315,7 @@ impl Device {
             used: Default::default(),
             tensors: Default::default(),
             tensors_with_grad: Default::default(),
-            tensors_to_optimize: Default::default(),
+            parameter_tensors: Default::default(),
             device,
             available_buffers: Default::default(),
         }
@@ -456,14 +456,12 @@ impl Device {
         };
         let tensor = TensorWithGrad::new(tensor, gradient, inputs);
         if requires_grad {
-            self.tensors_with_grad.write().unwrap().push(tensor.clone())
+            self.tensors_with_grad.write().unwrap().push(tensor.clone());
+            if optimize {
+                self.parameter_tensors.write().unwrap().push(tensor.clone())
+            }
         }
-        if optimize {
-            self.tensors_to_optimize
-                .write()
-                .unwrap()
-                .push(tensor.clone())
-        }
+
         Ok(tensor)
     }
 
@@ -473,7 +471,7 @@ impl Device {
 
     pub fn parameter_count(&self) -> usize {
         let mut count = 0;
-        for t in self.tensors_to_optimize.read().unwrap().iter() {
+        for t in self.parameter_tensors.read().unwrap().iter() {
             count += t.tensor().len();
         }
         count
@@ -487,8 +485,8 @@ impl Device {
         self.tensors_with_grad.read().unwrap()
     }
 
-    pub fn tensors_to_optimize(&self) -> impl Deref<Target = Vec<TensorWithGrad>> + '_ {
-        self.tensors_to_optimize.read().unwrap()
+    pub fn parameter_tensors(&self) -> impl Deref<Target = Vec<TensorWithGrad>> + '_ {
+        self.parameter_tensors.read().unwrap()
     }
 
     pub fn buffer(&self, len: usize) -> DevSlice {

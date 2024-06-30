@@ -4,6 +4,7 @@
 - clear only parameter tensor gradients after optimization instructions
 - don't ignore test mega_man_transformer
 - increase examples in transformer test from 10 to 100
+- set maximum_incorrect_predicted_next_tokens to 0
 
 == Story: naming ==
 

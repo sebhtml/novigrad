@@ -65,7 +65,7 @@ fn load_examples(
         })
 }
 
-pub fn load_arc_dataset(
+pub fn load_arc_prize_2024(
     device: &Device,
 ) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam, BoardPrinter>, Error> {
     let vocab_size = 10;

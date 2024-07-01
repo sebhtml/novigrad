@@ -6,7 +6,7 @@ use crate::{
 
 use super::{load_examples, DatasetDetails};
 
-pub fn load_mega_man_multi_head_attention_dataset(
+pub fn load_mega_man_multi_head_attention(
     device: &Device,
 ) -> Result<
     DatasetDetails<
@@ -71,7 +71,7 @@ pub fn load_mega_man_multi_head_attention_dataset(
 pub fn get_multi_head_attention_model_instructions(
     device: &Device,
 ) -> Result<Vec<Instruction>, Error> {
-    let details = load_mega_man_multi_head_attention_dataset(device)?;
+    let details = load_mega_man_multi_head_attention(device)?;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;

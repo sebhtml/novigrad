@@ -1,12 +1,12 @@
 use more_asserts::assert_ge;
 use more_asserts::assert_le;
 
-use crate::datasets::addition::load_addition_dataset;
-use crate::datasets::geoffroy_hinton::load_geoffroy_hinton_dataset;
-use crate::datasets::mega_man_attention_head::load_mega_man_attention_head_dataset;
-use crate::datasets::mega_man_linear::load_mega_man_linear_dataset;
-use crate::datasets::mega_man_multi_head_attention::load_mega_man_multi_head_attention_dataset;
-use crate::datasets::simple::load_simple_dataset;
+use crate::datasets::addition_perceptron::load_addition_perceptron;
+use crate::datasets::geoffroy_hinton_transformer::load_geoffroy_hinton_transformer;
+use crate::datasets::mega_man_attention_head::load_mega_man_attention_head;
+use crate::datasets::mega_man_linear::load_mega_man_linear;
+use crate::datasets::mega_man_multi_head_attention::load_mega_man_multi_head_attention;
+use crate::datasets::simple::load_simple;
 use crate::datasets::DatasetDetails;
 use crate::display::TensorPrinter;
 use crate::train_model;
@@ -66,45 +66,45 @@ fn test_model(
 }
 
 #[test]
-fn addition_with_perceptron() {
+fn addition_perceptron() {
     let device = Device::default();
-    let details = load_addition_dataset(&device).unwrap();
+    let details = load_addition_perceptron(&device).unwrap();
     test_model(details);
 }
 
 #[test]
 fn simple() {
     let device = Device::default();
-    let details = load_simple_dataset(&device).unwrap();
+    let details = load_simple(&device).unwrap();
     test_model(details);
 }
 
 #[test]
 fn mega_man_linear() {
     let device = Device::default();
-    let details = load_mega_man_linear_dataset(&device).unwrap();
+    let details = load_mega_man_linear(&device).unwrap();
     test_model(details);
 }
 
 #[test]
 fn mega_man_attention_head() {
     let device = Device::default();
-    let details = load_mega_man_attention_head_dataset(&device).unwrap();
+    let details = load_mega_man_attention_head(&device).unwrap();
     test_model(details);
 }
 
 #[test]
 fn mega_man_multi_head_attention() {
     let device = Device::default();
-    let details = load_mega_man_multi_head_attention_dataset(&device).unwrap();
+    let details = load_mega_man_multi_head_attention(&device).unwrap();
     test_model(details);
 }
 
 // This test is currently ignored because it's too slow and the transformer has a bug.
 #[ignore]
 #[test]
-fn geoffroy_hinton_with_transformer() {
+fn geoffroy_hinton_transformer() {
     let device = Device::default();
-    let details = load_geoffroy_hinton_dataset(&device).unwrap();
+    let details = load_geoffroy_hinton_transformer(&device).unwrap();
     test_model(details);
 }

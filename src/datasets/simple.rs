@@ -41,7 +41,7 @@ fn load_examples(
         })
 }
 
-pub fn load_simple_dataset(
+pub fn load_simple(
     device: &Device,
 ) -> Result<
     DatasetDetails<

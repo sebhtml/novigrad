@@ -5,7 +5,7 @@ use crate::{
 
 use super::{load_examples, DatasetDetails};
 
-pub fn load_mega_man_linear_dataset(
+pub fn load_mega_man_linear(
     device: &Device,
 ) -> Result<
     DatasetDetails<

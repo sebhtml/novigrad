@@ -25,7 +25,7 @@ fn load_examples(device: &Device) -> Result<Vec<(TensorWithGrad, TensorWithGrad)
     Ok(examples)
 }
 
-pub fn load_addition_dataset(
+pub fn load_addition_perceptron(
     device: &Device,
 ) -> Result<DatasetDetails<PerceptronModel, ReduceSumSquare, GradientDescent, RawPrinter>, Error> {
     let model = PerceptronModel::new(device)?;

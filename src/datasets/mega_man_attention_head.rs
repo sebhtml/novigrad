@@ -5,7 +5,7 @@ use crate::{
 
 use super::{load_examples, DatasetDetails};
 
-pub fn load_mega_man_attention_head_dataset(
+pub fn load_mega_man_attention_head(
     device: &Device,
 ) -> Result<
     DatasetDetails<AttentionHeadModel, SoftmaxCrossEntropyLoss, Adam, NextTokenPredictionPrinter>,
@@ -62,7 +62,7 @@ pub fn load_mega_man_attention_head_dataset(
             total_next_token_perplexity: 5.0,
         },
         final_metrics_max: Metrics {
-            total_loss: 350.0,
+            total_loss: 450.0,
             total_next_token_perplexity: 16.0,
         },
         maximum_incorrect_predicted_next_tokens: 0,

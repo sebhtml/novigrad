@@ -5,7 +5,7 @@ use crate::{
 
 use super::{load_examples, DatasetDetails};
 
-pub fn load_geoffroy_hinton_dataset(
+pub fn load_geoffroy_hinton_transformer(
     device: &Device,
 ) -> Result<
     DatasetDetails<

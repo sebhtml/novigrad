@@ -1,9 +1,3 @@
-== Story: naming ==
-
-- rename geoffroy_hinton to mega_man_transformer in datasets and examples
-- rename addition to addition_perceptron in datasets and examples
-- examples, train tests, and datasets should use the same names
-
 == Story: Training fixes ==
 
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
@@ -13,7 +7,7 @@
 
 == Story: Transformer bug hunting ==
 
-- use 2 layers in transformer model
+- use 4 layers in transformer model
 - increase examples in transformer test from 10 to 100
 
 == Story: Arc prize ==

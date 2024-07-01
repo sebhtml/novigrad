@@ -35,7 +35,7 @@ pub fn load_geoffroy_hinton_dataset(
     )?;
 
     let vocab_size = tokenizer.vocab_size();
-    let layers = 2;
+    let layers = 1;
     let causal_mask = true;
     let num_heads = 12;
     let dropout_probability = 0.1;
@@ -75,7 +75,7 @@ pub fn load_geoffroy_hinton_dataset(
             total_loss: 350.0,
             total_next_token_perplexity: 20.0,
         },
-        maximum_incorrect_predicted_next_tokens: 2,
+        maximum_incorrect_predicted_next_tokens: 0,
         printer: NextTokenPredictionPrinter::new(tokenizer),
         batch_size: 1,
     };

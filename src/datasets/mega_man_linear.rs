@@ -57,7 +57,7 @@ pub fn load_mega_man_linear_dataset(
             total_loss: 40.0,
             total_next_token_perplexity: 1010.0,
         },
-        maximum_incorrect_predicted_next_tokens: 10,
+        maximum_incorrect_predicted_next_tokens: 0,
         printer: NextTokenPredictionPrinter::new(tokenizer),
         batch_size: 64,
     };

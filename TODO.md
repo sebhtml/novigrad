@@ -1,9 +1,3 @@
-== Story: batching ==
-
-- set maximum_incorrect_predicted_next_tokens to 0
-- don't ignore test mega_man_transformer
-- increase examples in transformer test from 10 to 100
-
 == Story: naming ==
 
 - rename geoffroy_hinton to mega_man_transformer in datasets and examples
@@ -16,6 +10,11 @@
 - honour requires_grad() when updating gradients
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 - adam t should be in 0..num_iterations
+
+== Story: Transformer bug hunting ==
+
+- use 2 layers in transformer model
+- increase examples in transformer test from 10 to 100
 
 == Story: Arc prize ==
 

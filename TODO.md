@@ -1,9 +1,20 @@
-== Story: Training fixes ==
+== Story: Adam fixes ==
+
+- adam t should be in 0..num_iterations
+- use adam in transformer dataset
+
+== Story: no buffer store ==
+
+- remove buffer store that allow reuse
+
+== Story: use device pointer mode ==
 
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
+
+== Story: gradient accumulation ==
+
 - honour requires_grad() when updating gradients
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
-- adam t should be in 0..num_iterations
 
 == Story: Transformer bug hunting ==
 

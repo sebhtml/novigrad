@@ -13,6 +13,7 @@ use crate::{
 pub mod addition;
 pub mod arc_prize_2024;
 pub mod geoffroy_hinton;
+pub mod mega_man_attention_head;
 pub mod mega_man_linear;
 pub mod mega_man_multi_head_attention;
 pub mod simple;
@@ -30,14 +31,15 @@ where
     pub model: Model,
     pub loss_operator: LossOperator,
     pub optimizer: Optimizer,
+    pub batch_size: usize,
     pub learning_rate: f32,
     pub shuffle_examples: bool,
-    pub clipped_gradient_norm: bool,
+    pub clip_gradient_norm: bool,
     pub epochs: usize,
     pub progress: usize,
-    pub initial_metrics: Metrics,
-    pub final_metrics: Metrics,
-    pub maximum_incorrect_argmaxes: usize,
+    pub initial_metrics_min: Metrics,
+    pub final_metrics_max: Metrics,
+    pub maximum_incorrect_predicted_next_tokens: usize,
     pub printer: Printer,
 }
 
@@ -84,12 +86,10 @@ pub fn load_examples(
     if let Some(max_chars) = max_chars {
         text = text[0..max_chars].to_owned();
     }
-    println!("[load_megaman_examples] loaded {} bytes", text.len());
     let tokens: Vec<usize> = tokenizer.encode(&text);
     let vocab_size = tokenizer.vocab_size();
-    println!("[load_megaman_examples] loaded {} tokens", tokens.len());
     let mut i = 0;
-    while i + input_sequence_length < tokens.len() && i < max_number_of_examples {
+    while i + input_sequence_length < tokens.len() && examples.len() < max_number_of_examples {
         let input_begin = i;
         let input_end = input_begin + input_sequence_length;
         let input_tokens = &tokens[input_begin..input_end];

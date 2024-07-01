@@ -44,17 +44,18 @@ pub fn load_addition_dataset(
         progress: 10,
         learning_rate,
         shuffle_examples: false,
-        clipped_gradient_norm: true,
-        initial_metrics: Metrics {
+        clip_gradient_norm: true,
+        initial_metrics_min: Metrics {
             total_loss: 0.1,
             total_next_token_perplexity: f32::NAN,
         },
-        final_metrics: Metrics {
+        final_metrics_max: Metrics {
             total_loss: 15.0,
             total_next_token_perplexity: 1.0,
         },
-        maximum_incorrect_argmaxes: 0,
+        maximum_incorrect_predicted_next_tokens: 0,
         printer: RawPrinter::default(),
+        batch_size: 1,
     };
     Ok(details)
 }

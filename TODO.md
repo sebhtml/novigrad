@@ -1,15 +1,30 @@
+== Story: naming ==
+
+- rename geoffroy_hinton to mega_man_transformer in datasets and examples
+- rename addition to addition_perceptron in datasets and examples
+- examples, train tests, and datasets should use the same names
+
+== Story: Training fixes ==
+
+- use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
+- honour requires_grad() when updating gradients
+- Make sure that backward instruction add on top of existing gradients (no overwrite)
+- adam t should be in 0..num_iterations
+
+== Story: Transformer bug hunting ==
+
+- use 2 layers in transformer model
+- increase examples in transformer test from 10 to 100
+
 == Story: Arc prize ==
 
-- increase examples in transformer test from 10 to 100
-- the transformer model does not work probably because of buggy residual links
-- the transformer model does not work with layers=2 probably because ClipNorm causes a vanishing gradient
-- adam t should be in 0..num_iterations
-- use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
+- have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization)
+- Implement Transformer idea for the Arc prize challenge (left-to-right residual connections)
+
+
+- simplify code that push gradient_instruction instructions (too much re-mapping of inputs to outputs)
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 - maybe the pthread lock is caused by checking if the loss is 0
-
-- Make sure that backward instruction add on top of existing gradients (no overwrite)
-- Implement Transformer idea for the Arc prize challenge (left-to-right residual connections)
 
 == Clean-up ==
 
@@ -29,7 +44,6 @@
 
 ---------------
 
-- have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization)
 - implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
 - rename RowMax to ArgMax (https://onnx.ai/onnx/operators/onnx__ArgMax.html)
 - add code that discard useless instructions, for example when a operand write is never read betfore the next write

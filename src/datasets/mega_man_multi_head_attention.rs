@@ -6,7 +6,7 @@ use crate::{
 
 use super::{load_examples, DatasetDetails};
 
-pub fn load_mega_man_attention_dataset(
+pub fn load_mega_man_multi_head_attention_dataset(
     device: &Device,
 ) -> Result<
     DatasetDetails<
@@ -19,7 +19,7 @@ pub fn load_mega_man_attention_dataset(
 > {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
-    let max_number_of_examples = 10;
+    let max_number_of_examples = 100;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
 
@@ -52,17 +52,18 @@ pub fn load_mega_man_attention_dataset(
         progress: 10,
         learning_rate,
         shuffle_examples: true,
-        clipped_gradient_norm: true,
-        initial_metrics: Metrics {
+        clip_gradient_norm: true,
+        initial_metrics_min: Metrics {
             total_loss: 4000.0,
-            total_next_token_perplexity: 5.0,
+            total_next_token_perplexity: 100.0,
         },
-        final_metrics: Metrics {
-            total_loss: 350.0,
-            total_next_token_perplexity: 13.0,
+        final_metrics_max: Metrics {
+            total_loss: 7000.0,
+            total_next_token_perplexity: 120.0,
         },
-        maximum_incorrect_argmaxes: 2,
+        maximum_incorrect_predicted_next_tokens: 30,
         printer: NextTokenPredictionPrinter::new(tokenizer),
+        batch_size: 1,
     };
     Ok(details)
 }
@@ -70,7 +71,7 @@ pub fn load_mega_man_attention_dataset(
 pub fn get_multi_head_attention_model_instructions(
     device: &Device,
 ) -> Result<Vec<Instruction>, Error> {
-    let details = load_mega_man_attention_dataset(device)?;
+    let details = load_mega_man_multi_head_attention_dataset(device)?;
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;

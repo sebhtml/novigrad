@@ -19,7 +19,7 @@ impl AttentionHead {
         rows: usize,
         cols: usize,
         head_cols: usize,
-        mask: bool,
+        causal_mask: bool,
         dropout_probability: f32,
     ) -> Result<Self, Error> {
         let q = Linear::new(
@@ -43,9 +43,14 @@ impl AttentionHead {
             WeightsInitialization::Kaiming,
             rows,
         )?;
-        let attention =
-            ScaledDotProductAttention::try_new(device, rows, cols, mask, dropout_probability)
-                .unwrap();
+        let attention = ScaledDotProductAttention::try_new(
+            device,
+            rows,
+            cols,
+            causal_mask,
+            dropout_probability,
+        )
+        .unwrap();
 
         let head = Self { q, k, v, attention };
         Ok(head)

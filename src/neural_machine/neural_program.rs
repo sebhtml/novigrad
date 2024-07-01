@@ -24,6 +24,7 @@ impl NeuralProgram {
         optimizer: &impl OptimizerTrait,
         clipped_gradient_norm: bool,
     ) -> Result<NeuralProgram, Error> {
+        let zero = new_tensor!(device, 1, 1, vec![0.0])?;
         // input
         let input_shape = model.input_size();
         let input_len = input_shape[0] * input_shape[1];
@@ -66,6 +67,19 @@ impl NeuralProgram {
             processed_forward_tensors.insert(tensor_name);
         }
 
+        // Gradient instructions
+        let internal_tensors = device.internal_tensors();
+        for tensor in internal_tensors.iter() {
+            let inst = instruction!(
+                OpCode::ScalarMul,
+                OperatorAttributes::None,
+                &[&zero, &tensor.gradient()],
+                &[&tensor.gradient()],
+                Category::Gradient,
+            );
+            instructions.push(inst);
+        }
+
         let mut processed_backward_tensors = HashSet::<usize>::new();
         for tensor in tape.iter().rev() {
             let tensor_name = tensor.tensor().name();
@@ -93,19 +107,18 @@ impl NeuralProgram {
             processed_backward_tensors.insert(tensor_name);
         }
 
-        let tensors_to_optimize = device.tensors_to_optimize();
-        let mut optimizer_instructions = optimizer.optimize(device, &tensors_to_optimize)?;
+        // Optimization instructions
+        let parameter_tensors = device.parameter_tensors();
+        let mut optimizer_instructions = optimizer.optimize(device, &parameter_tensors)?;
         instructions.append(&mut optimizer_instructions);
 
-        let zero = new_tensor!(device, 1, 1, vec![0.0])?;
-        let tensors_with_grad = device.tensors_with_grad();
-        for tensor in tensors_with_grad.iter() {
+        for tensor in parameter_tensors.iter() {
             let inst = instruction!(
                 OpCode::ScalarMul,
                 OperatorAttributes::None,
                 &[&zero, &tensor.gradient()],
                 &[&tensor.gradient()],
-                Category::ZeroGrad,
+                Category::Optimization,
             );
             instructions.push(inst);
         }

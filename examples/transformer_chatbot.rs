@@ -1,4 +1,5 @@
 use novigrad::{
+    batch::make_batches,
     datasets::into_one_hot_encoded_rows,
     error, get_row_argmax,
     neural_program::NeuralProgram,
@@ -8,8 +9,6 @@ use novigrad::{
     Adam, Device, NeuralMachine, SoftmaxCrossEntropyLoss, TensorWithGrad, Tokenizer,
     TokenizerTrait,
 };
-use rand::prelude::SliceRandom;
-use rand::thread_rng;
 use std::{fs::read_to_string, io};
 
 fn main() -> Result<(), Error> {
@@ -35,7 +34,8 @@ fn main() -> Result<(), Error> {
     )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(&device);
-    let learning_rate = 0.05;
+    let learning_rate = 0.2;
+    let batch_size = 32;
     let clipped_gradient_norm = true;
     let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
     let program = NeuralProgram::try_new(
@@ -47,6 +47,8 @@ fn main() -> Result<(), Error> {
     )?;
 
     let maximum_device_streams = 16;
+    let epochs = 100;
+    let shuffle_examples = true;
     let mut neural_machine = NeuralMachine::<f32, DefaultStreamScheduler>::try_new(
         &device,
         program,
@@ -77,32 +79,35 @@ fn main() -> Result<(), Error> {
         .unwrap()
         .concat();
 
-    let mut indices = (0..train_examples.len()).collect::<Vec<_>>();
-    for turn in 0..1000 {
-        println!("Turn: {}", turn);
+    let indices = (0..train_examples.len()).collect::<Vec<_>>();
 
-        indices.shuffle(&mut thread_rng());
+    for epoch in 0..epochs {
+        println!("Epoch: {}", epoch);
 
+        let batches = make_batches(&indices, shuffle_examples, batch_size);
         let mut total_loss = 0.0;
-        println!("examples: {}", indices.len());
-        for i in indices.iter() {
-            let (input_one_hot, expected_output_one_hot) = &train_examples[*i];
-            let actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
-            let loss = neural_machine.loss(&expected_output_one_hot)?;
-            let loss: &Tensor = &loss.tensor();
-            let loss: f32 = loss.try_into()?;
-            let expected_next_token =
-                get_row_argmax(&expected_output_one_hot.tensor(), context_length - 1)?;
-            let actual_next_token =
-                get_row_argmax(&actual_output_one_hot.tensor(), context_length - 1)?;
-            println!(
-                "example: {}, loss {}, expected_next_token: {}, actual_next_token: {}",
-                i, loss, expected_next_token, actual_next_token
-            );
-            total_loss += loss;
-            neural_machine.compute_gradient()?;
+
+        for batch in batches.iter() {
+            for i in batch.iter() {
+                let (input_one_hot, expected_output_one_hot) = &train_examples[*i];
+                let _actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
+                let loss = neural_machine.loss(&expected_output_one_hot)?;
+                let loss: &Tensor = &loss.tensor();
+                let loss: f32 = loss.try_into()?;
+                /*
+                let expected_next_token =
+                    get_row_argmax(&expected_output_one_hot.tensor(), context_length - 1)?;
+                let actual_next_token =
+                    get_row_argmax(&actual_output_one_hot.tensor(), context_length - 1)?;
+                println!(
+                    "example: {}, loss {}, expected_next_token: {}, actual_next_token: {}",
+                    i, loss, expected_next_token, actual_next_token
+                );
+                */
+                total_loss += loss;
+                neural_machine.compute_gradient()?;
+            }
             neural_machine.optimize()?;
-            neural_machine.zero_grad()?;
         }
         println!("Loss: {}", total_loss);
 
@@ -174,7 +179,7 @@ fn auto_regressive_inference(
             context_length - 1
         };
         let predicted_next_token = get_row_argmax(&actual_output_one_hot.tensor(), last_row)?;
-        println!("predicted next token: {}", predicted_next_token);
+        //println!("predicted next token: {}", predicted_next_token);
         auto_regressive_tokens.push(predicted_next_token);
     }
     Ok(auto_regressive_tokens)

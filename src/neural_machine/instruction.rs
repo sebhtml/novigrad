@@ -186,9 +186,24 @@ impl Instruction {
     pub fn execute(&self, device: &Device, device_stream: &DeviceStream) -> Result<(), Error> {
         let attributes = &self.attributes;
         let inputs: Vec<&Tensor> = self.inputs.iter().collect();
+        #[cfg(debug_assertions)]
+        {
+            for input in inputs.iter() {
+                debug_assert_eq!(false, input.is_nan()?, "{:?}", self);
+                debug_assert_eq!(false, input.is_infinite()?, "{:?}", self);
+            }
+        }
         let outputs: Vec<&Tensor> = self.outputs.iter().collect();
         self.opcode
-            .execute(attributes, &inputs, &outputs, device, device_stream)
+            .execute(attributes, &inputs, &outputs, device, device_stream)?;
+        #[cfg(debug_assertions)]
+        {
+            for output in outputs.iter() {
+                debug_assert_eq!(false, output.is_nan()?, "{:?}", self);
+                debug_assert_eq!(false, output.is_infinite()?, "{:?}", self);
+            }
+        }
+        Ok(())
     }
 }
 

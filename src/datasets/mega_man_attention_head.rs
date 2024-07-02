@@ -44,7 +44,7 @@ pub fn load_mega_man_attention_head(
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
-    let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
+    let optimizer = Adam::try_new(device, learning_rate, 0.9, 0.999, 1e-8)?;
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,

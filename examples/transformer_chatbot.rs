@@ -37,7 +37,7 @@ fn main() -> Result<(), Error> {
     let learning_rate = 0.2;
     let batch_size = 32;
     let clipped_gradient_norm = true;
-    let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
+    let optimizer = Adam::try_new(&device, learning_rate, 0.9, 0.999, 1e-8)?;
     let program = NeuralProgram::try_new(
         &device,
         &model,

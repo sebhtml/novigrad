@@ -174,6 +174,12 @@ impl CudaDev {
         )?;
 
         device.load_module(
+            "pow_kernel_module",
+            &["pow_kernel"],
+            "./src/devices/cuda/kernels/pow_kernel.cu",
+        )?;
+
+        device.load_module(
             "scalar_add_kernel_module",
             &["scalar_add_kernel"],
             "./src/devices/cuda/kernels/scalar_add_kernel.cu",
@@ -547,6 +553,23 @@ impl DeviceTrait for CudaDev {
         self.launch_binary_kernel(
             "mul_kernel_module",
             "mul_kernel",
+            left,
+            right,
+            result,
+            device_stream,
+        )
+    }
+
+    fn pow(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.launch_binary_kernel(
+            "pow_kernel_module",
+            "pow_kernel",
             left,
             right,
             result,

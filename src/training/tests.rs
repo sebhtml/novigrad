@@ -100,8 +100,6 @@ fn mega_man_multi_head_attention() {
     test_model(details);
 }
 
-// This test is currently ignored because it's too slow and the transformer has a bug.
-#[ignore]
 #[test]
 fn geoffroy_hinton_transformer() {
     let device = Device::default();

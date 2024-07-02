@@ -3,6 +3,7 @@ use crate::{
     clip::Clip,
     gelu::{Gelu, GeluDerivative},
     identity::Identity,
+    pow::Pow,
     reduce_l2::ReduceL2,
     reduce_sum::ReduceSum,
     statistics::{bernoulli::Bernoulli, standardization::Standardization},
@@ -64,6 +65,9 @@ pub enum OpCode {
 
     /// https://onnx.ai/onnx/operators/onnx__Div.html
     Div,
+
+    /// https://onnx.ai/onnx/operators/onnx__Pow.html
+    Pow,
 
     /// https://onnx.ai/onnx/operators/onnx__Sqrt.html
     Sqrt,
@@ -135,6 +139,7 @@ impl From<&OpCode> for String {
             OpCode::Bernoulli => "Bernoulli".into(),
             OpCode::Sqrt => "Sqrt".into(),
             OpCode::Transpose => "Transpose".into(),
+            OpCode::Pow => "Pow".into(),
         }
     }
 }
@@ -201,6 +206,7 @@ impl OpCode {
             OpCode::ClipNorm => {
                 ClipNorm::execute(attributes, inputs, outputs, device, device_stream)
             }
+            OpCode::Pow => Pow::execute(attributes, inputs, outputs, device, device_stream),
         }
     }
 }

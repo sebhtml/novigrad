@@ -8,6 +8,9 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
+/// See
+/// Why gradient clipping accelerates training: A theoretical justification for adaptivity
+/// https://arxiv.org/abs/1905.11881
 pub struct ClipNorm {}
 
 impl ExecutableOperator for ClipNorm {

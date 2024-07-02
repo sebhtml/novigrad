@@ -75,7 +75,7 @@ pub fn load_arc_prize_2024(
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let learning_rate = 0.05;
-    let optimizer = Adam::new(learning_rate, 0.9, 0.98, 1e-9);
+    let optimizer = Adam::try_new(device, learning_rate, 0.9, 0.999, 1e-8)?;
     let layers = 2;
     let num_heads = 12;
     let dropout_probability = 0.1;

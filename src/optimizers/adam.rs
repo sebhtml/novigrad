@@ -8,11 +8,15 @@ use crate::{
 /// See:
 /// Adam: A Method for Stochastic Optimization
 /// https://arxiv.org/abs/1412.6980
+///
+/// See:
+/// On the Convergence of Adam and Beyond
+/// https://arxiv.org/abs/1904.09237
 /// 
 /// See:
 /// A Theory on Adam Instability in Large-Scale Machine Learning
 /// https://arxiv.org/pdf/2304.09871
-/// 
+///
 /// See:
 /// Full Parameter Fine-tuning for Large Language Models with Limited Resources
 /// https://arxiv.org/pdf/2306.09782

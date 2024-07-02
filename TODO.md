@@ -1,15 +1,18 @@
 
+== Adam v3 ==
+
+- implement AdamW : https://arxiv.org/pdf/1711.05101
+- add weight_decay in AdamW
+
 == Story: Transformer batching ==
 
-- use alpha = 0.001 with Adam
 - remove buffer store that allow reuse
 - use batching in transformer dataset
 - use 4 layers in transformer model
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
-- increase examples in transformer test from 10 to 100
+- increase examples in transformer test from 30 to 100
 
 - implement RMSNorm : https://arxiv.org/pdf/1910.07467
-- implement AdamW : https://arxiv.org/pdf/1711.05101
 
 == Story: use device pointer mode ==
 

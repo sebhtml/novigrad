@@ -31,8 +31,7 @@ pub fn load_addition_perceptron(
     let model = PerceptronModel::new(device)?;
     let examples = load_examples(device)?;
     let loss_operator = ReduceSumSquare::new(device);
-    let learning_rate = 0.5;
-    let optimizer = GradientDescent::new(learning_rate);
+    let optimizer = GradientDescent::new(0.5);
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,
@@ -42,7 +41,6 @@ pub fn load_addition_perceptron(
         optimizer,
         epochs: 100,
         progress: 10,
-        learning_rate,
         shuffle_examples: false,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics {

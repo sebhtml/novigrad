@@ -39,7 +39,7 @@ pub fn load_mega_man_multi_head_attention(
     let model = MultiHeadAttentionModel::new(device, sequence_length, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let optimizer = Adam::try_new(device, 0.05, 0.9, 0.999, 1e-8)?;
+    let optimizer = Adam::try_new(device, 0.05, 0.9, 0.999, 1e-8, 0.0)?;
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,

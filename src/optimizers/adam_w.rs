@@ -3,9 +3,9 @@ use crate::{
 };
 
 /// See:
-/// Adam: A Method for Stochastic Optimization
-/// https://arxiv.org/abs/1412.6980
-pub struct Adam {
+/// Decoupled Weight Decay Regularization
+/// https://arxiv.org/abs/1711.05101
+pub struct AdamW {
     learning_rate: f32,
     beta1: f32,
     beta2: f32,
@@ -13,7 +13,7 @@ pub struct Adam {
     weight_decay: f32,
 }
 
-impl Adam {
+impl AdamW {
     pub fn try_new(
         learning_rate: f32,
         beta1: f32,
@@ -32,13 +32,13 @@ impl Adam {
     }
 }
 
-impl OptimizerTrait for Adam {
+impl OptimizerTrait for AdamW {
     fn optimize(
         &self,
         device: &Device,
         tensors: &[TensorWithGrad],
     ) -> Result<Vec<Instruction>, Error> {
-        let is_adam_w = false;
+        let is_adam_w = true;
         optimize(
             device,
             self.learning_rate,

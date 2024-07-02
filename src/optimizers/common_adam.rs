@@ -3,6 +3,25 @@ use crate::{
     OperatorAttributes, TensorWithGrad,
 };
 
+/// See:
+/// Adam: A Method for Stochastic Optimization
+/// https://arxiv.org/abs/1412.6980
+///
+/// See:
+/// On the Convergence of Adam and Beyond
+/// https://arxiv.org/abs/1904.09237
+///
+/// See:
+/// A Theory on Adam Instability in Large-Scale Machine Learning
+/// https://arxiv.org/pdf/2304.09871
+///
+/// See:
+/// Full Parameter Fine-tuning for Large Language Models with Limited Resources
+/// https://arxiv.org/pdf/2306.09782
+///
+/// See:
+/// Decoupled Weight Decay Regularization
+/// https://arxiv.org/abs/1711.05101
 pub fn optimize(
     device: &Device,
     learning_rate: f32,
@@ -10,6 +29,7 @@ pub fn optimize(
     beta2: f32,
     epsilon: f32,
     weight_decay: f32,
+    is_adam_w: bool,
     tensors: &[TensorWithGrad],
 ) -> Result<Vec<Instruction>, Error> {
     let mut instructions = vec![];
@@ -23,6 +43,10 @@ pub fn optimize(
         &[&t],
     ));
 
+    let adam_w_remaining_weight_after_decay = 1.0 - learning_rate * weight_decay;
+    let adam_w_remaining_weight_after_decay =
+        new_tensor!(device, 1, 1, vec![adam_w_remaining_weight_after_decay])?;
+
     let learning_rate = new_tensor!(device, 1, 1, vec![learning_rate])?;
     let one_minus_beta1 = new_tensor!(device, 1, 1, vec![1.0 - beta1])?;
     let beta1 = new_tensor!(device, 1, 1, vec![beta1])?;
@@ -33,6 +57,16 @@ pub fn optimize(
 
     for optimizable_tensor in tensors {
         let theta = &optimizable_tensor.tensor();
+
+        if is_adam_w && weight_decay != 0.0 {
+            instructions.push(optimization_instruction!(
+                OpCode::ScalarMul,
+                OperatorAttributes::None,
+                &[&adam_w_remaining_weight_after_decay, &theta],
+                &[&theta],
+            ));
+        }
+
         let g = &optimizable_tensor.gradient();
         debug_assert_eq!(*g.size(), *theta.size());
 

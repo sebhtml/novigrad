@@ -47,7 +47,7 @@ pub fn load_geoffroy_hinton_transformer(
     )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let optimizer = Adam::try_new(device, 0.05, 0.9, 0.999, 1e-8, 0.0)?;
+    let optimizer = Adam::try_new(0.05, 0.9, 0.999, 1e-8, 0.01)?;
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,

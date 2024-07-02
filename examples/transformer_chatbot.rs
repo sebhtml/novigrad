@@ -34,10 +34,9 @@ fn main() -> Result<(), Error> {
     )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(&device);
-    let learning_rate = 0.2;
     let batch_size = 32;
     let clipped_gradient_norm = true;
-    let optimizer = Adam::try_new(&device, learning_rate, 0.9, 0.999, 1e-8)?;
+    let optimizer = Adam::try_new(0.2, 0.9, 0.999, 1e-8, 0.0)?;
     let program = NeuralProgram::try_new(
         &device,
         &model,

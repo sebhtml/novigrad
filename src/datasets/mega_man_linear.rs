@@ -35,8 +35,7 @@ pub fn load_mega_man_linear(
     let vocab_size = tokenizer.vocab_size();
     let model = MegaManModel::new(device, sequence_length, vocab_size)?;
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let learning_rate = 0.5;
-    let optimizer = GradientDescent::new(learning_rate);
+    let optimizer = GradientDescent::new(0.5);
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,
@@ -46,7 +45,6 @@ pub fn load_mega_man_linear(
         optimizer,
         epochs: 100,
         progress: 10,
-        learning_rate,
         shuffle_examples: true,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics {

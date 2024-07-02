@@ -32,7 +32,6 @@ where
     pub loss_operator: LossOperator,
     pub optimizer: Optimizer,
     pub batch_size: usize,
-    pub learning_rate: f32,
     pub shuffle_examples: bool,
     pub clip_gradient_norm: bool,
     pub epochs: usize,

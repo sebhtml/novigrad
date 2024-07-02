@@ -74,8 +74,7 @@ pub fn load_arc_prize_2024(
     let test_examples = load_examples("training", "3aa6fb7a", "test", device, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let learning_rate = 0.05;
-    let optimizer = Adam::try_new(device, learning_rate, 0.9, 0.999, 1e-8)?;
+    let optimizer = Adam::try_new(0.05, 0.9, 0.999, 1e-8, 0.0)?;
     let layers = 2;
     let num_heads = 12;
     let dropout_probability = 0.1;
@@ -100,7 +99,6 @@ pub fn load_arc_prize_2024(
         optimizer,
         epochs: 500,
         progress: 100,
-        learning_rate,
         shuffle_examples: true,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics {

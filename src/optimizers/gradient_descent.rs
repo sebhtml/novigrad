@@ -32,7 +32,7 @@ impl OptimizerTrait for GradientDescent {
                 vec![0.0; tensor.len()]
             )?;
 
-            let alpha = new_tensor!(device, 1, 1, vec![-self.learning_rate])?;
+            let alpha = new_tensor!(device, 1, 1, vec![self.learning_rate])?;
             instructions.push(optimization_instruction!(
                 OpCode::ScalarMul,
                 OperatorAttributes::None,
@@ -41,7 +41,7 @@ impl OptimizerTrait for GradientDescent {
             ));
 
             instructions.push(optimization_instruction!(
-                OpCode::Add,
+                OpCode::Sub,
                 OperatorAttributes::None,
                 &[tensor, &scaled_gradient],
                 &[tensor],

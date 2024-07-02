@@ -48,7 +48,6 @@ where
         program: NeuralProgram,
         maximum_device_streams: usize,
     ) -> Result<Self, Error> {
-        let maximum_device_streams = 1;
         let all_instructions = program.instructions;
         let inference_instructions = all_instructions
             .clone()

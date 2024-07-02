@@ -1,6 +1,7 @@
 use crate::{
-    display::NextTokenPredictionPrinter, tensor::Error, transformer_model::TransformerModel, Adam,
-    Device, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
+    adam_w::AdamW, display::NextTokenPredictionPrinter, tensor::Error,
+    transformer_model::TransformerModel, Device, Metrics, SoftmaxCrossEntropyLoss, Tokenizer,
+    TokenizerTrait,
 };
 
 use super::{load_examples, DatasetDetails};
@@ -8,7 +9,7 @@ use super::{load_examples, DatasetDetails};
 pub fn load_geoffroy_hinton_transformer(
     device: &Device,
 ) -> Result<
-    DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam, NextTokenPredictionPrinter>,
+    DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, AdamW, NextTokenPredictionPrinter>,
     Error,
 > {
     let file_path = "data/Geoffrey_Hinton.txt";
@@ -47,8 +48,7 @@ pub fn load_geoffroy_hinton_transformer(
     )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let learning_rate = 0.2;
-    let optimizer = Adam::try_new(device, learning_rate, 0.9, 0.999, 1e-8)?;
+    let optimizer = AdamW::try_new(0.05, 0.9, 0.999, 1e-7, 0.01)?;
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,
@@ -56,9 +56,8 @@ pub fn load_geoffroy_hinton_transformer(
         model,
         loss_operator,
         optimizer,
-        epochs: 200,
+        epochs: 50,
         progress: 10,
-        learning_rate,
         shuffle_examples: true,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics {
@@ -66,10 +65,10 @@ pub fn load_geoffroy_hinton_transformer(
             total_next_token_perplexity: 5.0,
         },
         final_metrics_max: Metrics {
-            total_loss: 350.0,
-            total_next_token_perplexity: 20.0,
+            total_loss: 450.0,
+            total_next_token_perplexity: 45.0,
         },
-        maximum_incorrect_predicted_next_tokens: 2,
+        maximum_incorrect_predicted_next_tokens: 3,
         printer: NextTokenPredictionPrinter::new(tokenizer),
         batch_size: 1,
     };

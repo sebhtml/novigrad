@@ -1,15 +1,10 @@
-
 == Story: Transformer batching ==
 
-- use alpha = 0.001 with Adam
+- increase examples in transformer test from 30 to 100
 - remove buffer store that allow reuse
 - use batching in transformer dataset
 - use 4 layers in transformer model
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
-- increase examples in transformer test from 10 to 100
-
-- implement RMSNorm : https://arxiv.org/pdf/1910.07467
-- implement AdamW : https://arxiv.org/pdf/1711.05101
 
 == Story: use device pointer mode ==
 
@@ -25,12 +20,12 @@
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization)
 - Implement Transformer idea for the Arc prize challenge (left-to-right residual connections)
 
-
-- simplify code that push gradient_instruction instructions (too much re-mapping of inputs to outputs)
 - investigate performance issue with tons of call to pthread_rwlock_unlock
-- maybe the pthread lock is caused by checking if the loss is 0
 
 == Clean-up ==
+
+- implement RMSNorm : https://arxiv.org/pdf/1910.07467
+- simplify code that push gradient_instruction instructions (too much re-mapping of inputs to outputs)
 
 - remove all calls to set_values
 - rewrite ResidualSumOfSquares using CUDA

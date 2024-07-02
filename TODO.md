@@ -1,14 +1,24 @@
-== Story: Training fixes ==
+
+== Story: Transformer batching ==
+
+- use alpha = 0.001 with Adam
+- remove buffer store that allow reuse
+- use batching in transformer dataset
+- use 4 layers in transformer model
+- set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
+- increase examples in transformer test from 10 to 100
+
+- implement RMSNorm : https://arxiv.org/pdf/1910.07467
+- implement AdamW : https://arxiv.org/pdf/1711.05101
+
+== Story: use device pointer mode ==
 
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
+
+== Story: gradient accumulation ==
+
 - honour requires_grad() when updating gradients
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
-- adam t should be in 0..num_iterations
-
-== Story: Transformer bug hunting ==
-
-- use 4 layers in transformer model
-- increase examples in transformer test from 10 to 100
 
 == Story: Arc prize ==
 

@@ -188,6 +188,14 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
+    fn pow(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error>;
+
     fn softmax(
         &self,
         input: &Tensor,
@@ -638,6 +646,16 @@ impl DeviceTrait for Device {
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         self.device.mul(left, right, result, device_stream)
+    }
+
+    fn pow(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        self.device.pow(left, right, result, device_stream)
     }
 
     fn sigmoid(

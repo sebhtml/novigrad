@@ -278,6 +278,40 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
+    fn pow(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        result: &Tensor,
+        _device_stream: &DeviceStream,
+    ) -> Result<(), Error> {
+        if *left.size() != *right.size() {
+            return Err(error!(ErrorEnum::IncompatibleTensorShapes));
+        }
+
+        let len = left.len();
+        debug_assert_eq!(*result.size(), *left.size());
+
+        let result_ptr = result.as_mut_ptr();
+        let left_ptr = left.as_ptr();
+        let right_ptr = right.as_ptr();
+
+        unsafe {
+            let mut index = 0;
+            while index < len {
+                let left_cell = left_ptr.add(index);
+                let right_cell = right_ptr.add(index);
+                let result_cell = result_ptr.add(index);
+                let left = *left_cell;
+                let right = *right_cell;
+                let value = left.powf(right);
+                *result_cell = value;
+                index += 1;
+            }
+        }
+        Ok(())
+    }
+
     fn sigmoid(
         &self,
         input: &Tensor,

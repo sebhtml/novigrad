@@ -1,3 +1,6 @@
+- Implement MSELoss correctly using ReduceSum
+- Implement SoftmaxCrossEntropyLoss correctly using other operators
+
 == Manual mini-batch ==
 
 - fix backward code of reduce sum square and cross-entropy loss

@@ -61,7 +61,6 @@ fn main() -> Result<(), Error> {
     println!("The chatbot knows nothing and will learn as you interact with it. (TODO)");
     println!("-------------------------------------------------------------------");
 
-    //let train_corpus_path = "data/arc-prize-2024-3aa6fb7a-train-examples.txt";
     let train_corpus_path = "data/Geoffrey_Hinton.txt";
     let train_corpus = read_to_string(train_corpus_path).unwrap();
 

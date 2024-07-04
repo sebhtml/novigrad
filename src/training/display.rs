@@ -137,11 +137,14 @@ impl TensorPrinter for RawPrinter {
     }
 }
 
-pub struct BoardPrinter {}
+pub struct BoardPrinter {
+    width: usize,
+    height: usize,
+}
 
-impl Default for BoardPrinter {
-    fn default() -> Self {
-        Self {}
+impl BoardPrinter {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self { width, height }
     }
 }
 
@@ -156,8 +159,8 @@ impl TensorPrinter for BoardPrinter {
         let expected_output_tokens = get_row_argmaxes(expected_output)?;
         let actual_output_tokens = get_row_argmaxes(actual_output)?;
 
-        let width = 7;
-        let height = 7;
+        let width = self.width;
+        let height = self.height;
 
         println!("input");
         print_board(width, height, &input_tokens);
@@ -167,6 +170,13 @@ impl TensorPrinter for BoardPrinter {
 
         println!("actual_output");
         print_board(width, height, &actual_output_tokens);
+
+        let correctness = if expected_output_tokens == actual_output_tokens {
+            1
+        } else {
+            0
+        };
+        println!("  correctness: {}", correctness);
 
         Ok(())
     }

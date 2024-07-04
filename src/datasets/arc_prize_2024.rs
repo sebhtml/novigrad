@@ -4,11 +4,12 @@ use std::fs;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    adam_w::AdamW,
     display::BoardPrinter,
     error,
     tensor::{Error, ErrorEnum},
     transformer_model::TransformerModel,
-    Adam, Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad,
+    Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad,
 };
 
 use super::{into_one_hot_encoded_rows, DatasetDetails};
@@ -67,14 +68,16 @@ fn load_examples(
 
 pub fn load_arc_prize_2024(
     device: &Device,
-) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, Adam, BoardPrinter>, Error> {
+) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, AdamW, BoardPrinter>, Error> {
     let vocab_size = 10;
-    let sequence_length = 7 * 7;
+    let width = 7;
+    let height = 7;
+    let sequence_length = width * height;
     let training_examples = load_examples("training", "3aa6fb7a", "train", device, vocab_size)?;
     let test_examples = load_examples("training", "3aa6fb7a", "test", device, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let optimizer = Adam::try_new(0.05, 0.9, 0.999, 1e-8, 0.0)?;
+    let optimizer = AdamW::try_new(0.5, 0.9, 0.999, 1e-8, 0.01)?;
     let layers = 2;
     let num_heads = 12;
     let dropout_probability = 0.1;
@@ -97,8 +100,8 @@ pub fn load_arc_prize_2024(
         model,
         loss_operator,
         optimizer,
-        epochs: 500,
-        progress: 100,
+        epochs: 100,
+        progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics {
@@ -110,7 +113,7 @@ pub fn load_arc_prize_2024(
             total_next_token_perplexity: 2.0,
         },
         maximum_incorrect_predicted_next_tokens: 0,
-        printer: BoardPrinter::default(),
+        printer: BoardPrinter::new(width, height),
         batch_size: 1,
     };
     Ok(details)

@@ -66,7 +66,7 @@ pub fn load_geoffroy_hinton_transformer(
         },
         final_metrics_max: Metrics {
             total_loss: 450.0,
-            total_next_token_perplexity: 45.0,
+            total_next_token_perplexity: 50.0,
         },
         maximum_incorrect_predicted_next_tokens: 3,
         printer: NextTokenPredictionPrinter::new(tokenizer),

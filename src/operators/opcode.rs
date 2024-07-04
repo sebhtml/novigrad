@@ -7,11 +7,11 @@ use crate::{
     reduce_sum::ReduceSum,
     statistics::{bernoulli::Bernoulli, standardization::Standardization},
     stream::DeviceStream,
+    sum_of_squared_errors::SumOfSquaredErrors,
     tensor::{Error, Tensor},
     transpose::Transpose,
-    Add, ClipNorm, Concat, Device, Div, ExecutableOperator, Gemm, Mul, OperatorAttributes,
-    ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid, Softmax, SoftmaxCrossEntropyLoss,
-    Sqrt, Sub, Unconcat,
+    Add, ClipNorm, Concat, Device, Div, ExecutableOperator, Gemm, Mul, OperatorAttributes, Reshape,
+    ScalarAdd, ScalarMul, Sigmoid, Softmax, SoftmaxCrossEntropyLoss, Sqrt, Sub, Unconcat,
 };
 
 use super::clip::Clip;
@@ -92,7 +92,8 @@ pub enum OpCode {
     SoftmaxCrossEntropyLoss,
 
     /// https://onnx.ai/onnx/operators/onnx__ReduceSumSquare.html
-    ReduceSumSquare,
+    /// ReduceSumSquare
+    SumOfSquaredErrors,
 
     /// https://onnx.ai/onnx/operators/onnx__Bernoulli.html
     Bernoulli,
@@ -136,7 +137,7 @@ impl From<&OpCode> for String {
             OpCode::Concat => "Concat".into(),
             OpCode::Unconcat => "Unconcat".into(),
             OpCode::SoftmaxCrossEntropyLoss => "SoftmaxCrossEntropyLoss".into(),
-            OpCode::ReduceSumSquare => "ReduceSumSquare".into(),
+            OpCode::SumOfSquaredErrors => "ReduceSumSquare".into(),
             OpCode::Bernoulli => "Bernoulli".into(),
             OpCode::Sqrt => "Sqrt".into(),
             OpCode::Transpose => "Transpose".into(),
@@ -181,8 +182,8 @@ impl OpCode {
             OpCode::SoftmaxCrossEntropyLoss => {
                 SoftmaxCrossEntropyLoss::execute(attributes, inputs, outputs, device, device_stream)
             }
-            OpCode::ReduceSumSquare => {
-                ReduceSumSquare::execute(attributes, inputs, outputs, device, device_stream)
+            OpCode::SumOfSquaredErrors => {
+                SumOfSquaredErrors::execute(attributes, inputs, outputs, device, device_stream)
             }
             OpCode::ReduceL2 => {
                 ReduceL2::execute(attributes, inputs, outputs, device, device_stream)

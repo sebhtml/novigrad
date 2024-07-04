@@ -1,9 +1,8 @@
+- use ReduceSumSquare in SumOfSquaredErrors
 - clip grad norn after backward
 - rename ARC prize to colored_mosaic_puzzles
 - remove buffer store that allow reuse
 - add option to print total_next_token_perplexity in TensorPrinter
-- Implement MSELoss correctly using ReduceSum
-- Implement SoftmaxCrossEntropyLoss correctly using other operators
 
 == Manual mini-batch ==
 

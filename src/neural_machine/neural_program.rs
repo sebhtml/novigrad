@@ -1,9 +1,12 @@
 use crate::clip_grad_norm::clip_grad_norm;
+use crate::gradient_instruction;
+use crate::tensor::Tensor;
 use crate::{
     instruction, new_tensor, new_tensor_with_grad, opcode::OpCode, tensor::Error, BinaryOperator,
     Category, Device, Instruction, OperatorAttributes, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
 use std::collections::HashSet;
+use std::ops::Deref;
 
 pub struct NeuralProgram {
     pub example_input: TensorWithGrad,
@@ -84,8 +87,24 @@ impl NeuralProgram {
                 continue;
             }
             for instruction in tensor.gradient_instructions().into_iter() {
+                let outputs: Vec<Tensor> =
+                    instruction.outputs().deref().clone().into_iter().collect();
+                let outputs: Vec<&Tensor> = outputs.iter().collect();
+
                 instructions.push(instruction);
+
+                if must_clip_grad_norm {
+                    for output in outputs {
+                        instructions.push(gradient_instruction!(
+                            OpCode::ClipNorm,
+                            OperatorAttributes::None,
+                            &[output],
+                            &[output],
+                        ));
+                    }
+                }
             }
+
             processed_backward_tensors.insert(tensor_name);
         }
 

@@ -73,14 +73,9 @@ pub fn get_multi_head_attention_model_instructions(
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;
-    let clipped_gradient_norm = true;
-    let program = NeuralProgram::try_new(
-        device,
-        &model,
-        &loss_operator,
-        &optimizer,
-        clipped_gradient_norm,
-    )?;
+    let clip_grad_norm = true;
+    let program =
+        NeuralProgram::try_new(device, &model, &loss_operator, &optimizer, clip_grad_norm)?;
     let instructions = program.instructions;
     Ok(instructions)
 }

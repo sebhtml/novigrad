@@ -1,6 +1,5 @@
 use crate::{
     analysis::min::Min,
-    clip::Clip,
     gelu::{Gelu, GeluDerivative},
     identity::Identity,
     pow::Pow,
@@ -14,6 +13,8 @@ use crate::{
     ReduceSumSquare, Reshape, ScalarAdd, ScalarMul, Sigmoid, Softmax, SoftmaxCrossEntropyLoss,
     Sqrt, Sub, Unconcat,
 };
+
+use super::clip::Clip;
 
 #[derive(Clone, Debug)]
 pub enum OpCode {

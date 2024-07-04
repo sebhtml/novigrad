@@ -1,10 +1,33 @@
+- clip grad norn after backward
+- rename ARC prize to colored_mosaic_puzzles
+- remove buffer store that allow reuse
+- add option to print total_next_token_perplexity in TensorPrinter
+- Implement MSELoss correctly using ReduceSum
+- Implement SoftmaxCrossEntropyLoss correctly using other operators
+
+== Manual mini-batch ==
+
+- fix backward code of reduce sum square and cross-entropy loss
+- use batch aggregated loss to compute gradient
+
+== correct mini-batch implementation ==
+
+- impement mini-batch in the model input tensor shape
+- implement mini batch using broadcasting in the operators
+
 == Story: Transformer batching ==
 
 - increase examples in transformer test from 30 to 100
-- remove buffer store that allow reuse
 - use batching in transformer dataset
 - use 4 layers in transformer model
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
+
+== Story: Mega-man transformer ==
+
+- use Mega_man.txt for transformer dataset
+
+- re-add method zero_grad
+
 
 == Story: use device pointer mode ==
 
@@ -86,9 +109,6 @@
 - remove random calls to unwrap()
 - return ErrNoGradient if output tensor has no gradient
 
-== Mini Batch ==
-
-- implement mini batch
 - image transformer
 
 == Datasets ==

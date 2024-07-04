@@ -84,7 +84,7 @@ C++
 - [Backdrop Build - Builds](https://backdropbuild.com/builds?cohorts=v5)
 - [sebhtml](https://backdropbuild.com/builders/sebhtml)
 
-# AI benchmarks
+# AGI benchmarks
 
 - [Abstraction and Reasoning Corpus for Artificial General Intelligence (ARC-AGI)](https://arcprize.org/) [GitHub](https://github.com/fchollet/ARC-AGI)
 

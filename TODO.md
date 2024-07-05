@@ -1,4 +1,9 @@
+== Story: optimization with NVIDIA NSight Systems ==
+
+- use result::memcpy_htod_async(*dst.device_ptr_mut(), src, self.stream) to do set_value
+- implement Bernoulli on CPU only and use host-to-device data movement
 - debug performance with NVIDIA Nsight Systems
+
 - increase examples in transformer test from 30 to 100
 
 - colored_mosaic_puzzles: generate examples with translations and rotations

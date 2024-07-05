@@ -31,8 +31,7 @@ fn load_json_examples(
     problem_id: &str,
     train_or_test: &str,
 ) -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
-    let file_path =
-        format!("/home/sebhtml/projects/ARC-AGI/data/{training_or_evaluation}/{problem_id}.json");
+    let file_path = format!("/colored_mosaic_puzzles/{training_or_evaluation}/{problem_id}.json");
     let data = fs::read_to_string(file_path).unwrap();
     let p: Problem = serde_json::from_str(&data).unwrap();
     let examples = match train_or_test {
@@ -144,7 +143,7 @@ fn load_examples(
         })
 }
 
-pub fn load_arc_prize_2024(
+pub fn load_colored_mosaic_puzzles(
     device: &Device,
 ) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, AdamW, BoardPrinter>, Error> {
     let vocab_size = 10;
@@ -176,10 +175,11 @@ pub fn load_arc_prize_2024(
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let optimizer = AdamW::try_new(0.05, 0.9, 0.999, 1e-8, 0.1)?;
     let layers = 2;
-    let num_heads = 16;
+    let num_heads = 12;
     let dropout_probability = 0.1;
-    let n_embd = 2048;
+    let n_embd = 768;
     let causal_mask = false;
+    let batch_size = 2;
     let model = TransformerModel::new(
         device,
         layers,
@@ -205,7 +205,7 @@ pub fn load_arc_prize_2024(
         final_metrics_max: Metrics { total_loss: 0.0 },
         maximum_incorrect_predicted_next_tokens: 0,
         printer: BoardPrinter::new(width, height),
-        batch_size: 1,
+        batch_size,
     };
     Ok(details)
 }

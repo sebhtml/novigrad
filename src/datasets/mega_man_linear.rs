@@ -1,6 +1,7 @@
 use crate::{
-    display::NextTokenPredictionPrinter, mega_man::MegaManModel, tensor::Error, Device,
-    GradientDescent, Metrics, SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
+    display::NextTokenPredictionPrinter, mega_man::MegaManModel,
+    stochastic_gradient_descent::StochasticGradientDescent, tensor::Error, Device, Metrics,
+    SoftmaxCrossEntropyLoss, Tokenizer, TokenizerTrait,
 };
 
 use super::{load_examples, DatasetDetails};
@@ -11,7 +12,7 @@ pub fn load_mega_man_linear(
     DatasetDetails<
         MegaManModel,
         SoftmaxCrossEntropyLoss,
-        GradientDescent,
+        StochasticGradientDescent,
         NextTokenPredictionPrinter,
     >,
     Error,
@@ -35,7 +36,7 @@ pub fn load_mega_man_linear(
     let batch_size = 4;
     let model = MegaManModel::new(device, sequence_length, vocab_size)?;
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let optimizer = GradientDescent::new(0.5);
+    let optimizer = StochasticGradientDescent::new(0.5);
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,

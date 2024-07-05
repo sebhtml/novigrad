@@ -3,17 +3,17 @@ use crate::{
     OperatorAttributes, OptimizerTrait, TensorWithGrad,
 };
 
-pub struct GradientDescent {
+pub struct StochasticGradientDescent {
     learning_rate: f32,
 }
 
-impl GradientDescent {
+impl StochasticGradientDescent {
     pub fn new(learning_rate: f32) -> Self {
         Self { learning_rate }
     }
 }
 
-impl OptimizerTrait for GradientDescent {
+impl OptimizerTrait for StochasticGradientDescent {
     fn optimize(
         &self,
         device: &Device,

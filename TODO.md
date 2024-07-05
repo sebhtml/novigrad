@@ -19,8 +19,6 @@
 
 == Story: Mega-man transformer ==
 
-- use Mega_man.txt for transformer dataset
-
 - re-add method zero_grad
 
 == Story: use device pointer mode ==

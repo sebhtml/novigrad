@@ -6,13 +6,13 @@ use crate::{
 
 use super::{load_examples, DatasetDetails};
 
-pub fn load_geoffroy_hinton_transformer(
+pub fn load_mega_man_transformers(
     device: &Device,
 ) -> Result<
     DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, AdamW, NextTokenPredictionPrinter>,
     Error,
 > {
-    let file_path = "data/Geoffrey_Hinton.txt";
+    let file_path = "data/Mega_Man.txt";
     let max_chars = None;
     let max_number_of_examples = 30;
     let mut tokenizer = Tokenizer::ascii_tokenizer();

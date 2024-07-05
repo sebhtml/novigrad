@@ -1,11 +1,12 @@
-- use ReduceSumSquare in SumOfSquaredErrors
-- clip grad norn after backward
-- rename ARC prize to colored_mosaic_puzzles
+- don't print total_next_token_perplexity
+- reported memory used is bad so remove it
 - remove buffer store that allow reuse
-- add option to print total_next_token_perplexity in TensorPrinter
+- rename ARC prize to colored_mosaic_puzzles
+
+- debug performance with NVIDIA Nsight Systems
 
 == Manual mini-batch ==
-
+- use batching in transformer dataset
 - fix backward code of reduce sum square and cross-entropy loss
 - use batch aggregated loss to compute gradient
 
@@ -17,7 +18,7 @@
 == Story: Transformer batching ==
 
 - increase examples in transformer test from 30 to 100
-- use batching in transformer dataset
+
 - use 4 layers in transformer model
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
 
@@ -26,7 +27,6 @@
 - use Mega_man.txt for transformer dataset
 
 - re-add method zero_grad
-
 
 == Story: use device pointer mode ==
 

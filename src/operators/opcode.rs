@@ -1,5 +1,6 @@
 use crate::{
     analysis::min::Min,
+    dot_product::Dot,
     gelu::{Gelu, GeluDerivative},
     identity::Identity,
     pow::Pow,
@@ -110,6 +111,9 @@ pub enum OpCode {
 
     /// Not ONNX-compliant
     Unconcat,
+
+    /// Not ONNX-compliant
+    Dot,
 }
 
 impl From<&OpCode> for String {
@@ -142,6 +146,7 @@ impl From<&OpCode> for String {
             OpCode::Sqrt => "Sqrt".into(),
             OpCode::Transpose => "Transpose".into(),
             OpCode::Pow => "Pow".into(),
+            OpCode::Dot => "Dot".into(),
         }
     }
 }
@@ -209,6 +214,7 @@ impl OpCode {
                 ClipNorm::execute(attributes, inputs, outputs, device, device_stream)
             }
             OpCode::Pow => Pow::execute(attributes, inputs, outputs, device, device_stream),
+            OpCode::Dot => Dot::execute(attributes, inputs, outputs, device, device_stream),
         }
     }
 }

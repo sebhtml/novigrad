@@ -59,7 +59,7 @@ pub fn load_mega_man_multi_head_attention(
             total_loss: 7000.0,
             total_next_token_perplexity: 120.0,
         },
-        maximum_incorrect_predicted_next_tokens: 30,
+        maximum_incorrect_predicted_next_tokens: 20,
         printer: NextTokenPredictionPrinter::new(tokenizer),
         batch_size: 1,
     };

@@ -18,21 +18,21 @@ pub fn load_mega_man_linear(
 > {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
-    let max_number_of_examples = 1000;
+    let number_of_examples = 1024;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
-    let input_sequence_length = sequence_length;
     let output_sequence_length = 1;
     let examples = load_examples(
         device,
         file_path,
         max_chars,
-        max_number_of_examples,
-        input_sequence_length,
+        number_of_examples,
+        sequence_length,
         output_sequence_length,
         &mut tokenizer,
     )?;
     let vocab_size = tokenizer.vocab_size();
+    let batch_size = 4;
     let model = MegaManModel::new(device, sequence_length, vocab_size)?;
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let optimizer = GradientDescent::new(0.5);
@@ -43,15 +43,15 @@ pub fn load_mega_man_linear(
         model,
         loss_operator,
         optimizer,
-        epochs: 100,
+        epochs: 50,
         progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics { total_loss: 5500.0 },
-        final_metrics_max: Metrics { total_loss: 0.0001 },
+        final_metrics_max: Metrics { total_loss: 0.01 },
         maximum_incorrect_predicted_next_tokens: 0,
         printer: NextTokenPredictionPrinter::new(tokenizer),
-        batch_size: 1,
+        batch_size,
     };
     Ok(details)
 }

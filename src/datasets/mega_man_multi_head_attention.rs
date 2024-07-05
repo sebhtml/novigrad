@@ -19,23 +19,22 @@ pub fn load_mega_man_multi_head_attention(
 > {
     let file_path = "data/Mega_Man.txt";
     let max_chars = None;
-    let max_number_of_examples = 100;
+    let number_of_examples = 10;
     let mut tokenizer = Tokenizer::ascii_tokenizer();
     let sequence_length = 32;
 
-    let input_sequence_length = sequence_length;
-    let output_sequence_length = sequence_length;
     let examples = load_examples(
         device,
         file_path,
         max_chars,
-        max_number_of_examples,
-        input_sequence_length,
-        output_sequence_length,
+        number_of_examples,
+        sequence_length,
+        sequence_length,
         &mut tokenizer,
     )?;
 
     let vocab_size = tokenizer.vocab_size();
+    let batch_size = 1;
     let model = MultiHeadAttentionModel::new(device, sequence_length, vocab_size)?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
@@ -47,15 +46,17 @@ pub fn load_mega_man_multi_head_attention(
         model,
         loss_operator,
         optimizer,
-        epochs: 200,
+        epochs: 100,
         progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,
-        initial_metrics_min: Metrics { total_loss: 4000.0 },
-        final_metrics_max: Metrics { total_loss: 7000.0 },
-        maximum_incorrect_predicted_next_tokens: 20,
+        initial_metrics_min: Metrics { total_loss: 3000.0 },
+        final_metrics_max: Metrics {
+            total_loss: 10000.0,
+        },
+        maximum_incorrect_predicted_next_tokens: 10,
         printer: NextTokenPredictionPrinter::new(tokenizer),
-        batch_size: 1,
+        batch_size,
     };
     Ok(details)
 }
@@ -67,9 +68,16 @@ pub fn get_multi_head_attention_model_instructions(
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;
+    let batch_size = 1;
     let clip_grad_norm = true;
-    let program =
-        NeuralProgram::try_new(device, &model, &loss_operator, &optimizer, clip_grad_norm)?;
+    let program = NeuralProgram::try_new(
+        device,
+        &model,
+        &loss_operator,
+        &optimizer,
+        clip_grad_norm,
+        batch_size,
+    )?;
     let instructions = program.instructions;
     Ok(instructions)
 }

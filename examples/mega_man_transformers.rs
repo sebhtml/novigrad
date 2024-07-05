@@ -1,6 +1,4 @@
-use novigrad::{
-    datasets::mega_man_transformers::load_mega_man_transformers, train_model, Device
-};
+use novigrad::{datasets::mega_man_transformers::load_mega_man_transformers, train_model, Device};
 
 fn main() {
     let device = Device::default();

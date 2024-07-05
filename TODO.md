@@ -1,18 +1,21 @@
+- report memory usage once
+- remove forward method in tensor
 - rename ARC prize to colored_mosaic_puzzles
-
+- rename GradientDescent to StochasticGradientDescent
 - debug performance with NVIDIA Nsight Systems
+- increase examples in transformer test from 30 to 100
+
+== Loss function fixes ==
+
+- fix backward code of reduce sum square and cross-entropy loss
 
 == correct mini-batch implementation ==
 
-- fix backward code of reduce sum square and cross-entropy loss
 - use batch aggregated loss to compute gradient
 - impement mini-batch in the model input tensor shape
 - implement mini batch using broadcasting in the operators
 
 == Story: Transformer batching ==
-
-- use batching in transformer dataset
-- increase examples in transformer test from 30 to 100
 
 - use 4 layers in transformer model
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset

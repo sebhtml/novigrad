@@ -2,9 +2,9 @@ use crate::{
     display::NextTokenPredictionPrinter,
     error,
     simple::SimpleModel,
+    stochastic_gradient_descent::StochasticGradientDescent,
     tensor::{Error, ErrorEnum},
-    Device, GradientDescent, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad, Tokenizer,
-    TokenizerTrait,
+    Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad, Tokenizer, TokenizerTrait,
 };
 
 use super::{into_one_hot_encoded_rows, DatasetDetails};
@@ -47,7 +47,7 @@ pub fn load_simple(
     DatasetDetails<
         SimpleModel,
         SoftmaxCrossEntropyLoss,
-        GradientDescent,
+        StochasticGradientDescent,
         NextTokenPredictionPrinter,
     >,
     Error,
@@ -59,7 +59,7 @@ pub fn load_simple(
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let vocab_size = tokenizer.vocab_size();
     let model = SimpleModel::new(device, sequence_length, vocab_size)?;
-    let optimizer = GradientDescent::new(0.5);
+    let optimizer = StochasticGradientDescent::new(0.5);
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,

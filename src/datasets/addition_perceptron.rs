@@ -1,7 +1,7 @@
 use crate::{
     display::RawPrinter, new_tensor_with_grad, perceptron::PerceptronModel,
-    sum_of_squared_errors::SumOfSquaredErrors, tensor::Error, Device, GradientDescent, Metrics,
-    TensorWithGrad,
+    stochastic_gradient_descent::StochasticGradientDescent,
+    sum_of_squared_errors::SumOfSquaredErrors, tensor::Error, Device, Metrics, TensorWithGrad,
 };
 
 use super::DatasetDetails;
@@ -28,12 +28,14 @@ fn load_examples(device: &Device) -> Result<Vec<(TensorWithGrad, TensorWithGrad)
 
 pub fn load_addition_perceptron(
     device: &Device,
-) -> Result<DatasetDetails<PerceptronModel, SumOfSquaredErrors, GradientDescent, RawPrinter>, Error>
-{
+) -> Result<
+    DatasetDetails<PerceptronModel, SumOfSquaredErrors, StochasticGradientDescent, RawPrinter>,
+    Error,
+> {
     let model = PerceptronModel::new(device)?;
     let examples = load_examples(device)?;
     let loss_operator = SumOfSquaredErrors::new(device);
-    let optimizer = GradientDescent::new(0.5);
+    let optimizer = StochasticGradientDescent::new(0.5);
     let details = DatasetDetails {
         device: device.clone(),
         train_examples: examples,

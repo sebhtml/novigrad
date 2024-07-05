@@ -1,11 +1,10 @@
-- remove forward method in tensor
-- rename GradientDescent to StochasticGradientDescent
 - debug performance with NVIDIA Nsight Systems
 - increase examples in transformer test from 30 to 100
 
 == Loss function fixes ==
 
 - fix backward code of reduce sum square and cross-entropy loss
+- remove forward method in tensor
 
 == correct mini-batch implementation ==
 

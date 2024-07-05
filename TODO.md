@@ -1,6 +1,8 @@
 - debug performance with NVIDIA Nsight Systems
 - increase examples in transformer test from 30 to 100
 
+- colored_mosaic_puzzles: generate examples with translations and rotations
+
 == Loss function fixes ==
 
 - fix backward code of reduce sum square and cross-entropy loss

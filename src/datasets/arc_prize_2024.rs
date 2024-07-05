@@ -201,14 +201,8 @@ pub fn load_arc_prize_2024(
         progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,
-        initial_metrics_min: Metrics {
-            total_loss: 5.0,
-            total_next_token_perplexity: 200.0,
-        },
-        final_metrics_max: Metrics {
-            total_loss: 0.0,
-            total_next_token_perplexity: 2.0,
-        },
+        initial_metrics_min: Metrics { total_loss: 5.0 },
+        final_metrics_max: Metrics { total_loss: 0.0 },
         maximum_incorrect_predicted_next_tokens: 0,
         printer: BoardPrinter::new(width, height),
         batch_size: 1,

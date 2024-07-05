@@ -5,7 +5,6 @@ use crate::{
     datasets::DatasetDetails,
     display::TensorPrinter,
     neural_program::NeuralProgram,
-    perplexity::get_perplexity,
     schedulers::DefaultStreamScheduler,
     tensor::{Error, Tensor},
     BinaryOperator, Device, NeuralMachine, OptimizerTrait, TensorWithGrad, UnaryModel,
@@ -23,7 +22,6 @@ fn print_device_mem_info(device: &Device) -> Result<(), Error> {
 #[derive(Clone)]
 pub struct Metrics {
     pub total_loss: f32,
-    pub total_next_token_perplexity: f32,
 }
 
 fn print_metrics(epoch: usize, metrics: &Metrics, previous_metrics: &Metrics) -> Result<(), Error> {
@@ -34,15 +32,6 @@ fn print_metrics(epoch: usize, metrics: &Metrics, previous_metrics: &Metrics) ->
     println!(
         "Epoch {} total_loss {}, change: {}",
         epoch, total_loss, total_loss_change
-    );
-    let total_next_token_perplexity = metrics.total_next_token_perplexity;
-    let previous_total_next_token_perplexity = previous_metrics.total_next_token_perplexity;
-    let total_next_token_perplexity_change = (total_next_token_perplexity
-        - previous_total_next_token_perplexity)
-        / previous_total_next_token_perplexity;
-    println!(
-        "Epoch {} total_next_token_perplexity {}, change: {}",
-        epoch, total_next_token_perplexity, total_next_token_perplexity_change
     );
     Ok(())
 }
@@ -64,11 +53,9 @@ pub fn train_model<T>(
 ) -> Result<NeuralMachineTestOutput, Error> {
     let mut initial_metrics = Metrics {
         total_loss: f32::NAN,
-        total_next_token_perplexity: f32::NAN,
     };
     let mut previous_metrics = Metrics {
         total_loss: f32::NAN,
-        total_next_token_perplexity: f32::NAN,
     };
     let train_examples = &details.train_examples;
     let model = details.model;
@@ -258,27 +245,17 @@ pub fn total_metrics<T>(
     outputs: &[TensorWithGrad],
 ) -> Result<Metrics, Error> {
     let mut total_loss = 0.0;
-    let mut total_next_token_perplexity = 0.0;
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
-        let actual_output = neural_machine.infer(&inputs[i])?;
 
         // Loss
         let example_loss = neural_machine.loss(expected_output)?;
         let example_loss: &Tensor = &example_loss.tensor();
         let example_loss: f32 = example_loss.try_into()?;
         total_loss += example_loss;
-
-        // Perplexity
-        let actual_output = &actual_output.tensor();
-        let perplexity = get_perplexity(actual_output, actual_output.rows() - 1)?;
-        total_next_token_perplexity += perplexity;
     }
 
-    let metrics = Metrics {
-        total_loss,
-        total_next_token_perplexity,
-    };
+    let metrics = Metrics { total_loss };
     Ok(metrics)
 }
 

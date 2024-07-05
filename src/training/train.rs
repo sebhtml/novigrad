@@ -247,6 +247,7 @@ pub fn total_metrics<T>(
     let mut total_loss = 0.0;
     for i in 0..inputs.len() {
         let expected_output = &outputs[i];
+        let _actual_output = neural_machine.infer(&inputs[i])?;
 
         // Loss
         let example_loss = neural_machine.loss(expected_output)?;

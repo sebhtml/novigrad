@@ -30,9 +30,7 @@ impl DevSlice {
     pub fn new(device: &Device, len: usize) -> DevSlice {
         // TODO remove unwrap
         let slice = device.slice(len as i32).unwrap();
-        DevSlice {
-            buffer: slice,
-        }
+        DevSlice { buffer: slice }
     }
 }
 

@@ -3,7 +3,7 @@ use crate::{
     ExecutableOperator,
 };
 
-use super::ReduceSumSquare;
+use super::SumOfSquaredErrors;
 
 #[test]
 fn derive() {
@@ -35,7 +35,7 @@ fn derive() {
         vec![-6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0, -6.0]
     )
     .unwrap();
-    let operator = ReduceSumSquare::new(&device);
+    let operator = SumOfSquaredErrors::new(&device);
     let loss = operator.forward(&expected_tensor, &actual_tensor).unwrap();
     let device_stream = device.new_stream().unwrap();
     loss.forward(&device, &device_stream).unwrap();
@@ -54,7 +54,7 @@ fn evaluate() {
     let actual_tensor =
         new_tensor!(device, 1, 8, vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]).unwrap();
     let loss = new_tensor!(device, 1, 1, vec![0.0]).unwrap();
-    ReduceSumSquare::execute(
+    SumOfSquaredErrors::execute(
         &Default::default(),
         &[&expected_tensor, &actual_tensor],
         &[&loss],

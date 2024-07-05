@@ -23,6 +23,7 @@ pub use div::*;
 mod sqrt;
 pub use sqrt::*;
 pub mod clip;
+pub mod dot_product;
 pub mod identity;
 pub mod pow;
 pub mod row_max;

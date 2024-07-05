@@ -59,7 +59,7 @@ pub fn load_mega_man_multi_head_attention(
             total_loss: 7000.0,
             total_next_token_perplexity: 120.0,
         },
-        maximum_incorrect_predicted_next_tokens: 30,
+        maximum_incorrect_predicted_next_tokens: 20,
         printer: NextTokenPredictionPrinter::new(tokenizer),
         batch_size: 1,
     };
@@ -73,14 +73,9 @@ pub fn get_multi_head_attention_model_instructions(
     let model = details.model;
     let loss_operator = details.loss_operator;
     let optimizer = details.optimizer;
-    let clipped_gradient_norm = true;
-    let program = NeuralProgram::try_new(
-        device,
-        &model,
-        &loss_operator,
-        &optimizer,
-        clipped_gradient_norm,
-    )?;
+    let clip_grad_norm = true;
+    let program =
+        NeuralProgram::try_new(device, &model, &loss_operator, &optimizer, clip_grad_norm)?;
     let instructions = program.instructions;
     Ok(instructions)
 }

@@ -1,12 +1,9 @@
-use std::{collections::HashSet, ops::Deref};
-
+use crate::clip_grad_norm::clip_grad_norm;
 use crate::{
-    gradient_instruction, instruction, new_tensor, new_tensor_with_grad,
-    opcode::OpCode,
-    tensor::{Error, Tensor},
-    BinaryOperator, Category, Device, Instruction, OperatorAttributes, OptimizerTrait,
-    TensorWithGrad, UnaryModel,
+    instruction, new_tensor, new_tensor_with_grad, opcode::OpCode, tensor::Error, BinaryOperator,
+    Category, Device, Instruction, OperatorAttributes, OptimizerTrait, TensorWithGrad, UnaryModel,
 };
+use std::collections::HashSet;
 
 pub struct NeuralProgram {
     pub example_input: TensorWithGrad,
@@ -22,7 +19,7 @@ impl NeuralProgram {
         model: &impl UnaryModel,
         loss_operator: &impl BinaryOperator,
         optimizer: &impl OptimizerTrait,
-        clipped_gradient_norm: bool,
+        must_clip_grad_norm: bool,
     ) -> Result<NeuralProgram, Error> {
         let zero = new_tensor!(device, 1, 1, vec![0.0])?;
         // input
@@ -87,28 +84,24 @@ impl NeuralProgram {
                 continue;
             }
             for instruction in tensor.gradient_instructions().into_iter() {
-                let outputs: Vec<Tensor> =
-                    instruction.outputs().deref().clone().into_iter().collect();
-                let outputs: Vec<&Tensor> = outputs.iter().collect();
-
                 instructions.push(instruction);
-
-                if clipped_gradient_norm {
-                    for output in outputs {
-                        instructions.push(gradient_instruction!(
-                            OpCode::ClipNorm,
-                            OperatorAttributes::None,
-                            &[output],
-                            &[output],
-                        ));
-                    }
-                }
             }
+
             processed_backward_tensors.insert(tensor_name);
         }
 
         // Optimization instructions
         let parameter_tensors = device.parameter_tensors();
+
+        if must_clip_grad_norm {
+            let gradient = parameter_tensors
+                .iter()
+                .map(|t| t.gradient())
+                .collect::<Vec<_>>();
+            let mut clip_instructions = clip_grad_norm(device, &gradient)?;
+            instructions.append(&mut clip_instructions);
+        }
+
         let mut optimizer_instructions = optimizer.optimize(device, &parameter_tensors)?;
         instructions.append(&mut optimizer_instructions);
 

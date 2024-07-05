@@ -10,11 +10,11 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
-pub struct ReduceSumSquare {
+pub struct SumOfSquaredErrors {
     device: Device,
 }
 
-impl ReduceSumSquare {
+impl SumOfSquaredErrors {
     pub fn new(device: &Device) -> Self {
         Self {
             device: device.clone(),
@@ -22,7 +22,7 @@ impl ReduceSumSquare {
     }
 }
 
-impl ExecutableOperator for ReduceSumSquare {
+impl ExecutableOperator for SumOfSquaredErrors {
     fn execute(
         _attributes: &OperatorAttributes,
         inputs: &[&Tensor],
@@ -37,7 +37,7 @@ impl ExecutableOperator for ReduceSumSquare {
     }
 }
 
-impl BinaryOperator for ReduceSumSquare {
+impl BinaryOperator for SumOfSquaredErrors {
     fn forward(
         &self,
         input_1: &TensorWithGrad,
@@ -56,7 +56,7 @@ impl BinaryOperator for ReduceSumSquare {
         let outputs = [&output];
 
         output.push_instruction(loss_instruction!(
-            OpCode::ReduceSumSquare,
+            OpCode::SumOfSquaredErrors,
             OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],

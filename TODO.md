@@ -1,6 +1,3 @@
-- don't print total_next_token_perplexity
-- reported memory used is bad so remove it
-- remove buffer store that allow reuse
 - rename ARC prize to colored_mosaic_puzzles
 
 - debug performance with NVIDIA Nsight Systems

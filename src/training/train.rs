@@ -68,8 +68,14 @@ pub fn train_model<T>(
     let optimizer = details.optimizer;
     let mut printer = details.printer;
 
-    let program =
-        NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer, clip_grad_norm)?;
+    let program = NeuralProgram::try_new(
+        &device,
+        &model,
+        &loss_operator,
+        &optimizer,
+        clip_grad_norm,
+        batch_size,
+    )?;
     let mut neural_machine = NeuralMachine::<T, DefaultStreamScheduler>::try_new(
         &device,
         program,

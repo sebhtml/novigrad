@@ -1,4 +1,5 @@
 use crate::clip_grad_norm::clip_grad_norm;
+use crate::optimization_instruction;
 use crate::{
     instruction, new_tensor, new_tensor_with_grad, opcode::OpCode, tensor::Error, BinaryOperator,
     Category, Device, Instruction, OperatorAttributes, OptimizerTrait, TensorWithGrad, UnaryModel,
@@ -20,6 +21,7 @@ impl NeuralProgram {
         loss_operator: &impl BinaryOperator,
         optimizer: &impl OptimizerTrait,
         must_clip_grad_norm: bool,
+        batch_size: usize,
     ) -> Result<NeuralProgram, Error> {
         let zero = new_tensor!(device, 1, 1, vec![0.0])?;
         // input
@@ -91,21 +93,31 @@ impl NeuralProgram {
         }
 
         // Optimization instructions
-        let parameter_tensors = device.parameter_tensors();
+        let parameters = device.parameter_tensors();
+        let gradient = parameters.iter().map(|t| t.gradient()).collect::<Vec<_>>();
 
         if must_clip_grad_norm {
-            let gradient = parameter_tensors
-                .iter()
-                .map(|t| t.gradient())
-                .collect::<Vec<_>>();
             let mut clip_instructions = clip_grad_norm(device, &gradient)?;
             instructions.append(&mut clip_instructions);
         }
 
-        let mut optimizer_instructions = optimizer.optimize(device, &parameter_tensors)?;
+        // Average the loss gradient over the batch size
+        if batch_size != 1 {
+            let batch_size_reciprocal = new_tensor!(device, 1, 1, vec![1.0 / batch_size as f32])?;
+            for g in gradient.iter() {
+                instructions.push(optimization_instruction!(
+                    OpCode::ScalarMul,
+                    OperatorAttributes::None,
+                    &[&batch_size_reciprocal, &g],
+                    &[&g],
+                ));
+            }
+        }
+
+        let mut optimizer_instructions = optimizer.optimize(device, &parameters)?;
         instructions.append(&mut optimizer_instructions);
 
-        for tensor in parameter_tensors.iter() {
+        for tensor in parameters.iter() {
             let inst = instruction!(
                 OpCode::ScalarMul,
                 OperatorAttributes::None,

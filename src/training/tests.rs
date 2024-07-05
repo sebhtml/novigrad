@@ -2,10 +2,10 @@ use more_asserts::assert_ge;
 use more_asserts::assert_le;
 
 use crate::datasets::addition_perceptron::load_addition_perceptron;
-use crate::datasets::geoffroy_hinton_transformer::load_geoffroy_hinton_transformer;
 use crate::datasets::mega_man_attention_head::load_mega_man_attention_head;
 use crate::datasets::mega_man_linear::load_mega_man_linear;
 use crate::datasets::mega_man_multi_head_attention::load_mega_man_multi_head_attention;
+use crate::datasets::mega_man_transformers::load_mega_man_transformers;
 use crate::datasets::simple::load_simple;
 use crate::datasets::DatasetDetails;
 use crate::display::TensorPrinter;
@@ -86,8 +86,8 @@ fn mega_man_multi_head_attention() {
 }
 
 #[test]
-fn geoffroy_hinton_transformer() {
+fn mega_man_transformers() {
     let device = Device::default();
-    let details = load_geoffroy_hinton_transformer(&device).unwrap();
+    let details = load_mega_man_transformers(&device).unwrap();
     test_model(details);
 }

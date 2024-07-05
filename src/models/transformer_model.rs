@@ -35,17 +35,17 @@ impl TransformerModel {
         num_heads: usize,
         dropout_probability: f32,
         n_embd: usize,
-        context_length: usize,
+        sequence_length: usize,
         vocab_size: usize,
         causal_mask: bool,
     ) -> Result<Self, Error> {
         let embedding = Embedding::new(device, vocab_size, n_embd)?;
-        let dropout = Dropout::try_new(device, context_length, n_embd, dropout_probability)?;
+        let dropout = Dropout::try_new(device, sequence_length, n_embd, dropout_probability)?;
         let transformers = (0..layers)
             .map(|_| {
                 Transformer::try_new(
                     device,
-                    context_length,
+                    sequence_length,
                     n_embd,
                     causal_mask,
                     num_heads,
@@ -54,19 +54,19 @@ impl TransformerModel {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let layer_norm = LayerNormalization::try_new(device, context_length, n_embd)?;
+        let layer_norm = LayerNormalization::try_new(device, sequence_length, n_embd)?;
         let linear = Linear::new(
             device,
             vocab_size,
             n_embd,
             WeightsInitialization::Kaiming,
-            context_length,
+            sequence_length,
         )?;
         let softmax = Softmax::new_with_next_is_cross_entropy_loss(device);
 
         let model = Self {
-            input_shape: vec![context_length, vocab_size],
-            output_shape: vec![context_length, vocab_size],
+            input_shape: vec![sequence_length, vocab_size],
+            output_shape: vec![sequence_length, vocab_size],
             embedding,
             dropout,
             transformers,

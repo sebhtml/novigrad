@@ -14,7 +14,7 @@ use std::{fs::read_to_string, io};
 fn main() -> Result<(), Error> {
     let device = Device::default();
     let mut tokenizer = Tokenizer::ascii_tokenizer();
-    let context_length = 32; //256;
+    let sequence_length = 32; //256;
     let padding_token = 0;
     let layers = 1;
     let num_heads = 12;
@@ -28,7 +28,7 @@ fn main() -> Result<(), Error> {
         num_heads,
         dropout_probability,
         n_embd,
-        context_length,
+        sequence_length,
         vocab_size,
         causal_mask,
     )?;
@@ -37,8 +37,14 @@ fn main() -> Result<(), Error> {
     let batch_size = 32;
     let clip_grad_norm = true;
     let optimizer = Adam::try_new(0.2, 0.9, 0.999, 1e-8, 0.0)?;
-    let program =
-        NeuralProgram::try_new(&device, &model, &loss_operator, &optimizer, clip_grad_norm)?;
+    let program = NeuralProgram::try_new(
+        &device,
+        &model,
+        &loss_operator,
+        &optimizer,
+        clip_grad_norm,
+        batch_size,
+    )?;
 
     let maximum_device_streams = 16;
     let epochs = 100;
@@ -67,7 +73,7 @@ fn main() -> Result<(), Error> {
 
     let train_examples = train_examples
         .iter()
-        .map(|example| generate_examples(example, &mut tokenizer, context_length, &device))
+        .map(|example| generate_examples(example, &mut tokenizer, sequence_length, &device))
         .collect::<Result<Vec<_>, _>>()
         .unwrap()
         .concat();
@@ -89,9 +95,9 @@ fn main() -> Result<(), Error> {
                 let loss: f32 = loss.try_into()?;
                 /*
                 let expected_next_token =
-                    get_row_argmax(&expected_output_one_hot.tensor(), context_length - 1)?;
+                    get_row_argmax(&expected_output_one_hot.tensor(), sequence_length - 1)?;
                 let actual_next_token =
-                    get_row_argmax(&actual_output_one_hot.tensor(), context_length - 1)?;
+                    get_row_argmax(&actual_output_one_hot.tensor(), sequence_length - 1)?;
                 println!(
                     "example: {}, loss {}, expected_next_token: {}, actual_next_token: {}",
                     i, loss, expected_next_token, actual_next_token
@@ -112,7 +118,7 @@ fn main() -> Result<(), Error> {
             &mut neural_machine,
             &device,
             &prompt_tokens,
-            context_length,
+            sequence_length,
             vocab_size,
             max_len,
             padding_token,
@@ -125,8 +131,8 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-pub fn add_padding(tokens: &mut Vec<usize>, context_length: usize, padding_token: usize) {
-    while tokens.len() < context_length {
+pub fn add_padding(tokens: &mut Vec<usize>, sequence_length: usize, padding_token: usize) {
+    while tokens.len() < sequence_length {
         tokens.push(padding_token);
     }
 }
@@ -144,7 +150,7 @@ fn auto_regressive_inference(
     neural_machine: &mut NeuralMachine<f32, DefaultStreamScheduler>,
     device: &Device,
     prompt_tokens: &[usize],
-    context_length: usize,
+    sequence_length: usize,
     vocab_size: usize,
     max_len: usize,
     padding_token: usize,
@@ -153,23 +159,23 @@ fn auto_regressive_inference(
 
     // TODO implement another stopping criterion.
     while auto_regressive_tokens.len() < max_len {
-        let input_tokens = if auto_regressive_tokens.len() <= context_length {
+        let input_tokens = if auto_regressive_tokens.len() <= sequence_length {
             vec![
                 auto_regressive_tokens.clone(),
-                vec![padding_token; context_length - auto_regressive_tokens.len()],
+                vec![padding_token; sequence_length - auto_regressive_tokens.len()],
             ]
             .concat()
         } else {
-            auto_regressive_tokens[(auto_regressive_tokens.len() - context_length)..].to_owned()
+            auto_regressive_tokens[(auto_regressive_tokens.len() - sequence_length)..].to_owned()
         };
 
         let input_one_hot = into_one_hot_encoded_rows(device, &input_tokens, vocab_size)?;
 
         let actual_output_one_hot = neural_machine.infer(&input_one_hot)?;
-        let last_row = if auto_regressive_tokens.len() <= context_length {
+        let last_row = if auto_regressive_tokens.len() <= sequence_length {
             auto_regressive_tokens.len() - 1
         } else {
-            context_length - 1
+            sequence_length - 1
         };
         let predicted_next_token = get_row_argmax(&actual_output_one_hot.tensor(), last_row)?;
         //println!("predicted next token: {}", predicted_next_token);
@@ -209,17 +215,17 @@ fn read_text_examples(corpus: &str) -> Vec<String> {
 fn generate_examples(
     example: &str,
     tokenizer: &mut Tokenizer,
-    context_length: usize,
+    sequence_length: usize,
     device: &Device,
 ) -> Result<Vec<(TensorWithGrad, TensorWithGrad)>, Error> {
     let vocab_size = tokenizer.vocab_size();
     let tokens = tokenizer.encode(example);
     let mut examples = vec![];
-    for i in 0..(tokens.len() - context_length) {
-        let input_tokens = &tokens[i..i + context_length];
+    for i in 0..(tokens.len() - sequence_length) {
+        let input_tokens = &tokens[i..i + sequence_length];
         let input_one_hot = into_one_hot_encoded_rows(&device, &input_tokens, vocab_size)?;
 
-        let output_tokens = &tokens[i + 1..i + context_length + 1];
+        let output_tokens = &tokens[i + 1..i + sequence_length + 1];
         let output_one_hot = into_one_hot_encoded_rows(&device, &output_tokens, vocab_size)?;
 
         //println!("in {:?}", input_tokens);

@@ -1,4 +1,3 @@
-- report memory usage once
 - remove forward method in tensor
 - rename ARC prize to colored_mosaic_puzzles
 - rename GradientDescent to StochasticGradientDescent

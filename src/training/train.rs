@@ -24,14 +24,19 @@ pub struct Metrics {
     pub total_loss: f32,
 }
 
-fn print_metrics(epoch: usize, metrics: &Metrics, previous_metrics: &Metrics) -> Result<(), Error> {
+fn print_metrics(
+    epoch: usize,
+    epochs: usize,
+    metrics: &Metrics,
+    previous_metrics: &Metrics,
+) -> Result<(), Error> {
     let total_loss = metrics.total_loss;
     let previous_total_loss = previous_metrics.total_loss;
     let total_loss_change = (total_loss - previous_total_loss) / previous_total_loss;
-    println!("----",);
+
     println!(
-        "Epoch {} total_loss {}, change: {}",
-        epoch, total_loss, total_loss_change
+        "Epoch {} / {}, total_loss {}, change: {}",
+        epoch, epochs, total_loss, total_loss_change
     );
     Ok(())
 }
@@ -88,6 +93,8 @@ pub fn train_model<T>(
     let epochs = details.epochs;
     let progress = details.progress;
 
+    print_device_mem_info(&device)?;
+
     let (_, _) = print_results(
         0,
         &mut neural_machine,
@@ -98,12 +105,12 @@ pub fn train_model<T>(
 
     let indices = (0..train_examples.len()).collect::<Vec<_>>();
 
+    println!("");
     for epoch in 0..epochs {
         let batches = make_batches(&indices, shuffle_examples, batch_size);
         if epoch % progress == 0 {
             let metrics = total_metrics(&mut neural_machine, &train_inputs, &train_outputs)?;
-            print_metrics(epoch, &metrics, &previous_metrics)?;
-            print_device_mem_info(&device)?;
+            print_metrics(epoch, epochs, &metrics, &previous_metrics)?;
             if epoch == 0 {
                 initial_metrics = metrics.clone();
             }
@@ -112,8 +119,7 @@ pub fn train_model<T>(
         train_on_batches(&mut neural_machine, &batches, &train_inputs, &train_outputs)?;
     }
     let final_metrics = total_metrics(&mut neural_machine, &train_inputs, &train_outputs)?;
-    print_metrics(epochs, &final_metrics, &previous_metrics)?;
-    print_device_mem_info(&device)?;
+    print_metrics(epochs, epochs, &final_metrics, &previous_metrics)?;
 
     let (expected_argmax_values, actual_argmax_values) = print_results(
         epochs,

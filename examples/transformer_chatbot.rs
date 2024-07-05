@@ -81,7 +81,7 @@ fn main() -> Result<(), Error> {
     let indices = (0..train_examples.len()).collect::<Vec<_>>();
 
     for epoch in 0..epochs {
-        println!("Epoch: {}", epoch);
+        println!("Epoch: {} / {}", epoch, epochs);
 
         let batches = make_batches(&indices, shuffle_examples, batch_size);
         let mut total_loss = 0.0;
@@ -93,16 +93,7 @@ fn main() -> Result<(), Error> {
                 let loss = neural_machine.loss(&expected_output_one_hot)?;
                 let loss: &Tensor = &loss.tensor();
                 let loss: f32 = loss.try_into()?;
-                /*
-                let expected_next_token =
-                    get_row_argmax(&expected_output_one_hot.tensor(), sequence_length - 1)?;
-                let actual_next_token =
-                    get_row_argmax(&actual_output_one_hot.tensor(), sequence_length - 1)?;
-                println!(
-                    "example: {}, loss {}, expected_next_token: {}, actual_next_token: {}",
-                    i, loss, expected_next_token, actual_next_token
-                );
-                */
+
                 total_loss += loss;
                 neural_machine.compute_gradient()?;
             }

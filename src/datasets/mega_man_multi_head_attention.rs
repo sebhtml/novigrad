@@ -51,14 +51,8 @@ pub fn load_mega_man_multi_head_attention(
         progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,
-        initial_metrics_min: Metrics {
-            total_loss: 4000.0,
-            total_next_token_perplexity: 100.0,
-        },
-        final_metrics_max: Metrics {
-            total_loss: 7000.0,
-            total_next_token_perplexity: 120.0,
-        },
+        initial_metrics_min: Metrics { total_loss: 4000.0 },
+        final_metrics_max: Metrics { total_loss: 7000.0 },
         maximum_incorrect_predicted_next_tokens: 20,
         printer: NextTokenPredictionPrinter::new(tokenizer),
         batch_size: 1,

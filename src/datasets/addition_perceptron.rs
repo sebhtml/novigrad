@@ -45,14 +45,8 @@ pub fn load_addition_perceptron(
         progress: 10,
         shuffle_examples: false,
         clip_gradient_norm: true,
-        initial_metrics_min: Metrics {
-            total_loss: 0.1,
-            total_next_token_perplexity: f32::NAN,
-        },
-        final_metrics_max: Metrics {
-            total_loss: 15.0,
-            total_next_token_perplexity: 1.0,
-        },
+        initial_metrics_min: Metrics { total_loss: 0.1 },
+        final_metrics_max: Metrics { total_loss: 15.0 },
         maximum_incorrect_predicted_next_tokens: 0,
         printer: RawPrinter::default(),
         batch_size: 1,

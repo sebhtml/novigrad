@@ -1,22 +1,17 @@
-- don't print total_next_token_perplexity
-- reported memory used is bad so remove it
-- remove buffer store that allow reuse
 - rename ARC prize to colored_mosaic_puzzles
 
 - debug performance with NVIDIA Nsight Systems
 
-== Manual mini-batch ==
-- use batching in transformer dataset
-- fix backward code of reduce sum square and cross-entropy loss
-- use batch aggregated loss to compute gradient
-
 == correct mini-batch implementation ==
 
+- fix backward code of reduce sum square and cross-entropy loss
+- use batch aggregated loss to compute gradient
 - impement mini-batch in the model input tensor shape
 - implement mini batch using broadcasting in the operators
 
 == Story: Transformer batching ==
 
+- use batching in transformer dataset
 - increase examples in transformer test from 30 to 100
 
 - use 4 layers in transformer model
@@ -39,7 +34,7 @@
 
 == Story: Arc prize ==
 
-- have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization)
+- have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization) using instruction range (begin..end)
 - Implement Transformer idea for the Arc prize challenge (left-to-right residual connections)
 
 - investigate performance issue with tons of call to pthread_rwlock_unlock
@@ -53,7 +48,7 @@
 - rewrite ResidualSumOfSquares using CUDA
 - implement Transpose with CUDA
 
-- refactor gelu, sigmoid, gelu_derivative in cpu module
+- refactor gelu, sigmoid, gelu_derivative in cpu module because they duplicate code
 - move ./src/devices/cuda/tests.rs tests that are not related to cuda to ./src/devices/tests.rs
 - move ./src/devices/cpu/tests.rs tests that are not related to cpu to ./src/devices/tests.rs
 
@@ -67,11 +62,11 @@
 
 - implement ArgMax operator https://onnx.ai/onnx/operators/onnx__ArgMax.html
 - rename RowMax to ArgMax (https://onnx.ai/onnx/operators/onnx__ArgMax.html)
-- add code that discard useless instructions, for example when a operand write is never read betfore the next write
+- add code that discard useless instructions, for example when a operand write is never read before the next write
 
 ---------------
 
-- improve Bernoulli CUDA kernel by using other shift values for halt the indices
+- improve Bernoulli CUDA kernel by using other shift values for half the indices
 
 - add Tensor categories
 - use Category::Constant to determine constants
@@ -79,7 +74,7 @@
 
 ---------------
 
-- device interface use <T>
+- device interface uses <T>
 - Implement code with f16
 
 ---------------------
@@ -90,14 +85,13 @@
 
 - simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
 
-
 == Other things ==
 
 - investigate calls to Device::tensor_f32
 
 == Tensor clean-up ==
 
-- device.tensor should take size instead of rows, cols
+- device.tensor should take size &[usize] instead of rows, cols
 
 == Refactoring ==
 

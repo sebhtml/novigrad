@@ -8,18 +8,7 @@ use std::borrow::BorrowMut;
 
 #[derive(Debug)]
 pub struct DevSlice {
-    device: Device,
     pub buffer: DeviceSlice,
-}
-
-impl Drop for DevSlice {
-    fn drop(&mut self) {
-        if self.len() == 0 {
-            return;
-        }
-        let device = self.device.clone();
-        device.recycle(self.len(), self);
-    }
 }
 
 #[derive(Debug)]
@@ -41,10 +30,7 @@ impl DevSlice {
     pub fn new(device: &Device, len: usize) -> DevSlice {
         // TODO remove unwrap
         let slice = device.slice(len as i32).unwrap();
-        DevSlice {
-            device: device.clone(),
-            buffer: slice,
-        }
+        DevSlice { buffer: slice }
     }
 }
 

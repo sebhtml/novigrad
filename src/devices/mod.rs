@@ -1,9 +1,8 @@
 mod cpu;
 use crate::{error, tensor::Error, tensor::ErrorEnum};
+use std::mem;
 use std::{
-    collections::{HashMap, LinkedList},
     fmt,
-    mem::swap,
     ops::Deref,
     sync::{Arc, RwLock},
 };
@@ -298,7 +297,6 @@ pub struct Device {
     internal_tensors: Arc<RwLock<Vec<TensorWithGrad>>>,
     parameter_tensors: Arc<RwLock<Vec<TensorWithGrad>>>,
     device: Arc<dyn DeviceTrait + Send + Sync>,
-    available_buffers: Arc<RwLock<HashMap<usize, LinkedList<DevSlice>>>>,
 }
 
 impl Default for Device {
@@ -325,7 +323,6 @@ impl Device {
             internal_tensors: Default::default(),
             parameter_tensors: Default::default(),
             device,
-            available_buffers: Default::default(),
         }
     }
 
@@ -354,15 +351,6 @@ impl Device {
 
     pub fn cpu() -> Self {
         Self::new(Arc::new(CpuDevice::default()))
-    }
-
-    pub fn recycle(&self, len: usize, buffer: &mut DevSlice) {
-        let mut recycled_buffer = DevSlice::new(self, 0);
-        swap(&mut recycled_buffer, buffer);
-
-        let available_buffers: &mut HashMap<_, _> = &mut self.available_buffers.write().unwrap();
-        let entry = available_buffers.entry(len);
-        entry.or_default().push_back(recycled_buffer)
     }
 
     pub fn get_memory_info(&self) -> Result<MemoryInfo, Error> {
@@ -499,23 +487,10 @@ impl Device {
     }
 
     pub fn buffer(&self, len: usize) -> DevSlice {
-        let recycled = self
-            .available_buffers
-            .write()
-            .unwrap()
-            .get_mut(&len)
-            .and_then(|x| x.pop_back());
-        match recycled {
-            Some(buffer) => {
-                //println!("Recycled buffer with length {}", len);
-                buffer
-            }
-            None => {
-                let used: &mut usize = &mut self.used.write().unwrap();
-                *used += len;
-                DevSlice::new(self, len)
-            }
-        }
+        let used: &mut usize = &mut self.used.write().unwrap();
+        let bytes = len * mem::size_of::<f32>();
+        *used += bytes;
+        DevSlice::new(self, len)
     }
 }
 

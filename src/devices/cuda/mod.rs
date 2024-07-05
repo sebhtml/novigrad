@@ -477,7 +477,7 @@ impl DeviceTrait for CudaDev {
     }
 
     fn slice(&self, n: i32) -> Result<DeviceSlice, Error> {
-        match self.dev.alloc_zeros(n as usize) {
+        match self.dev.alloc_zeros::<f32>(n as usize) {
             Ok(slice) => Ok(DeviceSlice::CudaDevSlice(CudaDevSlice::new(slice))),
             _ => Err(error!(ErrorEnum::UnsupportedOperation)),
         }

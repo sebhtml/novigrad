@@ -11,7 +11,7 @@ use crate::{
 };
 
 pub mod addition_perceptron;
-pub mod arc_prize_2024;
+pub mod colored_mosaic_puzzles;
 pub mod mega_man_attention_head;
 pub mod mega_man_linear;
 pub mod mega_man_multi_head_attention;

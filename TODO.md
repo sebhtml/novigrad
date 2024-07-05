@@ -1,5 +1,4 @@
 - remove forward method in tensor
-- rename ARC prize to colored_mosaic_puzzles
 - rename GradientDescent to StochasticGradientDescent
 - debug performance with NVIDIA Nsight Systems
 - increase examples in transformer test from 30 to 100
@@ -32,10 +31,10 @@
 - honour requires_grad() when updating gradients
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 
-== Story: Arc prize ==
+== Story: colored mosaic puzzles ==
 
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization) using instruction range (begin..end)
-- Implement Transformer idea for the Arc prize challenge (left-to-right residual connections)
+- Implement Transformer idea for colored mosaic puzzles (left-to-right residual connections)
 
 - investigate performance issue with tons of call to pthread_rwlock_unlock
 

@@ -31,8 +31,7 @@ fn load_json_examples(
     problem_id: &str,
     train_or_test: &str,
 ) -> Result<Vec<(Vec<usize>, Vec<usize>)>, Error> {
-    let file_path =
-        format!("/home/sebhtml/projects/ARC-AGI/data/{training_or_evaluation}/{problem_id}.json");
+    let file_path = format!("/colored_mosaic_puzzles/{training_or_evaluation}/{problem_id}.json");
     let data = fs::read_to_string(file_path).unwrap();
     let p: Problem = serde_json::from_str(&data).unwrap();
     let examples = match train_or_test {
@@ -144,7 +143,7 @@ fn load_examples(
         })
 }
 
-pub fn load_arc_prize_2024(
+pub fn load_colored_mosaic_puzzles(
     device: &Device,
 ) -> Result<DatasetDetails<TransformerModel, SoftmaxCrossEntropyLoss, AdamW, BoardPrinter>, Error> {
     let vocab_size = 10;

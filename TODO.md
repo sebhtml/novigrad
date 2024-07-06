@@ -1,10 +1,13 @@
+- use 4 layers in transformer model
+- set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
+- increase examples in transformer test from 30 to 100
+
 == Story: optimization with NVIDIA NSight Systems ==
 
 - debug performance with NVIDIA Nsight Systems
-
-- increase examples in transformer test from 30 to 100
-
 - colored_mosaic_puzzles: generate examples with translations and rotations
+
+- rematerialize dropout mask to save GPU VRAM memory
 
 == Loss function fixes ==
 
@@ -25,8 +28,6 @@
 
 == Story: Transformer batching ==
 
-- use 4 layers in transformer model
-- set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
 
 == Story: Mega-man transformer ==
 

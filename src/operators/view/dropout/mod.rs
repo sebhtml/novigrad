@@ -1,8 +1,8 @@
 use crate::{
-    inference_instruction, new_tensor, new_tensor_with_grad,
+    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
     opcode::OpCode,
     tensor::{Error, Tensor},
-    BinaryOperator, Device, Mul, OperatorAttributes, ScalarMul, TensorWithGrad, UnaryOperator,
+    Device, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 #[cfg(test)]
@@ -12,11 +12,10 @@ mod tests;
 /// Dropout: A Simple Way to Prevent Neural Networks from Overfitting
 /// https://www.jmlr.org/papers/v15/srivastava14a.html
 pub struct Dropout {
-    probabilities: Tensor,
+    device: Device,
     probability: f32,
-    mask: TensorWithGrad,
-    mul: Mul,
-    scalar_mul: ScalarMul,
+    mask: Tensor,
+    alpha: Tensor,
 }
 
 impl Dropout {
@@ -28,19 +27,15 @@ impl Dropout {
     ) -> Result<Self, Error> {
         let len = mask_rows * mask_cols;
         let mask = vec![1.0; len];
-        let mask = new_tensor_with_grad!(device, mask_rows, mask_cols, mask, &[], false, false)?;
+        let mask = new_tensor!(device, mask_rows, mask_cols, mask)?;
         let probability = 1.0 - dropout_probability;
-        let probabilities = vec![probability; len];
-        let probabilities = new_tensor!(device, mask_rows, mask_cols, probabilities)?;
-        let mul = Mul::new(device);
         let alpha = 1.0 / (1.0 - dropout_probability);
-        let scalar_mul = ScalarMul::new(device, alpha);
+        let alpha = new_tensor!(device, mask_rows, mask_cols, vec![alpha])?;
         let mask = Self {
-            probabilities,
+            device: device.clone(),
             probability,
             mask,
-            mul,
-            scalar_mul,
+            alpha,
         };
         Ok(mask)
     }
@@ -48,16 +43,44 @@ impl Dropout {
 
 impl UnaryOperator for Dropout {
     fn forward(&self, input: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
-        let probabilities = &self.probabilities;
-        let mask = &self.mask;
-        mask.push_instruction(inference_instruction!(
+        let rows = input.tensor().rows();
+        let cols = input.tensor().cols();
+        let len = rows * cols;
+        let output = new_tensor_with_grad!(
+            self.device,
+            rows,
+            cols,
+            vec![0.0; len],
+            &[input],
+            true,
+            false,
+        )?;
+
+        output.push_instruction(inference_instruction!(
             OpCode::Bernoulli,
             OperatorAttributes::F32(self.probability),
-            &[probabilities],
-            &[&mask.tensor()],
+            &[&self.mask],
+            &[&self.mask],
         ));
-        let mul_output = self.mul.forward(input, &self.mask)?;
-        let scalar_mul_output = self.scalar_mul.forward(&mul_output)?;
-        Ok(scalar_mul_output)
+
+        output.push_instruction(inference_instruction!(
+            OpCode::Mul,
+            OperatorAttributes::None,
+            &[&self.mask, &input.tensor()],
+            &[&output.tensor()],
+        ));
+        output.push_instruction(inference_instruction!(
+            OpCode::ScalarMul,
+            OperatorAttributes::None,
+            &[&self.alpha, &output.tensor()],
+            &[&output.tensor()],
+        ));
+        output.push_instruction(gradient_instruction!(
+            OpCode::Mul,
+            OperatorAttributes::None,
+            &[&self.mask, &output.gradient()],
+            &[&input.gradient()],
+        ));
+        Ok(output)
     }
 }

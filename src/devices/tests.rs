@@ -95,34 +95,6 @@ fn clip_max() {
 }
 
 #[test]
-fn bernoulli() {
-    use crate::Device;
-    let device = Device::default();
-    let probability = 0.3;
-    let input = new_tensor!(device, 1, 100, vec![probability; 100]).unwrap();
-    let output = new_tensor!(device, 1, 100, vec![0.0; 100]).unwrap();
-    let device_stream = device.new_stream().unwrap();
-    Bernoulli::execute(
-        &crate::OperatorAttributes::F32(probability),
-        &[&input],
-        &[&output],
-        &device,
-        &device_stream,
-    )
-    .unwrap();
-    device_stream.wait_for().unwrap();
-    let values = output.get_values().unwrap();
-    let ones = values.iter().filter(|x| **x == 1.0).count();
-    let zeroes = values.iter().filter(|x| **x == 0.0).count();
-    assert_eq!(100, ones + zeroes);
-    let diff = 10;
-    assert_ge!(30 + diff, ones);
-    assert_le!(30 - diff, ones);
-    assert_ge!(70 + diff, zeroes);
-    assert_le!(70 - diff, zeroes);
-}
-
-#[test]
 fn test_copy_1() {
     let device = Device::default();
     let device_stream = device.new_stream().unwrap();

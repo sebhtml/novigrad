@@ -1,7 +1,6 @@
 use std::f32::consts::E;
 pub mod slice;
 use cblas::{Layout, Transpose};
-use rand::{distributions::Uniform, thread_rng, Rng};
 extern crate cblas_sys as ffi;
 use crate::{
     error,
@@ -502,30 +501,6 @@ impl DeviceTrait for CpuDevice {
                 col += 1;
             }
             row += 1;
-        }
-        Ok(())
-    }
-
-    fn bernoulli(
-        &self,
-        input: &Tensor,
-        output: &Tensor,
-        _device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        let len = input.len();
-        let output_ptr = output.as_mut_ptr();
-        let mut rng = thread_rng();
-        let uniform = Uniform::new(0.0, 1.0);
-
-        let input_ptr = input.as_ptr();
-        for i in 0..len {
-            let probability = unsafe { *input_ptr.add(i) };
-            let random_number = if rng.sample(uniform) <= probability {
-                1.0
-            } else {
-                0.0
-            };
-            unsafe { *output_ptr.add(i) = random_number };
         }
         Ok(())
     }

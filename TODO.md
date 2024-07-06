@@ -1,7 +1,5 @@
 == Story: optimization with NVIDIA NSight Systems ==
 
-- use result::memcpy_htod_async(*dst.device_ptr_mut(), src, self.stream) to do set_value
-- implement Bernoulli on CPU only and use host-to-device data movement
 - debug performance with NVIDIA Nsight Systems
 
 - increase examples in transformer test from 30 to 100
@@ -18,6 +16,12 @@
 - use batch aggregated loss to compute gradient
 - impement mini-batch in the model input tensor shape
 - implement mini batch using broadcasting in the operators
+
+== Story: async copy ==
+
+- use result::memcpy_htod_async(*dst.device_ptr_mut(), src, self.stream) to do set_value
+- implement htod_into_on_stream in cudarc
+- implement set_value_with_stream
 
 == Story: Transformer batching ==
 
@@ -70,8 +74,6 @@
 - add code that discard useless instructions, for example when a operand write is never read before the next write
 
 ---------------
-
-- improve Bernoulli CUDA kernel by using other shift values for half the indices
 
 - add Tensor categories
 - use Category::Constant to determine constants

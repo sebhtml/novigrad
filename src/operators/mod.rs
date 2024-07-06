@@ -64,4 +64,5 @@ pub enum OperatorAttributes {
     ThreeBools(bool, bool, bool),
     String(String),
     Vec(Vec<usize>),
+    F32(f32),
 }

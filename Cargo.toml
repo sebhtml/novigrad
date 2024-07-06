@@ -27,7 +27,7 @@ cblas-sys = "0.1.4"
 blas-src = { version = "0.10.0", features = ["blis"] }
 
 # CUDA Blas
-cudarc = { version = "0.11.5", optional = true, features = ["cuda-11050"] }
+cudarc = { version = "0.11.5", optional = true, features = ["cuda-12000"] }
 
 rand = "0.8.5"
 rand_distr = "0.4.3"

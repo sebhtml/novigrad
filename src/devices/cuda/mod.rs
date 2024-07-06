@@ -222,12 +222,6 @@ impl CudaDev {
         )?;
 
         device.load_module(
-            "bernoulli_kernel_module",
-            &["bernoulli_kernel"],
-            "./src/devices/cuda/kernels/bernoulli_kernel.cu",
-        )?;
-
-        device.load_module(
             "sqrt_kernel_module",
             &["sqrt_kernel"],
             "./src/devices/cuda/kernels/sqrt_kernel.cu",
@@ -800,42 +794,6 @@ impl DeviceTrait for CudaDev {
             row += 1;
         }
         output.set_values(other_values)
-    }
-
-    fn bernoulli(
-        &self,
-        input: &Tensor,
-        output: &Tensor,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        let cuda_stream = get_cuda_stream(device_stream)?;
-        let kernel = self.get_func("bernoulli_kernel_module", "bernoulli_kernel")?;
-        let n = input.len();
-        let cfg = LaunchConfig::for_num_elems(n as u32);
-        let input = &input.device_slice().buffer;
-        let output = &output.device_slice().buffer;
-        let rng_state = if let DeviceStreamEnum::CudaDeviceStream(stream) = &device_stream.variant {
-            &stream.rng_state
-        } else {
-            return Err(error!(ErrorEnum::UnsupportedOperation));
-        };
-        match (input, output) {
-            (DeviceSlice::CudaDevSlice(input), DeviceSlice::CudaDevSlice(output)) => {
-                let rng_state = rng_state;
-                let result = unsafe {
-                    kernel.launch_on_stream(
-                        cuda_stream,
-                        cfg,
-                        (input.slice(), output.slice(), n, rng_state),
-                    )
-                };
-                match result {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
-                }
-            }
-            _ => Err(error!(ErrorEnum::NvRtcLoadPtxError)),
-        }
     }
 
     fn stream(&self) -> Result<DeviceStreamEnum, Error> {

@@ -230,13 +230,6 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
-    fn bernoulli(
-        &self,
-        input: &Tensor,
-        output: &Tensor,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error>;
-
     fn sqrt(
         &self,
         input: &Tensor,
@@ -729,15 +722,6 @@ impl DeviceTrait for Device {
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         self.device.transpose(input, output, device_stream)
-    }
-
-    fn bernoulli(
-        &self,
-        input: &Tensor,
-        output: &Tensor,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        self.device.bernoulli(input, output, device_stream)
     }
 
     fn slice(&self, n: i32) -> Result<DeviceSlice, Error> {

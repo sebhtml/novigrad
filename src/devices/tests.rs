@@ -2,7 +2,10 @@ use std::ops::Div;
 
 use more_asserts::{assert_ge, assert_le};
 
-use crate::{new_tensor, stream::StreamTrait, Device, DeviceTrait};
+use crate::{
+    new_tensor, statistics::bernoulli::Bernoulli, stream::StreamTrait, Device, DeviceTrait,
+    ExecutableOperator,
+};
 
 #[test]
 fn clip_min() {
@@ -93,13 +96,20 @@ fn clip_max() {
 
 #[test]
 fn bernoulli() {
-    use crate::devices::DeviceTrait;
     use crate::Device;
     let device = Device::default();
-    let input = new_tensor!(device, 1, 100, vec![0.3; 100]).unwrap();
+    let probability = 0.3;
+    let input = new_tensor!(device, 1, 100, vec![probability; 100]).unwrap();
     let output = new_tensor!(device, 1, 100, vec![0.0; 100]).unwrap();
     let device_stream = device.new_stream().unwrap();
-    device.bernoulli(&input, &output, &device_stream).unwrap();
+    Bernoulli::execute(
+        &crate::OperatorAttributes::F32(probability),
+        &[&input],
+        &[&output],
+        &device,
+        &device_stream,
+    )
+    .unwrap();
     device_stream.wait_for().unwrap();
     let values = output.get_values().unwrap();
     let ones = values.iter().filter(|x| **x == 1.0).count();

@@ -13,6 +13,7 @@ mod tests;
 /// https://www.jmlr.org/papers/v15/srivastava14a.html
 pub struct Dropout {
     probabilities: Tensor,
+    probability: f32,
     mask: TensorWithGrad,
     mul: Mul,
     scalar_mul: ScalarMul,
@@ -36,6 +37,7 @@ impl Dropout {
         let scalar_mul = ScalarMul::new(device, alpha);
         let mask = Self {
             probabilities,
+            probability,
             mask,
             mul,
             scalar_mul,
@@ -50,7 +52,7 @@ impl UnaryOperator for Dropout {
         let mask = &self.mask;
         mask.push_instruction(inference_instruction!(
             OpCode::Bernoulli,
-            OperatorAttributes::None,
+            OperatorAttributes::F32(self.probability),
             &[probabilities],
             &[&mask.tensor()],
         ));

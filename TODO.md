@@ -7,6 +7,8 @@
 - debug performance with NVIDIA Nsight Systems
 - colored_mosaic_puzzles: generate examples with translations and rotations
 
+- rematerialize dropout mask to save GPU VRAM memory
+
 == Loss function fixes ==
 
 - fix backward code of reduce sum square and cross-entropy loss

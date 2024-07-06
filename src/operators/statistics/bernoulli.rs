@@ -2,7 +2,7 @@ use rand::{thread_rng, Rng};
 use rand_distr::Uniform;
 
 use crate::{
-    stream::DeviceStream,
+    stream::{DeviceStream, StreamTrait},
     tensor::{Error, Tensor},
     Device, ExecutableOperator, OperatorAttributes,
 };
@@ -15,7 +15,7 @@ impl ExecutableOperator for Bernoulli {
         inputs: &[&Tensor],
         outputs: &[&Tensor],
         _device: &Device,
-        _device_stream: &DeviceStream,
+        device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let input = inputs[0];
         let output = outputs[0];
@@ -26,6 +26,7 @@ impl ExecutableOperator for Bernoulli {
         };
         let trials = bernoulli(n, probability);
         output.set_values(trials)?;
+        device_stream.wait_for_default()?;
         Ok(())
     }
 }

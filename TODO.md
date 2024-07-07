@@ -1,5 +1,5 @@
-- don't use ClipNorm in AdamW
-- use 4 layers in transformer model
+
+- use 4 layers in transformer model (need to fix a CPU memory bug)
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
 - increase examples in transformer test from 30 to 100
 
@@ -23,6 +23,8 @@
 == Story: use device pointer mode ==
 
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
+
+- don't use ClipNorm in AdamW
 
 == Story: gradient accumulation ==
 

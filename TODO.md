@@ -1,22 +1,19 @@
+- rename to ResidualSumOfSquares
+- colored_mosaic_puzzles: generate examples with translations and rotations
+
+- debug performance with NVIDIA Nsight Systems
+
+- implement RMSNorm : https://arxiv.org/pdf/1910.07467
+- rematerialize dropout mask to save GPU VRAM memory
+
+- remove forward method in tensor
 - don't use ClipNorm in AdamW
 - use 4 layers in transformer model
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
 - increase examples in transformer test from 30 to 100
 
-== Story: optimization with NVIDIA NSight Systems ==
-
-- debug performance with NVIDIA Nsight Systems
-- colored_mosaic_puzzles: generate examples with translations and rotations
-
-- rematerialize dropout mask to save GPU VRAM memory
-
-== Loss function fixes ==
-
-- fix backward code of reduce sum square and cross-entropy loss
-- remove forward method in tensor
-
 == correct mini-batch implementation ==
-
+- have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization) using instruction range (begin..end)
 - use batch aggregated loss to compute gradient
 - impement mini-batch in the model input tensor shape
 - implement mini batch using broadcasting in the operators
@@ -26,9 +23,6 @@
 - use result::memcpy_htod_async(*dst.device_ptr_mut(), src, self.stream) to do set_value
 - implement htod_into_on_stream in cudarc
 - implement set_value_with_stream
-
-== Story: Transformer batching ==
-
 
 == Story: Mega-man transformer ==
 
@@ -43,20 +37,13 @@
 - honour requires_grad() when updating gradients
 - Make sure that backward instruction add on top of existing gradients (no overwrite)
 
-== Story: colored mosaic puzzles ==
-
-- have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization) using instruction range (begin..end)
 - Implement Transformer idea for colored mosaic puzzles (left-to-right residual connections)
-
-- investigate performance issue with tons of call to pthread_rwlock_unlock
 
 == Clean-up ==
 
-- implement RMSNorm : https://arxiv.org/pdf/1910.07467
 - simplify code that push gradient_instruction instructions (too much re-mapping of inputs to outputs)
 
 - remove all calls to set_values
-- rewrite ResidualSumOfSquares using CUDA
 - implement Transpose with CUDA
 
 - refactor gelu, sigmoid, gelu_derivative in cpu module because they duplicate code

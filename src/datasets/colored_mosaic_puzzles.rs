@@ -173,7 +173,7 @@ pub fn load_colored_mosaic_puzzles(
     )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let optimizer = AdamW::try_new(0.05, 0.9, 0.999, 1e-8, 0.1)?;
+    let optimizer = AdamW::try_new(0.05, 0.9, 0.999, 1e-8, 0.001)?;
     let layers = 2;
     let num_heads = 12;
     let dropout_probability = 0.1;
@@ -197,7 +197,7 @@ pub fn load_colored_mosaic_puzzles(
         model,
         loss_operator,
         optimizer,
-        epochs: 50,
+        epochs: 100,
         progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,

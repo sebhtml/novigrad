@@ -24,18 +24,31 @@ where
     example_output: TensorWithGrad,
     machine_output: TensorWithGrad,
     loss: TensorWithGrad,
+
+    enable_dropout_instructions: Arc<Vec<Instruction>>,
+    enable_dropout_streams: Arc<Vec<Stream>>,
+    enable_dropout_scheduler: Scheduler,
+
+    disable_dropout_instructions: Arc<Vec<Instruction>>,
+    disable_dropout_streams: Arc<Vec<Stream>>,
+    disable_dropout_scheduler: Scheduler,
+
     inference_instructions: Arc<Vec<Instruction>>,
     inference_streams: Arc<Vec<Stream>>,
     inference_scheduler: Scheduler,
+
     loss_instructions: Arc<Vec<Instruction>>,
     loss_streams: Arc<Vec<Stream>>,
     loss_scheduler: Scheduler,
+
     gradient_instructions: Arc<Vec<Instruction>>,
     gradient_streams: Arc<Vec<Stream>>,
     gradient_scheduler: Scheduler,
+
     optimization_instructions: Arc<Vec<Instruction>>,
     optimization_streams: Arc<Vec<Stream>>,
     optimization_scheduler: Scheduler,
+
     phantom_data: PhantomData<T>,
 }
 
@@ -49,6 +62,21 @@ where
         maximum_device_streams: usize,
     ) -> Result<Self, Error> {
         let all_instructions = program.instructions;
+
+        let enable_dropout_instructions = all_instructions
+            .clone()
+            .into_iter()
+            .filter(|i| i.category() == Category::EnableDropout)
+            .collect();
+        let enable_dropout_instructions = Arc::new(enable_dropout_instructions);
+
+        let disable_dropout_instructions = all_instructions
+            .clone()
+            .into_iter()
+            .filter(|i| i.category() == Category::DisableDropout)
+            .collect();
+        let disable_dropout_instructions = Arc::new(disable_dropout_instructions);
+
         let inference_instructions = all_instructions
             .clone()
             .into_iter()
@@ -82,16 +110,42 @@ where
         let machine_output = program.machine_output;
         let loss = program.loss;
 
+        let enable_dropout_streams =
+            Self::assign_streams(&example_input, &enable_dropout_instructions);
+        let enable_dropout_streams = Arc::new(enable_dropout_streams);
+
+        let disable_dropout_streams =
+            Self::assign_streams(&example_input, &disable_dropout_instructions);
+        let disable_dropout_streams = Arc::new(disable_dropout_streams);
+
         let inference_streams = Self::assign_streams(&example_input, &inference_instructions);
         let inference_streams = Arc::new(inference_streams);
+
         let loss_streams = Self::assign_streams(&example_input, &loss_instructions);
         let loss_streams = Arc::new(loss_streams);
+
         let gradient_streams = Self::assign_streams(&example_input, &gradient_instructions);
         let gradient_streams = Arc::new(gradient_streams);
+
         let optimization_streams = Self::assign_streams(&example_input, &optimization_instructions);
         let optimization_streams = Arc::new(optimization_streams);
 
         let handler = StreamExecutor::new();
+
+        let mut enable_dropout_scheduler = Scheduler::new(
+            device,
+            maximum_device_streams,
+            &enable_dropout_streams,
+            &handler,
+            &enable_dropout_instructions,
+        );
+        let mut disable_dropout_scheduler = Scheduler::new(
+            device,
+            maximum_device_streams,
+            &disable_dropout_streams,
+            &handler,
+            &disable_dropout_instructions,
+        );
         let mut inference_scheduler = Scheduler::new(
             device,
             maximum_device_streams,
@@ -121,6 +175,8 @@ where
             &optimization_instructions,
         );
 
+        enable_dropout_scheduler.start();
+        disable_dropout_scheduler.start();
         inference_scheduler.start();
         loss_scheduler.start();
         gradient_scheduler.start();
@@ -133,6 +189,12 @@ where
             example_output,
             machine_output,
             loss,
+            enable_dropout_instructions,
+            enable_dropout_streams,
+            enable_dropout_scheduler,
+            disable_dropout_instructions,
+            disable_dropout_streams,
+            disable_dropout_scheduler,
             inference_instructions,
             inference_streams,
             inference_scheduler,
@@ -155,11 +217,23 @@ where
 
     pub fn instructions(&self, category: &Category) -> impl Deref<Target = Vec<Instruction>> {
         match category {
+            Category::EnableDropout => self.enable_dropout_instructions.clone(),
+            Category::DisableDropout => self.disable_dropout_instructions.clone(),
             Category::Inference => self.inference_instructions.clone(),
             Category::Loss => self.loss_instructions.clone(),
             Category::Gradient => self.gradient_instructions.clone(),
             Category::Optimization => self.optimization_instructions.clone(),
         }
+    }
+
+    pub fn enable_dropout(&mut self) -> Result<(), Error> {
+        self.forward(&Category::EnableDropout)?;
+        Ok(())
+    }
+
+    pub fn disable_dropout(&mut self) -> Result<(), Error> {
+        self.forward(&Category::DisableDropout)?;
+        Ok(())
     }
 
     pub fn loss(&mut self, expected_output: &TensorWithGrad) -> Result<TensorWithGrad, Error> {
@@ -189,6 +263,8 @@ where
 
     fn forward_with_streams(&mut self, category: &Category) -> Result<(), Error> {
         let scheduler = match category {
+            Category::EnableDropout => &mut self.enable_dropout_scheduler,
+            Category::DisableDropout => &mut self.disable_dropout_scheduler,
             Category::Inference => &mut self.inference_scheduler,
             Category::Loss => &mut self.loss_scheduler,
             Category::Gradient => &mut self.gradient_scheduler,
@@ -284,6 +360,8 @@ where
 
         println!("------------------------------");
 
+        print_streams("EnableDropout", &self.enable_dropout_streams);
+        print_streams("DisableDropout", &self.disable_dropout_streams);
         print_streams("Inference", &self.inference_streams);
         print_streams("Loss", &self.loss_streams);
         print_streams("Gradient", &self.gradient_streams);

@@ -1,5 +1,5 @@
-- don't use ClipNorm in AdamW
-- use 4 layers in transformer model
+
+- use 4 layers in transformer model (need to fix a CPU memory bug)
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
 - increase examples in transformer test from 30 to 100
 
@@ -12,14 +12,7 @@
 
 == Loss function fixes ==
 
-- fix backward code of reduce sum square and cross-entropy loss
 - remove forward method in tensor
-
-== correct mini-batch implementation ==
-
-- use batch aggregated loss to compute gradient
-- impement mini-batch in the model input tensor shape
-- implement mini batch using broadcasting in the operators
 
 == Story: async copy ==
 
@@ -27,16 +20,11 @@
 - implement htod_into_on_stream in cudarc
 - implement set_value_with_stream
 
-== Story: Transformer batching ==
-
-
-== Story: Mega-man transformer ==
-
-- re-add method zero_grad
-
 == Story: use device pointer mode ==
 
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
+
+- don't use ClipNorm in AdamW
 
 == Story: gradient accumulation ==
 
@@ -47,8 +35,6 @@
 
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization) using instruction range (begin..end)
 - Implement Transformer idea for colored mosaic puzzles (left-to-right residual connections)
-
-- investigate performance issue with tons of call to pthread_rwlock_unlock
 
 == Clean-up ==
 
@@ -88,8 +74,6 @@
 
 ---------------------
 
-- implement Conv2D
-
 == Performance ==
 
 - simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
@@ -117,18 +101,3 @@
 
 - CIFAR-10
 - MNIST
-
-== Import / Export ==
-
-- serialize and deserialize model to ONNX format
-
-== Positional Encoding ==
-
-- implement positional encoding
-
-== Devices ==
-
-- Add support for Jim Keller's https://tenstorrent.com/cards/
-- Add support for Google TPU
-- Add support for Apple Metal
-- Add support for Intel Arc

@@ -38,50 +38,37 @@ impl ExecutableOperator for SoftmaxCrossEntropyLoss {
 impl BinaryOperator for SoftmaxCrossEntropyLoss {
     fn forward(
         &self,
-        input_1: &TensorWithGrad,
-        input_2: &TensorWithGrad,
+        expected: &TensorWithGrad,
+        actual: &TensorWithGrad,
     ) -> Result<TensorWithGrad, Error> {
         let output = new_tensor_with_grad!(
             self.device,
             1,
             1,
             vec![0.0],
-            &[input_1, input_2],
+            &[expected, actual],
             true,
             false
         )?;
-        let inputs = [input_1, input_2];
-        let outputs = [&output];
 
         output.push_instruction(instruction!(
             OpCode::SoftmaxCrossEntropyLoss,
             OperatorAttributes::None,
-            &[&inputs[0].tensor(), &inputs[1].tensor(),],
-            &[&outputs[0].tensor()],
+            &[&expected.tensor(), &actual.tensor(),],
+            &[&output.tensor()],
             Category::Loss,
         ));
-        let inputs = [input_1, input_2];
-        let outputs = [input_2];
-
-        let inputs: &[&Tensor] = &[&inputs[0].tensor(), &inputs[1].tensor()];
-        let outputs: &[&Tensor] = &[&outputs[0].gradient()];
-
-        debug_assert_eq!(inputs.len(), 2);
-        debug_assert_eq!(outputs.len(), 1);
 
         // When Cross-Entropy Loss is used with a Softmax activation function,
         // then we don't need to derive the softmax activations.
         // The derivative of the Loss in respect to logits (before activation) is
         // output of the softmax function - expected output (one-hot encoded)
-        if outputs[0].requires_grad() {
-            let output_gradient = outputs[0];
-            let expected = inputs[0];
-            let actual = inputs[1];
+        if actual.gradient().requires_grad() {
             output.push_instruction(instruction!(
                 OpCode::Sub,
                 OperatorAttributes::None,
-                &[actual, expected],
-                &[output_gradient],
+                &[&actual.tensor(), &expected.tensor()],
+                &[&actual.gradient()],
                 Category::Gradient,
             ));
         }

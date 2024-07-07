@@ -1,6 +1,6 @@
 use crate::{
     devices::Device,
-    gradient_instruction, instruction, new_tensor_with_grad,
+    instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
@@ -77,11 +77,12 @@ impl BinaryOperator for SoftmaxCrossEntropyLoss {
             let output_gradient = outputs[0];
             let expected = inputs[0];
             let actual = inputs[1];
-            output.push_instruction(gradient_instruction!(
+            output.push_instruction(instruction!(
                 OpCode::Sub,
                 OperatorAttributes::None,
                 &[actual, expected],
                 &[output_gradient],
+                Category::Gradient,
             ));
         }
 

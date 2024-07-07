@@ -1,5 +1,5 @@
 use crate::{
-    error, gradient_instruction, instruction, new_tensor_with_grad,
+    error, instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
@@ -100,22 +100,24 @@ impl BinaryOperator for Add {
             if outputs[1].requires_grad() {
                 let output_1_gradient = outputs[1];
 
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
                     &[input_gradient, output_1_gradient],
                     &[output_1_gradient],
+                    Category::Gradient,
                 ));
             }
 
             if outputs[0].requires_grad() {
                 let output_0_gradient = outputs[0];
 
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
                     &[input_gradient, output_0_gradient],
                     &[output_0_gradient],
+                    Category::Gradient,
                 ));
             }
         }

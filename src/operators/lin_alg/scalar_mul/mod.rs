@@ -1,5 +1,5 @@
 use crate::{
-    gradient_instruction, instruction, new_tensor, new_tensor_with_grad,
+    instruction, new_tensor, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
@@ -76,11 +76,12 @@ impl UnaryOperator for ScalarMul {
             let input = inputs[0];
             let output_ = outputs[0];
             if output_.requires_grad() {
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
                     &[input, output_],
                     &[output_],
+                    Category::Gradient,
                 ));
             }
         }

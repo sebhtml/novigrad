@@ -1,11 +1,11 @@
 use crate::devices::Device;
 use crate::opcode::OpCode;
 use crate::stream::DeviceStream;
-use crate::{gradient_instruction, tensor::Tensor, DeviceTrait, UnaryOperator};
 use crate::{
     instruction, new_tensor, new_tensor_with_grad, Category, ExecutableOperator, OperatorAttributes,
 };
 use crate::{tensor::Error, TensorWithGrad};
+use crate::{tensor::Tensor, DeviceTrait, UnaryOperator};
 
 pub struct Softmax {
     device: Device,
@@ -70,11 +70,12 @@ impl UnaryOperator for Softmax {
 
         if input.gradient().requires_grad() {
             if self.next_is_cross_entropy_loss {
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
                     &[&output.gradient(), &input.gradient(),],
                     &[&input.gradient()],
+                    Category::Gradient,
                 ));
             } else {
                 emit_softmax_and_sigmoid_gradient_instructions(&self.device, input, &output)?;
@@ -110,32 +111,36 @@ pub fn emit_softmax_and_sigmoid_gradient_instructions(
         let ones = new_tensor!(device, rows, cols, vec![1.0; len])?;
         let one_minus_output = new_tensor!(device, rows, cols, vec![0.0; len])?;
 
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Sub,
             OperatorAttributes::None,
             &[&ones, input],
             &[&one_minus_output],
+            Category::Gradient,
         ));
         let layer_f_derivative = new_tensor!(device, rows, cols, vec![0.0; len])?;
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Mul,
             OperatorAttributes::None,
             &[input, &one_minus_output],
             &[&layer_f_derivative],
+            Category::Gradient,
         ));
         let tmp = new_tensor!(device, rows, cols, vec![0.0; len])?;
 
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Mul,
             OperatorAttributes::None,
             &[&layer_f_derivative, input_gradient],
             &[&tmp],
+            Category::Gradient,
         ));
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Add,
             OperatorAttributes::None,
             &[&tmp, output_gradient],
             &[output_gradient],
+            Category::Gradient,
         ));
     }
     Ok(())

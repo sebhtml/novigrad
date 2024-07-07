@@ -1,5 +1,5 @@
 use crate::{
-    gradient_instruction, instruction, new_tensor_with_grad,
+    instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
@@ -52,11 +52,12 @@ impl UnaryOperator for Identity {
             &[&output.tensor()],
             Category::Inference,
         ));
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Identity,
             OperatorAttributes::String("gradient".into()),
             &[&output.gradient()],
             &[&input.gradient()],
+            Category::Gradient,
         ));
         Ok(output)
     }

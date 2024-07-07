@@ -1,5 +1,5 @@
 use crate::{
-    gradient_instruction, instruction, new_tensor, new_tensor_with_grad,
+    instruction, new_tensor, new_tensor_with_grad,
     opcode::OpCode,
     tensor::{Error, Tensor},
     Category, Device, OperatorAttributes, TensorWithGrad, UnaryOperator,
@@ -78,11 +78,12 @@ impl UnaryOperator for Dropout {
             &[&output.tensor()],
             Category::Inference,
         ));
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Mul,
             OperatorAttributes::None,
             &[&self.mask, &output.gradient()],
             &[&input.gradient()],
+            Category::Gradient,
         ));
         Ok(output)
     }

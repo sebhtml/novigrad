@@ -66,19 +66,6 @@ macro_rules! instruction {
     };
 }
 
-#[macro_export]
-macro_rules! gradient_instruction {
-    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
-        $crate::instruction!(
-            $opcode,
-            $attributes,
-            $inputs,
-            $outputs,
-            $crate::Category::Gradient,
-        )
-    };
-}
-
 impl Instruction {
     pub fn new(
         opcode: OpCode,

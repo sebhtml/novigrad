@@ -1,5 +1,5 @@
 use crate::{
-    gradient_instruction, instruction, new_tensor_with_grad,
+    instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
@@ -82,11 +82,12 @@ impl NaryOperator for Concat {
         let inputs = [&output];
         let outputs = inputs_n;
         let outputs: Vec<Tensor> = outputs.iter().map(|t| t.gradient().clone()).collect();
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Unconcat,
             OperatorAttributes::None,
             &[&inputs[0].gradient()],
             &outputs.iter().collect::<Vec<_>>(),
+            Category::Gradient,
         ));
         Ok(output)
     }

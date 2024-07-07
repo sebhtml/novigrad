@@ -1,6 +1,6 @@
 use crate::{
     devices::Device,
-    error, gradient_instruction, instruction, new_tensor_with_grad,
+    error, instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
@@ -75,11 +75,12 @@ impl UnaryOperator for Reshape {
         let outputs = [input];
 
         if outputs[0].gradient().requires_grad() {
-            output.push_instruction(gradient_instruction!(
+            output.push_instruction(instruction!(
                 OpCode::Reshape,
                 OperatorAttributes::Vec(self.input_size.clone()),
                 &[&inputs[0].gradient()],
                 &[&outputs[0].gradient()],
+                Category::Gradient,
             ));
         }
 

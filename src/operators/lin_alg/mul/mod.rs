@@ -1,5 +1,5 @@
 use crate::{
-    error, gradient_instruction, instruction, new_tensor, new_tensor_with_grad,
+    error, instruction, new_tensor, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
@@ -98,18 +98,20 @@ impl BinaryOperator for Mul {
                 let output_0 = inputs[0];
                 let tmp = new_tensor!(self.device, rows, cols, vec![0.0; len])?;
 
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Mul,
                     OperatorAttributes::None,
                     &[output_0, input_gradient],
                     &[&tmp],
+                    Category::Gradient,
                 ));
 
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
                     &[&tmp, output_1_gradient],
                     &[output_1_gradient],
+                    Category::Gradient,
                 ));
             }
 
@@ -118,18 +120,20 @@ impl BinaryOperator for Mul {
                 let output_ = inputs[1];
                 let tmp = new_tensor!(self.device, rows, cols, vec![0.0; len])?;
 
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Mul,
                     OperatorAttributes::None,
                     &[output_, input_gradient],
                     &[&tmp],
+                    Category::Gradient,
                 ));
 
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
                     &[&tmp, output_0_gradient],
                     &[output_0_gradient],
+                    Category::Gradient,
                 ));
             }
         }

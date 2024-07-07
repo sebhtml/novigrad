@@ -1,6 +1,7 @@
 - rename to ResidualSumOfSquares
 - colored_mosaic_puzzles: generate examples with translations and rotations
 
+- use 4 layers in transformer model (find bug in CPU memory usage that causes a hang)
 - debug performance with NVIDIA Nsight Systems
 
 - implement RMSNorm : https://arxiv.org/pdf/1910.07467
@@ -8,7 +9,7 @@
 
 - remove forward method in tensor
 - don't use ClipNorm in AdamW
-- use 4 layers in transformer model
+
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
 - increase examples in transformer test from 30 to 100
 

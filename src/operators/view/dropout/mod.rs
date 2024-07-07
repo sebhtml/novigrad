@@ -61,7 +61,15 @@ impl UnaryOperator for Dropout {
             OperatorAttributes::F32(self.probability),
             &[&self.mask],
             &[&self.mask],
-            Category::Inference,
+            Category::EnableDropout,
+        ));
+
+        output.push_instruction(instruction!(
+            OpCode::Bernoulli,
+            OperatorAttributes::F32(1.0),
+            &[&self.mask],
+            &[&self.mask],
+            Category::DisableDropout,
         ));
 
         output.push_instruction(instruction!(

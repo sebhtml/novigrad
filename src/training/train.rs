@@ -238,6 +238,7 @@ pub fn train_on_batches<T>(
     outputs: &Vec<TensorWithGrad>,
 ) -> Result<(), Error> {
     for batch in batches {
+        neural_machine.enable_dropout()?;
         for i in batch.iter() {
             let input = &inputs[*i];
             let output = &outputs[*i];
@@ -248,6 +249,7 @@ pub fn train_on_batches<T>(
         neural_machine.optimize()?;
     }
 
+    neural_machine.disable_dropout()?;
     Ok(())
 }
 

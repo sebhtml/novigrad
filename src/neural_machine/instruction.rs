@@ -8,15 +8,29 @@ use std::{ops::Deref, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Category {
+    EnableDropout,
+    DisableDropout,
     Inference,
     Loss,
     Gradient,
     Optimization,
 }
 
+pub fn is_forward_category(category: &Category) -> bool {
+    [
+        Category::EnableDropout,
+        Category::DisableDropout,
+        Category::Inference,
+        Category::Loss,
+    ]
+    .contains(category)
+}
+
 impl From<Category> for String {
     fn from(val: Category) -> Self {
         match val {
+            Category::EnableDropout => "EnableDropout",
+            Category::DisableDropout => "DisableDropout",
             Category::Inference => "Inference",
             Category::Loss => "Loss",
             Category::Gradient => "Gradient",

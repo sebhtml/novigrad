@@ -1,5 +1,5 @@
 use crate::stream::DeviceStream;
-use crate::Device;
+use crate::{is_forward_category, Device};
 use crate::{tensor::Error, tensor::Tensor, Category, Instruction};
 use core::fmt::Debug;
 use std::fmt::Display;
@@ -35,7 +35,7 @@ impl TensorWithGrad {
             .unwrap()
             .clone()
             .into_iter()
-            .filter(|i| i.category() == Category::Inference || i.category() == Category::Loss)
+            .filter(|i| is_forward_category(&i.category()))
             .collect()
     }
 

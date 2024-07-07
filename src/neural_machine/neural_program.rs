@@ -1,5 +1,4 @@
 use crate::clip_grad_norm::clip_grad_norm;
-use crate::optimization_instruction;
 use crate::{
     instruction, new_tensor, new_tensor_with_grad, opcode::OpCode, tensor::Error, BinaryOperator,
     Category, Device, Instruction, OperatorAttributes, OptimizerTrait, TensorWithGrad, UnaryModel,
@@ -105,11 +104,12 @@ impl NeuralProgram {
         if batch_size != 1 {
             let batch_size_reciprocal = new_tensor!(device, 1, 1, vec![1.0 / batch_size as f32])?;
             for g in gradient.iter() {
-                instructions.push(optimization_instruction!(
+                instructions.push(instruction!(
                     OpCode::ScalarMul,
                     OperatorAttributes::None,
                     &[&batch_size_reciprocal, &g],
                     &[&g],
+                    Category::Optimization,
                 ));
             }
         }

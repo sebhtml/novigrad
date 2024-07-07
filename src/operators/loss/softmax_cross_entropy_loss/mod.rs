@@ -1,10 +1,10 @@
 use crate::{
     devices::Device,
-    gradient_instruction, loss_instruction, new_tensor_with_grad,
+    gradient_instruction, instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    BinaryOperator, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
+    BinaryOperator, Category, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
 };
 
 #[derive(Clone)]
@@ -53,11 +53,12 @@ impl BinaryOperator for SoftmaxCrossEntropyLoss {
         let inputs = [input_1, input_2];
         let outputs = [&output];
 
-        output.push_instruction(loss_instruction!(
+        output.push_instruction(instruction!(
             OpCode::SoftmaxCrossEntropyLoss,
             OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],
+            Category::Loss,
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];

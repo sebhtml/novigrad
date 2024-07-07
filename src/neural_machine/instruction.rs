@@ -67,19 +67,6 @@ macro_rules! instruction {
 }
 
 #[macro_export]
-macro_rules! loss_instruction {
-    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
-        $crate::instruction!(
-            $opcode,
-            $attributes,
-            $inputs,
-            $outputs,
-            $crate::Category::Loss,
-        )
-    };
-}
-
-#[macro_export]
 macro_rules! gradient_instruction {
     ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
         $crate::instruction!(
@@ -88,19 +75,6 @@ macro_rules! gradient_instruction {
             $inputs,
             $outputs,
             $crate::Category::Gradient,
-        )
-    };
-}
-
-#[macro_export]
-macro_rules! optimization_instruction {
-    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
-        $crate::instruction!(
-            $opcode,
-            $attributes,
-            $inputs,
-            $outputs,
-            $crate::Category::Optimization,
         )
     };
 }

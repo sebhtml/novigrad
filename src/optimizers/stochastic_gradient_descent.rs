@@ -1,5 +1,5 @@
 use crate::{
-    new_tensor, opcode::OpCode, optimization_instruction, tensor::Error, Device, Instruction,
+    instruction, new_tensor, opcode::OpCode, tensor::Error, Category, Device, Instruction,
     OperatorAttributes, OptimizerTrait, TensorWithGrad,
 };
 
@@ -33,18 +33,20 @@ impl OptimizerTrait for StochasticGradientDescent {
             )?;
 
             let alpha = new_tensor!(device, 1, 1, vec![self.learning_rate])?;
-            instructions.push(optimization_instruction!(
+            instructions.push(instruction!(
                 OpCode::ScalarMul,
                 OperatorAttributes::None,
                 &[&alpha, &gradient],
                 &[&scaled_gradient],
+                Category::Optimization,
             ));
 
-            instructions.push(optimization_instruction!(
+            instructions.push(instruction!(
                 OpCode::Sub,
                 OperatorAttributes::None,
                 &[tensor, &scaled_gradient],
                 &[tensor],
+                Category::Optimization,
             ));
         }
 

@@ -1,9 +1,9 @@
 use crate::{
-    gradient_instruction, inference_instruction, new_tensor_with_grad,
+    instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
+    Category, Device, ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 pub struct Identity {
@@ -45,17 +45,19 @@ impl UnaryOperator for Identity {
             true,
             false,
         )?;
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Identity,
             OperatorAttributes::String(self.label.clone()),
             &[&input.tensor()],
             &[&output.tensor()],
+            Category::Inference,
         ));
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Identity,
             OperatorAttributes::String("gradient".into()),
             &[&output.gradient()],
             &[&input.gradient()],
+            Category::Gradient,
         ));
         Ok(output)
     }

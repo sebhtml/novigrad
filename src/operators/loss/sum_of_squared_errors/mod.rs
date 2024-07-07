@@ -1,10 +1,10 @@
 use crate::{
     devices::Device,
-    gradient_instruction, loss_instruction, new_tensor, new_tensor_with_grad,
+    instruction, new_tensor, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    BinaryOperator, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
+    BinaryOperator, Category, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
 };
 
 #[cfg(test)]
@@ -55,11 +55,12 @@ impl BinaryOperator for SumOfSquaredErrors {
         let inputs = [input_1, input_2];
         let outputs = [&output];
 
-        output.push_instruction(loss_instruction!(
+        output.push_instruction(instruction!(
             OpCode::SumOfSquaredErrors,
             OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],
+            Category::Loss,
         ));
         let inputs = [input_1, input_2];
         let outputs = [input_2];
@@ -72,18 +73,20 @@ impl BinaryOperator for SumOfSquaredErrors {
             let output_gradient = outputs[0];
             let expected = inputs[0];
             let actual = inputs[1];
-            output.push_instruction(gradient_instruction!(
+            output.push_instruction(instruction!(
                 OpCode::Sub,
                 OperatorAttributes::None,
                 &[expected, actual],
                 &[output_gradient],
+                Category::Gradient,
             ));
             let minus_two = new_tensor!(self.device, 1, 1, vec![-2.0])?;
-            output.push_instruction(gradient_instruction!(
+            output.push_instruction(instruction!(
                 OpCode::ScalarMul,
                 OperatorAttributes::None,
                 &[&minus_two, output_gradient],
                 &[output_gradient],
+                Category::Gradient,
             ));
         }
 

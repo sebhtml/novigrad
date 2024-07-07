@@ -1,8 +1,8 @@
 use crate::{
-    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    instruction, new_tensor, new_tensor_with_grad,
     opcode::OpCode,
     tensor::{Error, Tensor},
-    Device, OperatorAttributes, TensorWithGrad, UnaryOperator,
+    Category, Device, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 #[cfg(test)]
@@ -56,30 +56,34 @@ impl UnaryOperator for Dropout {
             false,
         )?;
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Bernoulli,
             OperatorAttributes::F32(self.probability),
             &[&self.mask],
             &[&self.mask],
+            Category::Inference,
         ));
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Mul,
             OperatorAttributes::None,
             &[&self.mask, &input.tensor()],
             &[&output.tensor()],
+            Category::Inference,
         ));
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&self.alpha, &output.tensor()],
             &[&output.tensor()],
+            Category::Inference,
         ));
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Mul,
             OperatorAttributes::None,
             &[&self.mask, &output.gradient()],
             &[&input.gradient()],
+            Category::Gradient,
         ));
         Ok(output)
     }

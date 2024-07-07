@@ -1,9 +1,10 @@
 use crate::{
-    gradient_instruction, inference_instruction, new_tensor_with_grad,
+    instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
+    Category, Device, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
+    UnaryOperator,
 };
 
 pub struct Standardization {
@@ -33,17 +34,19 @@ impl UnaryOperator for Standardization {
             true,
             false
         )?;
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Standardization,
             OperatorAttributes::None,
             &[&input.tensor()],
             &[&output.tensor()],
+            Category::Inference,
         ));
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Add,
             OperatorAttributes::None,
             &[&output.gradient(), &input.gradient(),],
             &[&input.gradient()],
+            Category::Gradient,
         ));
         Ok(output)
     }

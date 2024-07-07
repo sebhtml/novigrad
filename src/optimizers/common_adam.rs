@@ -1,5 +1,5 @@
 use crate::{
-    new_tensor, opcode::OpCode, optimization_instruction, tensor::Error, Device, Instruction,
+    instruction, new_tensor, opcode::OpCode, tensor::Error, Category, Device, Instruction,
     OperatorAttributes, TensorWithGrad,
 };
 
@@ -36,11 +36,12 @@ pub fn optimize(
     let one = new_tensor!(device, 1, 1, vec![1.0])?;
     let t = new_tensor!(device, 1, 1, vec![0.0])?;
 
-    instructions.push(optimization_instruction!(
+    instructions.push(instruction!(
         OpCode::Add,
         OperatorAttributes::None,
         &[&one, &t],
         &[&t],
+        Category::Optimization,
     ));
 
     let adam_w_remaining_weight_after_decay = 1.0 - learning_rate * weight_decay;
@@ -59,11 +60,12 @@ pub fn optimize(
         let theta = &optimizable_tensor.tensor();
 
         if is_adam_w && weight_decay != 0.0 {
-            instructions.push(optimization_instruction!(
+            instructions.push(instruction!(
                 OpCode::ScalarMul,
                 OperatorAttributes::None,
                 &[&adam_w_remaining_weight_after_decay, &theta],
                 &[&theta],
+                Category::Optimization,
             ));
         }
 
@@ -80,50 +82,57 @@ pub fn optimize(
 
         // Update 1st moment
         // m = beta1 * m + (1 - beta1) * g
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&beta1, &m],
             &[&tmp1],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&one_minus_beta1, &g],
             &[&tmp2],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Add,
             OperatorAttributes::None,
             &[&tmp1, &tmp2],
             &[&m],
+            Category::Optimization,
         ));
 
         // Update 2nd moment
         // v = beta2 * v + (1 - beta2) * g**2
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&beta2, &v],
             &[&tmp1],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Mul,
             OperatorAttributes::None,
             &[&g, &g],
             &[&tmp2],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&one_minus_beta2, &tmp2],
             &[&tmp2],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Add,
             OperatorAttributes::None,
             &[&tmp1, &tmp2],
             &[&v],
+            Category::Optimization,
         ));
 
         // Correct bias in 1st and 2nd moments
@@ -133,39 +142,44 @@ pub fn optimize(
         // m_multiplier = 1 / (1 - beta1**t)
         let m_multiplier = new_tensor!(device, 1, 1, vec![0.0])?;
 
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Pow,
             OperatorAttributes::None,
             &[&beta1, &t],
             &[&m_multiplier],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Sub,
             OperatorAttributes::None,
             &[&one, &m_multiplier],
             &[&m_multiplier],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Clip,
             OperatorAttributes::None,
             &[&epsilon, &f32_max, &m_multiplier],
             &[&m_multiplier],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Div,
             OperatorAttributes::None,
             &[&one, &m_multiplier],
             &[&m_multiplier],
+            Category::Optimization,
         ));
 
         let m_hat = new_tensor!(device, theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
 
         // m_hatw
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&m_multiplier, &m],
             &[&m_hat],
+            Category::Optimization,
         ));
 
         // v_hat = v / (1 - beta2**t)
@@ -173,84 +187,95 @@ pub fn optimize(
         // v_multiplier = 1 / (1 - beta2**t)
         let v_multiplier = new_tensor!(device, 1, 1, vec![0.0])?;
 
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Pow,
             OperatorAttributes::None,
             &[&beta2, &t],
             &[&v_multiplier],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Sub,
             OperatorAttributes::None,
             &[&one, &v_multiplier],
             &[&v_multiplier],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Clip,
             OperatorAttributes::None,
             &[&epsilon, &f32_max, &v_multiplier],
             &[&v_multiplier],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Div,
             OperatorAttributes::None,
             &[&one, &v_multiplier],
             &[&v_multiplier],
+            Category::Optimization,
         ));
 
         let v_hat = new_tensor!(device, theta.rows(), theta.cols(), vec![0.0; theta.len()])?;
 
         // v_hat
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&v_multiplier, &v],
             &[&v_hat],
+            Category::Optimization,
         ));
 
         // Update parameters with adaptive learning rate
         // theta = theta - alpha * m_hat / (sqrt(v_hat) + epsilon)
 
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Sqrt,
             OperatorAttributes::None,
             &[&tmp1],
             &[&tmp1],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::ScalarAdd,
             OperatorAttributes::None,
             &[&epsilon, &tmp1],
             &[&tmp1],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Div,
             OperatorAttributes::None,
             &[&m_hat, &tmp1],
             &[&tmp1],
+            Category::Optimization,
         ));
 
         // ClipNorm is not in the adam paper. but +inf is reached is this is not done.
         // It's basically like clipping the gradient.
         // TODO try to remove this ClipNorm thing.
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::ClipNorm,
             OperatorAttributes::None,
             &[&tmp1],
             &[&tmp1],
+            Category::Optimization,
         ));
 
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&learning_rate, &tmp1],
             &[&tmp1],
+            Category::Optimization,
         ));
-        instructions.push(optimization_instruction!(
+        instructions.push(instruction!(
             OpCode::Sub,
             OperatorAttributes::None,
             &[&theta, &tmp1],
             &[&theta],
+            Category::Optimization,
         ));
     }
     Ok(instructions)

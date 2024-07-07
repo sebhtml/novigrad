@@ -2,9 +2,9 @@ use crate::devices::Device;
 use crate::opcode::OpCode;
 use crate::stream::DeviceStream;
 use crate::{
-    gradient_instruction, new_tensor, new_tensor_with_grad, ExecutableOperator, OperatorAttributes,
+    instruction, new_tensor, new_tensor_with_grad, Category, ExecutableOperator, OperatorAttributes,
 };
-use crate::{inference_instruction, tensor::Error, DeviceTrait, TensorWithGrad};
+use crate::{tensor::Error, DeviceTrait, TensorWithGrad};
 use crate::{tensor::Tensor, UnaryOperator};
 
 /// https://onnx.ai/onnx/operators/onnx__Gelu.html
@@ -53,34 +53,38 @@ impl UnaryOperator for Gelu {
             false
         )?;
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Gelu,
             OperatorAttributes::None,
             &[&input.tensor()],
             &[&output.tensor()],
+            Category::Inference,
         ));
 
         if input.gradient().requires_grad() {
             let device = &self.device;
             let layer_f_derivative = new_tensor!(device, rows, cols, vec![0.0; len])?;
-            output.push_instruction(gradient_instruction!(
+            output.push_instruction(instruction!(
                 OpCode::GeluDerivative,
                 OperatorAttributes::None,
                 &[&input.tensor()],
                 &[&layer_f_derivative],
+                Category::Gradient,
             ));
             let tmp = new_tensor!(device, rows, cols, vec![0.0; len])?;
-            output.push_instruction(gradient_instruction!(
+            output.push_instruction(instruction!(
                 OpCode::Mul,
                 OperatorAttributes::None,
                 &[&output.gradient(), &layer_f_derivative],
                 &[&tmp],
+                Category::Gradient,
             ));
-            output.push_instruction(gradient_instruction!(
+            output.push_instruction(instruction!(
                 OpCode::Add,
                 OperatorAttributes::None,
                 &[&tmp, &input.gradient()],
                 &[&input.gradient()],
+                Category::Gradient,
             ));
         }
 

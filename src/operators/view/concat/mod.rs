@@ -1,9 +1,10 @@
 use crate::{
-    gradient_instruction, inference_instruction, new_tensor_with_grad,
+    instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, DeviceTrait, ExecutableOperator, NaryOperator, OperatorAttributes, TensorWithGrad,
+    Category, Device, DeviceTrait, ExecutableOperator, NaryOperator, OperatorAttributes,
+    TensorWithGrad,
 };
 
 #[cfg(test)]
@@ -71,20 +72,22 @@ impl NaryOperator for Concat {
         let outputs = [&output];
         let inputs: Vec<Tensor> = inputs.iter().map(|t| t.tensor().clone()).collect();
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Concat,
             OperatorAttributes::None,
             &inputs.iter().collect::<Vec<_>>(),
             &[&outputs[0].tensor()],
+            Category::Inference,
         ));
         let inputs = [&output];
         let outputs = inputs_n;
         let outputs: Vec<Tensor> = outputs.iter().map(|t| t.gradient().clone()).collect();
-        output.push_instruction(gradient_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Unconcat,
             OperatorAttributes::None,
             &[&inputs[0].gradient()],
             &outputs.iter().collect::<Vec<_>>(),
+            Category::Gradient,
         ));
         Ok(output)
     }

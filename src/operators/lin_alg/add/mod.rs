@@ -1,9 +1,10 @@
 use crate::{
-    error, gradient_instruction, inference_instruction, new_tensor_with_grad,
+    error, instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
-    BinaryOperator, Device, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
+    BinaryOperator, Category, Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
+    TensorWithGrad,
 };
 
 #[cfg(test)]
@@ -79,11 +80,12 @@ impl BinaryOperator for Add {
         let inputs = [input_1, input_2];
         let outputs = [&output];
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Add,
             OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],
+            Category::Inference,
         ));
 
         {
@@ -98,22 +100,24 @@ impl BinaryOperator for Add {
             if outputs[1].requires_grad() {
                 let output_1_gradient = outputs[1];
 
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
                     &[input_gradient, output_1_gradient],
                     &[output_1_gradient],
+                    Category::Gradient,
                 ));
             }
 
             if outputs[0].requires_grad() {
                 let output_0_gradient = outputs[0];
 
-                output.push_instruction(gradient_instruction!(
+                output.push_instruction(instruction!(
                     OpCode::Add,
                     OperatorAttributes::None,
                     &[input_gradient, output_0_gradient],
                     &[output_0_gradient],
+                    Category::Gradient,
                 ));
             }
         }

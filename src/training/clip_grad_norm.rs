@@ -12,10 +12,18 @@ pub fn clip_grad_norm(
     gradient: &[impl Deref<Target = Tensor>],
 ) -> Result<Vec<Instruction>, Error> {
     let one = new_tensor!(device, 1, 1, vec![1.0])?;
+    let zero = new_tensor!(device, 1, 1, vec![0.0])?;
     let alpha = new_tensor!(device, 1, 1, vec![0.0])?;
     let l2_norm = new_tensor!(device, 1, 1, vec![0.0])?;
     let g_dot = new_tensor!(device, 1, 1, vec![0.0])?;
     let mut instructions = vec![];
+    instructions.push(instruction!(
+        OpCode::ScalarMul,
+        OperatorAttributes::None,
+        &[&zero, &l2_norm],
+        &[&l2_norm],
+        Category::Optimization,
+    ));
     for g in gradient.iter() {
         instructions.push(instruction!(
             OpCode::Dot,

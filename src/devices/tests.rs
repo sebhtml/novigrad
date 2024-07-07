@@ -1,11 +1,8 @@
 use std::ops::Div;
 
-use more_asserts::{assert_ge, assert_le};
+use more_asserts::assert_le;
 
-use crate::{
-    new_tensor, statistics::bernoulli::Bernoulli, stream::StreamTrait, Device, DeviceTrait,
-    ExecutableOperator,
-};
+use crate::{new_tensor, stream::StreamTrait, Device, DeviceTrait};
 
 #[test]
 fn clip_min() {

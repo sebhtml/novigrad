@@ -1,10 +1,10 @@
 use crate::{
     devices::Device,
-    error, gradient_instruction, inference_instruction, new_tensor_with_grad,
+    error, gradient_instruction, instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
-    ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
+    Category, ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
 };
 
 pub struct Reshape {
@@ -64,11 +64,12 @@ impl UnaryOperator for Reshape {
         let inputs = [input];
         let outputs = [&output];
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Reshape,
             OperatorAttributes::Vec(self.output_size.clone()),
             &[&inputs[0].tensor()],
             &[&outputs[0].tensor()],
+            Category::Inference,
         ));
         let inputs = [&output];
         let outputs = [input];

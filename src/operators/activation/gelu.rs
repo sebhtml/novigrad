@@ -2,9 +2,10 @@ use crate::devices::Device;
 use crate::opcode::OpCode;
 use crate::stream::DeviceStream;
 use crate::{
-    gradient_instruction, new_tensor, new_tensor_with_grad, ExecutableOperator, OperatorAttributes,
+    gradient_instruction, instruction, new_tensor, new_tensor_with_grad, Category,
+    ExecutableOperator, OperatorAttributes,
 };
-use crate::{inference_instruction, tensor::Error, DeviceTrait, TensorWithGrad};
+use crate::{tensor::Error, DeviceTrait, TensorWithGrad};
 use crate::{tensor::Tensor, UnaryOperator};
 
 /// https://onnx.ai/onnx/operators/onnx__Gelu.html
@@ -53,11 +54,12 @@ impl UnaryOperator for Gelu {
             false
         )?;
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Gelu,
             OperatorAttributes::None,
             &[&input.tensor()],
             &[&output.tensor()],
+            Category::Inference,
         ));
 
         if input.gradient().requires_grad() {

@@ -67,19 +67,6 @@ macro_rules! instruction {
 }
 
 #[macro_export]
-macro_rules! inference_instruction {
-    ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
-        $crate::instruction!(
-            $opcode,
-            $attributes,
-            $inputs,
-            $outputs,
-            $crate::Category::Inference,
-        )
-    };
-}
-
-#[macro_export]
 macro_rules! loss_instruction {
     ( $opcode:expr, $attributes:expr, $inputs:expr, $outputs:expr, ) => {
         $crate::instruction!(

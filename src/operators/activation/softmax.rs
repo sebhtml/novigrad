@@ -1,10 +1,10 @@
 use crate::devices::Device;
 use crate::opcode::OpCode;
 use crate::stream::DeviceStream;
+use crate::{gradient_instruction, tensor::Tensor, DeviceTrait, UnaryOperator};
 use crate::{
-    gradient_instruction, inference_instruction, tensor::Tensor, DeviceTrait, UnaryOperator,
+    instruction, new_tensor, new_tensor_with_grad, Category, ExecutableOperator, OperatorAttributes,
 };
-use crate::{new_tensor, new_tensor_with_grad, ExecutableOperator, OperatorAttributes};
 use crate::{tensor::Error, TensorWithGrad};
 
 pub struct Softmax {
@@ -60,11 +60,12 @@ impl UnaryOperator for Softmax {
         let inputs = [input];
         let outputs = [&output];
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Softmax,
             OperatorAttributes::None,
             &[&inputs[0].tensor()],
             &[&outputs[0].tensor()],
+            Category::Inference,
         ));
 
         if input.gradient().requires_grad() {

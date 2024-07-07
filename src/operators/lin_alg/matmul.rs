@@ -1,9 +1,9 @@
 use crate::{
     devices::Device,
-    error, gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    error, gradient_instruction, instruction, new_tensor, new_tensor_with_grad,
     opcode::OpCode,
     tensor::{Error, ErrorEnum, Tensor},
-    BinaryOperator, OperatorAttributes, TensorWithGrad,
+    BinaryOperator, Category, OperatorAttributes, TensorWithGrad,
 };
 
 pub struct MatMul {
@@ -68,14 +68,15 @@ impl BinaryOperator for MatMul {
         // For MatMul, we need to zero C it uses Gemm and
         // Gemm is C := alpha * AB^T + beta * C
         let zero = new_tensor!(&self.device, 1, 1, vec![0.0])?;
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&zero, &outputs[0].tensor()],
             &[&outputs[0].tensor()],
+            Category::Inference,
         ));
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Gemm,
             OperatorAttributes::ThreeBools(false, transb, false),
             &[
@@ -84,6 +85,7 @@ impl BinaryOperator for MatMul {
                 &outputs[0].tensor(),
             ],
             &[&outputs[0].tensor()],
+            Category::Inference,
         ));
         if input_1.gradient().requires_grad() {
             output.push_instruction(gradient_instruction!(

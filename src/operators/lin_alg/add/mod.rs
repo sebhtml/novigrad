@@ -1,9 +1,10 @@
 use crate::{
-    error, gradient_instruction, inference_instruction, new_tensor_with_grad,
+    error, gradient_instruction, instruction, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, ErrorEnum, Tensor},
-    BinaryOperator, Device, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
+    BinaryOperator, Category, Device, DeviceTrait, ExecutableOperator, OperatorAttributes,
+    TensorWithGrad,
 };
 
 #[cfg(test)]
@@ -79,11 +80,12 @@ impl BinaryOperator for Add {
         let inputs = [input_1, input_2];
         let outputs = [&output];
 
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::Add,
             OperatorAttributes::None,
             &[&inputs[0].tensor(), &inputs[1].tensor(),],
             &[&outputs[0].tensor()],
+            Category::Inference,
         ));
 
         {

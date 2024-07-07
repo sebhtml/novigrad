@@ -1,9 +1,10 @@
 use crate::{
-    gradient_instruction, inference_instruction, new_tensor, new_tensor_with_grad,
+    gradient_instruction, instruction, new_tensor, new_tensor_with_grad,
     opcode::OpCode,
     stream::DeviceStream,
     tensor::{Error, Tensor},
-    Device, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad, UnaryOperator,
+    Category, Device, DeviceTrait, ExecutableOperator, OperatorAttributes, TensorWithGrad,
+    UnaryOperator,
 };
 
 #[cfg(test)]
@@ -58,11 +59,12 @@ impl UnaryOperator for ScalarMul {
         let outputs = [&output];
 
         let alpha = new_tensor!(self.device, 1, 1, vec![self.alpha])?;
-        output.push_instruction(inference_instruction!(
+        output.push_instruction(instruction!(
             OpCode::ScalarMul,
             OperatorAttributes::None,
             &[&alpha, &inputs[0].tensor()],
             &[&outputs[0].tensor()],
+            Category::Inference,
         ));
         let inputs = [&output];
         let outputs = [input];

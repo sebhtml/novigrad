@@ -12,27 +12,13 @@
 
 == Loss function fixes ==
 
-- fix backward code of reduce sum square and cross-entropy loss
 - remove forward method in tensor
-
-== correct mini-batch implementation ==
-
-- use batch aggregated loss to compute gradient
-- impement mini-batch in the model input tensor shape
-- implement mini batch using broadcasting in the operators
 
 == Story: async copy ==
 
 - use result::memcpy_htod_async(*dst.device_ptr_mut(), src, self.stream) to do set_value
 - implement htod_into_on_stream in cudarc
 - implement set_value_with_stream
-
-== Story: Transformer batching ==
-
-
-== Story: Mega-man transformer ==
-
-- re-add method zero_grad
 
 == Story: use device pointer mode ==
 
@@ -47,8 +33,6 @@
 
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization) using instruction range (begin..end)
 - Implement Transformer idea for colored mosaic puzzles (left-to-right residual connections)
-
-- investigate performance issue with tons of call to pthread_rwlock_unlock
 
 == Clean-up ==
 
@@ -88,8 +72,6 @@
 
 ---------------------
 
-- implement Conv2D
-
 == Performance ==
 
 - simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
@@ -117,18 +99,3 @@
 
 - CIFAR-10
 - MNIST
-
-== Import / Export ==
-
-- serialize and deserialize model to ONNX format
-
-== Positional Encoding ==
-
-- implement positional encoding
-
-== Devices ==
-
-- Add support for Jim Keller's https://tenstorrent.com/cards/
-- Add support for Google TPU
-- Add support for Apple Metal
-- Add support for Intel Arc

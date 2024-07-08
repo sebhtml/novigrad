@@ -14,4 +14,5 @@ pub use neural_machine::*;
 pub use optimizers::*;
 pub mod datasets;
 mod optimizers;
+pub mod vision;
 const EPSILON: f32 = 1e-8;

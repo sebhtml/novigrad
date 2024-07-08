@@ -9,6 +9,7 @@ use crate::{
     error,
     tensor::{Error, ErrorEnum},
     transformer_model::TransformerModel,
+    vision::{center_examples_in_field_of_view, translate_examples_in_field_of_view},
     Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad,
 };
 
@@ -51,61 +52,6 @@ fn load_json_examples(
     Ok(examples)
 }
 
-fn put_pixels_on_larger_board(
-    pixels: Vec<usize>,
-    old_width: usize,
-    old_height: usize,
-    new_width: usize,
-    new_height: usize,
-    default_pixel: usize,
-) -> Vec<usize> {
-    let mut new_pixels = vec![default_pixel; new_width * new_height];
-    let x_translation = (new_width - old_width) / 2;
-    let y_translation = (new_height - old_height) / 2;
-    for old_x in 0..old_height {
-        for old_y in 0..old_width {
-            let pixel = pixels[old_y * old_width + old_x];
-            let new_x = old_x + x_translation;
-            let new_y = old_y + y_translation;
-            new_pixels[new_y * new_width + new_x] = pixel;
-        }
-    }
-    new_pixels
-}
-
-fn put_example_on_larger_board(
-    examples: Vec<(Vec<usize>, Vec<usize>)>,
-    old_width: usize,
-    old_height: usize,
-    new_width: usize,
-    new_height: usize,
-    default_pixel: usize,
-) -> Vec<(Vec<usize>, Vec<usize>)> {
-    let examples = examples
-        .into_iter()
-        .map(|(input, output)| {
-            let input = put_pixels_on_larger_board(
-                input,
-                old_width,
-                old_height,
-                new_width,
-                new_height,
-                default_pixel,
-            );
-            let output = put_pixels_on_larger_board(
-                output,
-                old_width,
-                old_height,
-                new_width,
-                new_height,
-                default_pixel,
-            );
-            (input, output)
-        })
-        .collect::<Vec<_>>();
-    examples
-}
-
 fn load_examples(
     training_or_evaluation: &str,
     problem_id: &str,
@@ -119,7 +65,7 @@ fn load_examples(
     let examples = load_json_examples(training_or_evaluation, problem_id, train_or_test)?;
     let old_width = (examples[0].0.len() as f32).sqrt() as usize;
     let old_height = old_width;
-    let examples = put_example_on_larger_board(
+    let examples = center_examples_in_field_of_view(
         examples,
         old_width,
         old_height,
@@ -127,6 +73,12 @@ fn load_examples(
         new_height,
         default_pixel,
     );
+    let examples = if train_or_test == "train" {
+        translate_examples_in_field_of_view(examples, new_width, new_height, default_pixel)
+    } else {
+        examples
+    };
+
     examples
         .into_iter()
         .map(|example| {
@@ -174,12 +126,12 @@ pub fn load_colored_mosaic_puzzles(
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
     let optimizer = AdamW::try_new(0.05, 0.9, 0.999, 1e-8, 0.1)?;
-    let layers = 2;
+    let layers = 3;
     let num_heads = 12;
     let dropout_probability = 0.1;
     let n_embd = 768;
     let causal_mask = false;
-    let batch_size = 2;
+    let batch_size = training_examples.len();
     let model = TransformerModel::new(
         device,
         layers,
@@ -197,7 +149,7 @@ pub fn load_colored_mosaic_puzzles(
         model,
         loss_operator,
         optimizer,
-        epochs: 50,
+        epochs: 100,
         progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,

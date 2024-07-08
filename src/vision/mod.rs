@@ -83,10 +83,10 @@ pub fn translate_examples_in_field_of_view(
     height: usize,
     default_pixel: usize,
 ) -> Vec<(Vec<usize>, Vec<usize>)> {
-    let min_translation_x = -1; //-(width as i32) / 3;
-    let max_translation_x = 1; //(width / 3) as i32;
-    let min_translation_y = -1; //-(height as i32) / 3;
-    let max_translation_y = 1; //(height / 3) as i32;
+    let min_translation_x = -3; //-(width as i32) / 3;
+    let max_translation_x = 3; //(width / 3) as i32;
+    let min_translation_y = -3; //-(height as i32) / 3;
+    let max_translation_y = 3; //(height / 3) as i32;
 
     let mut new_examples = vec![];
 

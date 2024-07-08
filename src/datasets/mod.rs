@@ -35,7 +35,6 @@ where
     pub shuffle_examples: bool,
     pub clip_gradient_norm: bool,
     pub epochs: usize,
-    pub progress: usize,
     pub initial_metrics_min: Metrics,
     pub final_metrics_max: Metrics,
     pub maximum_incorrect_predicted_next_tokens: usize,

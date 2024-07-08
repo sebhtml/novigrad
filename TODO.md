@@ -4,11 +4,6 @@
 - set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
 - increase examples in transformer test from 30 to 100
 
-== Performance ==
-
-- simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
-- print total_loss of each epoch
-
 == Story: performance ==
 
 - investigate calls (17% CPU cycles) to pthread_mutex_unlock@@GLIBC_2.2.5 and pthread_rwlock_unlock@@GLIBC_2.34
@@ -20,9 +15,7 @@
 
 == Backlog ==
 
-- use 4 layers in transformer model (find bug in CPU memory usage that causes a hang)
 - rename to ResidualSumOfSquares
-
 
 - rematerialize dropout mask to save GPU VRAM memory
 
@@ -31,15 +24,9 @@
 - remove forward method in tensor
 - don't use ClipNorm in AdamW
 
-- set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
-- increase examples in transformer test from 30 to 100
-
 == correct mini-batch implementation ==
 
 - have one unified set for instructions, streams, scheduler instead of four (inference, loss, gradient, optimization) using instruction range (begin..end)
-- use batch aggregated loss to compute gradient
-- impement mini-batch in the model input tensor shape
-- implement mini batch using broadcasting in the operators
 
 == Story: async copy ==
 
@@ -47,15 +34,9 @@
 - implement htod_into_on_stream in cudarc
 - implement set_value_with_stream
 
-== Story: Mega-man transformer ==
-
-- re-add method zero_grad
-
 == Story: use device pointer mode ==
 
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
-
-- don't use ClipNorm in AdamW
 
 == Story: gradient accumulation ==
 
@@ -99,10 +80,6 @@
 - Implement code with f16
 
 ---------------------
-
-== Performance ==
-
-- simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
 
 == Other things ==
 

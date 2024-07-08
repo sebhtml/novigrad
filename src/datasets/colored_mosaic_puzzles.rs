@@ -125,13 +125,13 @@ pub fn load_colored_mosaic_puzzles(
     )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let optimizer = AdamW::try_new(0.05, 0.9, 0.999, 1e-8, 0.1)?;
-    let layers = 3;
+    let optimizer = AdamW::try_new(0.001, 0.9, 0.999, 1e-8, 0.01)?;
+    let layers = 2;
     let num_heads = 12;
     let dropout_probability = 0.1;
     let n_embd = 768;
     let causal_mask = false;
-    let batch_size = training_examples.len();
+    let batch_size = 14;
     let model = TransformerModel::new(
         device,
         layers,
@@ -150,7 +150,6 @@ pub fn load_colored_mosaic_puzzles(
         loss_operator,
         optimizer,
         epochs: 100,
-        progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics { total_loss: 5.0 },

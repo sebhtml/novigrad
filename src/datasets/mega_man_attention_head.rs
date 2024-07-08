@@ -52,7 +52,6 @@ pub fn load_mega_man_attention_head(
         loss_operator,
         optimizer,
         epochs: 200,
-        progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics { total_loss: 100.0 },

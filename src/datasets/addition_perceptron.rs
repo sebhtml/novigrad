@@ -44,7 +44,6 @@ pub fn load_addition_perceptron(
         loss_operator,
         optimizer,
         epochs: 100,
-        progress: 10,
         shuffle_examples: false,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics { total_loss: 0.1 },

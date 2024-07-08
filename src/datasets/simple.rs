@@ -68,7 +68,6 @@ pub fn load_simple(
         loss_operator,
         optimizer,
         epochs: 500,
-        progress: 100,
         shuffle_examples: true,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics { total_loss: 5.0 },

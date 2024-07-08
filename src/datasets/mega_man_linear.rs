@@ -45,7 +45,6 @@ pub fn load_mega_man_linear(
         loss_operator,
         optimizer,
         epochs: 50,
-        progress: 10,
         shuffle_examples: true,
         clip_gradient_norm: true,
         initial_metrics_min: Metrics { total_loss: 5500.0 },

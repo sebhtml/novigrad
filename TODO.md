@@ -1,5 +1,9 @@
 - colored_mosaic_puzzles: generate examples rotations
 
+- use 4 layers in transformer model (need to fix a CPU memory bug)
+- set maximum_incorrect_predicted_next_tokens to 0 in transformer dataset
+- increase examples in transformer test from 30 to 100
+
 == Performance ==
 
 - simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
@@ -21,6 +25,8 @@
 
 
 - rematerialize dropout mask to save GPU VRAM memory
+
+== Loss function fixes ==
 
 - remove forward method in tensor
 - don't use ClipNorm in AdamW
@@ -48,6 +54,8 @@
 == Story: use device pointer mode ==
 
 - use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
+
+- don't use ClipNorm in AdamW
 
 == Story: gradient accumulation ==
 
@@ -92,6 +100,10 @@
 
 ---------------------
 
+== Performance ==
+
+- simplify train.rs to have at most 1 call to infer, loss, compute_gradient, optimize() per example per epoch.
+
 == Other things ==
 
 - investigate calls to Device::tensor_f32
@@ -115,18 +127,3 @@
 
 - CIFAR-10
 - MNIST
-
-== Import / Export ==
-
-- serialize and deserialize model to ONNX format
-
-== Positional Encoding ==
-
-- implement positional encoding
-
-== Devices ==
-
-- Add support for Jim Keller's https://tenstorrent.com/cards/
-- Add support for Google TPU
-- Add support for Apple Metal
-- Add support for Intel Arc

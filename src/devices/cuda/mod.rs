@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, sync::Arc};
+use std::{fs::File, io::Read, mem, sync::Arc};
 pub mod slice;
 pub mod stream;
 #[cfg(test)]
@@ -6,7 +6,8 @@ mod tests;
 
 use cudarc::{
     cublas::{
-        sys::{cublasHandle_t, cublasOperation_t, cublasPointerMode_t, lib},
+        self,
+        sys::{cublasHandle_t, cublasOperation_t, cublasPointerMode_t, cudaDataType},
         CudaBlas,
     },
     driver::{self, CudaDevice, CudaFunction, CudaStream, DevicePtrMut, LaunchAsync, LaunchConfig},
@@ -16,7 +17,7 @@ use stream::CudaDeviceStream;
 use crate::{
     error,
     slice::DeviceSlice,
-    stream::{DeviceStream, DeviceStreamEnum},
+    stream::{DeviceStream, DeviceStreamEnum, StreamTrait},
     tensor::{Error, ErrorEnum, Tensor},
     DeviceTrait, EPSILON,
 };
@@ -168,12 +169,6 @@ impl CudaDev {
         )?;
 
         device.load_module(
-            "scalar_mul_kernel_module",
-            &["scalar_mul_kernel"],
-            "./src/devices/cuda/kernels/scalar_mul_kernel.cu",
-        )?;
-
-        device.load_module(
             "pow_kernel_module",
             &["pow_kernel"],
             "./src/devices/cuda/kernels/pow_kernel.cu",
@@ -285,12 +280,12 @@ impl DeviceTrait for CudaDev {
         m: i32,
         n: i32,
         k: i32,
-        alpha: f32,
+        alpha: &Tensor,
         a: &Tensor,
         lda: i32,
         b: &Tensor,
         ldb: i32,
-        beta: f32,
+        beta: &Tensor,
         c: &Tensor,
         ldc: i32,
         device_stream: &DeviceStream,
@@ -305,14 +300,14 @@ impl DeviceTrait for CudaDev {
             true => cublasOperation_t::CUBLAS_OP_T,
         };
 
-        let alpha = &alpha;
-        let beta = &beta;
+        let alpha = alpha.as_ptr();
+        let beta = beta.as_ptr();
 
         let a = a.as_ptr();
         let b = b.as_ptr();
         let c = c.as_mut_ptr();
         unsafe {
-            lib().cublasSgemm_v2(
+            cublas::sys::lib().cublasSgemm_v2(
                 handle, transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
             )
         }
@@ -323,7 +318,7 @@ impl DeviceTrait for CudaDev {
     fn axpy(
         &self,
         n: i32,
-        alpha: f32,
+        alpha: &Tensor,
         x: &Tensor,
         incx: i32,
         y: &Tensor,
@@ -331,10 +326,10 @@ impl DeviceTrait for CudaDev {
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let handle = get_cublas_handle(device_stream)?;
-        let alpha = &alpha as *const f32;
+        let alpha = alpha.as_ptr();
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
-        unsafe { lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) }
+        unsafe { cublas::sys::lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) }
             .result()
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
@@ -382,46 +377,46 @@ impl DeviceTrait for CudaDev {
         n: i32,
         x: &Tensor,
         x_offset: i32,
-        x_inc: i32,
+        _x_inc: i32,
         y: &Tensor,
         y_offset: i32,
-        y_inc: i32,
+        _y_inc: i32,
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
-        let handle = get_cublas_handle(device_stream)?;
+        let n = mem::size_of::<f32>() * n as usize;
+        let cuda_stream: &CudaStream = get_cuda_stream(device_stream)?;
         let x = x.as_ptr();
         let x = x.wrapping_add(x_offset as usize);
+        let x = unsafe { mem::transmute::<*const f32, u64>(x) };
         let y = y.as_mut_ptr();
         let y = y.wrapping_add(y_offset as usize);
-        unsafe { lib().cublasScopy_v2(handle, n, x, x_inc, y, y_inc) }
+        let y = unsafe { mem::transmute::<*const f32, u64>(y) };
+        unsafe { driver::sys::lib().cuMemcpyDtoDAsync_v2(y, x, n as usize, cuda_stream.stream) }
             .result()
-            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
+            .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
+        device_stream.wait_for()
     }
 
-    fn scalar_mul(
-        &self,
-        alpha: &Tensor,
-        x: &Tensor,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        let cuda_stream = get_cuda_stream(device_stream)?;
-        let n = x.len();
-        let alpha = &alpha.device_slice().buffer;
-        let x = &x.device_slice().buffer;
-        let kernel = self.get_func("scalar_mul_kernel_module", "scalar_mul_kernel")?;
-        let cfg = LaunchConfig::for_num_elems(n as u32);
-        match (alpha, x) {
-            (DeviceSlice::CudaDevSlice(alpha), DeviceSlice::CudaDevSlice(x)) => {
-                let result = unsafe {
-                    kernel.launch_on_stream(cuda_stream, cfg, (n, x.slice(), alpha.slice()))
-                };
-                match result {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
-                }
-            }
-            _ => Err(error!(ErrorEnum::NvLaunchError)),
+    fn scal(&self, alpha: &Tensor, x: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
+        //
+        let handle = get_cublas_handle(device_stream)?;
+        let n = x.len() as i32;
+        let alpha = alpha.as_ptr() as *const _;
+        let x = x.as_mut_ptr() as *mut _;
+        unsafe {
+            cublas::sys::lib().cublasScalEx(
+                handle,
+                n,
+                alpha,
+                cudaDataType::CUDA_R_32F,
+                x,
+                cudaDataType::CUDA_R_32F,
+                1,
+                cudaDataType::CUDA_R_32F,
+            )
         }
+        .result()
+        .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
     fn scalar_add(
@@ -798,7 +793,7 @@ impl DeviceTrait for CudaDev {
             .alloc_zeros(workspace_size_in_bytes)
             .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;
         unsafe {
-            lib().cublasSetWorkspace_v2(
+            cublas::sys::lib().cublasSetWorkspace_v2(
                 *handle,
                 *workspace.device_ptr_mut() as *mut _,
                 workspace_size_in_bytes,
@@ -812,7 +807,8 @@ impl DeviceTrait for CudaDev {
 
         // Set pointer mode.
         unsafe {
-            lib().cublasSetPointerMode_v2(*handle, cublasPointerMode_t::CUBLAS_POINTER_MODE_HOST)
+            cublas::sys::lib()
+                .cublasSetPointerMode_v2(*handle, cublasPointerMode_t::CUBLAS_POINTER_MODE_DEVICE)
         }
         .result()
         .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;

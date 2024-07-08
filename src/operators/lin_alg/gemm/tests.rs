@@ -22,15 +22,16 @@ fn big_matrix_multiplication() {
     let len = rows * cols;
     let mut result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+
     Gemm::gemm(
         false,
         false,
-        alpha,
+        &alpha,
         &m,
         &m,
-        beta,
+        &beta,
         &mut result,
         false,
         &device,
@@ -111,15 +112,16 @@ fn lhs_t_rhs_result_t_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+
     Gemm::gemm(
         true,
         false,
-        alpha,
+        &alpha,
         &lhs,
         &rhs,
-        beta,
+        &beta,
         &mut result,
         true,
         &device,
@@ -191,15 +193,16 @@ fn transposed_lhs_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+
     Gemm::gemm(
         true,
         false,
-        alpha,
+        &alpha,
         &lhs,
         &rhs,
-        beta,
+        &beta,
         &mut result,
         false,
         &device,
@@ -262,15 +265,16 @@ fn matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+
     Gemm::gemm(
         false,
         false,
-        alpha,
+        &alpha,
         &lhs,
         &rhs,
-        beta,
+        &beta,
         &mut result,
         false,
         &device,
@@ -342,15 +346,16 @@ fn transposed_rhs_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+
     Gemm::gemm(
         false,
         true,
-        alpha,
+        &alpha,
         &lhs,
         &rhs,
-        beta,
+        &beta,
         &mut result,
         false,
         &device,
@@ -427,15 +432,16 @@ fn lhs_t_rhs_t_result_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+
     Gemm::gemm(
         true,
         true,
-        alpha,
+        &alpha,
         &lhs,
         &rhs,
-        beta,
+        &beta,
         &mut result,
         false,
         &device,
@@ -527,15 +533,16 @@ fn lhs_t_rhs_t_result_t_matrix_multiplication_result() {
     let len = rows * cols;
     let mut result = new_tensor!(device, rows, cols, vec![0.0; len]).unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+
     Gemm::gemm(
         true,
         true,
-        alpha,
+        &alpha,
         &lhs,
         &rhs,
-        beta,
+        &beta,
         &mut result,
         true,
         &device,

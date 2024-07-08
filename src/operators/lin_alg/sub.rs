@@ -32,7 +32,7 @@ impl ExecutableOperator for Sub {
         }
         device.copy_to(input_0, output, device_stream)?;
 
-        let alpha = -1.0;
+        let alpha = &device_stream.minus_one;
 
         let n = input_1.len() as i32;
         let incx = 1;

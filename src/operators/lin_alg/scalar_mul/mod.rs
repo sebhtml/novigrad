@@ -36,7 +36,7 @@ impl ExecutableOperator for ScalarMul {
         let input = inputs[1];
         let output = outputs[0];
         device.copy_to(input, output, device_stream)?;
-        device.scalar_mul(alpha, output, device_stream)
+        device.scal(alpha, output, device_stream)
     }
 }
 

@@ -42,8 +42,9 @@ impl ExecutableOperator for Gemm {
                 return Err(error!(ErrorEnum::UnsupportedOperation));
             }
         };
-        let alpha = 1.0;
-        let beta = 1.0;
+        let alpha = &device_stream.one;
+        let beta = &device_stream.one;
+
         Gemm::gemm(
             transa,
             transb,
@@ -63,10 +64,10 @@ impl Gemm {
     pub fn gemm(
         transa: bool,
         transb: bool,
-        alpha: f32,
+        alpha: &Tensor,
         a: &Tensor,
         b: &Tensor,
-        beta: f32,
+        beta: &Tensor,
         c: &Tensor,
         transpose_result: bool,
         device: &Device,
@@ -107,10 +108,10 @@ impl Gemm {
     fn _gemm(
         transa: bool,
         transb: bool,
-        alpha: f32,
+        alpha: &Tensor,
         a: &Tensor,
         b: &Tensor,
-        beta: f32,
+        beta: &Tensor,
         c: &Tensor,
         transpose_result: bool,
         device: &Device,

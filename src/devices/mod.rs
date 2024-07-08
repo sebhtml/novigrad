@@ -94,12 +94,12 @@ pub trait DeviceTrait {
         m: i32,
         n: i32,
         k: i32,
-        alpha: f32,
+        alpha: &Tensor,
         a: &Tensor,
         lda: i32,
         b: &Tensor,
         ldb: i32,
-        beta: f32,
+        beta: &Tensor,
         c: &Tensor,
         ldc: i32,
         device_stream: &DeviceStream,
@@ -126,7 +126,7 @@ pub trait DeviceTrait {
     fn axpy(
         &self,
         n: i32,
-        alpha: f32,
+        alpha: &Tensor,
         x: &Tensor,
         incx: i32,
         y: &Tensor,
@@ -165,12 +165,7 @@ pub trait DeviceTrait {
         device_stream: &DeviceStream,
     ) -> Result<(), Error>;
 
-    fn scalar_mul(
-        &self,
-        alpha: &Tensor,
-        x: &Tensor,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error>;
+    fn scal(&self, alpha: &Tensor, x: &Tensor, device_stream: &DeviceStream) -> Result<(), Error>;
 
     fn scalar_add(
         &self,
@@ -495,12 +490,12 @@ impl DeviceTrait for Device {
         m: i32,
         n: i32,
         k: i32,
-        alpha: f32,
+        alpha: &Tensor,
         a: &Tensor,
         lda: i32,
         b: &Tensor,
         ldb: i32,
-        beta: f32,
+        beta: &Tensor,
         c: &Tensor,
         ldc: i32,
         device_stream: &DeviceStream,
@@ -557,7 +552,7 @@ impl DeviceTrait for Device {
     fn axpy(
         &self,
         n: i32,
-        alpha: f32,
+        alpha: &Tensor,
         x: &Tensor,
         incx: i32,
         y: &Tensor,
@@ -567,13 +562,8 @@ impl DeviceTrait for Device {
         self.device.axpy(n, alpha, x, incx, y, incy, device_stream)
     }
 
-    fn scalar_mul(
-        &self,
-        alpha: &Tensor,
-        x: &Tensor,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        self.device.scalar_mul(alpha, x, device_stream)
+    fn scal(&self, alpha: &Tensor, x: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
+        self.device.scal(alpha, x, device_stream)
     }
 
     fn scalar_add(

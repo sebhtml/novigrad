@@ -4,7 +4,13 @@ use std::fs;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    adam_w::AdamW, display::BoardPrinter, error, tensor::{Error, ErrorEnum}, transformer_model::TransformerModel, vision::center_examples_in_field_of_view, Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad
+    adam_w::AdamW,
+    display::BoardPrinter,
+    error,
+    tensor::{Error, ErrorEnum},
+    transformer_model::TransformerModel,
+    vision::{center_examples_in_field_of_view, translate_examples_in_field_of_view},
+    Device, Metrics, SoftmaxCrossEntropyLoss, TensorWithGrad,
 };
 
 use super::{into_one_hot_encoded_rows, DatasetDetails};
@@ -67,6 +73,12 @@ fn load_examples(
         new_height,
         default_pixel,
     );
+    let examples = if train_or_test == "train" {
+        translate_examples_in_field_of_view(examples, new_width, new_height, default_pixel)
+    } else {
+        examples
+    };
+
     examples
         .into_iter()
         .map(|example| {
@@ -113,13 +125,13 @@ pub fn load_colored_mosaic_puzzles(
     )?;
 
     let loss_operator = SoftmaxCrossEntropyLoss::new(device);
-    let optimizer = AdamW::try_new(0.05, 0.9, 0.999, 1e-8, 0.01)?;
+    let optimizer = AdamW::try_new(0.05, 0.9, 0.999, 1e-8, 0.1)?;
     let layers = 3;
     let num_heads = 12;
     let dropout_probability = 0.1;
     let n_embd = 768;
     let causal_mask = false;
-    let batch_size = 2;
+    let batch_size = training_examples.len();
     let model = TransformerModel::new(
         device,
         layers,

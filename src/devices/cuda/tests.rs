@@ -50,8 +50,9 @@ fn cublas_sgemm_column_major() {
     )
     .unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+
     device
         .gemm(
             false,
@@ -59,12 +60,12 @@ fn cublas_sgemm_column_major() {
             m,
             n,
             k,
-            alpha,
+            &alpha,
             &a,
             m,
             &b,
             k,
-            beta,
+            &beta,
             &c,
             m,
             &device_stream,

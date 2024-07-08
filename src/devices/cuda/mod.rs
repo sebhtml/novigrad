@@ -286,12 +286,12 @@ impl DeviceTrait for CudaDev {
         m: i32,
         n: i32,
         k: i32,
-        alpha: f32,
+        alpha: &Tensor,
         a: &Tensor,
         lda: i32,
         b: &Tensor,
         ldb: i32,
-        beta: f32,
+        beta: &Tensor,
         c: &Tensor,
         ldc: i32,
         device_stream: &DeviceStream,
@@ -306,8 +306,8 @@ impl DeviceTrait for CudaDev {
             true => cublasOperation_t::CUBLAS_OP_T,
         };
 
-        let alpha = &alpha;
-        let beta = &beta;
+        let alpha = alpha.as_ptr();
+        let beta = beta.as_ptr();
 
         let a = a.as_ptr();
         let b = b.as_ptr();
@@ -324,7 +324,7 @@ impl DeviceTrait for CudaDev {
     fn axpy(
         &self,
         n: i32,
-        alpha: f32,
+        alpha: &Tensor,
         x: &Tensor,
         incx: i32,
         y: &Tensor,
@@ -332,7 +332,7 @@ impl DeviceTrait for CudaDev {
         device_stream: &DeviceStream,
     ) -> Result<(), Error> {
         let handle = get_cublas_handle(device_stream)?;
-        let alpha = &alpha as *const f32;
+        let alpha = alpha.as_ptr();
         let x = x.as_ptr();
         let y = y.as_mut_ptr();
         unsafe { cublas::sys::lib().cublasSaxpy_v2(handle, n, alpha, x, incx, y, incy) }
@@ -818,7 +818,7 @@ impl DeviceTrait for CudaDev {
         // Set pointer mode.
         unsafe {
             cublas::sys::lib()
-                .cublasSetPointerMode_v2(*handle, cublasPointerMode_t::CUBLAS_POINTER_MODE_HOST)
+                .cublasSetPointerMode_v2(*handle, cublasPointerMode_t::CUBLAS_POINTER_MODE_DEVICE)
         }
         .result()
         .map_err(|_| error!(ErrorEnum::UnsupportedOperation))?;

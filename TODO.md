@@ -34,10 +34,6 @@
 - implement htod_into_on_stream in cudarc
 - implement set_value_with_stream
 
-== Story: use device pointer mode ==
-
-- use device pointer mode for Gemm's alpha and beta (maybe this is the cause of pthread_rwlock_unlock)
-
 == Story: gradient accumulation ==
 
 - honour requires_grad() when updating gradients

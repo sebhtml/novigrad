@@ -47,8 +47,8 @@ fn cblas_sgemm_column_major() {
     )
     .unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
 
     device
         .gemm(
@@ -57,12 +57,12 @@ fn cblas_sgemm_column_major() {
             m,
             n,
             k,
-            alpha,
+            &alpha,
             &a,
             m,
             &b,
             k,
-            beta,
+            &beta,
             &c,
             m,
             &device_stream,
@@ -130,8 +130,9 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
     )
     .unwrap();
 
-    let alpha = 1.0;
-    let beta = 1.0;
+    let alpha = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+    let beta = new_tensor!(device, 1, 1, vec![1.0]).unwrap();
+
     device
         .gemm(
             false,
@@ -139,12 +140,12 @@ fn cblas_sgemm_with_column_major_layout_and_row_major_operands() {
             n,
             m,
             k,
-            alpha,
+            &alpha,
             &b,
             n,
             &a,
             k,
-            beta,
+            &beta,
             &c,
             n,
             &device_stream,

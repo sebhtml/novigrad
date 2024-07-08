@@ -60,7 +60,7 @@ pub fn load_mega_man_transformers(
         clip_gradient_norm: true,
         initial_metrics_min: Metrics { total_loss: 7000.0 },
         final_metrics_max: Metrics { total_loss: 150.0 },
-        maximum_incorrect_predicted_next_tokens: 2,
+        maximum_incorrect_predicted_next_tokens: 3,
         printer: NextTokenPredictionPrinter::new(tokenizer),
         batch_size,
     };

@@ -14,6 +14,7 @@ pub struct DeviceStream {
     pub max_alpha: Tensor,
     pub l2_norm: Tensor,
     pub one: Tensor,
+    pub minus_one: Tensor,
     pub alpha: Tensor,
     pub zero: Tensor,
 }
@@ -25,6 +26,7 @@ impl DeviceStream {
             max_alpha: new_tensor!(device, 1, 1, vec![1.0],)?,
             l2_norm: new_tensor!(device, 1, 1, vec![0.0],)?,
             one: new_tensor!(device, 1, 1, vec![1.0],)?,
+            minus_one: new_tensor!(device, 1, 1, vec![-1.0],)?,
             alpha: new_tensor!(device, 1, 1, vec![0.0],)?,
             zero: new_tensor!(device, 1, 1, vec![0.0],)?,
         };

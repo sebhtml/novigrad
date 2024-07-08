@@ -7,7 +7,7 @@ mod tests;
 use cudarc::{
     cublas::{
         self,
-        sys::{cublasHandle_t, cublasOperation_t, cublasPointerMode_t},
+        sys::{cublasHandle_t, cublasOperation_t, cublasPointerMode_t, cudaDataType},
         CudaBlas,
     },
     driver::{self, CudaDevice, CudaFunction, CudaStream, DevicePtrMut, LaunchAsync, LaunchConfig},
@@ -166,12 +166,6 @@ impl CudaDev {
             "cross_entropy_loss_kernel_module",
             &["cross_entropy_loss_kernel"],
             "./src/devices/cuda/kernels/cross_entropy_loss_kernel.cu",
-        )?;
-
-        device.load_module(
-            "scalar_mul_kernel_module",
-            &["scalar_mul_kernel"],
-            "./src/devices/cuda/kernels/scalar_mul_kernel.cu",
         )?;
 
         device.load_module(
@@ -403,30 +397,26 @@ impl DeviceTrait for CudaDev {
         device_stream.wait_for()
     }
 
-    fn scalar_mul(
-        &self,
-        alpha: &Tensor,
-        x: &Tensor,
-        device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
-        let cuda_stream = get_cuda_stream(device_stream)?;
-        let n = x.len();
-        let alpha = &alpha.device_slice().buffer;
-        let x = &x.device_slice().buffer;
-        let kernel = self.get_func("scalar_mul_kernel_module", "scalar_mul_kernel")?;
-        let cfg = LaunchConfig::for_num_elems(n as u32);
-        match (alpha, x) {
-            (DeviceSlice::CudaDevSlice(alpha), DeviceSlice::CudaDevSlice(x)) => {
-                let result = unsafe {
-                    kernel.launch_on_stream(cuda_stream, cfg, (n, x.slice(), alpha.slice()))
-                };
-                match result {
-                    Ok(_) => Ok(()),
-                    Err(_) => Err(error!(ErrorEnum::NvLaunchError)),
-                }
-            }
-            _ => Err(error!(ErrorEnum::NvLaunchError)),
+    fn scal(&self, alpha: &Tensor, x: &Tensor, device_stream: &DeviceStream) -> Result<(), Error> {
+        //
+        let handle = get_cublas_handle(device_stream)?;
+        let n = x.len() as i32;
+        let alpha = alpha.as_ptr() as *const _;
+        let x = x.as_mut_ptr() as *mut _;
+        unsafe {
+            cublas::sys::lib().cublasScalEx(
+                handle,
+                n,
+                alpha,
+                cudaDataType::CUDA_R_32F,
+                x,
+                cudaDataType::CUDA_R_32F,
+                1,
+                cudaDataType::CUDA_R_32F,
+            )
         }
+        .result()
+        .map_err(|_| error!(ErrorEnum::UnsupportedOperation))
     }
 
     fn scalar_add(

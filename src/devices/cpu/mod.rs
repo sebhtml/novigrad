@@ -133,12 +133,7 @@ impl DeviceTrait for CpuDevice {
         Ok(())
     }
 
-    fn scalar_mul(
-        &self,
-        alpha: &Tensor,
-        x: &Tensor,
-        _device_stream: &DeviceStream,
-    ) -> Result<(), Error> {
+    fn scal(&self, alpha: &Tensor, x: &Tensor, _device_stream: &DeviceStream) -> Result<(), Error> {
         let n = x.len() as i32;
         let x = x.as_mut_ptr();
         let incx = 1;

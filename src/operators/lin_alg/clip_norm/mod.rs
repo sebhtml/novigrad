@@ -39,7 +39,7 @@ impl ExecutableOperator for ClipNorm {
         let alpha = &device_stream.alpha;
         device.div(one, l2_norm, alpha, device_stream)?;
         device.min(max_alpha, alpha, alpha, device_stream)?;
-        device.scalar_mul(alpha, output, device_stream)?;
+        device.scal(alpha, output, device_stream)?;
         Ok(())
     }
 }

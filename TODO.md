@@ -1,3 +1,10 @@
+- rename expected_outputs to targets
+- in Linear, bias should not depend on sequence_length. The 2 ctor arguments are in_features, out_features
+- in LayerNorm, gain and bias should be scalars that are broadcasted
+- uncouple neural program and batch size
+- rename boardprinter to coloredMosaicPuzzlePrinter
+- use colors in ColoredMosaicPuzzle printer
+
 - colored_mosaic_puzzles: generate examples rotations
 
 - use 4 layers in transformer model (need to fix a CPU memory bug)

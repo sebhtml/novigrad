@@ -1,3 +1,7 @@
+# Update 2024-07-19
+
+For the [ARC prize](https://arcprize.org/), I switched to [PyTorch](https://pytorch.org/). Novigrad was an interesting learning experience.
+
 # TLDR
 
 An animal can do training and inference every day of its existence until the day of its death.
